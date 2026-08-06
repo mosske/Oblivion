@@ -9,6 +9,23 @@ const PORT = 3000;
 
 app.set("trust proxy", 1);
 
+app.use((req, res, next) => {
+  if (req.query && req.query.__path) {
+    const subpath = Array.isArray(req.query.__path)
+      ? req.query.__path.join("/")
+      : String(req.query.__path);
+    delete req.query.__path;
+    const queryObj = { ...req.query };
+    const search = new URLSearchParams(queryObj as any).toString();
+    req.url = `/api/${subpath}` + (search ? `?${search}` : "");
+  }
+  next();
+});
+
+app.get(["/api", "/api/"], (req, res) => {
+  res.json({ status: "ok", service: "Oblivion YouTube Music API" });
+});
+
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 app.use(cookieParser());
