@@ -2,11 +2,12 @@ import express from "express";
 import path from "path";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 const app = express();
 const PORT = 3000;
+
+app.set("trust proxy", 1);
 
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
@@ -18,8 +19,9 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // http in preview
+      secure: process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL),
       httpOnly: true,
+      sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
   })
@@ -189,9 +191,15 @@ function getBaseUrl(req: express.Request) {
   if (process.env.APP_URL && !process.env.APP_URL.includes("MY_APP_URL")) {
     return process.env.APP_URL.replace(/\/$/, "");
   }
-  const host = req.headers["x-forwarded-host"] || req.headers.host;
-  const proto = req.headers["x-forwarded-proto"] || "http";
-  return `${proto}://${host}`;
+  const rawHost = req.headers["x-forwarded-host"] || req.headers.host || "";
+  const host = Array.isArray(rawHost) ? rawHost[0] : String(rawHost).split(",")[0].trim();
+  const rawProto = req.headers["x-forwarded-proto"] || req.protocol || "https";
+  const proto = Array.isArray(rawProto) ? rawProto[0] : String(rawProto).split(",")[0].trim();
+
+  if (host) {
+    return `${proto}://${host}`;
+  }
+  return "https://oblivion-rho.vercel.app";
 }
 
 // Helper to refresh Google access token if expired
@@ -1214,21 +1222,26 @@ Return strictly the LRC/timed text. No markdown header, no commentary.`,
 // -------------------------------------------------------------
 
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
   if (!process.env.VERCEL) {
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        const { createServer: createViteServer } = await import("vite");
+        const vite = await createViteServer({
+          server: { middlewareMode: true },
+          appType: "spa",
+        });
+        app.use(vite.middlewares);
+      } catch (e) {
+        console.warn("Could not start Vite dev middleware:", e);
+      }
+    } else {
+      const distPath = path.join(process.cwd(), "dist");
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+    }
+
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Oblivion YouTube Music Server listening on http://0.0.0.0:${PORT}`);
     });
