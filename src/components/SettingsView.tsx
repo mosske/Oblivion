@@ -52,6 +52,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   useEffect(() => {
     getCacheSizeMB().then(setCacheMB);
 
+    const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || "";
+    if (envClientId) {
+      setClientId(envClientId);
+      setIsConfigured(true);
+    }
+
     fetch("/api/auth/google/config")
       .then((res) => {
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -60,22 +66,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         return res.json();
       })
       .then((data) => {
-        if (data.clientId) {
-          setClientId(data.clientId);
-          localStorage.setItem("oblivion_google_client_id", data.clientId);
+        const activeId = data.clientId || envClientId || localStorage.getItem("oblivion_google_client_id") || "";
+        if (activeId) {
+          setClientId(activeId);
+          localStorage.setItem("oblivion_google_client_id", activeId);
+          setIsConfigured(true);
         }
         if (data.redirectUri) setRedirectUri(data.redirectUri);
-        setIsConfigured(Boolean(data.configured));
-        if (!data.configured) setShowConfigPanel(true);
       })
       .catch((err) => {
-        console.warn("Config fetch notice (checking local storage fallback):", err);
-        const localClientId = localStorage.getItem("oblivion_google_client_id") || "";
-        if (localClientId) {
-          setClientId(localClientId);
+        console.warn("Config fetch notice (checking environment & local storage fallback):", err);
+        const activeId = envClientId || localStorage.getItem("oblivion_google_client_id") || "";
+        if (activeId) {
+          setClientId(activeId);
           setIsConfigured(true);
-        } else {
-          setShowConfigPanel(true);
         }
       });
   }, []);
@@ -153,10 +157,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       // 2. Client-side fallback if backend API is unreachable or not configured on server
       if (!authUrl) {
-        const activeClientId = clientId.trim() || localStorage.getItem("oblivion_google_client_id") || "";
+        const activeClientId = clientId.trim() || (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || localStorage.getItem("oblivion_google_client_id") || "";
         if (!activeClientId) {
           setShowConfigPanel(true);
-          alert("Google OAuth Client ID is required. Please enter your Client ID in the settings configuration panel below.");
+          alert("Google OAuth Client ID is required. Please ensure GOOGLE_CLIENT_ID or VITE_GOOGLE_CLIENT_ID is configured in Secrets.");
           setAuthLoading(false);
           return;
         }

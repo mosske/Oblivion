@@ -239,15 +239,15 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
 // AUTH ROUTES
 // -------------------------------------------------------------
 
-let storedClientId = process.env.GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
-let storedClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
+let storedClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
+let storedClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
 
 function getOAuthClientId(): string {
-  return process.env.GOOGLE_CLIENT_ID || process.env.CLIENT_ID || storedClientId;
+  return process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || storedClientId;
 }
 
 function getOAuthClientSecret(): string {
-  return process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || storedClientSecret;
+  return process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || storedClientSecret;
 }
 
 // Get Google OAuth Configuration Status
