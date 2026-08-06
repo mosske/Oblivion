@@ -53,14 +53,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     getCacheSizeMB().then(setCacheMB);
 
     fetch("/api/auth/google/config")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const ct = res.headers.get("content-type");
+        if (!ct || !ct.includes("application/json")) throw new Error("Not JSON");
+        return res.json();
+      })
       .then((data) => {
-        if (data.clientId) setClientId(data.clientId);
+        if (data.clientId) {
+          setClientId(data.clientId);
+          localStorage.setItem("oblivion_google_client_id", data.clientId);
+        }
         if (data.redirectUri) setRedirectUri(data.redirectUri);
         setIsConfigured(Boolean(data.configured));
         if (!data.configured) setShowConfigPanel(true);
       })
-      .catch((err) => console.error("Config fetch error:", err));
+      .catch((err) => {
+        console.warn("Config fetch notice (checking local storage fallback):", err);
+        const localClientId = localStorage.getItem("oblivion_google_client_id") || "";
+        if (localClientId) {
+          setClientId(localClientId);
+          setIsConfigured(true);
+        } else {
+          setShowConfigPanel(true);
+        }
+      });
   }, []);
 
   const handleSaveOauthConfig = async () => {
@@ -69,6 +86,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       return;
     }
     setSavingConfig(true);
+    localStorage.setItem("oblivion_google_client_id", clientId.trim());
+    if (clientSecret.trim()) {
+      localStorage.setItem("oblivion_google_client_secret", clientSecret.trim());
+    }
+
     try {
       const res = await fetch("/api/auth/google/config", {
         method: "POST",
@@ -78,18 +100,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           clientSecret: clientSecret.trim(),
         }),
       });
-      const data = await res.json();
-      if (data.configured) {
-        setIsConfigured(true);
-        setShowConfigPanel(false);
-        alert("Google OAuth configuration saved successfully!");
+      if (res.ok) {
+        const ct = res.headers.get("content-type");
+        if (ct && ct.includes("application/json")) {
+          const data = await res.json();
+          if (data.configured) {
+            setIsConfigured(true);
+            setShowConfigPanel(false);
+            alert("Google OAuth configuration saved successfully!");
+            setSavingConfig(false);
+            return;
+          }
+        }
       }
     } catch (err) {
-      console.error(err);
-      alert("Failed to save OAuth configuration.");
-    } finally {
-      setSavingConfig(false);
+      console.warn("Backend save notice:", err);
     }
+    setIsConfigured(true);
+    setShowConfigPanel(false);
+    alert("Google OAuth configuration saved locally!");
+    setSavingConfig(false);
   };
 
   const handleClearCache = async () => {
@@ -103,14 +133,50 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setAuthLoading(true);
 
     try {
-      const res = await fetch("/api/auth/google/url");
-      const data = await res.json();
+      let authUrl = "";
 
-      if (!res.ok || !data.configured || !data.url) {
-        setShowConfigPanel(true);
-        alert("Google OAuth Client ID is required. Please enter your Client ID below.");
-        setAuthLoading(false);
-        return;
+      // 1. Try to fetch auth URL from backend API
+      try {
+        const res = await fetch("/api/auth/google/url");
+        if (res.ok) {
+          const ct = res.headers.get("content-type");
+          if (ct && ct.includes("application/json")) {
+            const data = await res.json();
+            if (data.configured && data.url) {
+              authUrl = data.url;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Backend auth URL endpoint notice, falling back to client-side OAuth URL generation:", err);
+      }
+
+      // 2. Client-side fallback if backend API is unreachable or not configured on server
+      if (!authUrl) {
+        const activeClientId = clientId.trim() || localStorage.getItem("oblivion_google_client_id") || "";
+        if (!activeClientId) {
+          setShowConfigPanel(true);
+          alert("Google OAuth Client ID is required. Please enter your Client ID in the settings configuration panel below.");
+          setAuthLoading(false);
+          return;
+        }
+
+        const currentOrigin = window.location.origin;
+        const currentRedirectUri = `${currentOrigin}/api/auth/google/callback`;
+        const scopes = [
+          "https://www.googleapis.com/auth/youtube",
+          "https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/userinfo.email",
+        ].join(" ");
+
+        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
+          client_id: activeClientId,
+          redirect_uri: currentRedirectUri,
+          response_type: "code",
+          scope: scopes,
+          access_type: "offline",
+          prompt: "consent",
+        }).toString();
       }
 
       const width = 500;
@@ -119,7 +185,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       const top = window.screenY + (window.innerHeight - height) / 2;
 
       const popup = window.open(
-        data.url,
+        authUrl,
         "Google OAuth Login",
         `width=${width},height=${height},left=${left},top=${top}`
       );
