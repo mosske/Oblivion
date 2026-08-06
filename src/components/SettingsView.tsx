@@ -52,36 +52,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   useEffect(() => {
     getCacheSizeMB().then(setCacheMB);
 
-    const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || "";
-    if (envClientId) {
-      setClientId(envClientId);
-      setIsConfigured(true);
-    }
+      const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || "";
+      const envClientSecret = (import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string) || "";
+      if (envClientId) {
+        setClientId(envClientId);
+        setIsConfigured(true);
+      }
+      if (envClientSecret) {
+        setClientSecret(envClientSecret);
+      }
 
-    fetch("/api/auth/google/config")
-      .then((res) => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const ct = res.headers.get("content-type");
-        if (!ct || !ct.includes("application/json")) throw new Error("Not JSON");
-        return res.json();
-      })
-      .then((data) => {
-        const activeId = data.clientId || envClientId || localStorage.getItem("oblivion_google_client_id") || "";
-        if (activeId) {
-          setClientId(activeId);
-          localStorage.setItem("oblivion_google_client_id", activeId);
-          setIsConfigured(true);
-        }
-        if (data.redirectUri) setRedirectUri(data.redirectUri);
-      })
-      .catch((err) => {
-        console.warn("Config fetch notice (checking environment & local storage fallback):", err);
-        const activeId = envClientId || localStorage.getItem("oblivion_google_client_id") || "";
-        if (activeId) {
-          setClientId(activeId);
-          setIsConfigured(true);
-        }
-      });
+      fetch("/api/auth/google/config")
+        .then((res) => {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const ct = res.headers.get("content-type");
+          if (!ct || !ct.includes("application/json")) throw new Error("Not JSON");
+          return res.json();
+        })
+        .then((data) => {
+          const activeId = data.clientId || envClientId || localStorage.getItem("oblivion_google_client_id") || "";
+          if (activeId) {
+            setClientId(activeId);
+            localStorage.setItem("oblivion_google_client_id", activeId);
+            setIsConfigured(true);
+          }
+          if (data.redirectUri) setRedirectUri(data.redirectUri);
+        })
+        .catch((err) => {
+          console.warn("Config fetch notice (checking environment & local storage fallback):", err);
+          const activeId = envClientId || localStorage.getItem("oblivion_google_client_id") || "";
+          if (activeId) {
+            setClientId(activeId);
+            setIsConfigured(true);
+          }
+        });
   }, []);
 
   const handleSaveOauthConfig = async () => {
@@ -208,7 +212,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         } else if (event.data && event.data.type === "OAUTH_ERROR") {
           window.removeEventListener("message", handleMessage);
           setAuthLoading(false);
-          alert("Google Sign-In Error: " + (event.data.error || "Failed to authenticate"));
+          const rawErr = event.data.error ? String(event.data.error) : "Failed to authenticate";
+          if (rawErr.toLowerCase().includes("secret") || rawErr.toLowerCase().includes("invalid_client")) {
+            setShowConfigPanel(true);
+            alert("Google OAuth Credential Error:\n\n" + rawErr + "\n\nPlease verify your Google OAuth Client Secret in Google Cloud Console and save it in the settings panel below.");
+          } else {
+            alert("Google Sign-In Notice: " + rawErr);
+          }
         }
       };
 

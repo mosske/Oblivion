@@ -239,27 +239,44 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
 // AUTH ROUTES
 // -------------------------------------------------------------
 
-let storedClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
-let storedClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
+function sanitizeCredential(val: string | undefined | null): string {
+  if (!val) return "";
+  let clean = String(val).trim();
+  while (
+    (clean.startsWith('"') && clean.endsWith('"')) ||
+    (clean.startsWith("'") && clean.endsWith("'")) ||
+    (clean.startsWith('`') && clean.endsWith('`'))
+  ) {
+    clean = clean.slice(1, -1).trim();
+  }
+  clean = clean.replace(/[\r\n\t\f\v]/g, "").trim();
+  return clean;
+}
+
+let storedClientId = "";
+let storedClientSecret = "";
 
 function getOAuthClientId(): string {
-  return process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || storedClientId;
+  const envVal = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
+  return sanitizeCredential(storedClientId || envVal);
 }
 
 function getOAuthClientSecret(): string {
-  return process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || storedClientSecret;
+  const envVal = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
+  return sanitizeCredential(storedClientSecret || envVal);
 }
 
 // Get Google OAuth Configuration Status
 app.get("/api/auth/google/config", (req, res) => {
   const clientId = getOAuthClientId();
+  const clientSecret = getOAuthClientSecret();
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
   res.json({
     configured: Boolean(clientId),
     clientId: clientId || "",
-    hasSecret: Boolean(getOAuthClientSecret()),
+    hasSecret: Boolean(clientSecret),
     redirectUri,
   });
 });
@@ -268,10 +285,10 @@ app.get("/api/auth/google/config", (req, res) => {
 app.post("/api/auth/google/config", (req, res) => {
   const { clientId, clientSecret } = req.body || {};
   if (typeof clientId === "string") {
-    storedClientId = clientId.trim();
+    storedClientId = sanitizeCredential(clientId);
   }
   if (typeof clientSecret === "string") {
-    storedClientSecret = clientSecret.trim();
+    storedClientSecret = sanitizeCredential(clientSecret);
   }
 
   const activeClientId = getOAuthClientId();
@@ -282,6 +299,7 @@ app.post("/api/auth/google/config", (req, res) => {
     success: true,
     configured: Boolean(activeClientId),
     clientId: activeClientId,
+    hasSecret: Boolean(getOAuthClientSecret()),
     redirectUri,
   });
 });
@@ -382,14 +400,20 @@ app.get("/api/auth/google/callback", async (req, res) => {
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
-
   try {
+    if (!clientId) {
+      throw new Error("OAuth Client ID is missing. Please configure GOOGLE_CLIENT_ID.");
+    }
+    if (!clientSecret) {
+      throw new Error("OAuth Client Secret is missing or empty. Please configure GOOGLE_CLIENT_SECRET in Secrets or Settings.");
+    }
+
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: clientId || "",
-        client_secret: clientSecret || "",
+        client_id: clientId,
+        client_secret: clientSecret,
         code: code,
         grant_type: "authorization_code",
         redirect_uri: redirectUri,
@@ -398,7 +422,7 @@ app.get("/api/auth/google/callback", async (req, res) => {
 
     const tokenData = await tokenRes.json();
 
-    if (tokenData.access_token) {
+    if (tokenRes.ok && tokenData.access_token) {
       req.session.tokens = {
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
@@ -413,8 +437,8 @@ app.get("/api/auth/google/callback", async (req, res) => {
 
       req.session.user = {
         id: userData.id,
-        name: userData.name || userData.email.split("@")[0],
-        email: userData.email,
+        name: userData.name || userData.email?.split("@")[0] || "User",
+        email: userData.email || "",
         picture: userData.picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
       };
 
@@ -432,17 +456,33 @@ app.get("/api/auth/google/callback", async (req, res) => {
         </script>
       `);
     } else {
-      throw new Error(tokenData.error_description || "Failed to acquire tokens");
+      const errDescription = tokenData.error_description || tokenData.error || "Failed to acquire tokens from Google";
+      console.error("Google OAuth token exchange error response:", {
+        status: tokenRes.status,
+        error: tokenData.error,
+        description: tokenData.error_description,
+        clientIdSnippet: clientId.slice(0, 15) + "...",
+        hasSecret: Boolean(clientSecret),
+        secretLen: clientSecret.length,
+      });
+
+      if (tokenData.error === "invalid_client" || errDescription.toLowerCase().includes("client secret")) {
+        throw new Error(
+          `The provided Google Client Secret is invalid or mismatched for Client ID (${clientId.slice(0, 18)}...). Please check Google Cloud Console Credentials and update the Client Secret in Settings.`
+        );
+      }
+      throw new Error(errDescription);
     }
   } catch (err: any) {
-    console.error("OAuth token exchange error:", err);
+    const errorMsg = err.message || "OAuth token exchange error";
+    console.error("OAuth token exchange error:", errorMsg);
     return res.send(`
       <script>
         if (window.opener) {
-          window.opener.postMessage({ type: 'OAUTH_ERROR', error: '${encodeURIComponent(err.message)}' }, '*');
+          window.opener.postMessage({ type: 'OAUTH_ERROR', error: ${JSON.stringify(errorMsg)} }, '*');
           window.close();
         } else {
-          window.location.href = '/?oauth_error=failed';
+          window.location.href = '/?oauth_error=${encodeURIComponent(errorMsg)}';
         }
       </script>
     `);
