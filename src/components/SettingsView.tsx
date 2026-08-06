@@ -41,94 +41,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [cleared, setCleared] = useState<boolean>(false);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
 
-  // Google OAuth Config state
+  // Google OAuth state
   const [clientId, setClientId] = useState<string>("");
-  const [clientSecret, setClientSecret] = useState<string>("");
-  const [isConfigured, setIsConfigured] = useState<boolean>(false);
-  const [redirectUri, setRedirectUri] = useState<string>("");
-  const [showConfigPanel, setShowConfigPanel] = useState<boolean>(false);
-  const [savingConfig, setSavingConfig] = useState<boolean>(false);
+  const [, setIsConfigured] = useState<boolean>(false);
 
   useEffect(() => {
     getCacheSizeMB().then(setCacheMB);
 
-      const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || "";
-      const envClientSecret = (import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string) || "";
-      if (envClientId) {
-        setClientId(envClientId);
-        setIsConfigured(true);
-      }
-      if (envClientSecret) {
-        setClientSecret(envClientSecret);
-      }
-
-      fetch("/api/auth/google/config")
-        .then((res) => {
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const ct = res.headers.get("content-type");
-          if (!ct || !ct.includes("application/json")) throw new Error("Not JSON");
-          return res.json();
-        })
-        .then((data) => {
-          const activeId = data.clientId || envClientId || localStorage.getItem("oblivion_google_client_id") || "";
-          if (activeId) {
-            setClientId(activeId);
-            localStorage.setItem("oblivion_google_client_id", activeId);
-            setIsConfigured(true);
-          }
-          if (data.redirectUri) setRedirectUri(data.redirectUri);
-        })
-        .catch((err) => {
-          console.warn("Config fetch notice (checking environment & local storage fallback):", err);
-          const activeId = envClientId || localStorage.getItem("oblivion_google_client_id") || "";
-          if (activeId) {
-            setClientId(activeId);
-            setIsConfigured(true);
-          }
-        });
-  }, []);
-
-  const handleSaveOauthConfig = async () => {
-    if (!clientId.trim()) {
-      alert("Please enter a valid Google OAuth Client ID.");
-      return;
-    }
-    setSavingConfig(true);
-    localStorage.setItem("oblivion_google_client_id", clientId.trim());
-    if (clientSecret.trim()) {
-      localStorage.setItem("oblivion_google_client_secret", clientSecret.trim());
+    const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || "";
+    if (envClientId) {
+      setClientId(envClientId);
+      setIsConfigured(true);
     }
 
-    try {
-      const res = await fetch("/api/auth/google/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: clientId.trim(),
-          clientSecret: clientSecret.trim(),
-        }),
-      });
-      if (res.ok) {
+    fetch("/api/auth/google/config")
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
         const ct = res.headers.get("content-type");
-        if (ct && ct.includes("application/json")) {
-          const data = await res.json();
-          if (data.configured) {
-            setIsConfigured(true);
-            setShowConfigPanel(false);
-            alert("Google OAuth configuration saved successfully!");
-            setSavingConfig(false);
-            return;
-          }
+        if (!ct || !ct.includes("application/json")) throw new Error("Not JSON");
+        return res.json();
+      })
+      .then((data) => {
+        const activeId = data.clientId || envClientId || localStorage.getItem("oblivion_google_client_id") || "";
+        if (activeId) {
+          setClientId(activeId);
+          localStorage.setItem("oblivion_google_client_id", activeId);
+          setIsConfigured(true);
         }
-      }
-    } catch (err) {
-      console.warn("Backend save notice:", err);
-    }
-    setIsConfigured(true);
-    setShowConfigPanel(false);
-    alert("Google OAuth configuration saved locally!");
-    setSavingConfig(false);
-  };
+      })
+      .catch((err) => {
+        console.warn("Config fetch notice (checking environment & local storage fallback):", err);
+        const activeId = envClientId || localStorage.getItem("oblivion_google_client_id") || "";
+        if (activeId) {
+          setClientId(activeId);
+          setIsConfigured(true);
+        }
+      });
+  }, []);
 
   const handleClearCache = async () => {
     await clearAllCache();
@@ -163,8 +112,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       if (!authUrl) {
         const activeClientId = clientId.trim() || (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || localStorage.getItem("oblivion_google_client_id") || "";
         if (!activeClientId) {
-          setShowConfigPanel(true);
-          alert("Google OAuth Client ID is required. Please ensure GOOGLE_CLIENT_ID or VITE_GOOGLE_CLIENT_ID is configured in Secrets.");
+          alert("Google OAuth Client ID is missing. Please ensure GOOGLE_CLIENT_ID or VITE_GOOGLE_CLIENT_ID is configured in Secrets.");
           setAuthLoading(false);
           return;
         }
@@ -187,20 +135,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         }).toString();
       }
 
+      // Safe screen coordinate calculations (prevents NaN on mobile Android / iOS)
+      const winX = typeof window.screenX === "number" && !isNaN(window.screenX) ? window.screenX : 0;
+      const winY = typeof window.screenY === "number" && !isNaN(window.screenY) ? window.screenY : 0;
+      const winW = window.innerWidth || document.documentElement.clientWidth || 500;
+      const winH = window.innerHeight || document.documentElement.clientHeight || 650;
       const width = 500;
       const height = 650;
-      const left = window.screenX + (window.innerWidth - width) / 2;
-      const top = window.screenY + (window.innerHeight - height) / 2;
+      const left = Math.max(0, Math.floor(winX + (winW - width) / 2));
+      const top = Math.max(0, Math.floor(winY + (winH - height) / 2));
 
-      const popup = window.open(
-        authUrl,
-        "Google OAuth Login",
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
+      let popup: Window | null = null;
+      try {
+        popup = window.open(
+          authUrl,
+          "Google OAuth Login",
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+      } catch (openErr) {
+        console.warn("Popup with feature string failed, attempting fallback pop-up:", openErr);
+      }
+
+      // If popup window.open returned null or failed due to mobile popup blockers, try window.open without features or direct navigation
+      if (!popup) {
+        try {
+          popup = window.open(authUrl, "_blank");
+        } catch (e) {
+          console.warn("Window.open _blank failed, redirecting window:", e);
+        }
+      }
 
       if (!popup) {
-        alert("Please allow popups for this site to complete Google sign in.");
-        setAuthLoading(false);
+        // Fallback to direct navigation if popup is completely blocked by browser
+        window.location.href = authUrl;
         return;
       }
 
@@ -213,19 +180,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           window.removeEventListener("message", handleMessage);
           setAuthLoading(false);
           const rawErr = event.data.error ? String(event.data.error) : "Failed to authenticate";
-          if (rawErr.toLowerCase().includes("secret") || rawErr.toLowerCase().includes("invalid_client")) {
-            setShowConfigPanel(true);
-            alert("Google OAuth Credential Error:\n\n" + rawErr + "\n\nPlease verify your Google OAuth Client Secret in Google Cloud Console and save it in the settings panel below.");
-          } else {
-            alert("Google Sign-In Notice: " + rawErr);
-          }
+          alert("Google Sign-In Error: " + rawErr);
         }
       };
 
       window.addEventListener("message", handleMessage);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to initiate Google sign in.");
+    } catch (err: any) {
+      console.error("handleGoogleLogin error:", err);
+      const errMsg = err?.message || String(err) || "Unknown error";
+      alert("Failed to initiate Google sign in: " + errMsg);
       setAuthLoading(false);
     }
   };
@@ -342,85 +305,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
                 <span>Sign in with Google</span>
               </button>
-
-              <button
-                onClick={() => setShowConfigPanel(!showConfigPanel)}
-                className="w-full sm:w-auto py-3 px-4 bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition-colors"
-              >
-                <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                <span>{showConfigPanel ? "Hide OAuth Settings" : "Configure Google Credentials"}</span>
-              </button>
-            </div>
-
-            {/* Google Credentials Configuration Panel */}
-            {showConfigPanel && (
-              <div className="mt-3 p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
-                <div className="flex items-center justify-between text-xs font-bold text-cyan-400">
-                  <span>Google OAuth Client Configuration</span>
-                  <a
-                    href="https://console.cloud.google.com/apis/credentials"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[11px] text-slate-400 hover:text-cyan-300 underline"
-                  >
-                    Open Google Cloud Console ↗
-                  </a>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-300">Google OAuth Client ID</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
-                      value={clientId}
-                      onChange={(e) => setClientId(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-300">Client Secret (Optional)</label>
-                    <input
-                      type="password"
-                      placeholder="e.g. GOCSPX-..."
-                      value={clientSecret}
-                      onChange={(e) => setClientSecret(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <div className="text-[10px] text-slate-400">
-                    Callback URL: <code className="text-cyan-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 select-all">{redirectUri || "https://.../api/auth/google/callback"}</code>
-                  </div>
-
-                  <button
-                    onClick={handleSaveOauthConfig}
-                    disabled={savingConfig}
-                    className="px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs rounded-lg transition-all"
-                  >
-                    {savingConfig ? "Saving..." : "Save Credentials"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* OAuth Provider Instructions */}
-            <div className="mt-4 p-4 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 text-xs text-slate-300">
-              <div className="flex items-center gap-2 font-mono text-cyan-400 font-semibold">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Google OAuth Provider Setup Guidelines</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                When creating OAuth 2.0 Web Client credentials in Google Cloud Console, add these exact redirect URLs:
-              </p>
-              <div className="space-y-1 font-mono text-[11px] bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-cyan-300 select-all">
-                <div>• Vercel Production Callback: <code>https://oblivion-rho.vercel.app/api/auth/google/callback</code></div>
-                <div>• Development Callback: <code>https://ais-dev-blr47rrsu4chpkttmgwnlk-270966030907.asia-southeast1.run.app/api/auth/google/callback</code></div>
-                <div>• Shared Callback: <code>https://ais-pre-blr47rrsu4chpkttmgwnlk-270966030907.asia-southeast1.run.app/api/auth/google/callback</code></div>
-              </div>
             </div>
           </div>
         )}
