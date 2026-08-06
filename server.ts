@@ -350,39 +350,52 @@ app.get("/api/auth/google/url", (req, res) => {
 
 // Initiate Google Login
 app.get("/api/auth/google", (req, res) => {
-  const clientId = getOAuthClientId();
-  const baseUrl = getBaseUrl(req);
-  const redirectUri = `${baseUrl}/api/auth/google/callback`;
+  try {
+    const clientId = getOAuthClientId();
+    const baseUrl = getBaseUrl(req);
+    const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
-  if (!clientId) {
-    return res.status(500).send(`
+    if (!clientId) {
+      return res.status(500).send(`
+        <html>
+          <body style="font-family:sans-serif; background:#0f172a; color:#f8fafc; padding:2rem; text-align:center;">
+            <h2>Google OAuth Client ID Not Configured</h2>
+            <p>Please configure process.env.GOOGLE_CLIENT_ID or process.env.CLIENT_ID in secrets.</p>
+            <p>Callback URL required: <code>${redirectUri}</code></p>
+            <button onclick="window.close()" style="padding:10px 20px; background:#06b6d4; color:#000; border:none; border-radius:8px; cursor:pointer;">Close Window</button>
+          </body>
+        </html>
+      `);
+    }
+
+    const scopes = [
+      "https://www.googleapis.com/auth/youtube",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ].join(" ");
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: scopes,
+      access_type: "offline",
+      prompt: "consent",
+    }).toString();
+
+    res.redirect(authUrl);
+  } catch (err: any) {
+    console.error("Error initiating Google auth:", err);
+    res.status(500).send(`
       <html>
         <body style="font-family:sans-serif; background:#0f172a; color:#f8fafc; padding:2rem; text-align:center;">
-          <h2>Google OAuth Client ID Not Configured</h2>
-          <p>Please configure process.env.GOOGLE_CLIENT_ID or process.env.CLIENT_ID in settings.</p>
-          <p>Callback URL required: <code>${redirectUri}</code></p>
+          <h2>Google Authentication Error</h2>
+          <p>${err?.message || String(err)}</p>
           <button onclick="window.close()" style="padding:10px 20px; background:#06b6d4; color:#000; border:none; border-radius:8px; cursor:pointer;">Close Window</button>
         </body>
       </html>
     `);
   }
-
-  const scopes = [
-    "https://www.googleapis.com/auth/youtube",
-    "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/userinfo.email",
-  ].join(" ");
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    response_type: "code",
-    scope: scopes,
-    access_type: "offline",
-    prompt: "consent",
-  }).toString();
-
-  res.redirect(authUrl);
 });
 
 // OAuth Callback
@@ -1215,6 +1228,19 @@ Return strictly the LRC/timed text. No markdown header, no commentary.`,
 [01:52.00] (Fade out into ambient reverb)`;
 
   res.json({ lyricsRaw: sampleLyrics });
+});
+
+// Fallback for unmatched API routes
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl || req.url}` });
+});
+
+// Global Express error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Unhandled Express error:", err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: err?.message || "Internal Server Error" });
+  }
 });
 
 // -------------------------------------------------------------
