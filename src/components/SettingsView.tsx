@@ -337,6 +337,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 When creating OAuth 2.0 Web Client credentials in Google Cloud Console, add these exact redirect URLs:
               </p>
               <div className="space-y-1 font-mono text-[11px] bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-cyan-300 select-all">
+                <div>• Vercel Production Callback: <code>https://oblivion-rho.vercel.app/api/auth/google/callback</code></div>
                 <div>• Development Callback: <code>https://ais-dev-blr47rrsu4chpkttmgwnlk-270966030907.asia-southeast1.run.app/api/auth/google/callback</code></div>
                 <div>• Shared Callback: <code>https://ais-pre-blr47rrsu4chpkttmgwnlk-270966030907.asia-southeast1.run.app/api/auth/google/callback</code></div>
               </div>
