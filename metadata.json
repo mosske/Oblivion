@@ -1,0 +1,6 @@
+{
+  "name": "Oblivion",
+  "description": "YouTube Music client player with Google account sync, background playback, offline caching, real-time playlist management, synchronized lyrics, and smart recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

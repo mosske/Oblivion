@@ -1,0 +1,23 @@
+{
+  "short_name": "Oblivion",
+  "name": "Oblivion YouTube Music",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "id": "/",
+  "start_url": "/",
+  "background_color": "#020617",
+  "theme_color": "#06b6d4",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "YouTube Music client player with Google account sync, background playback, and offline audio caching."
+}
