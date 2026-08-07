@@ -11,6 +11,7 @@ import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AuthModal } from "./components/AuthModal";
 import { DesignSelectorModal } from "./components/DesignSelectorModal";
+import { AlertTriangle, X } from "lucide-react";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"home" | "search" | "library" | "settings">("home");
@@ -39,6 +40,7 @@ export default function App() {
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [isSyncingYouTube, setIsSyncingYouTube] = useState<boolean>(false);
+  const [oauthBannerError, setOauthBannerError] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<UserSettings>({
     audioQuality: "high",
@@ -84,11 +86,38 @@ export default function App() {
 
   // Check auth status on mount and sync session
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errParam = urlParams.get("oauth_error");
+    const successParam = urlParams.get("oauth_success");
+    const userParam = urlParams.get("user");
+
+    if (errParam) {
+      setOauthBannerError(errParam);
+      setActiveTab("settings");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (successParam || userParam) {
+      if (userParam) {
+        try {
+          const parsedUser = JSON.parse(decodeURIComponent(userParam));
+          if (parsedUser && (parsedUser.id || parsedUser.email)) {
+            const fullUser = { ...parsedUser, isLoggedIn: true };
+            setUser(fullUser);
+            localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+          }
+        } catch (e) {
+          console.error("Failed to parse user param:", e);
+        }
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
         if (data.isLoggedIn && data.user) {
-          setUser({ ...data.user, isLoggedIn: true });
+          const fullUser = { ...data.user, isLoggedIn: true };
+          setUser(fullUser);
+          localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
         }
       })
       .catch((err) => console.error("Auth check error:", err));
@@ -392,6 +421,23 @@ export default function App() {
 
       {/* Main Content Workspace Area */}
       <main className={`flex-1 flex flex-col relative h-full overflow-hidden bg-gradient-to-b ${activeThemeMeta.bgCanvas}`}>
+        {oauthBannerError && (
+          <div className="bg-red-500/15 border-b border-red-500/30 px-4 py-3 flex items-center justify-between text-red-200 text-xs font-medium shrink-0 shadow-lg z-20 animate-fade-in">
+            <div className="flex items-center gap-2.5 pr-2">
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>
+                <strong className="font-bold text-red-300">Authentication Alert:</strong> {oauthBannerError}
+              </span>
+            </div>
+            <button
+              onClick={() => setOauthBannerError(null)}
+              className="p-1 hover:text-white rounded text-slate-400 hover:bg-red-500/20 transition-colors shrink-0"
+              title="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         {activeTab === "home" && (
           <HomeView
             onPlayTrack={handlePlayTrack}

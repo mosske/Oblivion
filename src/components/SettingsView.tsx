@@ -18,7 +18,14 @@ import {
   LogOut,
   RefreshCw,
   CheckCircle2,
-  Lock
+  Lock,
+  Key,
+  Copy,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { getCacheSizeMB, clearAllCache } from "../utils/offlineCache";
 
@@ -41,9 +48,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [cleared, setCleared] = useState<boolean>(false);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
 
-  // Google OAuth state
+  // Google OAuth credentials state
   const [clientId, setClientId] = useState<string>("");
-  const [, setIsConfigured] = useState<boolean>(false);
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [redirectUri, setRedirectUri] = useState<string>("");
+  const [hasSecret, setHasSecret] = useState<boolean>(false);
+  const [showConfig, setShowConfig] = useState<boolean>(false);
+  const [showSecret, setShowSecret] = useState<boolean>(false);
+  const [savingConfig, setSavingConfig] = useState<boolean>(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>("");
+  const [authErrorMsg, setAuthErrorMsg] = useState<string>("");
+  const [copiedRedirect, setCopiedRedirect] = useState<boolean>(false);
 
   useEffect(() => {
     getCacheSizeMB().then(setCacheMB);
@@ -51,8 +66,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || "";
     if (envClientId) {
       setClientId(envClientId);
-      setIsConfigured(true);
     }
+
+    const defaultRedirect = `${window.location.origin}/api/auth/google/callback`;
+    setRedirectUri(defaultRedirect);
 
     fetch("/api/auth/google/config")
       .then((res) => {
@@ -66,7 +83,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         if (activeId) {
           setClientId(activeId);
           localStorage.setItem("oblivion_google_client_id", activeId);
-          setIsConfigured(true);
+        }
+        if (data.redirectUri) {
+          setRedirectUri(data.redirectUri);
+        }
+        setHasSecret(Boolean(data.hasSecret));
+        if (!data.configured || !data.hasSecret) {
+          setShowConfig(true);
         }
       })
       .catch((err) => {
@@ -74,7 +97,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         const activeId = envClientId || localStorage.getItem("oblivion_google_client_id") || "";
         if (activeId) {
           setClientId(activeId);
-          setIsConfigured(true);
         }
       });
   }, []);
@@ -84,6 +106,52 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setCacheMB(0);
     setCleared(true);
     setTimeout(() => setCleared(false), 3000);
+  };
+
+  const handleSaveCredentials = async () => {
+    if (!clientId.trim()) {
+      setAuthErrorMsg("Please enter a valid Google OAuth Client ID.");
+      return;
+    }
+
+    setSavingConfig(true);
+    setAuthErrorMsg("");
+    setSaveSuccessMsg("");
+
+    try {
+      const res = await fetch("/api/auth/google/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: clientId.trim(),
+          clientSecret: clientSecret.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("oblivion_google_client_id", clientId.trim());
+        setHasSecret(Boolean(data.hasSecret));
+        if (data.redirectUri) setRedirectUri(data.redirectUri);
+        setSaveSuccessMsg("OAuth Credentials saved successfully! You can now sign in.");
+        setTimeout(() => setSaveSuccessMsg(""), 4000);
+      } else {
+        setAuthErrorMsg(data.error || "Failed to save OAuth credentials.");
+      }
+    } catch (err: any) {
+      console.error("Save credentials error:", err);
+      setAuthErrorMsg("Network error saving OAuth credentials.");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const handleCopyRedirectUri = () => {
+    if (redirectUri) {
+      navigator.clipboard.writeText(redirectUri);
+      setCopiedRedirect(true);
+      setTimeout(() => setCopiedRedirect(false), 2500);
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -175,16 +243,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         if (event.data && event.data.type === "OAUTH_SUCCESS") {
           window.removeEventListener("message", handleMessage);
           setAuthLoading(false);
-          onLoginSuccess(event.data.user);
+          setAuthErrorMsg("");
+          const fullUser = { ...event.data.user, isLoggedIn: true };
+          onLoginSuccess(fullUser);
         } else if (event.data && event.data.type === "OAUTH_ERROR") {
           window.removeEventListener("message", handleMessage);
           setAuthLoading(false);
           const rawErr = event.data.error ? String(event.data.error) : "Failed to authenticate";
-          alert("Google Sign-In Error: " + rawErr);
+          setAuthErrorMsg("Google Sign-In Error: " + rawErr);
         }
       };
 
       window.addEventListener("message", handleMessage);
+
+      // Interval fallback to check if popup or redirect completed and saved user
+      const checkTimer = setInterval(() => {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && (parsed.id || parsed.email)) {
+              clearInterval(checkTimer);
+              window.removeEventListener("message", handleMessage);
+              setAuthLoading(false);
+              setAuthErrorMsg("");
+              onLoginSuccess({ ...parsed, isLoggedIn: true });
+            }
+          }
+          if (popup && popup.closed) {
+            clearInterval(checkTimer);
+            setTimeout(() => setAuthLoading(false), 800);
+          }
+        } catch (e) {}
+      }, 800);
+
+      setTimeout(() => {
+        clearInterval(checkTimer);
+        setAuthLoading(false);
+      }, 60000);
     } catch (err: any) {
       console.error("handleGoogleLogin error:", err);
       const errMsg = err?.message || String(err) || "Unknown error";
@@ -273,6 +369,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 Connect your Google Account to automatically sync your YouTube Music collection, personal playlists, and liked songs in real time across sessions.
               </p>
             </div>
+
+            {/* Error Message Box */}
+            {authErrorMsg && (
+              <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-300 text-xs animate-fade-in">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <div className="space-y-1 flex-1">
+                  <p className="font-semibold text-red-200">OAuth Error Encountered</p>
+                  <p className="text-[11px] leading-relaxed text-red-300/90">{authErrorMsg}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Save Success Box */}
+            {saveSuccessMsg && (
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2.5 text-emerald-300 text-xs animate-fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{saveSuccessMsg}</span>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
               <button

@@ -25,12 +25,7 @@ export default function handler(req: any, res: any) {
     console.warn("Could not rewrite req.url in api/index.ts:", e);
   }
 
-  return new Promise<void>((resolve) => {
-    res.on("finish", resolve);
-    res.on("close", resolve);
-    res.on("error", resolve);
-    app(req, res);
-  });
+  return app(req, res);
 }
 
 
