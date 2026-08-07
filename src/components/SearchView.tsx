@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Track, Playlist } from "../types";
 import { Search, Play, Plus, Sparkles, Music2, Check, Radio } from "lucide-react";
+import { cleanTrackTitle } from "../utils/formatters";
 
 interface SearchViewProps {
   onPlayTrack: (track: Track) => void;
@@ -102,9 +103,9 @@ export const SearchView: React.FC<SearchViewProps> = ({
             <p className="text-sm font-medium">No YouTube Music results found for "{query}".</p>
           </div>
         ) : (
-          filteredResults.map((item: any) => (
+          filteredResults.map((item: any, idx: number) => (
             <div
-              key={item.id}
+              key={`sr_${item.id}_${idx}`}
               className="group flex items-center justify-between p-3 rounded-2xl bg-slate-900/40 hover:bg-slate-800/80 border border-slate-800/50 hover:border-slate-700 transition-all relative"
             >
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -123,8 +124,9 @@ export const SearchView: React.FC<SearchViewProps> = ({
                     <h4
                       onClick={() => onPlayTrack(item)}
                       className="text-sm font-bold text-white truncate cursor-pointer hover:text-cyan-300"
+                      title={item.title}
                     >
-                      {item.title}
+                      {cleanTrackTitle(item.title, item.artist)}
                     </h4>
                     {item.type && item.type !== "track" && (
                       <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
@@ -164,9 +166,9 @@ export const SearchView: React.FC<SearchViewProps> = ({
                       <p className="text-[10px] font-mono text-slate-500 uppercase px-3 py-1">
                         Add to Playlist
                       </p>
-                      {playlists.map((pl) => (
+                      {playlists.map((pl, idx) => (
                         <button
-                          key={pl.id}
+                          key={`dd_pl_${pl.id}_${idx}`}
                           onClick={() => {
                             onAddTrackToPlaylist(item, pl.id);
                             setOpenPlaylistMenuId(null);

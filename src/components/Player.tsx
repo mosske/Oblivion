@@ -24,6 +24,7 @@ import {
 import { LyricsView } from "./LyricsView";
 import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { cacheTrackAudio, isTrackCached, getCachedTrackAudioUrl } from "../utils/offlineCache";
+import { cleanTrackTitle, getPlayableAudioUrl } from "../utils/formatters";
 
 interface PlayerProps {
   playerState: PlayerState;
@@ -84,7 +85,7 @@ export const Player: React.FC<PlayerProps> = ({
       const cached = await isTrackCached(currentTrack.id);
       setIsCachedOffline(cached);
 
-      let srcUrl = currentTrack.audioUrl;
+      let srcUrl = getPlayableAudioUrl(currentTrack);
       if (cached) {
         const cachedBlobUrl = await getCachedTrackAudioUrl(currentTrack.id);
         if (cachedBlobUrl && !isCancelled) {
@@ -105,7 +106,7 @@ export const Player: React.FC<PlayerProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [currentTrack?.id]);
+  }, [currentTrack?.id, currentTrack?.audioUrl]);
 
   // Handle Play/Pause
   useEffect(() => {
@@ -127,7 +128,7 @@ export const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     if ("mediaSession" in navigator && currentTrack) {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
+        title: cleanTrackTitle(currentTrack.title, currentTrack.artist),
         artist: currentTrack.artist,
         album: currentTrack.album || "Oblivion YouTube Music",
         artwork: [
@@ -177,6 +178,20 @@ export const Player: React.FC<PlayerProps> = ({
     }
   };
 
+  // Handle Audio Error Fallback
+  const handleAudioError = () => {
+    if (audioRef.current && currentTrack) {
+      console.warn("Audio playback error encountered. Applying reliable stream fallback.");
+      const fallbackUrl = getPlayableAudioUrl(currentTrack);
+      if (audioRef.current.src !== fallbackUrl) {
+        audioRef.current.src = fallbackUrl;
+        if (isPlaying) {
+          audioRef.current.play().catch(() => {});
+        }
+      }
+    }
+  };
+
   // Cache Track Offline Action
   const handleCacheOffline = async () => {
     if (!currentTrack || isCaching || isCachedOffline) return;
@@ -199,6 +214,7 @@ export const Player: React.FC<PlayerProps> = ({
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
+        onError={handleAudioError}
         preload="auto"
       />
 

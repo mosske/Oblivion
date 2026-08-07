@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Playlist, Track } from "../types";
 import { DragDropPlaylist } from "./DragDropPlaylist";
+import { cleanTrackTitle } from "../utils/formatters";
 import {
   Library,
   Sparkles,
@@ -36,6 +37,9 @@ interface LibraryViewProps {
   onPlayQueue: (tracks: Track[], startIndex?: number) => void;
   currentTrackId?: string;
   likedTrackIds: string[];
+  currentTrack?: Track | null;
+  onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
+  onSyncPlaylistTracks?: (playlistId: string, updatedTracks: Track[]) => Promise<any>;
 }
 
 export const LibraryView: React.FC<LibraryViewProps> = ({
@@ -51,10 +55,15 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   onPlayQueue,
   currentTrackId,
   likedTrackIds,
+  currentTrack,
+  onAddTrackToPlaylist,
+  onSyncPlaylistTracks,
 }) => {
   const [tab, setTab] = useState<"playlists" | "offline" | "liked">("playlists");
   const [offlineTracks, setOfflineTracks] = useState<Track[]>([]);
   const [cacheSizeMB, setCacheSizeMB] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncStatusMsg, setSyncStatusMsg] = useState<string>("");
 
   // View type and sorting state
   const [viewMode, setViewMode] = useState<"grid" | "compact" | "list">("grid");
@@ -195,9 +204,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           {/* Playlist Hero */}
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 p-6 rounded-3xl bg-slate-900/60 border border-slate-800/80">
             <img
-              src={selectedPlaylist.coverUrl}
+              src={selectedPlaylist.tracks?.[0]?.coverUrl || selectedPlaylist.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80"}
               alt={selectedPlaylist.title}
-              className="w-40 h-40 rounded-2xl object-cover border border-slate-700 shadow-2xl"
+              onError={(e) => {
+                e.currentTarget.src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80";
+              }}
+              className="w-40 h-40 rounded-2xl object-cover border border-slate-700 shadow-2xl shrink-0"
             />
 
             <div className="flex-1 space-y-2 text-center sm:text-left">
@@ -219,7 +231,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               <p className="text-xs text-slate-400 max-w-lg">{selectedPlaylist.description}</p>
 
               {/* Action Buttons */}
-              <div className="pt-3 flex items-center justify-center sm:justify-start gap-3">
+              <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-3">
                 <button
                   onClick={() => {
                     if (selectedPlaylist.tracks && selectedPlaylist.tracks.length > 0) {
@@ -232,6 +244,43 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   <Play className="w-4 h-4 fill-slate-950" />
                   <span>Play All</span>
                 </button>
+
+                {/* Save & Sync to YouTube Button */}
+                {onSyncPlaylistTracks && (
+                  <button
+                    onClick={async () => {
+                      setIsSyncing(true);
+                      setSyncStatusMsg("Syncing with YouTube...");
+                      try {
+                        await onSyncPlaylistTracks(selectedPlaylist.id, selectedPlaylist.tracks || []);
+                        setSyncStatusMsg("Saved & Synced with YouTube!");
+                      } catch (err) {
+                        setSyncStatusMsg("Sync error. Saved locally.");
+                      } finally {
+                        setIsSyncing(false);
+                        setTimeout(() => setSyncStatusMsg(""), 4000);
+                      }
+                    }}
+                    disabled={isSyncing}
+                    className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                    title="Save current order & track modifications directly to YouTube"
+                  >
+                    <RefreshCcw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
+                    <span>{isSyncing ? "Saving..." : "Save to YouTube"}</span>
+                  </button>
+                )}
+
+                {/* Add Currently Playing Track Button */}
+                {currentTrack && onAddTrackToPlaylist && (
+                  <button
+                    onClick={() => onAddTrackToPlaylist(currentTrack, selectedPlaylist.id)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-semibold text-xs rounded-xl flex items-center gap-2 transition-all"
+                    title={`Add "${currentTrack.title}" to this playlist`}
+                  >
+                    <Plus className="w-4 h-4 text-cyan-400" />
+                    <span>Add Playing Song</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => onEditPlaylist(selectedPlaylist)}
@@ -249,13 +298,21 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Sync Feedback Alert */}
+              {syncStatusMsg && (
+                <div className="mt-2 text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5 animate-fade-in">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{syncStatusMsg}</span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Drag & Drop Sortable Tracks */}
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
-              <span>Track List (Drag handle to reorder)</span>
+              <span>Track List (Drag handle to reorder, use bin to remove)</span>
               <span>Duration</span>
             </div>
 
@@ -295,14 +352,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             ) : (
               offlineTracks.map((track, idx) => (
                 <div
-                  key={track.id}
+                  key={`off_${track.id}_${idx}`}
                   className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:bg-slate-800/70 transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <span className="w-5 text-xs font-mono text-slate-500 text-center">{idx + 1}</span>
                     <img src={track.coverUrl} alt={track.title} className="w-10 h-10 rounded-xl object-cover shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-white truncate">{track.title}</p>
+                      <p className="text-sm font-semibold text-white truncate" title={track.title}>{cleanTrackTitle(track.title, track.artist)}</p>
                       <p className="text-xs text-slate-400 truncate">{track.artist}</p>
                     </div>
                   </div>
@@ -437,9 +494,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {hiddenPlaylists.map((pl) => (
+                {hiddenPlaylists.map((pl, idx) => (
                   <div
-                    key={pl.id}
+                    key={`hp_${pl.id}_${idx}`}
                     className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -481,9 +538,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           ) : viewMode === "grid" ? (
             /* GRID VIEW */
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {sortedPlaylists.map((pl) => (
+              {sortedPlaylists.map((pl, idx) => (
                 <div
-                  key={pl.id}
+                  key={`grid_${pl.id}_${idx}`}
                   onClick={() => onSelectPlaylist(pl)}
                   className="group relative p-4 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-2xl cursor-pointer transition-all shadow-lg hover:shadow-cyan-500/10 flex flex-col justify-between"
                 >
@@ -533,9 +590,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           ) : viewMode === "compact" ? (
             /* COMPACT CARDS VIEW */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sortedPlaylists.map((pl) => (
+              {sortedPlaylists.map((pl, idx) => (
                 <div
-                  key={pl.id}
+                  key={`cmp_${pl.id}_${idx}`}
                   onClick={() => onSelectPlaylist(pl)}
                   className="group relative flex items-center gap-4 p-3 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-2xl cursor-pointer transition-all shadow-lg hover:shadow-cyan-500/10"
                 >
@@ -586,7 +643,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             <div className="space-y-2">
               {sortedPlaylists.map((pl, idx) => (
                 <div
-                  key={pl.id}
+                  key={`lst_${pl.id}_${idx}`}
                   onClick={() => onSelectPlaylist(pl)}
                   className="group flex items-center justify-between p-3 rounded-2xl bg-slate-900/40 hover:bg-slate-800/70 border border-slate-800/60 hover:border-slate-700 transition-all cursor-pointer"
                 >

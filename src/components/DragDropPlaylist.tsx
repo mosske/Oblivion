@@ -18,10 +18,12 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Track } from "../types";
 import { GripVertical, Play, Trash2, Music2 } from "lucide-react";
+import { cleanTrackTitle } from "../utils/formatters";
 
 interface SortableTrackItemProps {
   key?: string;
   track: Track;
+  dndId: string;
   index: number;
   onPlay: (track: Track) => void;
   onRemove: (trackId: string) => void;
@@ -30,6 +32,7 @@ interface SortableTrackItemProps {
 
 function SortableTrackItem({
   track,
+  dndId,
   index,
   onPlay,
   onRemove,
@@ -42,7 +45,7 @@ function SortableTrackItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: track.id });
+  } = useSortable({ id: dndId });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -97,8 +100,9 @@ function SortableTrackItem({
             className={`text-sm font-semibold truncate cursor-pointer hover:underline ${
               isPlayingCurrent ? "text-cyan-400" : "text-slate-200"
             }`}
+            title={track.title}
           >
-            {track.title}
+            {cleanTrackTitle(track.title, track.artist)}
           </p>
           <p className="text-xs text-slate-400 truncate">{track.artist}</p>
         </div>
@@ -149,11 +153,18 @@ export const DragDropPlaylist: React.FC<DragDropPlaylistProps> = ({
     })
   );
 
+  const uniqueTracks = React.useMemo(() => {
+    return tracks.map((t, idx) => ({
+      ...t,
+      dndId: `${t.id || 'tr'}_dnd_${idx}`,
+    }));
+  }, [tracks]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = tracks.findIndex((t) => t.id === active.id);
-      const newIndex = tracks.findIndex((t) => t.id === over.id);
+      const oldIndex = uniqueTracks.findIndex((t) => t.dndId === active.id);
+      const newIndex = uniqueTracks.findIndex((t) => t.dndId === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         const reordered = arrayMove(tracks, oldIndex, newIndex);
         onReorderTracks(reordered);
@@ -161,7 +172,7 @@ export const DragDropPlaylist: React.FC<DragDropPlaylistProps> = ({
     }
   };
 
-  if (tracks.length === 0) {
+  if (uniqueTracks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-slate-500 border border-dashed border-slate-800 rounded-2xl">
         <Music2 className="w-12 h-12 mb-2 stroke-1" />
@@ -173,12 +184,13 @@ export const DragDropPlaylist: React.FC<DragDropPlaylistProps> = ({
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={tracks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={uniqueTracks.map((t) => t.dndId)} strategy={verticalListSortingStrategy}>
         <div className="w-full space-y-1">
-          {tracks.map((track, idx) => (
+          {uniqueTracks.map((track, idx) => (
             <SortableTrackItem
-              key={track.id}
+              key={track.dndId}
               track={track}
+              dndId={track.dndId}
               index={idx}
               onPlay={onPlayTrack}
               onRemove={onRemoveTrack}

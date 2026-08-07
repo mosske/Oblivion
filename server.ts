@@ -220,10 +220,33 @@ function getBaseUrl(req: express.Request) {
   return "https://oblivion-rho.vercel.app";
 }
 
-// Helper to refresh Google access token if expired
-async function getValidAccessToken(req: express.Request): Promise<string | null> {
-  if (!req.session?.tokens) return null;
-  const { access_token, refresh_token, expires_at } = req.session.tokens;
+// Helper to refresh Google access token if expired or retrieve from cookie
+async function getValidAccessToken(req: express.Request, res?: express.Response): Promise<string | null> {
+  let tokens = req.session?.tokens;
+
+  if (!tokens && req.cookies?.oblivion_tokens) {
+    try {
+      const decoded = Buffer.from(req.cookies.oblivion_tokens, "base64").toString("utf-8");
+      tokens = JSON.parse(decoded);
+      if (tokens && req.session) {
+        req.session.tokens = tokens;
+      }
+    } catch (e) {
+      console.error("Error parsing oblivion_tokens cookie:", e);
+    }
+  }
+
+  if (!tokens) {
+    const authHeader = req.headers["authorization"] || req.headers["x-access-token"];
+    if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+      return authHeader.slice(7);
+    } else if (typeof authHeader === "string" && authHeader) {
+      return authHeader;
+    }
+    return null;
+  }
+
+  const { access_token, refresh_token, expires_at } = tokens;
   
   if (expires_at && Date.now() < expires_at - 60000) {
     return access_token;
@@ -231,13 +254,13 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
 
   if (!refresh_token) return access_token;
 
-  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET;
+  const clientId = getOAuthClientId();
+  const clientSecret = getOAuthClientSecret();
 
   if (!clientId || !clientSecret) return access_token;
 
   try {
-    const res = await fetch("https://oauth2.googleapis.com/token", {
+    const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -248,10 +271,28 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
       }),
     });
 
-    const data = await res.json();
+    const data = await refreshRes.json();
     if (data.access_token) {
-      req.session.tokens.access_token = data.access_token;
-      req.session.tokens.expires_at = Date.now() + data.expires_in * 1000;
+      const updatedTokens = {
+        access_token: data.access_token,
+        refresh_token: refresh_token,
+        expires_at: Date.now() + (data.expires_in || 3600) * 1000,
+      };
+
+      if (req.session) {
+        req.session.tokens = updatedTokens;
+      }
+
+      if (res) {
+        const cookieVal = Buffer.from(JSON.stringify(updatedTokens)).toString("base64");
+        res.cookie("oblivion_tokens", cookieVal, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+        });
+      }
+
       return data.access_token;
     }
   } catch (err) {
@@ -500,11 +541,21 @@ app.get("/api/auth/google/callback", async (req, res) => {
     const tokenData = await tokenRes.json();
 
     if (tokenRes.ok && tokenData.access_token) {
-      req.session.tokens = {
+      const tokenObj = {
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
         expires_at: Date.now() + tokenData.expires_in * 1000,
       };
+      req.session.tokens = tokenObj;
+
+      // Persist tokens in HTTP-only cookie to survive serverless instance resets
+      const cookieVal = Buffer.from(JSON.stringify(tokenObj)).toString("base64");
+      res.cookie("oblivion_tokens", cookieVal, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      });
 
       // Fetch User Info
       const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
@@ -595,22 +646,52 @@ app.get("/api/auth/google/callback", async (req, res) => {
 });
 
 // Get current user session
-app.get("/api/auth/me", (req, res) => {
+app.get("/api/auth/me", async (req, res) => {
   if (req.session?.user) {
-    res.json({
+    return res.json({
       isLoggedIn: true,
       user: req.session.user,
     });
-  } else {
-    res.json({
-      isLoggedIn: false,
-      user: null,
-    });
   }
+
+  // Check if token cookie is present to restore user session if server memory was reset
+  const token = await getValidAccessToken(req, res);
+  if (token) {
+    try {
+      const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        const userSession = {
+          id: userData.id,
+          name: userData.name || userData.email?.split("@")[0] || "User",
+          email: userData.email || "",
+          picture: userData.picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+          isLoggedIn: true,
+        };
+        if (req.session) {
+          req.session.user = userSession;
+        }
+        return res.json({
+          isLoggedIn: true,
+          user: userSession,
+        });
+      }
+    } catch (e) {
+      console.error("Failed to restore user from token:", e);
+    }
+  }
+
+  res.json({
+    isLoggedIn: false,
+    user: null,
+  });
 });
 
 // Logout
 app.post("/api/auth/logout", (req, res) => {
+  res.clearCookie("oblivion_tokens", { secure: true, sameSite: "none" });
   req.session.destroy(() => {
     res.json({ success: true });
   });
@@ -622,7 +703,7 @@ app.post("/api/auth/logout", (req, res) => {
 
 // Fetch Playlists (YouTube API with local fallback/sync)
 app.get("/api/youtube/playlists", async (req, res) => {
-  const token = await getValidAccessToken(req);
+  const token = await getValidAccessToken(req, res);
 
   if (token) {
     try {
@@ -632,34 +713,112 @@ app.get("/api/youtube/playlists", async (req, res) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      const data = await ytRes.json();
 
-      if (data.items) {
-        const syncedPlaylists = data.items.map((item: any, idx: number) => ({
-          id: item.id,
-          title: item.snippet.title,
-          description: item.snippet.description || "YouTube Synced Playlist",
-          coverUrl:
-            item.snippet.thumbnails?.high?.url ||
-            item.snippet.thumbnails?.medium?.url ||
-            `https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80`,
-          isYouTubeSynced: true,
-          tracksCount: item.contentDetails?.itemCount || 0,
-          updatedAt: item.snippet.publishedAt || new Date().toISOString(),
-          tracks: [],
-        }));
+      let syncedPlaylists: any[] = [];
+      if (ytRes.ok) {
+        const data = await ytRes.json();
+        if (data.items) {
+          const seenPlIds = new Map<string, number>();
+          syncedPlaylists = data.items.map((item: any, idx: number) => {
+            const rawId = item.id || `pl_${idx}`;
+            const count = (seenPlIds.get(rawId) || 0) + 1;
+            seenPlIds.set(rawId, count);
+            const plId = count > 1 ? `${rawId}_${count}` : rawId;
 
-        // Merge with local created playlists
-        const combined = [...syncedPlaylists];
-        for (const lp of localPlaylistsStore) {
-          if (!combined.some((p) => p.id === lp.id)) {
-            combined.push(lp);
+            const thumbs = item.snippet.thumbnails;
+            const bestThumb =
+              thumbs?.maxres?.url ||
+              thumbs?.high?.url ||
+              thumbs?.medium?.url ||
+              thumbs?.standard?.url ||
+              thumbs?.default?.url ||
+              `https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80`;
+
+            const localMatch = localPlaylistsStore.find((p) => p.id === item.id || p.id === plId);
+
+            return {
+              id: plId,
+              title: item.snippet.title,
+              description: item.snippet.description || "YouTube Synced Playlist",
+              coverUrl: bestThumb,
+              isYouTubeSynced: true,
+              tracksCount: item.contentDetails?.itemCount || (localMatch?.tracks?.length || 0),
+              updatedAt: item.snippet.publishedAt || new Date().toISOString(),
+              tracks: localMatch?.tracks || [],
+            };
+          });
+        }
+      } else {
+        const errJson = await ytRes.json().catch(() => ({}));
+        console.error("YouTube playlists API response error:", ytRes.status, errJson);
+      }
+
+      // Fetch User's Liked Videos (playlistId=LL) as Liked YouTube Tracks playlist
+      try {
+        const likedRes = await fetch(
+          "https://www.googleapis.com/youtube/v3/playlistItems?playlistId=LL&part=snippet,contentDetails&maxResults=50",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (likedRes.ok) {
+          const likedData = await likedRes.json();
+          if (likedData.items && likedData.items.length > 0) {
+            const seenIds = new Map<string, number>();
+            const likedTracks = likedData.items.map((item: any, idx: number) => {
+              const vid = item.snippet.resourceId?.videoId || item.contentDetails?.videoId;
+              const itemId = item.id || vid || `idx_${idx}`;
+              const count = (seenIds.get(itemId) || 0) + 1;
+              seenIds.set(itemId, count);
+              const uniqueKey = count > 1 ? `${itemId}_${count}` : itemId;
+
+              const thumbs = item.snippet.thumbnails;
+              const cover =
+                thumbs?.maxres?.url ||
+                thumbs?.high?.url ||
+                thumbs?.medium?.url ||
+                thumbs?.standard?.url ||
+                thumbs?.default?.url ||
+                (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80");
+
+              return {
+                id: uniqueKey,
+                youtubeVideoId: vid,
+                title: item.snippet.title,
+                artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
+                album: "Liked Videos",
+                duration: 210,
+                coverUrl: cover,
+                audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
+                genre: "Liked Music",
+                playsCount: 250000,
+              };
+            });
+
+            syncedPlaylists.unshift({
+              id: "LL",
+              title: "Liked YouTube Tracks",
+              description: "Your official YouTube Liked Music & Videos",
+              coverUrl: likedTracks[0]?.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+              isYouTubeSynced: true,
+              tracksCount: likedTracks.length,
+              updatedAt: new Date().toISOString(),
+              tracks: likedTracks,
+            });
           }
         }
-        return res.json({ playlists: combined, isLiveYouTube: true });
+      } catch (err) {
+        console.error("YouTube Liked Songs playlist error:", err);
       }
+
+      // Merge with local created playlists
+      const combined = [...syncedPlaylists];
+      for (const lp of localPlaylistsStore) {
+        if (!combined.some((p) => p.id === lp.id)) {
+          combined.push(lp);
+        }
+      }
+      return res.json({ playlists: combined, isLiveYouTube: true });
     } catch (err) {
-      console.error("YouTube playlists error:", err);
+      console.error("YouTube playlists endpoint error:", err);
     }
   }
 
@@ -670,51 +829,70 @@ app.get("/api/youtube/playlists", async (req, res) => {
 // Fetch Single Playlist Items
 app.get("/api/youtube/playlists/:id/items", async (req, res) => {
   const { id } = req.params;
-  const token = await getValidAccessToken(req);
+  const targetYtId = id.replace(/_\d+$/, "");
+  const token = await getValidAccessToken(req, res);
 
-  // Check if it's in local store first
-  const localPlaylist = localPlaylistsStore.find((p) => p.id === id);
-  if (localPlaylist && localPlaylist.tracks && localPlaylist.tracks.length > 0) {
-    return res.json({ playlist: localPlaylist, tracks: localPlaylist.tracks });
-  }
+  const localPlaylist = localPlaylistsStore.find((p) => p.id === id || p.id === targetYtId);
 
   if (token) {
     try {
       const ytRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${id}&part=snippet,contentDetails&maxResults=50`,
+        `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${targetYtId}&part=snippet,contentDetails&maxResults=50`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      const data = await ytRes.json();
 
-      if (data.items) {
-        const tracks = data.items.map((item: any, idx: number) => {
-          const vid = item.snippet.resourceId.videoId;
-          return {
-            id: item.id,
-            youtubeVideoId: vid,
-            title: item.snippet.title,
-            artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
-            album: item.snippet.playlistTitle || "YouTube Music Collection",
-            duration: 210,
-            coverUrl:
-              item.snippet.thumbnails?.high?.url ||
-              item.snippet.thumbnails?.medium?.url ||
-              "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-            audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-            genre: "YouTube Music",
-            playsCount: Math.floor(Math.random() * 800000) + 100000,
-          };
-        });
+      if (ytRes.ok) {
+        const data = await ytRes.json();
+        if (data.items) {
+          const seenIds = new Map<string, number>();
+          const tracks = data.items.map((item: any, idx: number) => {
+            const vid = item.snippet.resourceId?.videoId || item.contentDetails?.videoId;
+            const itemId = item.id || vid || `tr_${idx}`;
+            const count = (seenIds.get(itemId) || 0) + 1;
+            seenIds.set(itemId, count);
+            const uniqueKey = count > 1 ? `${itemId}_${count}` : itemId;
 
-        return res.json({
-          playlistId: id,
-          tracks,
-        });
+            const thumbs = item.snippet.thumbnails;
+            const cover =
+              thumbs?.maxres?.url ||
+              thumbs?.high?.url ||
+              thumbs?.medium?.url ||
+              thumbs?.standard?.url ||
+              thumbs?.default?.url ||
+              (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80");
+
+            return {
+              id: uniqueKey,
+              youtubeVideoId: vid,
+              title: item.snippet.title,
+              artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
+              album: item.snippet.playlistTitle || "YouTube Music Collection",
+              duration: 210,
+              coverUrl: cover,
+              audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
+              genre: "YouTube Music",
+              playsCount: Math.floor(Math.random() * 800000) + 100000,
+            };
+          });
+
+          if (localPlaylist) {
+            localPlaylist.tracks = tracks;
+            localPlaylist.tracksCount = tracks.length;
+            if (tracks[0]?.coverUrl) {
+              localPlaylist.coverUrl = tracks[0].coverUrl;
+            }
+          }
+
+          return res.json({
+            playlistId: id,
+            tracks,
+          });
+        }
       }
     } catch (err) {
-      console.error("YouTube playlist items error:", err);
+      console.error("YouTube playlist items fetch error:", err);
     }
   }
 
@@ -722,6 +900,77 @@ app.get("/api/youtube/playlists/:id/items", async (req, res) => {
     playlistId: id,
     tracks: localPlaylist ? localPlaylist.tracks : [],
   });
+});
+
+// Sync / Batch Save Playlist Tracks
+app.post("/api/youtube/playlists/:id/sync", async (req, res) => {
+  const { id } = req.params;
+  const { tracks } = req.body;
+  const token = await getValidAccessToken(req, res);
+
+  const localPlaylist = localPlaylistsStore.find((p) => p.id === id);
+  if (localPlaylist) {
+    localPlaylist.tracks = tracks || [];
+    localPlaylist.tracksCount = localPlaylist.tracks.length;
+    localPlaylist.updatedAt = new Date().toISOString();
+    if (localPlaylist.tracks[0]?.coverUrl) {
+      localPlaylist.coverUrl = localPlaylist.tracks[0].coverUrl;
+    }
+  }
+
+  if (token && id !== "LL") {
+    try {
+      const ytRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${id}&part=snippet,contentDetails&maxResults=50`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (ytRes.ok) {
+        const ytData = await ytRes.json();
+        const existingYtItems: any[] = ytData.items || [];
+        const existingVidMap = new Map(existingYtItems.map((item) => [item.snippet.resourceId?.videoId, item.id]));
+
+        const newTrackVids = new Set((tracks || []).map((t: any) => t.youtubeVideoId));
+
+        // Delete removed items
+        for (const [vid, ytItemId] of existingVidMap.entries()) {
+          if (!newTrackVids.has(vid)) {
+            await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?id=${ytItemId}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            }).catch((e) => console.error("Error deleting item from YT playlist:", e));
+          }
+        }
+
+        // Add new items
+        for (let i = 0; i < (tracks || []).length; i++) {
+          const trk = tracks[i];
+          if (trk.youtubeVideoId && !existingVidMap.has(trk.youtubeVideoId)) {
+            await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                snippet: {
+                  playlistId: id,
+                  resourceId: {
+                    kind: "youtube#video",
+                    videoId: trk.youtubeVideoId,
+                  },
+                  position: i,
+                },
+              }),
+            }).catch((e) => console.error("Error adding item to YT playlist:", e));
+          }
+        }
+      }
+    } catch (err) {
+      console.error("YouTube playlist sync error:", err);
+    }
+  }
+
+  res.json({ success: true, tracks: localPlaylist ? localPlaylist.tracks : tracks });
 });
 
 // Create Playlist
@@ -926,11 +1175,18 @@ app.get("/api/youtube/search", async (req, res) => {
       const data = await ytRes.json();
 
       if (data.items) {
+        const seenIds = new Map<string, number>();
         const results = data.items.map((item: any, idx: number) => {
-          const isPlaylist = item.id.kind === "youtube#playlist";
+          const isPlaylist = item.id?.kind === "youtube#playlist";
+          const rawId = isPlaylist ? item.id?.playlistId : item.id?.videoId;
+          const baseId = rawId || `srch_${idx}`;
+          const count = (seenIds.get(baseId) || 0) + 1;
+          seenIds.set(baseId, count);
+          const uniqueId = count > 1 ? `${baseId}_${count}` : baseId;
+
           return {
-            id: isPlaylist ? item.id.playlistId : item.id.videoId,
-            youtubeVideoId: isPlaylist ? undefined : item.id.videoId,
+            id: uniqueId,
+            youtubeVideoId: isPlaylist ? undefined : item.id?.videoId,
             type: isPlaylist ? "playlist" : "track",
             title: item.snippet.title,
             artist: item.snippet.channelTitle,
@@ -959,12 +1215,12 @@ app.get("/api/youtube/search", async (req, res) => {
       id: "search_01",
       youtubeVideoId: "kJQP7kiw5Fk",
       type: "track",
-      title: "Despacito (Acoustic Oblivion Mix)",
+      title: "Despacito",
       artist: "Luis Fonsi ft. Daddy Yankee",
       album: "Vida",
       duration: 228,
-      coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      coverUrl: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg",
+      audioUrl: "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
       genre: "Latin Pop",
       playsCount: 9400000,
     },
@@ -972,12 +1228,12 @@ app.get("/api/youtube/search", async (req, res) => {
       id: "search_02",
       youtubeVideoId: "OPf0YbXqDm0",
       type: "track",
-      title: "Uptown Funk Electro Edit",
+      title: "Uptown Funk",
       artist: "Mark Ronson ft. Bruno Mars",
       album: "Uptown Special",
       duration: 270,
-      coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      coverUrl: "https://i.ytimg.com/vi/OPf0YbXqDm0/hqdefault.jpg",
+      audioUrl: "https://www.youtube.com/watch?v=OPf0YbXqDm0",
       genre: "Funk / Pop",
       playsCount: 8100000,
     },
@@ -985,12 +1241,12 @@ app.get("/api/youtube/search", async (req, res) => {
       id: "search_03",
       youtubeVideoId: "fJ9rUzIMcZQ",
       type: "track",
-      title: "Bohemian Rhapsody Live Synth",
+      title: "Bohemian Rhapsody",
       artist: "Queen",
       album: "A Night at the Opera",
       duration: 354,
-      coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      coverUrl: "https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
+      audioUrl: "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
       genre: "Rock Legend",
       playsCount: 12500000,
     },
@@ -998,12 +1254,12 @@ app.get("/api/youtube/search", async (req, res) => {
       id: "search_04",
       youtubeVideoId: "YQHsXMglC9A",
       type: "track",
-      title: "Hello (Night Vibe Edition)",
+      title: "Hello",
       artist: "Adele",
       album: "25",
       duration: 295,
-      coverUrl: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+      coverUrl: "https://i.ytimg.com/vi/YQHsXMglC9A/hqdefault.jpg",
+      audioUrl: "https://www.youtube.com/watch?v=YQHsXMglC9A",
       genre: "Soul Pop",
       playsCount: 6800000,
     },
@@ -1015,8 +1271,8 @@ app.get("/api/youtube/search", async (req, res) => {
       artist: "Official Artist Channel",
       album: "Artist Profile",
       duration: 0,
-      coverUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "",
+      coverUrl: "https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg",
+      audioUrl: "https://www.youtube.com/watch?v=JGwWNGJdvx8",
       genre: "Pop / Acoustic",
       playsCount: 18000000,
     },
@@ -1024,12 +1280,12 @@ app.get("/api/youtube/search", async (req, res) => {
       id: "search_06",
       youtubeVideoId: "e-ORhEE9VVg",
       type: "album",
-      title: "Blinding Lights Deluxe",
+      title: "Blinding Lights",
       artist: "The Weeknd",
       album: "After Hours",
-      duration: 1200,
-      coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+      duration: 200,
+      coverUrl: "https://i.ytimg.com/vi/e-ORhEE9VVg/hqdefault.jpg",
+      audioUrl: "https://www.youtube.com/watch?v=e-ORhEE9VVg",
       genre: "Synthpop",
       playsCount: 15400000,
     }
@@ -1047,7 +1303,7 @@ app.get("/api/youtube/search", async (req, res) => {
 
 // Recommendations / Home Feed (Account-Specific when signed in, General Trending when signed out)
 app.get("/api/youtube/recommendations", async (req, res) => {
-  const token = await getValidAccessToken(req);
+  const token = await getValidAccessToken(req, res);
 
   if (token) {
     try {
@@ -1061,22 +1317,39 @@ app.get("/api/youtube/recommendations", async (req, res) => {
         if (likedRes.ok) {
           const likedData = await likedRes.json();
           if (likedData.items && likedData.items.length > 0) {
-            personalizedTracks = likedData.items.map((item: any, idx: number) => ({
-              id: `yt_user_ll_${item.id}`,
-              youtubeVideoId: item.snippet.resourceId?.videoId || item.contentDetails?.videoId,
-              title: item.snippet.title,
-              artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
-              album: "Your YouTube Liked Collection",
-              duration: 210,
-              coverUrl:
-                item.snippet.thumbnails?.high?.url ||
-                item.snippet.thumbnails?.medium?.url ||
-                "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-              audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-              genre: "YouTube Liked Track",
-              playsCount: Math.floor(Math.random() * 500000) + 100000,
-            }));
+            const seenIds = new Map<string, number>();
+            personalizedTracks = likedData.items.map((item: any, idx: number) => {
+              const vid = item.snippet.resourceId?.videoId || item.contentDetails?.videoId;
+              const itemId = item.id || vid || `idx_${idx}`;
+              const count = (seenIds.get(itemId) || 0) + 1;
+              seenIds.set(itemId, count);
+              const uniqueKey = count > 1 ? `${itemId}_${count}` : itemId;
+
+              const thumbs = item.snippet.thumbnails;
+              const cover =
+                thumbs?.maxres?.url ||
+                thumbs?.high?.url ||
+                thumbs?.medium?.url ||
+                thumbs?.standard?.url ||
+                thumbs?.default?.url ||
+                (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80");
+
+              return {
+                id: `yt_user_ll_${uniqueKey}`,
+                youtubeVideoId: vid,
+                title: item.snippet.title,
+                artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
+                album: "Your YouTube Liked Collection",
+                duration: 210,
+                coverUrl: cover,
+                audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
+                genre: "YouTube Liked Track",
+                playsCount: Math.floor(Math.random() * 500000) + 100000,
+              };
+            });
           }
+        } else {
+          console.error("Liked videos response status:", likedRes.status);
         }
       } catch (err) {
         console.error("User liked videos fetch error:", err);
@@ -1086,34 +1359,86 @@ app.get("/api/youtube/recommendations", async (req, res) => {
       let accountTrending: any[] = [];
       try {
         const popularRes = await fetch(
-          "https://www.googleapis.com/youtube/v3/videos?chart=mostPopular&videoCategoryId=10&part=snippet,contentDetails,statistics&maxResults=15",
+          "https://www.googleapis.com/youtube/v3/videos?chart=mostPopular&videoCategoryId=10&regionCode=US&part=snippet,contentDetails,statistics&maxResults=15",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (popularRes.ok) {
           const popularData = await popularRes.json();
-          if (popularData.items) {
-            accountTrending = popularData.items.map((item: any, idx: number) => ({
-              id: `yt_user_pop_${item.id}`,
-              youtubeVideoId: item.id,
-              title: item.snippet.title,
-              artist: item.snippet.channelTitle,
-              album: "YouTube Account Feed",
-              duration: 210,
-              coverUrl:
-                item.snippet.thumbnails?.high?.url ||
-                item.snippet.thumbnails?.medium?.url ||
-                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-              audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-              genre: "YouTube Account Trending",
-              playsCount: parseInt(item.statistics?.viewCount || "1500000", 10),
-            }));
+          if (popularData.items && popularData.items.length > 0) {
+            accountTrending = popularData.items.map((item: any, idx: number) => {
+              const vid = item.id;
+              const thumbs = item.snippet.thumbnails;
+              const cover =
+                thumbs?.maxres?.url ||
+                thumbs?.high?.url ||
+                thumbs?.medium?.url ||
+                thumbs?.standard?.url ||
+                thumbs?.default?.url ||
+                `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+
+              return {
+                id: `yt_user_pop_${vid}`,
+                youtubeVideoId: vid,
+                title: item.snippet.title,
+                artist: item.snippet.channelTitle,
+                album: "YouTube Trending Music",
+                duration: 210,
+                coverUrl: cover,
+                audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
+                genre: "YouTube Account Trending",
+                playsCount: parseInt(item.statistics?.viewCount || "1500000", 10),
+              };
+            });
           }
+        } else {
+          console.error("Popular music response status:", popularRes.status);
         }
       } catch (err) {
         console.error("Account trending fetch error:", err);
       }
 
-      // 3. User's top albums / channel collections
+      // 3. Search fallback for live YouTube Music tracks if Liked Videos or Popular charts were empty
+      if (personalizedTracks.length === 0 && accountTrending.length === 0) {
+        try {
+          const searchRes = await fetch(
+            "https://www.googleapis.com/youtube/v3/search?q=top+music+hits+official+video&type=video&part=snippet&maxResults=15",
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            if (searchData.items) {
+              accountTrending = searchData.items.map((item: any, idx: number) => {
+                const vid = item.id.videoId;
+                const thumbs = item.snippet.thumbnails;
+                const cover =
+                  thumbs?.maxres?.url ||
+                  thumbs?.high?.url ||
+                  thumbs?.medium?.url ||
+                  thumbs?.standard?.url ||
+                  thumbs?.default?.url ||
+                  `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+
+                return {
+                  id: `yt_user_srch_${vid}`,
+                  youtubeVideoId: vid,
+                  title: item.snippet.title,
+                  artist: item.snippet.channelTitle,
+                  album: "YouTube Music Feed",
+                  duration: 210,
+                  coverUrl: cover,
+                  audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
+                  genre: "YouTube Music",
+                  playsCount: Math.floor(Math.random() * 2000000) + 500000,
+                };
+              });
+            }
+          }
+        } catch (err) {
+          console.error("YouTube search fallback error:", err);
+        }
+      }
+
+      // 4. User's top albums / channel collections
       let accountAlbums: any[] = [];
       try {
         const userPlaylistsRes = await fetch(
@@ -1122,7 +1447,7 @@ app.get("/api/youtube/recommendations", async (req, res) => {
         );
         if (userPlaylistsRes.ok) {
           const plData = await userPlaylistsRes.json();
-          if (plData.items) {
+          if (plData.items && plData.items.length > 0) {
             accountAlbums = plData.items.map((pl: any) => ({
               id: `yt_user_album_${pl.id}`,
               title: pl.snippet.title,
@@ -1140,7 +1465,14 @@ app.get("/api/youtube/recommendations", async (req, res) => {
         console.error("Account playlists albums error:", err);
       }
 
-      const combinedTrending = [...personalizedTracks, ...accountTrending];
+      const trackMap = new Map();
+      for (const trk of [...personalizedTracks, ...accountTrending]) {
+        const key = trk.youtubeVideoId || trk.id;
+        if (!trackMap.has(key)) {
+          trackMap.set(key, trk);
+        }
+      }
+      const combinedTrending = Array.from(trackMap.values());
 
       if (combinedTrending.length > 0) {
         return res.json({
@@ -1164,7 +1496,7 @@ app.get("/api/youtube/recommendations", async (req, res) => {
               tracksCount: 15,
             }
           ],
-          quickPicks: combinedTrending.slice(0, 6),
+          quickPicks: (personalizedTracks.length > 0 ? personalizedTracks : combinedTrending).slice(0, 6),
         });
       }
     } catch (err) {
@@ -1179,60 +1511,60 @@ app.get("/api/youtube/recommendations", async (req, res) => {
       {
         id: "gen_rec_01",
         youtubeVideoId: "09R8_2nJtjg",
-        title: "Starboy (Global Trending Edit)",
+        title: "Starboy",
         artist: "The Weeknd ft. Daft Punk",
         album: "Starboy",
         duration: 230,
-        coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        coverUrl: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg",
+        audioUrl: "https://www.youtube.com/watch?v=09R8_2nJtjg",
         genre: "Electro Pop",
         playsCount: 5200000,
       },
       {
         id: "gen_rec_02",
         youtubeVideoId: "bFD4A5qN8XU",
-        title: "Levitating (YouTube Viral Hits)",
+        title: "Levitating",
         artist: "Dua Lipa",
         album: "Future Nostalgia",
         duration: 203,
-        coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        coverUrl: "https://i.ytimg.com/vi/bFD4A5qN8XU/hqdefault.jpg",
+        audioUrl: "https://www.youtube.com/watch?v=bFD4A5qN8XU",
         genre: "Disco Pop",
         playsCount: 4800000,
       },
       {
         id: "gen_rec_03",
         youtubeVideoId: "H5v3kku4y6Q",
-        title: "As It Was (General Trending)",
+        title: "As It Was",
         artist: "Harry Styles",
         album: "Harry's House",
         duration: 167,
-        coverUrl: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+        coverUrl: "https://i.ytimg.com/vi/H5v3kku4y6Q/hqdefault.jpg",
+        audioUrl: "https://www.youtube.com/watch?v=H5v3kku4y6Q",
         genre: "Indie Pop",
         playsCount: 6100000,
       },
       {
         id: "gen_rec_04",
         youtubeVideoId: "K4DyBUG242c",
-        title: "Save Your Tears (YouTube Music Chart)",
+        title: "Save Your Tears",
         artist: "The Weeknd & Ariana Grande",
         album: "After Hours",
         duration: 215,
-        coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+        coverUrl: "https://i.ytimg.com/vi/K4DyBUG242c/hqdefault.jpg",
+        audioUrl: "https://www.youtube.com/watch?v=K4DyBUG242c",
         genre: "Synthwave",
         playsCount: 3900000,
       },
       {
         id: "gen_rec_05",
         youtubeVideoId: "fJ9rUzIMcZQ",
-        title: "Espresso (Viral Hits 2026)",
+        title: "Espresso",
         artist: "Sabrina Carpenter",
         album: "Short n' Sweet",
         duration: 175,
-        coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+        coverUrl: "https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
+        audioUrl: "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
         genre: "Pop",
         playsCount: 8900000,
       },
@@ -1243,8 +1575,8 @@ app.get("/api/youtube/recommendations", async (req, res) => {
         artist: "Billie Eilish",
         album: "HIT ME HARD AND SOFT",
         duration: 198,
-        coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+        coverUrl: "https://i.ytimg.com/vi/YQHsXMglC9A/hqdefault.jpg",
+        audioUrl: "https://www.youtube.com/watch?v=YQHsXMglC9A",
         genre: "Alternative Pop",
         playsCount: 11200000,
       }

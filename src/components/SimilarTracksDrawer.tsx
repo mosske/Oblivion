@@ -84,11 +84,11 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
             <p className="text-xs font-mono">Generating Radio Queue...</p>
           </div>
         ) : (
-          similarTracks.map((track) => {
+          similarTracks.map((track, idx) => {
             const isAdded = addedIds.includes(track.id);
             return (
               <div
-                key={track.id}
+                key={`sim_${track.id}_${idx}`}
                 className="group flex items-center justify-between p-2 rounded-xl bg-slate-900/50 hover:bg-slate-800/80 border border-slate-800/40 hover:border-slate-700 transition-all"
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { User, Track, Album, Playlist } from "../types";
 import { Play, Sparkles, TrendingUp, Disc, Flame, Radio, Plus, User as UserIcon, Settings as SettingsIcon, Check } from "lucide-react";
+import { cleanTrackTitle } from "../utils/formatters";
 
 interface HomeViewProps {
   onPlayTrack: (track: Track) => void;
@@ -181,10 +182,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
             ? Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="h-16 bg-slate-900/60 rounded-xl animate-pulse"></div>
               ))
-            : [...recommendations.quickPicks, ...recommendations.trendingTracks.slice(0, 4)].map(
-                (track) => (
+            : Array.from(
+                new Map(
+                  [...recommendations.quickPicks, ...recommendations.trendingTracks]
+                    .filter(Boolean)
+                    .map((t) => [t.id, t])
+                ).values()
+              )
+                .slice(0, 6)
+                .map((track, i) => (
                   <div
-                    key={track.id}
+                    key={`qp_${track.id}_${i}`}
                     onClick={() => onPlayTrack(track)}
                     className="group flex items-center gap-3 p-2.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 hover:border-cyan-500/40 cursor-pointer transition-all shadow-md"
                   >
@@ -200,14 +208,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-semibold text-white truncate group-hover:text-cyan-300">
-                        {track.title}
+                      <h4 className="text-xs font-semibold text-white truncate group-hover:text-cyan-300" title={track.title}>
+                        {cleanTrackTitle(track.title, track.artist)}
                       </h4>
                       <p className="text-[11px] text-slate-400 truncate">{track.artist}</p>
                     </div>
                   </div>
-                )
-              )}
+                ))}
         </div>
       </section>
 
@@ -233,7 +240,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div className="space-y-2">
           {recommendations.trendingTracks.map((track, idx) => (
             <div
-              key={track.id}
+              key={`tt_${track.id}_${idx}`}
               className="group flex items-center justify-between p-3 rounded-2xl bg-slate-900/40 hover:bg-slate-800/70 border border-slate-800/50 hover:border-slate-700 transition-all"
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -259,8 +266,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <h4
                     onClick={() => onPlayTrack(track)}
                     className="text-sm font-semibold text-slate-200 truncate cursor-pointer hover:text-cyan-300"
+                    title={track.title}
                   >
-                    {track.title}
+                    {cleanTrackTitle(track.title, track.artist)}
                   </h4>
                   <p className="text-xs text-slate-400 truncate">{track.artist}</p>
                 </div>
@@ -300,9 +308,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {recommendations.topAlbums.map((album) => (
+          {recommendations.topAlbums.map((album, idx) => (
             <div
-              key={album.id}
+              key={`alb_${album.id}_${idx}`}
               className="group p-4 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-2xl transition-all cursor-pointer shadow-lg hover:shadow-cyan-500/10"
             >
               <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3 border border-slate-800">

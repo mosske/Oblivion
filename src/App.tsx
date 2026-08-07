@@ -119,11 +119,19 @@ export default function App() {
           setUser(fullUser);
           localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
         }
+        fetchPlaylists();
       })
-      .catch((err) => console.error("Auth check error:", err));
-
-    fetchPlaylists();
+      .catch((err) => {
+        console.error("Auth check error:", err);
+        fetchPlaylists();
+      });
   }, []);
+
+  useEffect(() => {
+    if (user?.isLoggedIn) {
+      fetchPlaylists();
+    }
+  }, [user?.isLoggedIn]);
 
   const handleLoginSuccess = (loggedUser: User) => {
     const fullUser = { ...loggedUser, isLoggedIn: true };
@@ -150,14 +158,37 @@ export default function App() {
       const res = await fetch("/api/youtube/playlists");
       const data = await res.json();
       if (data.playlists) {
-        setPlaylists(data.playlists);
+        const seenPlIds = new Map<string, number>();
+        const sanitizedPlaylists = data.playlists.map((pl: Playlist, plIdx: number) => {
+          const rawPlId = pl.id || `pl_${plIdx}`;
+          const plCount = (seenPlIds.get(rawPlId) || 0) + 1;
+          seenPlIds.set(rawPlId, plCount);
+          const uniquePlId = plCount > 1 ? `${rawPlId}_${plCount}` : rawPlId;
+
+          const seenTrackIds = new Map<string, number>();
+          const sanitizedTracks = (pl.tracks || []).map((t: Track, trIdx: number) => {
+            const rawTrId = t.id || `tr_${trIdx}`;
+            const trCount = (seenTrackIds.get(rawTrId) || 0) + 1;
+            seenTrackIds.set(rawTrId, trCount);
+            const uniqueTrId = trCount > 1 ? `${rawTrId}_${trCount}` : rawTrId;
+            return { ...t, id: uniqueTrId };
+          });
+
+          return {
+            ...pl,
+            id: uniquePlId,
+            tracks: sanitizedTracks,
+          };
+        });
+
+        setPlaylists(sanitizedPlaylists);
         // If initial track is empty, set default from first playlist
-        if (!playerState.currentTrack && data.playlists[0]?.tracks?.[0]) {
-          const defaultTrack = data.playlists[0].tracks[0];
+        if (!playerState.currentTrack && sanitizedPlaylists[0]?.tracks?.[0]) {
+          const defaultTrack = sanitizedPlaylists[0].tracks[0];
           setPlayerState((prev) => ({
             ...prev,
             currentTrack: defaultTrack,
-            queue: data.playlists[0].tracks,
+            queue: sanitizedPlaylists[0].tracks,
             queueIndex: 0,
           }));
         }
@@ -168,6 +199,55 @@ export default function App() {
       setIsSyncingYouTube(false);
     }
   };
+
+  // Fetch specific playlist items when selected
+  const fetchPlaylistDetails = async (playlistId: string) => {
+    try {
+      const res = await fetch(`/api/youtube/playlists/${playlistId}/items`);
+      const data = await res.json();
+      if (data.tracks) {
+        const seenIds = new Map<string, number>();
+        const uniqueTracks = data.tracks.map((t: Track, idx: number) => {
+          const rawId = t.id || `tr_${idx}`;
+          const count = (seenIds.get(rawId) || 0) + 1;
+          seenIds.set(rawId, count);
+          const uniqueId = count > 1 ? `${rawId}_${count}` : rawId;
+          return { ...t, id: uniqueId };
+        });
+
+        setPlaylists((prev) =>
+          prev.map((p) =>
+            p.id === playlistId
+              ? {
+                  ...p,
+                  tracks: uniqueTracks,
+                  tracksCount: uniqueTracks.length,
+                  coverUrl: uniqueTracks[0]?.coverUrl || p.coverUrl,
+                }
+              : p
+          )
+        );
+        setSelectedPlaylist((prev) =>
+          prev && prev.id === playlistId
+            ? {
+                ...prev,
+                tracks: uniqueTracks,
+                tracksCount: uniqueTracks.length,
+                coverUrl: uniqueTracks[0]?.coverUrl || prev.coverUrl,
+              }
+            : prev
+        );
+      }
+    } catch (err) {
+      console.error("Fetch playlist details error:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedPlaylist?.id) {
+      fetchPlaylistDetails(selectedPlaylist.id);
+    }
+  }, [selectedPlaylist?.id]);
 
   // Play single track
   const handlePlayTrack = (track: Track) => {
@@ -398,6 +478,48 @@ export default function App() {
     }
   };
 
+  // Sync / Batch Save Playlist Tracks
+  const handleSyncPlaylistTracks = async (playlistId: string, updatedTracks: Track[]) => {
+    try {
+      const res = await fetch(`/api/youtube/playlists/${playlistId}/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tracks: updatedTracks }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPlaylists((prev) =>
+          prev.map((p) =>
+            p.id === playlistId
+              ? {
+                  ...p,
+                  tracks: updatedTracks,
+                  tracksCount: updatedTracks.length,
+                  coverUrl: updatedTracks[0]?.coverUrl || p.coverUrl,
+                }
+              : p
+          )
+        );
+        if (selectedPlaylist?.id === playlistId) {
+          setSelectedPlaylist((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  tracks: updatedTracks,
+                  tracksCount: updatedTracks.length,
+                  coverUrl: updatedTracks[0]?.coverUrl || prev.coverUrl,
+                }
+              : null
+          );
+        }
+      }
+      return data;
+    } catch (err) {
+      console.error("Sync playlist tracks error:", err);
+      throw err;
+    }
+  };
+
   return (
     <div className={`flex h-screen w-screen bg-gradient-to-b ${activeThemeMeta.bgCanvas} ${activeThemeMeta.textColor} overflow-hidden font-sans select-none`}>
       {/* Sidebar Navigation */}
@@ -481,6 +603,9 @@ export default function App() {
             onPlayQueue={handlePlayQueue}
             currentTrackId={playerState.currentTrack?.id}
             likedTrackIds={playerState.likedTrackIds}
+            currentTrack={playerState.currentTrack}
+            onAddTrackToPlaylist={handleAddTrackToPlaylist}
+            onSyncPlaylistTracks={handleSyncPlaylistTracks}
           />
         )}
 

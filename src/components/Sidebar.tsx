@@ -218,9 +218,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {playlists.map((pl) => (
+        {playlists.map((pl, idx) => (
           <button
-            key={pl.id}
+            key={`sb_pl_${pl.id}_${idx}`}
             onClick={() => {
               setActiveTab("library");
               onSelectPlaylist(pl);
