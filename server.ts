@@ -128,7 +128,7 @@ function sanitizeCredential(val: string | undefined | null): string {
   if (!val) return "";
   let clean = String(val).trim();
   while (
-    (clean.startsWith('\"') && clean.endsWith('\"')) ||
+    (clean.startsWith('"') && clean.endsWith('"')) ||
     (clean.startsWith("'") && clean.endsWith("'")) ||
     (clean.startsWith('`') && clean.endsWith('`'))
   ) {
@@ -310,6 +310,47 @@ app.post("/api/auth/logout", (req, res) => {
   req.session.destroy(() => {
     res.json({ success: true });
   });
+});
+
+// Placeholder endpoints to prevent 404 errors
+app.get("/api/youtube/playlists", (req, res) => {
+  res.json({ playlists: localPlaylistsStore, isLiveYouTube: false });
+});
+
+app.get("/api/youtube/recommendations", (req, res) => {
+  res.json({ trendingTracks: [], topAlbums: [], quickPicks: [] });
+});
+
+app.get("/api/youtube/search", (req, res) => {
+  res.json({ results: [] });
+});
+
+app.post("/api/youtube/playlists", (req, res) => {
+  const newPlaylist = {
+    id: `pl_${Date.now()}`,
+    title: req.body.title || "New Playlist",
+    description: req.body.description || "",
+    coverUrl: req.body.coverUrl || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
+    isYouTubeSynced: false,
+    tracksCount: 0,
+    updatedAt: new Date().toISOString(),
+    tracks: [],
+  };
+  localPlaylistsStore.unshift(newPlaylist);
+  res.json({ success: true, playlist: newPlaylist });
+});
+
+app.get("/api/youtube/playlists/:id/items", (req, res) => {
+  const playlist = localPlaylistsStore.find((p) => p.id === req.params.id);
+  res.json({
+    playlistId: req.params.id,
+    tracks: playlist ? playlist.tracks : [],
+  });
+});
+
+app.delete("/api/youtube/playlists/:id", (req, res) => {
+  localPlaylistsStore = localPlaylistsStore.filter((p) => p.id !== req.params.id);
+  res.json({ success: true });
 });
 
 async function startServer() {
