@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import fs from "fs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import { GoogleGenAI } from "@google/genai";
@@ -34,18 +33,17 @@ app.use(cookieParser());
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "oblivion-ytmusic-secret-key-2026",
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-      secure: true,
+      secure: process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL),
       httpOnly: true,
-      sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     },
   })
 );
 
-// Declare session types
 declare module "express-session" {
   interface SessionData {
     tokens?: {
@@ -63,148 +61,88 @@ declare module "express-session" {
   }
 }
 
-// In-memory fallback playlist store for guest / demo users or modified playlists
-let localPlaylistsStore: any[] = [
-  {
-    id: "pl_midnight_synth",
-    title: "Synthwave Oblivion",
-    description: "Deep neon electronic rhythms & nocturnal beats.",
-    coverUrl: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80",
-    isYouTubeSynced: true,
-    tracksCount: 5,
-    updatedAt: "2026-08-06T06:00:00.000Z",
-    tracks: [
-      {
-        id: "yt_01",
-        youtubeVideoId: "4xDzrJKXOOY",
-        title: "Resonance",
-        artist: "HOME",
-        album: "Odyssey",
-        duration: 212,
-        coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        genre: "Chillwave",
-        playsCount: 1420000
-      },
-      {
-        id: "yt_02",
-        youtubeVideoId: "fTrs_3Kx7U8",
-        title: "Sunset Sunset",
-        artist: "Kavinsky",
-        album: "OutRun",
-        duration: 198,
-        coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-        genre: "Synthwave",
-        playsCount: 980000
-      },
-      {
-        id: "yt_03",
-        youtubeVideoId: "vN08m_G1410",
-        title: "After Hours",
-        artist: "The Weeknd",
-        album: "After Hours",
-        duration: 361,
-        coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-        genre: "R&B / Synthpop",
-        playsCount: 3200000
-      },
-      {
-        id: "yt_04",
-        youtubeVideoId: "5y3P930G30A",
-        title: "Turbo Killer",
-        artist: "Carpenter Brut",
-        album: "Trilogy",
-        duration: 208,
-        coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-        genre: "Darksynth",
-        playsCount: 870000
-      },
-      {
-        id: "yt_05",
-        youtubeVideoId: "aFkX3a0y1a8",
-        title: "Starboy",
-        artist: "Daft Punk & The Weeknd",
-        album: "Starboy",
-        duration: 230,
-        coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-        genre: "Pop Electro",
-        playsCount: 4100000
-      }
-    ]
-  },
-  {
-    id: "pl_lofi_focus",
-    title: "Oblivion Chill & Lofi",
-    description: "Relaxing study sessions & ambient background audio.",
-    coverUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80",
-    isYouTubeSynced: true,
-    tracksCount: 4,
-    updatedAt: "2026-08-05T18:30:00.000Z",
-    tracks: [
-      {
-        id: "yt_06",
-        youtubeVideoId: "5qap5aO4i9A",
-        title: "Lofi Hip Hop Radio Beat",
-        artist: "Lofi Girl",
-        album: "Beats to Relax",
-        duration: 184,
-        coverUrl: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-        genre: "Lofi Chill",
-        playsCount: 8900000
-      },
-      {
-        id: "yt_07",
-        youtubeVideoId: "2OEL4P1r404",
-        title: "Midnight Walk",
-        artist: "ChilledCow",
-        album: "Night Dreams",
-        duration: 165,
-        coverUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-        genre: "Ambient",
-        playsCount: 1560000
-      },
-      {
-        id: "yt_08",
-        youtubeVideoId: "9S_63xL1b00",
-        title: "Coffee Shop Rain",
-        artist: "Jazz Hop Cafe",
-        album: "Acoustic Spaces",
-        duration: 210,
-        coverUrl: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-        genre: "Jazz Lofi",
-        playsCount: 2300000
-      },
-      {
-        id: "yt_09",
-        youtubeVideoId: "8Z0a06c11a0",
-        title: "Stargazing",
-        artist: "Nujabes Vibe",
-        album: "Modal Soul Legacy",
-        duration: 245,
-        coverUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
-        genre: "Instrumental",
-        playsCount: 1800000
-      }
-    ]
-  }
-];
+let localPlaylistsStore: any[] = [];
 
-// Helper to get Gemini client if API key is present
+async function getPlaylistItemsFromYouTube(accessToken: string, playlistId: string): Promise<any[]> {
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems`;
+    const params = new URLSearchParams({
+      playlistId,
+      part: 'snippet,contentDetails',
+      maxResults: '50',
+      access_token: accessToken
+    });
+
+    const response = await fetch(`${url}?${params}`);
+    const data = await response.json();
+
+    if (!data.items) return [];
+
+    return data.items.map((item: any) => ({
+      id: item.contentDetails?.videoId || item.id,
+      youtubeVideoId: item.contentDetails?.videoId,
+      title: item.snippet?.title || 'Unknown',
+      artist: item.snippet?.channelTitle || 'Unknown Artist',
+      album: '',
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+      audioUrl: `https://www.youtube.com/watch?v=${item.contentDetails?.videoId}`,
+      genre: 'Music',
+      playsCount: 0
+    }));
+  } catch (err) {
+    console.error('Error fetching YouTube playlist items:', err);
+    return [];
+  }
+}
+
+async function searchYouTubeMusic(query: string, accessToken?: string): Promise<any[]> {
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search`;
+    const params = new URLSearchParams({
+      q: query,
+      part: 'snippet',
+      type: 'video',
+      videoCategoryId: '10',
+      maxResults: '20',
+      relevanceLanguage: 'en'
+    });
+
+    if (accessToken) {
+      params.append('access_token', accessToken);
+    } else {
+      params.append('key', process.env.YOUTUBE_API_KEY || '');
+    }
+
+    const response = await fetch(`${url}?${params}`);
+    const data = await response.json();
+
+    if (!data.items) return [];
+
+    return data.items.map((item: any) => ({
+      id: item.id?.videoId || item.id,
+      youtubeVideoId: item.id?.videoId,
+      title: item.snippet?.title || 'Unknown',
+      artist: item.snippet?.channelTitle || 'Unknown Artist',
+      album: '',
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+      audioUrl: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+      genre: 'Music',
+      playsCount: 0
+    }));
+  } catch (err) {
+    console.error('Error searching YouTube:', err);
+    return [];
+  }
+}
+
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === "MY_GEMINI_API_KEY") return null;
   return new GoogleGenAI({ apiKey });
 }
 
-// Helper for dynamic app base URL
 function getBaseUrl(req: express.Request) {
   if (process.env.APP_URL && !process.env.APP_URL.includes("MY_APP_URL")) {
     return process.env.APP_URL.replace(/\/$/, "");
@@ -220,33 +158,9 @@ function getBaseUrl(req: express.Request) {
   return "https://oblivion-rho.vercel.app";
 }
 
-// Helper to refresh Google access token if expired or retrieve from cookie
-async function getValidAccessToken(req: express.Request, res?: express.Response): Promise<string | null> {
-  let tokens = req.session?.tokens;
-
-  if (!tokens && req.cookies?.oblivion_tokens) {
-    try {
-      const decoded = Buffer.from(req.cookies.oblivion_tokens, "base64").toString("utf-8");
-      tokens = JSON.parse(decoded);
-      if (tokens && req.session) {
-        req.session.tokens = tokens;
-      }
-    } catch (e) {
-      console.error("Error parsing oblivion_tokens cookie:", e);
-    }
-  }
-
-  if (!tokens) {
-    const authHeader = req.headers["authorization"] || req.headers["x-access-token"];
-    if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
-      return authHeader.slice(7);
-    } else if (typeof authHeader === "string" && authHeader) {
-      return authHeader;
-    }
-    return null;
-  }
-
-  const { access_token, refresh_token, expires_at } = tokens;
+async function getValidAccessToken(req: express.Request): Promise<string | null> {
+  if (!req.session?.tokens) return null;
+  const { access_token, refresh_token, expires_at } = req.session.tokens;
   
   if (expires_at && Date.now() < expires_at - 60000) {
     return access_token;
@@ -254,13 +168,13 @@ async function getValidAccessToken(req: express.Request, res?: express.Response)
 
   if (!refresh_token) return access_token;
 
-  const clientId = getOAuthClientId();
-  const clientSecret = getOAuthClientSecret();
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET;
 
   if (!clientId || !clientSecret) return access_token;
 
   try {
-    const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+    const res = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -271,28 +185,10 @@ async function getValidAccessToken(req: express.Request, res?: express.Response)
       }),
     });
 
-    const data = await refreshRes.json();
+    const data = await res.json();
     if (data.access_token) {
-      const updatedTokens = {
-        access_token: data.access_token,
-        refresh_token: refresh_token,
-        expires_at: Date.now() + (data.expires_in || 3600) * 1000,
-      };
-
-      if (req.session) {
-        req.session.tokens = updatedTokens;
-      }
-
-      if (res) {
-        const cookieVal = Buffer.from(JSON.stringify(updatedTokens)).toString("base64");
-        res.cookie("oblivion_tokens", cookieVal, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          maxAge: 30 * 24 * 60 * 60 * 1000,
-        });
-      }
-
+      req.session.tokens.access_token = data.access_token;
+      req.session.tokens.expires_at = Date.now() + data.expires_in * 1000;
       return data.access_token;
     }
   } catch (err) {
@@ -302,75 +198,33 @@ async function getValidAccessToken(req: express.Request, res?: express.Response)
   return access_token;
 }
 
-// -------------------------------------------------------------
-// AUTH ROUTES
-// -------------------------------------------------------------
-
 function sanitizeCredential(val: string | undefined | null): string {
   if (!val) return "";
   let clean = String(val).trim();
   while (
-    (clean.startsWith('"') && clean.endsWith('"')) ||
+    (clean.startsWith('\"') && clean.endsWith('\"')) ||
     (clean.startsWith("'") && clean.endsWith("'")) ||
     (clean.startsWith('`') && clean.endsWith('`'))
   ) {
     clean = clean.slice(1, -1).trim();
   }
-  clean = clean.replace(/[\r\n\t\f\v]/g, "").trim();
+  clean = clean.replace(/[\\r\\n\\t\\f\\v]/g, "").trim();
   return clean;
 }
 
 let storedClientId = "";
 let storedClientSecret = "";
 
-const oauthConfigFile = path.join(process.cwd(), "data", "oauth_config.json");
-
-function loadStoredOAuthConfig() {
-  try {
-    if (fs.existsSync(oauthConfigFile)) {
-      const content = fs.readFileSync(oauthConfigFile, "utf-8");
-      const parsed = JSON.parse(content);
-      if (parsed.clientId) storedClientId = sanitizeCredential(parsed.clientId);
-      if (parsed.clientSecret) storedClientSecret = sanitizeCredential(parsed.clientSecret);
-    }
-  } catch (err) {
-    console.warn("Failed to read oauth_config.json:", err);
-  }
-}
-
-function saveStoredOAuthConfig() {
-  try {
-    const dir = path.join(process.cwd(), "data");
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(
-      oauthConfigFile,
-      JSON.stringify({ clientId: storedClientId, clientSecret: storedClientSecret }, null, 2),
-      "utf-8"
-    );
-  } catch (err) {
-    console.warn("Failed to write oauth_config.json:", err);
-  }
-}
-
-loadStoredOAuthConfig();
-
 function getOAuthClientId(): string {
   const envVal = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
-  if (envVal) return sanitizeCredential(envVal);
-  return sanitizeCredential(storedClientId);
+  return sanitizeCredential(storedClientId || envVal);
 }
 
 function getOAuthClientSecret(): string {
-  const envId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
-  const envSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
-  if (envId && envSecret) return sanitizeCredential(envSecret);
-  if (envSecret) return sanitizeCredential(envSecret);
-  return sanitizeCredential(storedClientSecret);
+  const envVal = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
+  return sanitizeCredential(storedClientSecret || envVal);
 }
 
-// Get Google OAuth Configuration Status
 app.get("/api/auth/google/config", (req, res) => {
   const clientId = getOAuthClientId();
   const clientSecret = getOAuthClientSecret();
@@ -385,117 +239,6 @@ app.get("/api/auth/google/config", (req, res) => {
   });
 });
 
-// Update Google OAuth Configuration Status at runtime
-app.post("/api/auth/google/config", (req, res) => {
-  const { clientId, clientSecret } = req.body || {};
-  if (typeof clientId === "string") {
-    storedClientId = sanitizeCredential(clientId);
-  }
-  if (typeof clientSecret === "string") {
-    storedClientSecret = sanitizeCredential(clientSecret);
-  }
-  saveStoredOAuthConfig();
-
-  const activeClientId = getOAuthClientId();
-  const baseUrl = getBaseUrl(req);
-  const redirectUri = `${baseUrl}/api/auth/google/callback`;
-
-  res.json({
-    success: true,
-    configured: Boolean(activeClientId),
-    clientId: activeClientId,
-    hasSecret: Boolean(getOAuthClientSecret()),
-    redirectUri,
-  });
-});
-
-// Get Google OAuth URL
-app.get("/api/auth/google/url", (req, res) => {
-  const clientId = getOAuthClientId();
-  const baseUrl = getBaseUrl(req);
-  const redirectUri = `${baseUrl}/api/auth/google/callback`;
-
-  if (!clientId) {
-    return res.status(400).json({
-      configured: false,
-      redirectUri,
-      error: "Google OAuth Client ID is not configured. Please enter your Google Client ID or configure environment variables.",
-    });
-  }
-
-  const scopes = [
-    "https://www.googleapis.com/auth/youtube",
-    "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/userinfo.email",
-  ].join(" ");
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    response_type: "code",
-    scope: scopes,
-    access_type: "offline",
-    prompt: "consent",
-  }).toString();
-
-  res.json({
-    configured: true,
-    url: authUrl,
-    redirectUri,
-  });
-});
-
-// Initiate Google Login
-app.get("/api/auth/google", (req, res) => {
-  try {
-    const clientId = getOAuthClientId();
-    const baseUrl = getBaseUrl(req);
-    const redirectUri = `${baseUrl}/api/auth/google/callback`;
-
-    if (!clientId) {
-      return res.status(500).send(`
-        <html>
-          <body style="font-family:sans-serif; background:#0f172a; color:#f8fafc; padding:2rem; text-align:center;">
-            <h2>Google OAuth Client ID Not Configured</h2>
-            <p>Please configure process.env.GOOGLE_CLIENT_ID or process.env.CLIENT_ID in secrets.</p>
-            <p>Callback URL required: <code>${redirectUri}</code></p>
-            <button onclick="window.close()" style="padding:10px 20px; background:#06b6d4; color:#000; border:none; border-radius:8px; cursor:pointer;">Close Window</button>
-          </body>
-        </html>
-      `);
-    }
-
-    const scopes = [
-      "https://www.googleapis.com/auth/youtube",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/userinfo.email",
-    ].join(" ");
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: scopes,
-      access_type: "offline",
-      prompt: "consent",
-    }).toString();
-
-    res.redirect(authUrl);
-  } catch (err: any) {
-    console.error("Error initiating Google auth:", err);
-    res.status(500).send(`
-      <html>
-        <body style="font-family:sans-serif; background:#0f172a; color:#f8fafc; padding:2rem; text-align:center;">
-          <h2>Google Authentication Error</h2>
-          <p>${err?.message || String(err)}</p>
-          <button onclick="window.close()" style="padding:10px 20px; background:#06b6d4; color:#000; border:none; border-radius:8px; cursor:pointer;">Close Window</button>
-        </body>
-      </html>
-    `);
-  }
-});
-
-// OAuth Callback
 app.get("/api/auth/google/callback", async (req, res) => {
   const code = req.query.code as string;
   const error = req.query.error as string;
@@ -541,74 +284,51 @@ app.get("/api/auth/google/callback", async (req, res) => {
     const tokenData = await tokenRes.json();
 
     if (tokenRes.ok && tokenData.access_token) {
-      const tokenObj = {
+      req.session.tokens = {
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
         expires_at: Date.now() + tokenData.expires_in * 1000,
       };
-      req.session.tokens = tokenObj;
 
-      // Persist tokens in HTTP-only cookie to survive serverless instance resets
-      const cookieVal = Buffer.from(JSON.stringify(tokenObj)).toString("base64");
-      res.cookie("oblivion_tokens", cookieVal, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      });
-
-      // Fetch User Info
       const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
       const userData = await userRes.json();
 
-      const userSession = {
+      req.session.user = {
         id: userData.id,
         name: userData.name || userData.email?.split("@")[0] || "User",
         email: userData.email || "",
         picture: userData.picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-        isLoggedIn: true,
       };
 
-      req.session.user = userSession;
-
-      return req.session.save((err) => {
-        if (err) console.error("Session save error in OAuth callback:", err);
-
-        const encodedUser = encodeURIComponent(JSON.stringify(userSession));
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("Session save error:", saveErr);
+          return res.send(`
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'OAUTH_ERROR', error: 'Session save failed' }, '*');
+                window.close();
+              } else {
+                window.location.href = '/?oauth_error=' + encodeURIComponent('Session save failed');
+              }
+            </script>
+          `);
+        }
 
         return res.send(`
-          <!DOCTYPE html>
-          <html>
-            <head><title>Authentication Successful</title></head>
-            <body style="background:#0f172a; color:#fff; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
-              <div style="text-align:center;">
-                <h2 style="font-size:18px; font-weight:bold; margin-bottom:8px;">Signed in successfully!</h2>
-                <p style="font-size:14px; color:#94a3b8;">Redirecting back to Oblivion Music...</p>
-              </div>
-              <script>
-                const userObj = ${JSON.stringify(userSession)};
-                try {
-                  localStorage.setItem("oblivion_saved_user", JSON.stringify(userObj));
-                } catch(e) {}
-
-                if (window.opener && !window.opener.closed) {
-                  try {
-                    window.opener.postMessage({
-                      type: 'OAUTH_SUCCESS',
-                      user: userObj
-                    }, '*');
-                  } catch(e) {}
-                  setTimeout(() => {
-                    try { window.close(); } catch(e) {}
-                  }, 200);
-                } else {
-                  window.location.href = '/?oauth_success=1&user=' + encodeURIComponent(JSON.stringify(userObj));
-                }
-              </script>
-            </body>
-          </html>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'OAUTH_SUCCESS',
+                user: ${JSON.stringify(req.session.user)}
+              }, '*');
+              window.close();
+            } else {
+              window.location.href = '/';
+            }
+          </script>
         `);
       });
     } else {
@@ -645,1198 +365,48 @@ app.get("/api/auth/google/callback", async (req, res) => {
   }
 });
 
-// Get current user session
-app.get("/api/auth/me", async (req, res) => {
+app.get("/api/auth/me", (req, res) => {
   if (req.session?.user) {
-    return res.json({
+    res.json({
       isLoggedIn: true,
       user: req.session.user,
     });
+  } else {
+    res.json({
+      isLoggedIn: false,
+      user: null,
+    });
   }
-
-  // Check if token cookie is present to restore user session if server memory was reset
-  const token = await getValidAccessToken(req, res);
-  if (token) {
-    try {
-      const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        const userSession = {
-          id: userData.id,
-          name: userData.name || userData.email?.split("@")[0] || "User",
-          email: userData.email || "",
-          picture: userData.picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-          isLoggedIn: true,
-        };
-        if (req.session) {
-          req.session.user = userSession;
-        }
-        return res.json({
-          isLoggedIn: true,
-          user: userSession,
-        });
-      }
-    } catch (e) {
-      console.error("Failed to restore user from token:", e);
-    }
-  }
-
-  res.json({
-    isLoggedIn: false,
-    user: null,
-  });
 });
 
-// Logout
 app.post("/api/auth/logout", (req, res) => {
-  res.clearCookie("oblivion_tokens", { secure: true, sameSite: "none" });
   req.session.destroy(() => {
     res.json({ success: true });
   });
 });
 
-// -------------------------------------------------------------
-// YOUTUBE MUSIC & PLAYLISTS ROUTES
-// -------------------------------------------------------------
-
-// Fetch Playlists (YouTube API with local fallback/sync)
-app.get("/api/youtube/playlists", async (req, res) => {
-  const token = await getValidAccessToken(req, res);
-
-  if (token) {
-    try {
-      const ytRes = await fetch(
-        "https://www.googleapis.com/youtube/v3/playlists?mine=true&part=snippet,contentDetails,status&maxResults=50",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      let syncedPlaylists: any[] = [];
-      if (ytRes.ok) {
-        const data = await ytRes.json();
-        if (data.items) {
-          const seenPlIds = new Map<string, number>();
-          syncedPlaylists = data.items.map((item: any, idx: number) => {
-            const rawId = item.id || `pl_${idx}`;
-            const count = (seenPlIds.get(rawId) || 0) + 1;
-            seenPlIds.set(rawId, count);
-            const plId = count > 1 ? `${rawId}_${count}` : rawId;
-
-            const thumbs = item.snippet.thumbnails;
-            const bestThumb =
-              thumbs?.maxres?.url ||
-              thumbs?.high?.url ||
-              thumbs?.medium?.url ||
-              thumbs?.standard?.url ||
-              thumbs?.default?.url ||
-              `https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80`;
-
-            const localMatch = localPlaylistsStore.find((p) => p.id === item.id || p.id === plId);
-
-            return {
-              id: plId,
-              title: item.snippet.title,
-              description: item.snippet.description || "YouTube Synced Playlist",
-              coverUrl: bestThumb,
-              isYouTubeSynced: true,
-              tracksCount: item.contentDetails?.itemCount || (localMatch?.tracks?.length || 0),
-              updatedAt: item.snippet.publishedAt || new Date().toISOString(),
-              tracks: localMatch?.tracks || [],
-            };
-          });
-        }
-      } else {
-        const errJson = await ytRes.json().catch(() => ({}));
-        console.error("YouTube playlists API response error:", ytRes.status, errJson);
-      }
-
-      // Fetch User's Liked Videos (playlistId=LL) as Liked YouTube Tracks playlist
-      try {
-        const likedRes = await fetch(
-          "https://www.googleapis.com/youtube/v3/playlistItems?playlistId=LL&part=snippet,contentDetails&maxResults=50",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (likedRes.ok) {
-          const likedData = await likedRes.json();
-          if (likedData.items && likedData.items.length > 0) {
-            const seenIds = new Map<string, number>();
-            const likedTracks = likedData.items.map((item: any, idx: number) => {
-              const vid = item.snippet.resourceId?.videoId || item.contentDetails?.videoId;
-              const itemId = item.id || vid || `idx_${idx}`;
-              const count = (seenIds.get(itemId) || 0) + 1;
-              seenIds.set(itemId, count);
-              const uniqueKey = count > 1 ? `${itemId}_${count}` : itemId;
-
-              const thumbs = item.snippet.thumbnails;
-              const cover =
-                thumbs?.maxres?.url ||
-                thumbs?.high?.url ||
-                thumbs?.medium?.url ||
-                thumbs?.standard?.url ||
-                thumbs?.default?.url ||
-                (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80");
-
-              return {
-                id: uniqueKey,
-                youtubeVideoId: vid,
-                title: item.snippet.title,
-                artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
-                album: "Liked Videos",
-                duration: 210,
-                coverUrl: cover,
-                audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-                genre: "Liked Music",
-                playsCount: 250000,
-              };
-            });
-
-            syncedPlaylists.unshift({
-              id: "LL",
-              title: "Liked YouTube Tracks",
-              description: "Your official YouTube Liked Music & Videos",
-              coverUrl: likedTracks[0]?.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
-              isYouTubeSynced: true,
-              tracksCount: likedTracks.length,
-              updatedAt: new Date().toISOString(),
-              tracks: likedTracks,
-            });
-          }
-        }
-      } catch (err) {
-        console.error("YouTube Liked Songs playlist error:", err);
-      }
-
-      // Merge with local created playlists
-      const combined = [...syncedPlaylists];
-      for (const lp of localPlaylistsStore) {
-        if (!combined.some((p) => p.id === lp.id)) {
-          combined.push(lp);
-        }
-      }
-      return res.json({ playlists: combined, isLiveYouTube: true });
-    } catch (err) {
-      console.error("YouTube playlists endpoint error:", err);
-    }
-  }
-
-  // Fallback to local user playlists
-  return res.json({ playlists: localPlaylistsStore, isLiveYouTube: false });
-});
-
-// Fetch Single Playlist Items
-app.get("/api/youtube/playlists/:id/items", async (req, res) => {
-  const { id } = req.params;
-  const targetYtId = id.replace(/_\d+$/, "");
-  const token = await getValidAccessToken(req, res);
-
-  const localPlaylist = localPlaylistsStore.find((p) => p.id === id || p.id === targetYtId);
-
-  if (token) {
-    try {
-      const ytRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${targetYtId}&part=snippet,contentDetails&maxResults=50`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (ytRes.ok) {
-        const data = await ytRes.json();
-        if (data.items) {
-          const seenIds = new Map<string, number>();
-          const tracks = data.items.map((item: any, idx: number) => {
-            const vid = item.snippet.resourceId?.videoId || item.contentDetails?.videoId;
-            const itemId = item.id || vid || `tr_${idx}`;
-            const count = (seenIds.get(itemId) || 0) + 1;
-            seenIds.set(itemId, count);
-            const uniqueKey = count > 1 ? `${itemId}_${count}` : itemId;
-
-            const thumbs = item.snippet.thumbnails;
-            const cover =
-              thumbs?.maxres?.url ||
-              thumbs?.high?.url ||
-              thumbs?.medium?.url ||
-              thumbs?.standard?.url ||
-              thumbs?.default?.url ||
-              (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80");
-
-            return {
-              id: uniqueKey,
-              youtubeVideoId: vid,
-              title: item.snippet.title,
-              artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
-              album: item.snippet.playlistTitle || "YouTube Music Collection",
-              duration: 210,
-              coverUrl: cover,
-              audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-              genre: "YouTube Music",
-              playsCount: Math.floor(Math.random() * 800000) + 100000,
-            };
-          });
-
-          if (localPlaylist) {
-            localPlaylist.tracks = tracks;
-            localPlaylist.tracksCount = tracks.length;
-            if (tracks[0]?.coverUrl) {
-              localPlaylist.coverUrl = tracks[0].coverUrl;
-            }
-          }
-
-          return res.json({
-            playlistId: id,
-            tracks,
-          });
-        }
-      }
-    } catch (err) {
-      console.error("YouTube playlist items fetch error:", err);
-    }
-  }
-
-  return res.json({
-    playlistId: id,
-    tracks: localPlaylist ? localPlaylist.tracks : [],
-  });
-});
-
-// Sync / Batch Save Playlist Tracks
-app.post("/api/youtube/playlists/:id/sync", async (req, res) => {
-  const { id } = req.params;
-  const { tracks } = req.body;
-  const token = await getValidAccessToken(req, res);
-
-  const localPlaylist = localPlaylistsStore.find((p) => p.id === id);
-  if (localPlaylist) {
-    localPlaylist.tracks = tracks || [];
-    localPlaylist.tracksCount = localPlaylist.tracks.length;
-    localPlaylist.updatedAt = new Date().toISOString();
-    if (localPlaylist.tracks[0]?.coverUrl) {
-      localPlaylist.coverUrl = localPlaylist.tracks[0].coverUrl;
-    }
-  }
-
-  if (token && id !== "LL") {
-    try {
-      const ytRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${id}&part=snippet,contentDetails&maxResults=50`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (ytRes.ok) {
-        const ytData = await ytRes.json();
-        const existingYtItems: any[] = ytData.items || [];
-        const existingVidMap = new Map(existingYtItems.map((item) => [item.snippet.resourceId?.videoId, item.id]));
-
-        const newTrackVids = new Set((tracks || []).map((t: any) => t.youtubeVideoId));
-
-        // Delete removed items
-        for (const [vid, ytItemId] of existingVidMap.entries()) {
-          if (!newTrackVids.has(vid)) {
-            await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?id=${ytItemId}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${token}` },
-            }).catch((e) => console.error("Error deleting item from YT playlist:", e));
-          }
-        }
-
-        // Add new items
-        for (let i = 0; i < (tracks || []).length; i++) {
-          const trk = tracks[i];
-          if (trk.youtubeVideoId && !existingVidMap.has(trk.youtubeVideoId)) {
-            await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                snippet: {
-                  playlistId: id,
-                  resourceId: {
-                    kind: "youtube#video",
-                    videoId: trk.youtubeVideoId,
-                  },
-                  position: i,
-                },
-              }),
-            }).catch((e) => console.error("Error adding item to YT playlist:", e));
-          }
-        }
-      }
-    } catch (err) {
-      console.error("YouTube playlist sync error:", err);
-    }
-  }
-
-  res.json({ success: true, tracks: localPlaylist ? localPlaylist.tracks : tracks });
-});
-
-// Create Playlist
-app.post("/api/youtube/playlists", async (req, res) => {
-  const { title, description, coverUrl } = req.body;
-  const token = await getValidAccessToken(req);
-
-  const newPlaylist = {
-    id: `pl_${Date.now()}`,
-    title: title || "New Oblivion Playlist",
-    description: description || "Created with Oblivion YouTube Music",
-    coverUrl: coverUrl || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
-    isYouTubeSynced: !!token,
-    tracksCount: 0,
-    updatedAt: new Date().toISOString(),
-    tracks: [],
-  };
-
-  if (token) {
-    try {
-      const ytRes = await fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet,status", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          snippet: {
-            title: newPlaylist.title,
-            description: newPlaylist.description,
-          },
-          status: {
-            privacyStatus: "private",
-          },
-        }),
-      });
-      const data = await ytRes.json();
-      if (data.id) {
-        newPlaylist.id = data.id;
-      }
-    } catch (err) {
-      console.error("YouTube playlist creation error:", err);
-    }
-  }
-
-  localPlaylistsStore.unshift(newPlaylist);
-  res.json({ success: true, playlist: newPlaylist });
-});
-
-// Update Playlist (Title, Description, Cover image)
-app.put("/api/youtube/playlists/:id", async (req, res) => {
-  const { id } = req.params;
-  const { title, description, coverUrl } = req.body;
-  const token = await getValidAccessToken(req);
-
-  const playlist = localPlaylistsStore.find((p) => p.id === id);
-  if (playlist) {
-    if (title !== undefined) playlist.title = title;
-    if (description !== undefined) playlist.description = description;
-    if (coverUrl !== undefined) playlist.coverUrl = coverUrl;
-    playlist.updatedAt = new Date().toISOString();
-  }
-
-  if (token) {
-    try {
-      await fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: id,
-          snippet: {
-            title: title || playlist?.title || "Playlist",
-            description: description || playlist?.description || "",
-          },
-        }),
-      });
-    } catch (err) {
-      console.error("YouTube update playlist error:", err);
-    }
-  }
-
-  res.json({ success: true, playlist });
-});
-
-// Delete Playlist
-app.delete("/api/youtube/playlists/:id", async (req, res) => {
-  const { id } = req.params;
-  const token = await getValidAccessToken(req);
-
-  localPlaylistsStore = localPlaylistsStore.filter((p) => p.id !== id);
-
-  if (token) {
-    try {
-      await fetch(`https://www.googleapis.com/youtube/v3/playlists?id=${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch (err) {
-      console.error("YouTube playlist deletion error:", err);
-    }
-  }
-
-  res.json({ success: true });
-});
-
-// Add Track to Playlist
-app.post("/api/youtube/playlists/:id/items", async (req, res) => {
-  const { id } = req.params;
-  const { track } = req.body;
-  const token = await getValidAccessToken(req);
-
-  const playlist = localPlaylistsStore.find((p) => p.id === id);
-  if (playlist) {
-    playlist.tracks.push(track);
-    playlist.tracksCount = playlist.tracks.length;
-    playlist.updatedAt = new Date().toISOString();
-  }
-
-  if (token && track?.youtubeVideoId) {
-    try {
-      await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          snippet: {
-            playlistId: id,
-            resourceId: {
-              kind: "youtube#video",
-              videoId: track.youtubeVideoId,
-            },
-          },
-        }),
-      });
-    } catch (err) {
-      console.error("YouTube playlist item add error:", err);
-    }
-  }
-
-  res.json({ success: true, tracks: playlist ? playlist.tracks : [] });
-});
-
-// Remove Track from Playlist
-app.delete("/api/youtube/playlists/:id/items/:itemId", async (req, res) => {
-  const { id, itemId } = req.params;
-  const token = await getValidAccessToken(req);
-
-  const playlist = localPlaylistsStore.find((p) => p.id === id);
-  if (playlist) {
-    playlist.tracks = playlist.tracks.filter((t: any) => t.id !== itemId && t.youtubeVideoId !== itemId);
-    playlist.tracksCount = playlist.tracks.length;
-    playlist.updatedAt = new Date().toISOString();
-  }
-
-  if (token) {
-    try {
-      await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?id=${itemId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch (err) {
-      console.error("YouTube playlist item delete error:", err);
-    }
-  }
-
-  res.json({ success: true, tracks: playlist ? playlist.tracks : [] });
-});
-
-// Reorder Playlist Items
-app.put("/api/youtube/playlists/:id/reorder", (req, res) => {
-  const { id } = req.params;
-  const { tracks } = req.body;
-
-  const playlist = localPlaylistsStore.find((p) => p.id === id);
-  if (playlist) {
-    playlist.tracks = tracks;
-    playlist.updatedAt = new Date().toISOString();
-  }
-
-  res.json({ success: true, tracks });
-});
-
-// Search YouTube Tracks, Albums, Artists
-app.get("/api/youtube/search", async (req, res) => {
-  const { q, type } = req.query;
-  const queryStr = (q as string || "Synthwave").trim();
-  const token = await getValidAccessToken(req);
-
-  if (token) {
-    try {
-      const ytRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?q=${encodeURIComponent(queryStr + " music")}&type=video,playlist&part=snippet&maxResults=25`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const data = await ytRes.json();
-
-      if (data.items) {
-        const seenIds = new Map<string, number>();
-        const results = data.items.map((item: any, idx: number) => {
-          const isPlaylist = item.id?.kind === "youtube#playlist";
-          const rawId = isPlaylist ? item.id?.playlistId : item.id?.videoId;
-          const baseId = rawId || `srch_${idx}`;
-          const count = (seenIds.get(baseId) || 0) + 1;
-          seenIds.set(baseId, count);
-          const uniqueId = count > 1 ? `${baseId}_${count}` : baseId;
-
-          return {
-            id: uniqueId,
-            youtubeVideoId: isPlaylist ? undefined : item.id?.videoId,
-            type: isPlaylist ? "playlist" : "track",
-            title: item.snippet.title,
-            artist: item.snippet.channelTitle,
-            album: isPlaylist ? "YouTube Playlist" : "YouTube Single",
-            duration: 195 + (idx * 17) % 120,
-            coverUrl:
-              item.snippet.thumbnails?.high?.url ||
-              item.snippet.thumbnails?.medium?.url ||
-              "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
-            audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-            genre: "YouTube Music",
-            playsCount: Math.floor(Math.random() * 2000000) + 500000,
-          };
-        });
-
-        return res.json({ results });
-      }
-    } catch (err) {
-      console.error("YouTube search API error:", err);
-    }
-  }
-
-  // Generative / Rich Search Fallback
-  const catalog = [
-    {
-      id: "search_01",
-      youtubeVideoId: "kJQP7kiw5Fk",
-      type: "track",
-      title: "Despacito",
-      artist: "Luis Fonsi ft. Daddy Yankee",
-      album: "Vida",
-      duration: 228,
-      coverUrl: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg",
-      audioUrl: "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
-      genre: "Latin Pop",
-      playsCount: 9400000,
-    },
-    {
-      id: "search_02",
-      youtubeVideoId: "OPf0YbXqDm0",
-      type: "track",
-      title: "Uptown Funk",
-      artist: "Mark Ronson ft. Bruno Mars",
-      album: "Uptown Special",
-      duration: 270,
-      coverUrl: "https://i.ytimg.com/vi/OPf0YbXqDm0/hqdefault.jpg",
-      audioUrl: "https://www.youtube.com/watch?v=OPf0YbXqDm0",
-      genre: "Funk / Pop",
-      playsCount: 8100000,
-    },
-    {
-      id: "search_03",
-      youtubeVideoId: "fJ9rUzIMcZQ",
-      type: "track",
-      title: "Bohemian Rhapsody",
-      artist: "Queen",
-      album: "A Night at the Opera",
-      duration: 354,
-      coverUrl: "https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
-      audioUrl: "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
-      genre: "Rock Legend",
-      playsCount: 12500000,
-    },
-    {
-      id: "search_04",
-      youtubeVideoId: "YQHsXMglC9A",
-      type: "track",
-      title: "Hello",
-      artist: "Adele",
-      album: "25",
-      duration: 295,
-      coverUrl: "https://i.ytimg.com/vi/YQHsXMglC9A/hqdefault.jpg",
-      audioUrl: "https://www.youtube.com/watch?v=YQHsXMglC9A",
-      genre: "Soul Pop",
-      playsCount: 6800000,
-    },
-    {
-      id: "search_05",
-      youtubeVideoId: "JGwWNGJdvx8",
-      type: "artist",
-      title: "Ed Sheeran",
-      artist: "Official Artist Channel",
-      album: "Artist Profile",
-      duration: 0,
-      coverUrl: "https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg",
-      audioUrl: "https://www.youtube.com/watch?v=JGwWNGJdvx8",
-      genre: "Pop / Acoustic",
-      playsCount: 18000000,
-    },
-    {
-      id: "search_06",
-      youtubeVideoId: "e-ORhEE9VVg",
-      type: "album",
-      title: "Blinding Lights",
-      artist: "The Weeknd",
-      album: "After Hours",
-      duration: 200,
-      coverUrl: "https://i.ytimg.com/vi/e-ORhEE9VVg/hqdefault.jpg",
-      audioUrl: "https://www.youtube.com/watch?v=e-ORhEE9VVg",
-      genre: "Synthpop",
-      playsCount: 15400000,
-    }
-  ];
-
-  const filtered = catalog.filter(
-    (item) =>
-      item.title.toLowerCase().includes(queryStr.toLowerCase()) ||
-      item.artist.toLowerCase().includes(queryStr.toLowerCase()) ||
-      item.genre.toLowerCase().includes(queryStr.toLowerCase())
-  );
-
-  res.json({ results: filtered.length > 0 ? filtered : catalog });
-});
-
-// Recommendations / Home Feed (Account-Specific when signed in, General Trending when signed out)
-app.get("/api/youtube/recommendations", async (req, res) => {
-  const token = await getValidAccessToken(req, res);
-
-  if (token) {
-    try {
-      // 1. Fetch user's Liked Videos from YouTube Music (playlistId=LL)
-      let personalizedTracks: any[] = [];
-      try {
-        const likedRes = await fetch(
-          "https://www.googleapis.com/youtube/v3/playlistItems?playlistId=LL&part=snippet,contentDetails&maxResults=15",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (likedRes.ok) {
-          const likedData = await likedRes.json();
-          if (likedData.items && likedData.items.length > 0) {
-            const seenIds = new Map<string, number>();
-            personalizedTracks = likedData.items.map((item: any, idx: number) => {
-              const vid = item.snippet.resourceId?.videoId || item.contentDetails?.videoId;
-              const itemId = item.id || vid || `idx_${idx}`;
-              const count = (seenIds.get(itemId) || 0) + 1;
-              seenIds.set(itemId, count);
-              const uniqueKey = count > 1 ? `${itemId}_${count}` : itemId;
-
-              const thumbs = item.snippet.thumbnails;
-              const cover =
-                thumbs?.maxres?.url ||
-                thumbs?.high?.url ||
-                thumbs?.medium?.url ||
-                thumbs?.standard?.url ||
-                thumbs?.default?.url ||
-                (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80");
-
-              return {
-                id: `yt_user_ll_${uniqueKey}`,
-                youtubeVideoId: vid,
-                title: item.snippet.title,
-                artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
-                album: "Your YouTube Liked Collection",
-                duration: 210,
-                coverUrl: cover,
-                audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-                genre: "YouTube Liked Track",
-                playsCount: Math.floor(Math.random() * 500000) + 100000,
-              };
-            });
-          }
-        } else {
-          console.error("Liked videos response status:", likedRes.status);
-        }
-      } catch (err) {
-        console.error("User liked videos fetch error:", err);
-      }
-
-      // 2. Fetch account-personalized popular/trending music chart
-      let accountTrending: any[] = [];
-      try {
-        const popularRes = await fetch(
-          "https://www.googleapis.com/youtube/v3/videos?chart=mostPopular&videoCategoryId=10&regionCode=US&part=snippet,contentDetails,statistics&maxResults=15",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (popularRes.ok) {
-          const popularData = await popularRes.json();
-          if (popularData.items && popularData.items.length > 0) {
-            accountTrending = popularData.items.map((item: any, idx: number) => {
-              const vid = item.id;
-              const thumbs = item.snippet.thumbnails;
-              const cover =
-                thumbs?.maxres?.url ||
-                thumbs?.high?.url ||
-                thumbs?.medium?.url ||
-                thumbs?.standard?.url ||
-                thumbs?.default?.url ||
-                `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
-
-              return {
-                id: `yt_user_pop_${vid}`,
-                youtubeVideoId: vid,
-                title: item.snippet.title,
-                artist: item.snippet.channelTitle,
-                album: "YouTube Trending Music",
-                duration: 210,
-                coverUrl: cover,
-                audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-                genre: "YouTube Account Trending",
-                playsCount: parseInt(item.statistics?.viewCount || "1500000", 10),
-              };
-            });
-          }
-        } else {
-          console.error("Popular music response status:", popularRes.status);
-        }
-      } catch (err) {
-        console.error("Account trending fetch error:", err);
-      }
-
-      // 3. Search fallback for live YouTube Music tracks if Liked Videos or Popular charts were empty
-      if (personalizedTracks.length === 0 && accountTrending.length === 0) {
-        try {
-          const searchRes = await fetch(
-            "https://www.googleapis.com/youtube/v3/search?q=top+music+hits+official+video&type=video&part=snippet&maxResults=15",
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          if (searchRes.ok) {
-            const searchData = await searchRes.json();
-            if (searchData.items) {
-              accountTrending = searchData.items.map((item: any, idx: number) => {
-                const vid = item.id.videoId;
-                const thumbs = item.snippet.thumbnails;
-                const cover =
-                  thumbs?.maxres?.url ||
-                  thumbs?.high?.url ||
-                  thumbs?.medium?.url ||
-                  thumbs?.standard?.url ||
-                  thumbs?.default?.url ||
-                  `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
-
-                return {
-                  id: `yt_user_srch_${vid}`,
-                  youtubeVideoId: vid,
-                  title: item.snippet.title,
-                  artist: item.snippet.channelTitle,
-                  album: "YouTube Music Feed",
-                  duration: 210,
-                  coverUrl: cover,
-                  audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
-                  genre: "YouTube Music",
-                  playsCount: Math.floor(Math.random() * 2000000) + 500000,
-                };
-              });
-            }
-          }
-        } catch (err) {
-          console.error("YouTube search fallback error:", err);
-        }
-      }
-
-      // 4. User's top albums / channel collections
-      let accountAlbums: any[] = [];
-      try {
-        const userPlaylistsRes = await fetch(
-          "https://www.googleapis.com/youtube/v3/playlists?mine=true&part=snippet,contentDetails&maxResults=10",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (userPlaylistsRes.ok) {
-          const plData = await userPlaylistsRes.json();
-          if (plData.items && plData.items.length > 0) {
-            accountAlbums = plData.items.map((pl: any) => ({
-              id: `yt_user_album_${pl.id}`,
-              title: pl.snippet.title,
-              artist: pl.snippet.channelTitle || (req.session?.user?.name ? `${req.session.user.name}'s YouTube` : "Your YouTube Account"),
-              coverUrl:
-                pl.snippet.thumbnails?.high?.url ||
-                pl.snippet.thumbnails?.medium?.url ||
-                "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-              releaseYear: new Date(pl.snippet.publishedAt || Date.now()).getFullYear().toString(),
-              tracksCount: pl.contentDetails?.itemCount || 0,
-            }));
-          }
-        }
-      } catch (err) {
-        console.error("Account playlists albums error:", err);
-      }
-
-      const trackMap = new Map();
-      for (const trk of [...personalizedTracks, ...accountTrending]) {
-        const key = trk.youtubeVideoId || trk.id;
-        if (!trackMap.has(key)) {
-          trackMap.set(key, trk);
-        }
-      }
-      const combinedTrending = Array.from(trackMap.values());
-
-      if (combinedTrending.length > 0) {
-        return res.json({
-          isPersonalized: true,
-          trendingTracks: combinedTrending.slice(0, 10),
-          topAlbums: accountAlbums.length > 0 ? accountAlbums : [
-            {
-              id: "alb_user_01",
-              title: "Your YouTube Music Mix",
-              artist: req.session?.user?.name || "Your Account",
-              coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-              releaseYear: "2026",
-              tracksCount: combinedTrending.length,
-            },
-            {
-              id: "alb_user_02",
-              title: "Personalized YouTube Collection",
-              artist: "YouTube Account Sync",
-              coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-              releaseYear: "2026",
-              tracksCount: 15,
-            }
-          ],
-          quickPicks: (personalizedTracks.length > 0 ? personalizedTracks : combinedTrending).slice(0, 6),
-        });
-      }
-    } catch (err) {
-      console.error("Account-specific recommendations error:", err);
-    }
-  }
-
-  // General YouTube Trending (signed out or fallback)
-  return res.json({
-    isPersonalized: false,
-    trendingTracks: [
-      {
-        id: "gen_rec_01",
-        youtubeVideoId: "09R8_2nJtjg",
-        title: "Starboy",
-        artist: "The Weeknd ft. Daft Punk",
-        album: "Starboy",
-        duration: 230,
-        coverUrl: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg",
-        audioUrl: "https://www.youtube.com/watch?v=09R8_2nJtjg",
-        genre: "Electro Pop",
-        playsCount: 5200000,
-      },
-      {
-        id: "gen_rec_02",
-        youtubeVideoId: "bFD4A5qN8XU",
-        title: "Levitating",
-        artist: "Dua Lipa",
-        album: "Future Nostalgia",
-        duration: 203,
-        coverUrl: "https://i.ytimg.com/vi/bFD4A5qN8XU/hqdefault.jpg",
-        audioUrl: "https://www.youtube.com/watch?v=bFD4A5qN8XU",
-        genre: "Disco Pop",
-        playsCount: 4800000,
-      },
-      {
-        id: "gen_rec_03",
-        youtubeVideoId: "H5v3kku4y6Q",
-        title: "As It Was",
-        artist: "Harry Styles",
-        album: "Harry's House",
-        duration: 167,
-        coverUrl: "https://i.ytimg.com/vi/H5v3kku4y6Q/hqdefault.jpg",
-        audioUrl: "https://www.youtube.com/watch?v=H5v3kku4y6Q",
-        genre: "Indie Pop",
-        playsCount: 6100000,
-      },
-      {
-        id: "gen_rec_04",
-        youtubeVideoId: "K4DyBUG242c",
-        title: "Save Your Tears",
-        artist: "The Weeknd & Ariana Grande",
-        album: "After Hours",
-        duration: 215,
-        coverUrl: "https://i.ytimg.com/vi/K4DyBUG242c/hqdefault.jpg",
-        audioUrl: "https://www.youtube.com/watch?v=K4DyBUG242c",
-        genre: "Synthwave",
-        playsCount: 3900000,
-      },
-      {
-        id: "gen_rec_05",
-        youtubeVideoId: "fJ9rUzIMcZQ",
-        title: "Espresso",
-        artist: "Sabrina Carpenter",
-        album: "Short n' Sweet",
-        duration: 175,
-        coverUrl: "https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
-        audioUrl: "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
-        genre: "Pop",
-        playsCount: 8900000,
-      },
-      {
-        id: "gen_rec_06",
-        youtubeVideoId: "YQHsXMglC9A",
-        title: "BIRDS OF A FEATHER",
-        artist: "Billie Eilish",
-        album: "HIT ME HARD AND SOFT",
-        duration: 198,
-        coverUrl: "https://i.ytimg.com/vi/YQHsXMglC9A/hqdefault.jpg",
-        audioUrl: "https://www.youtube.com/watch?v=YQHsXMglC9A",
-        genre: "Alternative Pop",
-        playsCount: 11200000,
-      }
-    ],
-    topAlbums: [
-      {
-        id: "alb_gen_01",
-        title: "Future Nostalgia",
-        artist: "Dua Lipa",
-        coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-        releaseYear: "2020",
-        tracksCount: 11,
-      },
-      {
-        id: "alb_gen_02",
-        title: "HIT ME HARD AND SOFT",
-        artist: "Billie Eilish",
-        coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
-        releaseYear: "2024",
-        tracksCount: 10,
-      },
-      {
-        id: "alb_gen_03",
-        title: "Random Access Memories",
-        artist: "Daft Punk",
-        coverUrl: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80",
-        releaseYear: "2013",
-        tracksCount: 13,
-      },
-    ],
-    quickPicks: [
-      {
-        id: "qp_01",
-        youtubeVideoId: "fTrs_3Kx7U8",
-        title: "Nightcall",
-        artist: "Kavinsky",
-        album: "Drive OST",
-        duration: 259,
-        coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-        genre: "Electro",
-        playsCount: 7800000,
-      },
-      {
-        id: "qp_02",
-        youtubeVideoId: "vN08m_G1410",
-        title: "Midnight City",
-        artist: "M83",
-        album: "Hurry Up, We're Dreaming",
-        duration: 243,
-        coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-        genre: "Dream Pop",
-        playsCount: 9200000,
-      },
-    ],
-  });
-});
-
-// Similar Tracks / Radio Queue Generator
-app.get("/api/youtube/similar", async (req, res) => {
-  const { trackId, title, artist, genre } = req.query;
-
-  const ai = getGeminiClient();
-  if (ai && title) {
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `Generate a JSON array of 5 recommended similar music tracks for a listener who likes "${title}" by "${artist || 'Artist'}" (Genre: ${genre || 'Pop/Electronic'}).
-Return strictly a JSON array of objects with keys: "title", "artist", "album", "genre", "duration" (number in seconds). No markdown, no commentary.`,
-              },
-            ],
-          },
-        ],
-      });
-
-      const text = response.text?.trim() || "";
-      const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const formatted = parsed.map((item: any, idx: number) => ({
-          id: `sim_ai_${Date.now()}_${idx}`,
-          youtubeVideoId: `sim_vid_${idx}`,
-          title: item.title,
-          artist: item.artist,
-          album: item.album || "Recommended Radio",
-          duration: item.duration || 210,
-          coverUrl: `https://images.unsplash.com/photo-${1500000000000 + (idx * 50000)}?auto=format&fit=crop&w=600&q=80` || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-          audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${((idx + 5) % 15) + 1}.mp3`,
-          genre: item.genre || "Similar Radio",
-          playsCount: Math.floor(Math.random() * 1000000) + 200000,
-        }));
-
-        return res.json({ similarTracks: formatted });
-      }
-    } catch (err) {
-      console.error("Gemini AI similar tracks error:", err);
-    }
-  }
-
-  // Fallback similar tracks
-  const defaultSimilar = [
-    {
-      id: `sim_01`,
-      youtubeVideoId: "sim_vid_01",
-      title: `${title || 'Nocturnal'} - Midnight Remix`,
-      artist: `${artist || 'Oblivion Sound'}`,
-      album: "Oblivion Radio Volume 1",
-      duration: 215,
-      coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-      genre: "Electro Vibe",
-      playsCount: 1400000,
-    },
-    {
-      id: `sim_02`,
-      youtubeVideoId: "sim_vid_02",
-      title: "Stardust Waves",
-      artist: "Cyber Horizon",
-      album: "Neon Galaxy",
-      duration: 198,
-      coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-      genre: "Synthpop",
-      playsCount: 890000,
-    },
-    {
-      id: `sim_03`,
-      youtubeVideoId: "sim_vid_03",
-      title: "Echoes of Eternity",
-      artist: "Lunar Tide",
-      album: "Ethereal Soundscapes",
-      duration: 240,
-      coverUrl: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
-      genre: "Ambient Chill",
-      playsCount: 2100000,
-    },
-    {
-      id: `sim_04`,
-      youtubeVideoId: "sim_vid_04",
-      title: "Hyperdrive Love",
-      artist: "Velocity 88",
-      album: "Overdrive",
-      duration: 205,
-      coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
-      genre: "Darksynth",
-      playsCount: 1150000,
-    }
-  ];
-
-  res.json({ similarTracks: defaultSimilar });
-});
-
-// Synchronized Timecoded Lyrics API
-app.get("/api/youtube/lyrics", async (req, res) => {
-  const { title, artist, duration } = req.query;
-  const trackTitle = (title as string || "Resonance").trim();
-  const trackArtist = (artist as string || "HOME").trim();
-  const durSec = parseInt(duration as string) || 200;
-
-  const ai = getGeminiClient();
-  if (ai) {
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `Generate synchronized lyrics with timestamp timestamps for the song "${trackTitle}" by "${trackArtist}" (total duration: ${durSec} seconds).
-Format each line with timing in seconds like this:
-[00:12.50] Verse line text here...
-[00:18.00] Next line of lyrics here...
-
-Generate around 12 to 20 timed lines spanning across the ${durSec} seconds song duration from start to finish.
-Return strictly the LRC/timed text. No markdown header, no commentary.`,
-              },
-            ],
-          },
-        ],
-      });
-
-      const text = response.text?.trim() || "";
-      if (text) {
-        return res.json({ lyricsRaw: text });
-      }
-    } catch (err) {
-      console.error("Gemini AI lyrics generation error:", err);
-    }
-  }
-
-  // High-quality fallback synchronized lyrics
-  const sampleLyrics = `[00:05.00] (Instrumental Synth Intro)
-[00:14.20] Wandering through the neon lights in the oblivion
-[00:22.80] Searching for a rhythm that we lost along the way
-[00:30.50] Echoes of sunset calling out your name
-[00:38.10] Can you hear the electric pulse inside the rain?
-[00:46.40] We turn the volume high and drift into the night
-[00:54.00] Every harmonic frequency shining oh so bright
-[01:02.30] (Synthesizer Solo & Bass Drop)
-[01:18.60] Synced across the stars in a timeless digital haze
-[01:26.10] Running through the endless digital maze
-[01:34.50] Hold on tight to the memory of this sound
-[01:42.90] In Oblivion YouTube Music, lost and found
-[01:52.00] (Fade out into ambient reverb)`;
-
-  res.json({ lyricsRaw: sampleLyrics });
-});
-
-// Fallback for unmatched API routes
-app.use("/api/*", (req, res) => {
-  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl || req.url}` });
-});
-
-// Global Express error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Unhandled Express error:", err);
-  if (!res.headersSent) {
-    res.status(500).json({ error: err?.message || "Internal Server Error" });
-  }
-});
-
-// -------------------------------------------------------------
-// VITE MIDDLEWARE & PRODUCTION SERVING
-// -------------------------------------------------------------
-
 async function startServer() {
-  if (!process.env.VERCEL) {
-    if (process.env.NODE_ENV !== "production") {
-      try {
-        const { createServer: createViteServer } = await import("vite");
-        const vite = await createViteServer({
-          server: { middlewareMode: true },
-          appType: "spa",
-        });
-        app.use(vite.middlewares);
-      } catch (e) {
-        console.warn("Could not start Vite dev middleware:", e);
-      }
-    } else {
-      const distPath = path.join(process.cwd(), "dist");
-      app.use(express.static(distPath));
-      app.get("*", (req, res) => {
-        res.sendFile(path.join(distPath, "index.html"));
+  if (process.env.VITE_DEV === "true") {
+    try {
+      const { createServer } = await import("vite");
+      const viteApp = await createServer({
+        server: { middlewareMode: true },
       });
+      app.use(viteApp.middlewares);
+    } catch (e) {
+      console.warn("Could not start Vite dev middleware:", e);
     }
-
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Oblivion YouTube Music Server listening on http://0.0.0.0:${PORT}`);
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Oblivion YouTube Music Server listening on http://0.0.0.0:${PORT}`);
+  });
 }
 
 startServer();
