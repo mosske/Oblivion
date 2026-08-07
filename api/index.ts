@@ -1,4 +1,4 @@
-import app from "../server";
+import app from "../server.js";
 
 export default function handler(req: any, res: any) {
   try {
@@ -7,8 +7,8 @@ export default function handler(req: any, res: any) {
         ? req.query.__path.join("/")
         : String(req.query.__path);
       
+      delete req.query.__path;
       const queryObj = { ...req.query };
-      delete queryObj.__path;
       const search = new URLSearchParams(queryObj as any).toString();
       req.url = `/api/${subpath}` + (search ? `?${search}` : "");
     } else {
@@ -27,5 +27,6 @@ export default function handler(req: any, res: any) {
 
   return app(req, res);
 }
+
 
 
