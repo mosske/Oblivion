@@ -23,10 +23,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
     trendingTracks: Track[];
     topAlbums: Album[];
     quickPicks: Track[];
+    isPersonalized?: boolean;
   }>({
     trendingTracks: [],
     topAlbums: [],
     quickPicks: [],
+    isPersonalized: false,
   });
 
   const [loading, setLoading] = useState<boolean>(true);
@@ -58,6 +60,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   useEffect(() => {
     let isMounted = true;
+    setLoading(true);
     const fetchRecs = async () => {
       try {
         const res = await fetch("/api/youtube/recommendations");
@@ -76,7 +79,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.isLoggedIn, user?.email]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar pb-28 select-none">
@@ -210,11 +213,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {/* Trending Tracks */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-cyan-400" />
-            <span>Trending YouTube Hits</span>
+            <span>
+              {user?.isLoggedIn && recommendations.isPersonalized
+                ? "Your YouTube Account Trending Hits"
+                : "General YouTube Trending Hits"}
+            </span>
           </h2>
+          {user?.isLoggedIn && recommendations.isPersonalized && (
+            <span className="px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] font-mono flex items-center gap-1 self-start sm:self-auto">
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              Synced with Google Account
+            </span>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -225,7 +238,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <span className="w-6 text-xs font-mono text-slate-500 text-center font-bold">
-                  0{idx + 1}
+                  {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
                 </span>
 
                 <div className="relative w-10 h-10 shrink-0 rounded-xl overflow-hidden">
@@ -275,10 +288,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {/* Featured Albums */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Disc className="w-5 h-5 text-indigo-400" />
-          <span>Top Featured Albums</span>
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Disc className="w-5 h-5 text-indigo-400" />
+            <span>
+              {user?.isLoggedIn && recommendations.isPersonalized
+                ? "Your YouTube Account Albums & Collections"
+                : "Top General YouTube Featured Albums"}
+            </span>
+          </h2>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {recommendations.topAlbums.map((album) => (

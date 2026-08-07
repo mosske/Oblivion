@@ -1045,14 +1045,141 @@ app.get("/api/youtube/search", async (req, res) => {
   res.json({ results: filtered.length > 0 ? filtered : catalog });
 });
 
-// Recommendations / Home Feed
-app.get("/api/youtube/recommendations", (req, res) => {
-  const recommendations = {
+// Recommendations / Home Feed (Account-Specific when signed in, General Trending when signed out)
+app.get("/api/youtube/recommendations", async (req, res) => {
+  const token = await getValidAccessToken(req);
+
+  if (token) {
+    try {
+      // 1. Fetch user's Liked Videos from YouTube Music (playlistId=LL)
+      let personalizedTracks: any[] = [];
+      try {
+        const likedRes = await fetch(
+          "https://www.googleapis.com/youtube/v3/playlistItems?playlistId=LL&part=snippet,contentDetails&maxResults=15",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (likedRes.ok) {
+          const likedData = await likedRes.json();
+          if (likedData.items && likedData.items.length > 0) {
+            personalizedTracks = likedData.items.map((item: any, idx: number) => ({
+              id: `yt_user_ll_${item.id}`,
+              youtubeVideoId: item.snippet.resourceId?.videoId || item.contentDetails?.videoId,
+              title: item.snippet.title,
+              artist: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle || "YouTube Artist",
+              album: "Your YouTube Liked Collection",
+              duration: 210,
+              coverUrl:
+                item.snippet.thumbnails?.high?.url ||
+                item.snippet.thumbnails?.medium?.url ||
+                "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+              audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
+              genre: "YouTube Liked Track",
+              playsCount: Math.floor(Math.random() * 500000) + 100000,
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("User liked videos fetch error:", err);
+      }
+
+      // 2. Fetch account-personalized popular/trending music chart
+      let accountTrending: any[] = [];
+      try {
+        const popularRes = await fetch(
+          "https://www.googleapis.com/youtube/v3/videos?chart=mostPopular&videoCategoryId=10&part=snippet,contentDetails,statistics&maxResults=15",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (popularRes.ok) {
+          const popularData = await popularRes.json();
+          if (popularData.items) {
+            accountTrending = popularData.items.map((item: any, idx: number) => ({
+              id: `yt_user_pop_${item.id}`,
+              youtubeVideoId: item.id,
+              title: item.snippet.title,
+              artist: item.snippet.channelTitle,
+              album: "YouTube Account Feed",
+              duration: 210,
+              coverUrl:
+                item.snippet.thumbnails?.high?.url ||
+                item.snippet.thumbnails?.medium?.url ||
+                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+              audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 15) + 1}.mp3`,
+              genre: "YouTube Account Trending",
+              playsCount: parseInt(item.statistics?.viewCount || "1500000", 10),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Account trending fetch error:", err);
+      }
+
+      // 3. User's top albums / channel collections
+      let accountAlbums: any[] = [];
+      try {
+        const userPlaylistsRes = await fetch(
+          "https://www.googleapis.com/youtube/v3/playlists?mine=true&part=snippet,contentDetails&maxResults=10",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (userPlaylistsRes.ok) {
+          const plData = await userPlaylistsRes.json();
+          if (plData.items) {
+            accountAlbums = plData.items.map((pl: any) => ({
+              id: `yt_user_album_${pl.id}`,
+              title: pl.snippet.title,
+              artist: pl.snippet.channelTitle || (req.session?.user?.name ? `${req.session.user.name}'s YouTube` : "Your YouTube Account"),
+              coverUrl:
+                pl.snippet.thumbnails?.high?.url ||
+                pl.snippet.thumbnails?.medium?.url ||
+                "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+              releaseYear: new Date(pl.snippet.publishedAt || Date.now()).getFullYear().toString(),
+              tracksCount: pl.contentDetails?.itemCount || 0,
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Account playlists albums error:", err);
+      }
+
+      const combinedTrending = [...personalizedTracks, ...accountTrending];
+
+      if (combinedTrending.length > 0) {
+        return res.json({
+          isPersonalized: true,
+          trendingTracks: combinedTrending.slice(0, 10),
+          topAlbums: accountAlbums.length > 0 ? accountAlbums : [
+            {
+              id: "alb_user_01",
+              title: "Your YouTube Music Mix",
+              artist: req.session?.user?.name || "Your Account",
+              coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+              releaseYear: "2026",
+              tracksCount: combinedTrending.length,
+            },
+            {
+              id: "alb_user_02",
+              title: "Personalized YouTube Collection",
+              artist: "YouTube Account Sync",
+              coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+              releaseYear: "2026",
+              tracksCount: 15,
+            }
+          ],
+          quickPicks: combinedTrending.slice(0, 6),
+        });
+      }
+    } catch (err) {
+      console.error("Account-specific recommendations error:", err);
+    }
+  }
+
+  // General YouTube Trending (signed out or fallback)
+  return res.json({
+    isPersonalized: false,
     trendingTracks: [
       {
-        id: "rec_01",
+        id: "gen_rec_01",
         youtubeVideoId: "09R8_2nJtjg",
-        title: "Starboy Midnight Drive",
+        title: "Starboy (Global Trending Edit)",
         artist: "The Weeknd ft. Daft Punk",
         album: "Starboy",
         duration: 230,
@@ -1062,9 +1189,9 @@ app.get("/api/youtube/recommendations", (req, res) => {
         playsCount: 5200000,
       },
       {
-        id: "rec_02",
+        id: "gen_rec_02",
         youtubeVideoId: "bFD4A5qN8XU",
-        title: "Levitating Oblivion Edit",
+        title: "Levitating (YouTube Viral Hits)",
         artist: "Dua Lipa",
         album: "Future Nostalgia",
         duration: 203,
@@ -1074,9 +1201,9 @@ app.get("/api/youtube/recommendations", (req, res) => {
         playsCount: 4800000,
       },
       {
-        id: "rec_03",
+        id: "gen_rec_03",
         youtubeVideoId: "H5v3kku4y6Q",
-        title: "As It Was (Acoustic Echo)",
+        title: "As It Was (General Trending)",
         artist: "Harry Styles",
         album: "Harry's House",
         duration: 167,
@@ -1086,9 +1213,9 @@ app.get("/api/youtube/recommendations", (req, res) => {
         playsCount: 6100000,
       },
       {
-        id: "rec_04",
+        id: "gen_rec_04",
         youtubeVideoId: "K4DyBUG242c",
-        title: "Save Your Tears (Chilledwave)",
+        title: "Save Your Tears (YouTube Music Chart)",
         artist: "The Weeknd & Ariana Grande",
         album: "After Hours",
         duration: 215,
@@ -1097,10 +1224,34 @@ app.get("/api/youtube/recommendations", (req, res) => {
         genre: "Synthwave",
         playsCount: 3900000,
       },
+      {
+        id: "gen_rec_05",
+        youtubeVideoId: "fJ9rUzIMcZQ",
+        title: "Espresso (Viral Hits 2026)",
+        artist: "Sabrina Carpenter",
+        album: "Short n' Sweet",
+        duration: 175,
+        coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
+        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+        genre: "Pop",
+        playsCount: 8900000,
+      },
+      {
+        id: "gen_rec_06",
+        youtubeVideoId: "YQHsXMglC9A",
+        title: "BIRDS OF A FEATHER",
+        artist: "Billie Eilish",
+        album: "HIT ME HARD AND SOFT",
+        duration: 198,
+        coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
+        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+        genre: "Alternative Pop",
+        playsCount: 11200000,
+      }
     ],
     topAlbums: [
       {
-        id: "alb_01",
+        id: "alb_gen_01",
         title: "Future Nostalgia",
         artist: "Dua Lipa",
         coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
@@ -1108,15 +1259,15 @@ app.get("/api/youtube/recommendations", (req, res) => {
         tracksCount: 11,
       },
       {
-        id: "alb_02",
-        title: "Odyssey Ambient",
-        artist: "HOME",
-        coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-        releaseYear: "2014",
-        tracksCount: 12,
+        id: "alb_gen_02",
+        title: "HIT ME HARD AND SOFT",
+        artist: "Billie Eilish",
+        coverUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
+        releaseYear: "2024",
+        tracksCount: 10,
       },
       {
-        id: "alb_03",
+        id: "alb_gen_03",
         title: "Random Access Memories",
         artist: "Daft Punk",
         coverUrl: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80",
@@ -1150,9 +1301,7 @@ app.get("/api/youtube/recommendations", (req, res) => {
         playsCount: 9200000,
       },
     ],
-  };
-
-  res.json(recommendations);
+  });
 });
 
 // Similar Tracks / Radio Queue Generator
