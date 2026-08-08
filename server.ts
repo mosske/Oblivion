@@ -384,6 +384,278 @@ app.post("/api/auth/logout", (req, res) => {
   });
 });
 
+// ============================================================
+// CRITICAL ENDPOINT #1: GET /api/youtube/playlists
+// PURPOSE: Fetch user's YouTube playlists
+// ============================================================
+app.get("/api/youtube/playlists", async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req);
+    
+    if (!accessToken) {
+      return res.status(401).json({ 
+        error: "Not authenticated",
+        playlists: []
+      });
+    }
+
+    // Fetch user's playlists from YouTube API
+    const url = "https://www.googleapis.com/youtube/v3/playlists";
+    const params = new URLSearchParams({
+      part: "snippet,contentDetails",
+      mine: "true",
+      maxResults: "25",
+      access_token: accessToken
+    });
+
+    const response = await fetch(`${url}?${params}`);
+    
+    if (!response.ok) {
+      throw new Error(`YouTube API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Transform YouTube playlists to our format
+    const playlists = (data.items || []).map((item: any) => ({
+      id: item.id,
+      name: item.snippet?.title || "Untitled Playlist",
+      description: item.snippet?.description || "",
+      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
+      tracks: [],
+      isPrivate: false,
+      createdAt: item.snippet?.publishedAt || new Date().toISOString(),
+      itemCount: item.contentDetails?.itemCount || 0
+    }));
+
+    console.log(`Fetched ${playlists.length} playlists for user`);
+
+    res.json({
+      success: true,
+      playlists: playlists,
+      count: playlists.length
+    });
+
+  } catch (error) {
+    console.error("Error fetching playlists:", error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Failed to fetch playlists",
+      playlists: []
+    });
+  }
+});
+
+// ============================================================
+// CRITICAL ENDPOINT #2: GET /api/youtube/playlists/:id
+// PURPOSE: Fetch tracks from a specific playlist
+// ============================================================
+app.get("/api/youtube/playlists/:playlistId", async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+    const accessToken = await getValidAccessToken(req);
+
+    if (!playlistId) {
+      return res.status(400).json({
+        error: "Playlist ID required",
+        tracks: []
+      });
+    }
+
+    // Fetch playlist items (tracks)
+    const url = "https://www.googleapis.com/youtube/v3/playlistItems";
+    const params = new URLSearchParams({
+      playlistId: playlistId,
+      part: "snippet,contentDetails",
+      maxResults: "50",
+      access_token: accessToken || process.env.YOUTUBE_API_KEY || ""
+    });
+
+    const response = await fetch(`${url}?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`YouTube API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Transform YouTube playlist items to our Track format
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.contentDetails?.videoId || item.id,
+      youtubeVideoId: item.contentDetails?.videoId,
+      title: item.snippet?.title || "Unknown Song",
+      artist: item.snippet?.channelTitle || "Unknown Artist",
+      album: item.snippet?.playlistId || "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
+      audioUrl: `https://www.youtube.com/watch?v=${item.contentDetails?.videoId}`,
+      genre: "Music",
+      playsCount: 0
+    }));
+
+    console.log(`Fetched ${tracks.length} tracks from playlist ${playlistId}`);
+
+    res.json({
+      success: true,
+      tracks: tracks,
+      count: tracks.length,
+      playlistId: playlistId
+    });
+
+  } catch (error) {
+    console.error("Error fetching playlist tracks:", error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Failed to fetch playlist tracks",
+      tracks: []
+    });
+  }
+});
+
+// ============================================================
+// CRITICAL ENDPOINT #3: GET /api/youtube/recommendations
+// PURPOSE: Fetch trending songs/music videos
+// ============================================================
+app.get("/api/youtube/recommendations", async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req);
+    const maxResults = req.query.maxResults || "20";
+    const videoCategoryId = req.query.videoCategoryId || "10"; // 10 = Music category
+
+    // Fetch trending videos from Music category
+    const url = "https://www.googleapis.com/youtube/v3/videos";
+    const params = new URLSearchParams({
+      part: "snippet,statistics",
+      chart: "mostPopular",
+      videoCategoryId: String(videoCategoryId), // CRITICAL: Filter to music!
+      maxResults: String(maxResults),
+      regionCode: "US"
+    });
+
+    if (accessToken) {
+      params.append("access_token", accessToken);
+    } else {
+      params.append("key", process.env.YOUTUBE_API_KEY || "");
+    }
+
+    const response = await fetch(`${url}?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`YouTube API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Transform YouTube videos to our Track format
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.id,
+      youtubeVideoId: item.id,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown Artist",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
+      audioUrl: `https://www.youtube.com/watch?v=${item.id}`,
+      genre: "Music",
+      playsCount: parseInt(item.statistics?.viewCount || "0")
+    }));
+
+    // Split into quick picks and full trending list
+    const quickPicks = tracks.slice(0, 5);
+
+    console.log(`Fetched ${tracks.length} trending music videos`);
+
+    res.json({
+      success: true,
+      trendingTracks: tracks,
+      quickPicks: quickPicks,
+      count: tracks.length
+    });
+
+  } catch (error) {
+    console.error("Error fetching recommendations:", error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Failed to fetch recommendations",
+      trendingTracks: [],
+      quickPicks: []
+    });
+  }
+});
+
+// ============================================================
+// CRITICAL ENDPOINT #4: GET /api/youtube/search
+// PURPOSE: Search for music on YouTube
+// ============================================================
+app.get("/api/youtube/search", async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    const accessToken = await getValidAccessToken(req);
+
+    if (!query) {
+      return res.status(400).json({
+        error: "Search query required",
+        tracks: [],
+        albums: []
+      });
+    }
+
+    // Search YouTube Music
+    const url = "https://www.googleapis.com/youtube/v3/search";
+    const params = new URLSearchParams({
+      q: query,
+      part: "snippet",
+      type: "video",
+      videoCategoryId: "10", // MUSIC CATEGORY
+      maxResults: "20",
+      relevanceLanguage: "en"
+    });
+
+    if (accessToken) {
+      params.append("access_token", accessToken);
+    } else {
+      params.append("key", process.env.YOUTUBE_API_KEY || "");
+    }
+
+    const response = await fetch(`${url}?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`YouTube API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Transform results to Track format
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.id?.videoId || item.id,
+      youtubeVideoId: item.id?.videoId,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown Artist",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
+      audioUrl: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+      genre: "Music",
+      playsCount: 0
+    }));
+
+    console.log(`Search results for "${query}": ${tracks.length} items`);
+
+    res.json({
+      success: true,
+      tracks: tracks,
+      albums: [],
+      count: tracks.length,
+      query: query
+    });
+
+  } catch (error) {
+    console.error("Error searching YouTube:", error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Search failed",
+      tracks: [],
+      albums: []
+    });
+  }
+});
+
 async function startServer() {
   if (process.env.VITE_DEV === "true") {
     try {
