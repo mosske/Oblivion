@@ -3,251 +3,381 @@ import { Playlist, Track } from "../types";
 import { DragDropPlaylist } from "./DragDropPlaylist";
 import { cleanTrackTitle } from "../utils/formatters";
 import {
-  Library,
-  Sparkles,
-  Plus,
   Play,
-  DownloadCloud,
+  Plus,
   Trash2,
-  Edit,
-  Heart,
-  HardDrive,
-  RefreshCcw,
-  CheckCircle2,
-  LayoutGrid,
+  Grid3x3,
   List,
-  Columns,
-  ArrowUpDown,
-  Eye,
-  EyeOff,
-  Music
+  Download,
+  Music,
+  ChevronRight,
+  Loader,
 } from "lucide-react";
-import { getAllCachedTracks, getCacheSizeMB, removeCachedTrack } from "../utils/offlineCache";
 
-interface LibraryViewProps {
-  playlists: Playlist[];
-  selectedPlaylist: Playlist | null;
-  onSelectPlaylist: (playlist: Playlist | null) => void;
-  onCreatePlaylist: () => void;
-  onEditPlaylist: (playlist: Playlist) => void;
-  onDeletePlaylist: (playlistId: string) => void;
-  onReorderPlaylistTracks: (playlistId: string, newTracks: Track[]) => void;
-  onRemoveTrackFromPlaylist: (playlistId: string, trackId: string) => void;
+export interface LibraryViewProps {
+  playerState: any;
   onPlayTrack: (track: Track) => void;
   onPlayQueue: (tracks: Track[], startIndex: number) => void;
-  currentTrackId?: string;
-  likedTrackIds: string[];
-  currentTrack?: Track | null;
-  onAddTrackToPlaylist: (track: Track, playlistId: string) => void;
-  onSyncPlaylistTracks?: (playlistId: string) => void;
+  onAddToQueue: (track: Track) => void;
 }
 
-export const LibraryView: React.FC<LibraryViewProps> = ({
-  playlists,
-  selectedPlaylist,
-  onSelectPlaylist,
-  onCreatePlaylist,
-  onEditPlaylist,
-  onDeletePlaylist,
-  onReorderPlaylistTracks,
-  onRemoveTrackFromPlaylist,
+export function LibraryView({
+  playerState,
   onPlayTrack,
   onPlayQueue,
-  currentTrackId,
-  likedTrackIds,
-  currentTrack,
-  onAddTrackToPlaylist,
-  onSyncPlaylistTracks,
-}) => {
+  onAddToQueue,
+}: LibraryViewProps) {
+  // STATE MANAGEMENT
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [cachedTracks, setCachedTracks] = useState<Track[]>([]);
   const [cacheSizeMB, setCacheSizeMB] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
 
-  useEffect(() => {
-    const loadCachedTracks = async () => {
-      const cached = await getAllCachedTracks();
-      setCachedTracks(cached);
-      const size = await getCacheSizeMB();
-      setCacheSizeMB(size);
-    };
-    loadCachedTracks();
-  }, []);
+  // CRITICAL FIX: ADD PLAYLIST LOADING STATE
+  const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
+  const [loadingPlaylists, setLoadingPlaylists] = useState(false);
+  const [playlistError, setPlaylistError] = useState<string | null>(null);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
+    null
+  );
+  const [playlistTracks, setPlaylistTracks] = useState<Track[]>([]);
+  const [loadingTracks, setLoadingTracks] = useState(false);
 
-  const handleRemoveFromCache = async (trackId: string) => {
-    await removeCachedTrack(trackId);
-    const updated = cachedTracks.filter((t) => t.id !== trackId);
-    setCachedTracks(updated);
+  // CRITICAL FIX: FETCH USER PLAYLISTS ON MOUNT
+  useEffect(() => {
+    const fetchUserPlaylists = async () => {
+      // Only fetch if user is authenticated
+      if (!playerState?.user?.id) {
+        console.log("Not authenticated, skipping playlist fetch");
+        return;
+      }
+
+      try {
+        setLoadingPlaylists(true);
+        setPlaylistError(null);
+
+        console.log("Fetching user playlists...");
+
+        // Call API to get user's YouTube playlists
+        const response = await fetch("/api/youtube/playlists", {
+          headers: {
+            Authorization: `Bearer ${playerState.tokens?.access_token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch playlists: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Playlists fetched:", data);
+
+        // Handle response structure
+        const playlists = data.playlists || data.items || [];
+        setUserPlaylists(playlists);
+
+        if (playlists.length === 0) {
+          setPlaylistError("No playlists found");
+        }
+      } catch (error) {
+        console.error("Error fetching playlists:", error);
+        setPlaylistError(
+          error instanceof Error ? error.message : "Failed to load playlists"
+        );
+      } finally {
+        setLoadingPlaylists(false);
+      }
+    };
+
+    fetchUserPlaylists();
+  }, [playerState?.user?.id, playerState?.tokens?.access_token]);
+
+  // CRITICAL FIX: LOAD PLAYLIST TRACKS WHEN PLAYLIST SELECTED
+  const handlePlaylistClick = async (playlist: Playlist) => {
+    setSelectedPlaylistId(playlist.id);
+
+    // If tracks already exist in playlist object, use them
+    if (playlist.tracks && playlist.tracks.length > 0) {
+      setPlaylistTracks(playlist.tracks);
+      return;
+    }
+
+    // Otherwise, fetch tracks from API
+    try {
+      setLoadingTracks(true);
+
+      const response = await fetch(`/api/youtube/playlists/${playlist.id}`, {
+        headers: {
+          Authorization: `Bearer ${playerState.tokens?.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch playlist tracks: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const tracks = data.tracks || data.items || [];
+
+      setPlaylistTracks(tracks);
+      console.log(`Loaded ${tracks.length} tracks from playlist`);
+    } catch (error) {
+      console.error("Error fetching playlist tracks:", error);
+    } finally {
+      setLoadingTracks(false);
+    }
   };
 
-  return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-slate-900 to-slate-950 overflow-hidden">
-      <div className="flex-1 overflow-y-auto space-y-6 p-6">
-        {/* Playlists Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Library className="w-6 h-6 text-cyan-400" />
-              Your Playlists
-            </h2>
-            <button
-              onClick={onCreatePlaylist}
-              className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all font-medium flex items-center gap-2 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              New Playlist
-            </button>
-          </div>
+  // CRITICAL FIX: PLAY TRACKS FROM PLAYLIST
+  const handlePlayPlaylist = (playlist: Playlist) => {
+    if (!onPlayQueue) return;
 
-          {playlists.length === 0 ? (
-            <div className="p-8 text-center bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <Music className="w-12 h-12 mx-auto mb-3 text-slate-500" />
-              <p className="text-slate-400">No playlists yet. Create one to get started!</p>
+    const tracks = playlist.tracks || playlistTracks;
+    if (tracks && tracks.length > 0) {
+      onPlayQueue(tracks, 0);
+      console.log(`Playing ${playlist.name} with ${tracks.length} tracks`);
+    }
+  };
+
+  // RENDER
+  return (
+    <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950 min-h-screen">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Music className="w-8 h-8 text-cyan-400" />
+          <h1 className="text-3xl font-bold text-white">Your Library</h1>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-2 rounded ${
+              viewMode === "grid"
+                ? "bg-cyan-500 text-white"
+                : "bg-slate-700 text-gray-300"
+            }`}
+          >
+            <Grid3x3 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 rounded ${
+              viewMode === "list"
+                ? "bg-cyan-500 text-white"
+                : "bg-slate-700 text-gray-300"
+            }`}
+          >
+            <List className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {loadingPlaylists && (
+        <div className="flex items-center justify-center py-12">
+          <Loader className="w-8 h-8 text-cyan-400 animate-spin" />
+          <span className="ml-4 text-gray-400">Loading playlists...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {playlistError && (
+        <div className="bg-red-900/20 border border-red-500 text-red-300 p-4 rounded mb-6">
+          ⚠️ {playlistError}
+        </div>
+      )}
+
+      {/* Playlists Grid / List */}
+      {!loadingPlaylists && userPlaylists.length > 0 && (
+        <>
+          <h2 className="text-xl font-semibold text-white mb-6">
+            Your YouTube Playlists ({userPlaylists.length})
+          </h2>
+
+          {viewMode === "grid" ? (
+            // GRID VIEW
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+              {userPlaylists.map((playlist) => (
+                <div
+                  key={playlist.id}
+                  className="group cursor-pointer"
+                  onClick={() => handlePlaylistClick(playlist)}
+                >
+                  <div className="relative overflow-hidden rounded-lg mb-4 bg-slate-800 aspect-square">
+                    {/* Playlist Cover Art */}
+                    {playlist.coverUrl ? (
+                      <img
+                        src={playlist.coverUrl}
+                        alt={playlist.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
+                        <Music className="w-12 h-12 text-white" />
+                      </div>
+                    )}
+
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayPlaylist(playlist);
+                        }}
+                        className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full p-3 transform scale-0 group-hover:scale-100 transition"
+                      >
+                        <Play className="w-6 h-6 ml-1" fill="white" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Playlist Info */}
+                  <h3 className="font-semibold text-white truncate group-hover:text-cyan-400 transition">
+                    {playlist.name}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {playlist.tracks?.length || 0} songs
+                  </p>
+                </div>
+              ))}
             </div>
           ) : (
-            <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "space-y-2"}>
-              {playlists.map((pl) => (
+            // LIST VIEW
+            <div className="space-y-2 mb-12">
+              {userPlaylists.map((playlist) => (
                 <div
-                  key={pl.id}
-                  onClick={() => onSelectPlaylist(pl)}
-                  className={`group rounded-lg overflow-hidden cursor-pointer transition-all ${
-                    selectedPlaylist?.id === pl.id
-                      ? "ring-2 ring-cyan-400 bg-slate-800/80"
-                      : "bg-slate-800/50 hover:bg-slate-800"
-                  } ${viewMode === "list" ? "p-3 flex items-center gap-3" : "p-3"}`}
+                  key={playlist.id}
+                  onClick={() => handlePlaylistClick(playlist)}
+                  className="flex items-center gap-4 p-4 bg-slate-800/50 hover:bg-slate-700 rounded cursor-pointer transition"
                 >
-                  <img
-                    src={
-                      pl.coverUrl ||
-                      pl.tracks?.[0]?.coverUrl ||
-                      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=300&q=80"
-                    }
-                    alt={pl.title}
-                    className={`object-cover rounded-md bg-slate-700 ${
-                      viewMode === "grid" ? "w-full aspect-square" : "w-12 h-12 shrink-0"
-                    }`}
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=300&q=80";
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-white truncate group-hover:text-cyan-300">{pl.title}</h3>
-                    <p className="text-xs text-slate-400">{pl.tracks?.length || 0} tracks</p>
+                  {/* Thumbnail */}
+                  <div className="w-16 h-16 rounded flex-shrink-0">
+                    {playlist.coverUrl ? (
+                      <img
+                        src={playlist.coverUrl}
+                        alt={playlist.name}
+                        className="w-full h-full object-cover rounded"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 rounded flex items-center justify-center">
+                        <Music className="w-8 h-8 text-white" />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-white truncate">
+                      {playlist.name}
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      {playlist.tracks?.length || 0} songs
+                    </p>
+                  </div>
+
+                  {/* Play Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayPlaylist(playlist);
+                    }}
+                    className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full p-2 transition"
+                  >
+                    <Play className="w-5 h-5 ml-0.5" fill="white" />
+                  </button>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </>
+      )}
 
-        {/* Selected Playlist Detail View */}
-        {selectedPlaylist ? (
-          <div className="space-y-6 animate-fade-in">
-            {/* Playlist Hero - PRIORITY 1 FIXES APPLIED HERE */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 p-6 rounded-3xl bg-slate-900/60 border border-slate-800/80">
-              <img
-                src={selectedPlaylist.coverUrl || selectedPlaylist.tracks?.[0]?.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=300&q=80"}
-                alt={selectedPlaylist.title}
-                loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=300&q=80";
-                }}
-                className="w-20 h-20 rounded-xl object-cover border border-slate-600 shadow-lg shrink-0"
-              />
+      {/* Playlist Detail / Tracks View */}
+      {selectedPlaylistId && playlistTracks.length > 0 && (
+        <>
+          <div className="mb-8">
+            <button
+              onClick={() => {
+                setSelectedPlaylistId(null);
+                setPlaylistTracks([]);
+              }}
+              className="text-cyan-400 hover:text-cyan-300 flex items-center gap-2 mb-6"
+            >
+              ← Back to Playlists
+            </button>
 
-              <div className="flex-1 space-y-2 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-2">
-                  {selectedPlaylist.isYouTubeSynced && (
-                    <span className="px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-cyan-400" />
-                      YouTube Synced
-                    </span>
-                  )}
-                </div>
-                <h1 className="text-3xl font-bold text-white">{selectedPlaylist.title}</h1>
-                <p className="text-slate-400 text-sm">{selectedPlaylist.tracks?.length || 0} tracks</p>
-              </div>
+            <h2 className="text-2xl font-bold text-white mb-6">
+              {userPlaylists.find((p) => p.id === selectedPlaylistId)?.name}
+            </h2>
 
-              <div className="flex gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => onPlayQueue(selectedPlaylist.tracks || [], 0)}
-                  className="flex-1 sm:flex-none px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all font-medium flex items-center justify-center gap-2"
-                >
-                  <Play className="w-4 h-4" />
-                  Play All
-                </button>
-                <button
-                  onClick={() => onEditPlaylist(selectedPlaylist)}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Tracks */}
-            {selectedPlaylist.tracks && selectedPlaylist.tracks.length > 0 ? (
-              <DragDropPlaylist
-                tracks={selectedPlaylist.tracks}
-                onReorder={(newTracks) => onReorderPlaylistTracks(selectedPlaylist.id, newTracks)}
-                onRemoveTrack={(trackId) => onRemoveTrackFromPlaylist(selectedPlaylist.id, trackId)}
-                onPlayTrack={onPlayTrack}
-                currentTrackId={currentTrackId}
-                likedTrackIds={likedTrackIds}
-              />
-            ) : (
-              <div className="p-8 text-center bg-slate-800/50 rounded-lg border border-slate-700/50">
-                <Music className="w-12 h-12 mx-auto mb-3 text-slate-500" />
-                <p className="text-slate-400">No tracks in this playlist. Add some to get started!</p>
+            {loadingTracks && (
+              <div className="flex items-center justify-center py-12">
+                <Loader className="w-6 h-6 text-cyan-400 animate-spin" />
               </div>
             )}
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Music className="w-16 h-16 mx-auto mb-4 text-slate-500" />
-              <p className="text-slate-400 text-lg">Select a playlist to view tracks</p>
-            </div>
-          </div>
-        )}
 
-        {/* Cached Tracks Section */}
-        {cachedTracks.length > 0 && (
-          <div className="border-t border-slate-700 pt-6">
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <HardDrive className="w-5 h-5 text-purple-400" />
-                Offline Cache ({cacheSizeMB.toFixed(1)}MB)
-              </h2>
-              <ArrowUpDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-            </div>
+            {!loadingTracks && (
+              <div className="space-y-2">
+                {playlistTracks.map((track, index) => (
+                  <div
+                    key={track.id}
+                    className="flex items-center gap-4 p-3 bg-slate-800/50 hover:bg-slate-700 rounded cursor-pointer transition group"
+                    onClick={() => onPlayTrack(track)}
+                  >
+                    {/* Index */}
+                    <span className="text-gray-400 w-6 text-right">
+                      {index + 1}
+                    </span>
 
-            {isExpanded && (
-              <div className="mt-4 space-y-2">
-                {cachedTracks.map((track) => (
-                  <div key={track.id} className="flex items-center justify-between p-2 bg-slate-800/50 rounded hover:bg-slate-800 transition-colors">
+                    {/* Cover */}
+                    <img
+                      src={track.coverUrl || ""}
+                      alt={track.title}
+                      className="w-12 h-12 rounded object-cover"
+                      loading="lazy"
+                    />
+
+                    {/* Track Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{track.title}</p>
-                      <p className="text-xs text-slate-400">{track.artist}</p>
+                      <p className="font-medium text-white truncate">
+                        {cleanTrackTitle(track.title)}
+                      </p>
+                      <p className="text-sm text-gray-400 truncate">
+                        {track.artist}
+                      </p>
                     </div>
+
+                    {/* Play Button */}
                     <button
-                      onClick={() => handleRemoveFromCache(track.id)}
-                      className="ml-2 p-1 hover:bg-red-500/20 rounded text-red-400 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPlayTrack(track);
+                      }}
+                      className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Play className="w-4 h-4 ml-0.5" fill="white" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+
+      {/* Empty State */}
+      {!loadingPlaylists && userPlaylists.length === 0 && !playlistError && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Music className="w-16 h-16 text-gray-500 mb-4" />
+          <p className="text-gray-400 text-lg">No playlists yet</p>
+          <p className="text-gray-500">Create a playlist on YouTube to see it here</p>
+        </div>
+      )}
     </div>
   );
-};
+}
+
+export default LibraryView;
