@@ -202,27 +202,26 @@ function sanitizeCredential(val: string | undefined | null): string {
   if (!val) return "";
   let clean = String(val).trim();
   while (
-    (clean.startsWith('\"') && clean.endsWith('\"')) ||
+    (clean.startsWith('"') && clean.endsWith('"')) ||
     (clean.startsWith("'") && clean.endsWith("'")) ||
     (clean.startsWith('`') && clean.endsWith('`'))
   ) {
     clean = clean.slice(1, -1).trim();
   }
-  clean = clean.replace(/[\\r\\n\\t\\f\\v]/g, "").trim();
+  clean = clean.replace(/[\r\n\t\f\v]/g, "").trim();
   return clean;
 }
 
-let storedClientId = "";
-let storedClientSecret = "";
-
 function getOAuthClientId(): string {
-  const envVal = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
-  return sanitizeCredential(storedClientId || envVal);
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
+  console.log("OAuth: clientId = ", clientId ? "present" : "MISSING");
+  return clientId;
 }
 
 function getOAuthClientSecret(): string {
-  const envVal = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
-  return sanitizeCredential(storedClientSecret || envVal);
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
+  console.log("OAuth: clientSecret = ", clientSecret ? "present" : "MISSING");
+  return clientSecret;
 }
 
 app.get("/api/auth/google/config", (req, res) => {
