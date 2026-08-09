@@ -63,80 +63,6 @@ declare module "express-session" {
 
 let localPlaylistsStore: any[] = [];
 
-async function getPlaylistItemsFromYouTube(accessToken: string, playlistId: string): Promise<any[]> {
-  try {
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems`;
-    const params = new URLSearchParams({
-      playlistId,
-      part: 'snippet,contentDetails',
-      maxResults: '50',
-      access_token: accessToken
-    });
-
-    const response = await fetch(`${url}?${params}`);
-    const data = await response.json();
-
-    if (!data.items) return [];
-
-    return data.items.map((item: any) => ({
-      id: item.contentDetails?.videoId || item.id,
-      youtubeVideoId: item.contentDetails?.videoId,
-      title: item.snippet?.title || 'Unknown',
-      artist: item.snippet?.channelTitle || 'Unknown Artist',
-      album: '',
-      duration: 0,
-      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
-      audioUrl: `https://www.youtube.com/watch?v=${item.contentDetails?.videoId}`,
-      genre: 'Music',
-      playsCount: 0
-    }));
-  } catch (err) {
-    console.error('Error fetching YouTube playlist items:', err);
-    return [];
-  }
-}
-
-async function searchYouTubeMusic(query: string, accessToken?: string): Promise<any[]> {
-  try {
-    const url = `https://www.googleapis.com/youtube/v3/search`;
-    const params = new URLSearchParams({
-      q: query,
-      part: 'snippet',
-      type: 'video',
-      videoCategoryId: '10',
-      maxResults: '20',
-      relevanceLanguage: 'en'
-    });
-
-    if (accessToken) {
-      params.append('access_token', accessToken);
-    } else {
-      params.append('key', process.env.YOUTUBE_API_KEY || '');
-    }
-
-    const response = await fetch(`${url}?${params}`);
-    const data = await response.json();
-
-    if (!data.items) return [];
-
-    return data.items.map((item: any) => ({
-      id: item.id?.videoId || item.id,
-      youtubeVideoId: item.id?.videoId,
-      title: item.snippet?.title || 'Unknown',
-      artist: item.snippet?.channelTitle || 'Unknown Artist',
-      album: '',
-      duration: 0,
-      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
-      audioUrl: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
-      genre: 'Music',
-      playsCount: 0
-    }));
-  } catch (err) {
-    console.error('Error searching YouTube:', err);
-    return [];
-  }
-}
-
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === "MY_GEMINI_API_KEY") return null;
@@ -198,29 +124,13 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
   return access_token;
 }
 
-function sanitizeCredential(val: string | undefined | null): string {
-  if (!val) return "";
-  let clean = String(val).trim();
-  while (
-    (clean.startsWith('"') && clean.endsWith('"')) ||
-    (clean.startsWith("'") && clean.endsWith("'")) ||
-    (clean.startsWith('`') && clean.endsWith('`'))
-  ) {
-    clean = clean.slice(1, -1).trim();
-  }
-  clean = clean.replace(/[\r\n\t\f\v]/g, "").trim();
-  return clean;
-}
-
 function getOAuthClientId(): string {
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || process.env.CLIENT_ID || "";
-  console.log("OAuth: clientId = ", clientId ? "present" : "MISSING");
   return clientId;
 }
 
 function getOAuthClientSecret(): string {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "";
-  console.log("OAuth: clientSecret = ", clientSecret ? "present" : "MISSING");
   return clientSecret;
 }
 
@@ -262,10 +172,10 @@ app.get("/api/auth/google/callback", async (req, res) => {
 
   try {
     if (!clientId) {
-      throw new Error("OAuth Client ID is missing. Please configure GOOGLE_CLIENT_ID.");
+      throw new Error("OAuth Client ID is missing.");
     }
     if (!clientSecret) {
-      throw new Error("OAuth Client Secret is missing or empty. Please configure GOOGLE_CLIENT_SECRET in Secrets or Settings.");
+      throw new Error("OAuth Client Secret is missing.");
     }
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -304,16 +214,7 @@ app.get("/api/auth/google/callback", async (req, res) => {
       req.session.save((saveErr) => {
         if (saveErr) {
           console.error("Session save error:", saveErr);
-          return res.send(`
-            <script>
-              if (window.opener) {
-                window.opener.postMessage({ type: 'OAUTH_ERROR', error: 'Session save failed' }, '*');
-                window.close();
-              } else {
-                window.location.href = '/?oauth_error=' + encodeURIComponent('Session save failed');
-              }
-            </script>
-          `);
+          return res.send(`<script>if (window.opener) { window.opener.postMessage({ type: 'OAUTH_ERROR', error: 'Session save failed' }, '*'); window.close(); }</script>`);
         }
 
         return res.send(`
@@ -331,36 +232,11 @@ app.get("/api/auth/google/callback", async (req, res) => {
         `);
       });
     } else {
-      const errDescription = tokenData.error_description || tokenData.error || "Failed to acquire tokens from Google";
-      console.error("Google OAuth token exchange error response:", {
-        status: tokenRes.status,
-        error: tokenData.error,
-        description: tokenData.error_description,
-        clientIdSnippet: clientId.slice(0, 15) + "...",
-        hasSecret: Boolean(clientSecret),
-        secretLen: clientSecret.length,
-      });
-
-      if (tokenData.error === "invalid_client" || errDescription.toLowerCase().includes("client secret")) {
-        throw new Error(
-          `The provided Google Client Secret is invalid or mismatched for Client ID (${clientId.slice(0, 18)}...). Please check Google Cloud Console Credentials and update the Client Secret in Settings.`
-        );
-      }
-      throw new Error(errDescription);
+      throw new Error("Failed to get tokens from Google");
     }
   } catch (err: any) {
-    const errorMsg = err.message || "OAuth token exchange error";
-    console.error("OAuth token exchange error:", errorMsg);
-    return res.send(`
-      <script>
-        if (window.opener) {
-          window.opener.postMessage({ type: 'OAUTH_ERROR', error: ${JSON.stringify(errorMsg)} }, '*');
-          window.close();
-        } else {
-          window.location.href = '/?oauth_error=${encodeURIComponent(errorMsg)}';
-        }
-      </script>
-    `);
+    console.error("OAuth error:", err);
+    return res.send(`<script>if (window.opener) { window.opener.postMessage({ type: 'OAUTH_ERROR', error: '${err.message}' }, '*'); window.close(); }</script>`);
   }
 });
 
@@ -384,166 +260,6 @@ app.post("/api/auth/logout", (req, res) => {
   });
 });
 
-app.get("/api/youtube/playlists", async (req, res) => {
-  try {
-    const accessToken = await getValidAccessToken(req);
-    if (!accessToken) {
-      return res.status(401).json({ error: "Not authenticated", playlists: [] });
-    }
-    const url = "https://www.googleapis.com/youtube/v3/playlists";
-    const params = new URLSearchParams({
-      part: "snippet,contentDetails",
-      mine: "true",
-      maxResults: "25",
-      access_token: accessToken
-    });
-    const response = await fetch(`${url}?${params}`);
-    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
-    const data = await response.json();
-    const playlists = (data.items || []).map((item: any) => ({
-      id: item.id,
-      name: item.snippet?.title || "Untitled Playlist",
-      description: item.snippet?.description || "",
-      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
-      tracks: [],
-      isPrivate: false,
-      createdAt: item.snippet?.publishedAt || new Date().toISOString(),
-      itemCount: item.contentDetails?.itemCount || 0
-    }));
-    console.log(`Fetched ${playlists.length} playlists for user`);
-    res.json({ success: true, playlists: playlists, count: playlists.length });
-  } catch (error) {
-    console.error("Error fetching playlists:", error);
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch playlists", playlists: [] });
-  }
-});
-
-app.get("/api/youtube/playlists/:playlistId", async (req, res) => {
-  try {
-    const { playlistId } = req.params;
-    const accessToken = await getValidAccessToken(req);
-    if (!playlistId) return res.status(400).json({ error: "Playlist ID required", tracks: [] });
-    const url = "https://www.googleapis.com/youtube/v3/playlistItems";
-    const params = new URLSearchParams({
-      playlistId: playlistId,
-      part: "snippet,contentDetails",
-      maxResults: "50",
-      access_token: accessToken || process.env.YOUTUBE_API_KEY || ""
-    });
-    const response = await fetch(`${url}?${params}`);
-    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
-    const data = await response.json();
-    const tracks = (data.items || []).map((item: any) => ({
-      id: item.contentDetails?.videoId || item.id,
-      youtubeVideoId: item.contentDetails?.videoId,
-      title: item.snippet?.title || "Unknown Song",
-      artist: item.snippet?.channelTitle || "Unknown Artist",
-      album: item.snippet?.playlistId || "",
-      duration: 0,
-      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
-      audioUrl: `https://www.youtube.com/watch?v=${item.contentDetails?.videoId}`,
-      genre: "Music",
-      playsCount: 0
-    }));
-    console.log(`Fetched ${tracks.length} tracks from playlist ${playlistId}`);
-    res.json({ success: true, tracks: tracks, count: tracks.length, playlistId: playlistId });
-  } catch (error) {
-    console.error("Error fetching playlist tracks:", error);
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch playlist tracks", tracks: [] });
-  }
-});
-
-app.get("/api/youtube/recommendations", async (req, res) => {
-  try {
-    const accessToken = await getValidAccessToken(req);
-    const maxResults = req.query.maxResults || "20";
-    const videoCategoryId = req.query.videoCategoryId || "10";
-    
-    const apiKey = process.env.YOUTUBE_API_KEY;
-    if (!accessToken && !apiKey) {
-      console.warn("⚠️ No YOUTUBE_API_KEY set - returning empty recommendations");
-      return res.json({ 
-        success: true, 
-        trendingTracks: [], 
-        quickPicks: [],
-        count: 0,
-        message: "Trending recommendations disabled. Set YOUTUBE_API_KEY environment variable to enable."
-      });
-    }
-
-    const url = "https://www.googleapis.com/youtube/v3/videos";
-    const params = new URLSearchParams({
-      part: "snippet,statistics",
-      chart: "mostPopular",
-      videoCategoryId: String(videoCategoryId),
-      maxResults: String(maxResults),
-      regionCode: "US"
-    });
-    if (accessToken) params.append("access_token", accessToken);
-    else params.append("key", apiKey || "");
-    const response = await fetch(`${url}?${params}`);
-    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
-    const data = await response.json();
-    const tracks = (data.items || []).map((item: any) => ({
-      id: item.id,
-      youtubeVideoId: item.id,
-      title: item.snippet?.title || "Unknown",
-      artist: item.snippet?.channelTitle || "Unknown Artist",
-      album: "",
-      duration: 0,
-      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
-      audioUrl: `https://www.youtube.com/watch?v=${item.id}`,
-      genre: "Music",
-      playsCount: parseInt(item.statistics?.viewCount || "0")
-    }));
-    const quickPicks = tracks.slice(0, 5);
-    console.log(`✅ Fetched ${tracks.length} trending music videos`);
-    res.json({ success: true, trendingTracks: tracks, quickPicks: quickPicks, count: tracks.length });
-  } catch (error) {
-    console.error("❌ Error fetching recommendations:", error);
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch recommendations", trendingTracks: [], quickPicks: [] });
-  }
-});
-
-app.get("/api/youtube/search", async (req, res) => {
-  try {
-    const query = req.query.q as string;
-    const accessToken = await getValidAccessToken(req);
-    if (!query) return res.status(400).json({ error: "Search query required", tracks: [], albums: [] });
-    const url = "https://www.googleapis.com/youtube/v3/search";
-    const params = new URLSearchParams({
-      q: query,
-      part: "snippet",
-      type: "video",
-      videoCategoryId: "10",
-      maxResults: "20",
-      relevanceLanguage: "en"
-    });
-    if (accessToken) params.append("access_token", accessToken);
-    else params.append("key", process.env.YOUTUBE_API_KEY || "");
-    const response = await fetch(`${url}?${params}`);
-    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
-    const data = await response.json();
-    const tracks = (data.items || []).map((item: any) => ({
-      id: item.id?.videoId || item.id,
-      youtubeVideoId: item.id?.videoId,
-      title: item.snippet?.title || "Unknown",
-      artist: item.snippet?.channelTitle || "Unknown Artist",
-      album: "",
-      duration: 0,
-      coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
-      audioUrl: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
-      genre: "Music",
-      playsCount: 0
-    }));
-    console.log(`Search results for "${query}": ${tracks.length} items`);
-    res.json({ success: true, tracks: tracks, albums: [], count: tracks.length, query: query });
-  } catch (error) {
-    console.error("Error searching YouTube:", error);
-    res.status(500).json({ error: error instanceof Error ? error.message : "Search failed", tracks: [], albums: [] });
-  }
-});
-
 async function startServer() {
   if (process.env.VITE_DEV === "true") {
     try {
@@ -564,7 +280,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Oblivion YouTube Music Server listening on http://0.0.0.0:${PORT}`);
+    console.log(`Oblivion Server listening on port ${PORT}`);
   });
 }
 
