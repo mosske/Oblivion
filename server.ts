@@ -458,6 +458,19 @@ app.get("/api/youtube/recommendations", async (req, res) => {
     const accessToken = await getValidAccessToken(req);
     const maxResults = req.query.maxResults || "20";
     const videoCategoryId = req.query.videoCategoryId || "10";
+    
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!accessToken && !apiKey) {
+      console.warn("⚠️ No YOUTUBE_API_KEY set - returning empty recommendations");
+      return res.json({ 
+        success: true, 
+        trendingTracks: [], 
+        quickPicks: [],
+        count: 0,
+        message: "Trending recommendations disabled. Set YOUTUBE_API_KEY environment variable to enable."
+      });
+    }
+
     const url = "https://www.googleapis.com/youtube/v3/videos";
     const params = new URLSearchParams({
       part: "snippet,statistics",
@@ -467,7 +480,7 @@ app.get("/api/youtube/recommendations", async (req, res) => {
       regionCode: "US"
     });
     if (accessToken) params.append("access_token", accessToken);
-    else params.append("key", process.env.YOUTUBE_API_KEY || "");
+    else params.append("key", apiKey || "");
     const response = await fetch(`${url}?${params}`);
     if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
     const data = await response.json();
@@ -484,10 +497,10 @@ app.get("/api/youtube/recommendations", async (req, res) => {
       playsCount: parseInt(item.statistics?.viewCount || "0")
     }));
     const quickPicks = tracks.slice(0, 5);
-    console.log(`Fetched ${tracks.length} trending music videos`);
+    console.log(`✅ Fetched ${tracks.length} trending music videos`);
     res.json({ success: true, trendingTracks: tracks, quickPicks: quickPicks, count: tracks.length });
   } catch (error) {
-    console.error("Error fetching recommendations:", error);
+    console.error("❌ Error fetching recommendations:", error);
     res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch recommendations", trendingTracks: [], quickPicks: [] });
   }
 });
