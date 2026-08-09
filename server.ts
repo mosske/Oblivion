@@ -116,6 +116,126 @@ app.post("/api/auth/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
+app.get("/api/youtube/playlists", async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req);
+    if (!accessToken) return res.status(401).json({ success: false, playlists: [], error: "Not authenticated" });
+    const url = "https://www.googleapis.com/youtube/v3/playlists";
+    const params = new URLSearchParams({ part: "snippet,contentDetails", mine: "true", maxResults: "25", access_token: accessToken });
+    const response = await fetch(`${url}?${params}`);
+    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
+    const data = await response.json();
+    const playlists = (data.items || []).map((item: any) => ({
+      id: item.id,
+      name: item.snippet?.title || "Untitled",
+      description: item.snippet?.description || "",
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      tracks: [],
+      isPrivate: false,
+      createdAt: item.snippet?.publishedAt || new Date().toISOString(),
+      itemCount: item.contentDetails?.itemCount || 0
+    }));
+    res.json({ success: true, playlists, count: playlists.length });
+  } catch (error) {
+    console.error("Playlists error:", error);
+    res.status(500).json({ success: false, playlists: [], error: error instanceof Error ? error.message : "Failed" });
+  }
+});
+
+app.get("/api/youtube/playlists/:playlistId", async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+    const accessToken = await getValidAccessToken(req);
+    if (!playlistId) return res.status(400).json({ success: false, tracks: [], error: "No ID" });
+    const url = "https://www.googleapis.com/youtube/v3/playlistItems";
+    const params = new URLSearchParams({ playlistId, part: "snippet,contentDetails", maxResults: "50", access_token: accessToken || process.env.YOUTUBE_API_KEY || "" });
+    const response = await fetch(`${url}?${params}`);
+    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
+    const data = await response.json();
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.contentDetails?.videoId || item.id,
+      youtubeVideoId: item.contentDetails?.videoId,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      audioUrl: `https://www.youtube.com/watch?v=${item.contentDetails?.videoId}`,
+      genre: "Music",
+      playsCount: 0
+    }));
+    res.json({ success: true, tracks, count: tracks.length, playlistId });
+  } catch (error) {
+    console.error("Playlist tracks error:", error);
+    res.status(500).json({ success: false, tracks: [], error: error instanceof Error ? error.message : "Failed" });
+  }
+});
+
+app.get("/api/youtube/recommendations", async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req);
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!accessToken && !apiKey) {
+      return res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
+    }
+    const url = "https://www.googleapis.com/youtube/v3/videos";
+    const params = new URLSearchParams({ part: "snippet,statistics", chart: "mostPopular", videoCategoryId: "10", maxResults: "20", regionCode: "US" });
+    if (accessToken) params.append("access_token", accessToken);
+    else params.append("key", apiKey || "");
+    const response = await fetch(`${url}?${params}`);
+    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
+    const data = await response.json();
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.id,
+      youtubeVideoId: item.id,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      audioUrl: `https://www.youtube.com/watch?v=${item.id}`,
+      genre: "Music",
+      playsCount: parseInt(item.statistics?.viewCount || "0")
+    }));
+    const quickPicks = tracks.slice(0, 5);
+    res.json({ success: true, trendingTracks: tracks, quickPicks, count: tracks.length });
+  } catch (error) {
+    console.error("Recommendations error:", error);
+    res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
+  }
+});
+
+app.get("/api/youtube/search", async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    const accessToken = await getValidAccessToken(req);
+    if (!query) return res.status(400).json({ success: false, tracks: [], albums: [], error: "No query" });
+    const url = "https://www.googleapis.com/youtube/v3/search";
+    const params = new URLSearchParams({ q: query, part: "snippet", type: "video", videoCategoryId: "10", maxResults: "20", relevanceLanguage: "en" });
+    if (accessToken) params.append("access_token", accessToken);
+    else params.append("key", process.env.YOUTUBE_API_KEY || "");
+    const response = await fetch(`${url}?${params}`);
+    if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
+    const data = await response.json();
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.id?.videoId || item.id,
+      youtubeVideoId: item.id?.videoId,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      audioUrl: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+      genre: "Music",
+      playsCount: 0
+    }));
+    res.json({ success: true, tracks, albums: [], count: tracks.length, query });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.json({ success: true, tracks: [], albums: [], count: 0 });
+  }
+});
+
 async function startServer() {
   const distPath = path.join(process.cwd(), "dist");
   app.use(express.static(distPath));
