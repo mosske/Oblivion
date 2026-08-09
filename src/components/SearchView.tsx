@@ -1,199 +1,367 @@
 import React, { useEffect, useState } from "react";
 import { Track, Playlist } from "../types";
-import { Search, Play, Plus, Sparkles, Music2, Check, Radio } from "lucide-react";
-import { cleanTrackTitle } from "../utils/formatters";
+import {
+  Search,
+  Play,
+  Plus,
+  Sparkles,
+  Music2,
+  ChevronRight,
+  Loader,
+  AlertCircle,
+} from "lucide-react";
 
-interface SearchViewProps {
+export interface SearchViewProps {
+  playerState: any;
   onPlayTrack: (track: Track) => void;
+  onPlayQueue: (tracks: Track[], startIndex: number) => void;
   onAddToQueue: (track: Track) => void;
-  onAddTrackToPlaylist: (track: Track, playlistId: string) => void;
-  playlists: Playlist[];
 }
 
-export const SearchView: React.FC<SearchViewProps> = ({
+export function SearchView({
+  playerState,
   onPlayTrack,
+  onPlayQueue,
   onAddToQueue,
-  onAddTrackToPlaylist,
-  playlists,
-}) => {
-  const [query, setQuery] = useState("Synthwave");
-  const [filter, setFilter] = useState<"all" | "track" | "album" | "artist">("all");
+}: SearchViewProps) {
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<Track[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [openPlaylistMenuId, setOpenPlaylistMenuId] = useState<string | null>(null);
+  const [albums, setAlbums] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"songs" | "albums">("songs");
+  const [filter, setFilter] = useState("all");
 
-  const fetchSearchResults = async (qStr: string) => {
-    if (!qStr.trim()) return;
-    setLoading(true);
+  // ENHANCED: Search function with debouncing
+  const handleSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setResults([]);
+      setAlbums([]);
+      return;
+    }
+
     try {
-      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(qStr)}&type=${filter}`);
-      const data = await res.json();
-      if (data.results) {
-        setResults(data.results);
+      setLoading(true);
+      setError(null);
+
+      console.log("Searching for:", searchQuery);
+
+      // Call search API - NOW AVAILABLE via new server endpoint!
+      const response = await fetch(
+        `/api/youtube/search?q=${encodeURIComponent(searchQuery)}&type=${filter}`,
+        {
+          headers: playerState?.tokens?.access_token
+            ? {
+                Authorization: `Bearer ${playerState.tokens.access_token}`,
+              }
+            : {},
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Search results:", data);
+
+      // Extract songs and albums
+      const songs = data.tracks || data.items || [];
+      const albumsData = data.albums || [];
+
+      setResults(songs);
+      setAlbums(albumsData);
+
+      if (songs.length === 0 && albumsData.length === 0) {
+        setError("No results found");
       }
     } catch (err) {
       console.error("Search error:", err);
+      setError(err instanceof Error ? err.message : "Search failed");
+      setResults([]);
+      setAlbums([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchSearchResults(query);
+      if (query) {
+        handleSearch(query);
+      }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query, filter]);
+  }, [query]);
 
-  const filteredResults = results.filter((item: any) => {
-    if (filter === "all") return true;
-    return item.type === filter;
-  });
+  // ENHANCED: Handle album click - fetch tracks from album
+  const handleAlbumClick = async (album: any) => {
+    try {
+      setLoading(true);
 
+      // Note: YouTube API search doesn't return albums per se,
+      // but we filter by artist instead
+      // In a real implementation, this would fetch related tracks by the artist
+      if (album.id || album.artistId) {
+        // Search for more tracks by this artist
+        const artistQuery = album.artist || album.title;
+        await handleSearch(artistQuery);
+      }
+
+      setActiveTab("songs");
+      console.log(`Showing tracks from album`);
+    } catch (err) {
+      console.error("Error loading album tracks:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to load album tracks"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ENHANCED: Handle song click - play it immediately
+  const handleSongClick = (track: Track) => {
+    // Verify track has required fields
+    if (!track.id || !track.title) {
+      console.error("Invalid track:", track);
+      return;
+    }
+
+    console.log("Playing track:", track.title);
+
+    // Call the onPlayTrack handler from parent
+    onPlayTrack(track);
+  };
+
+  // ENHANCED: Queue all results for continuous play
+  const handlePlayAll = () => {
+    if (!onPlayQueue || results.length === 0) return;
+
+    // Play all results starting from first
+    onPlayQueue(results, 0);
+    console.log(`Queued ${results.length} songs for playback`);
+  };
+
+  // RENDER
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 custom-scrollbar pb-28 select-none">
-      {/* Search Header Bar */}
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-white font-mono flex items-center gap-2">
-          <Search className="w-6 h-6 text-cyan-400" />
-          <span>Search YouTube Music</span>
+    <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950 min-h-screen">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+          <Search className="w-8 h-8 text-cyan-400" />
+          Search YouTube Music
         </h1>
 
-        <div className="relative max-w-2xl">
-          <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
           <input
             type="text"
+            placeholder="Search songs, albums, artists..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search songs, artists, albums, or genres..."
-            className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-2xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 shadow-xl transition-all"
+            className="w-full pl-10 pr-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-cyan-500 focus:outline-none transition"
           />
         </div>
+      </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {(["all", "track", "album", "artist"] as const).map((f) => (
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-900/20 border border-red-500 text-red-300 p-4 rounded mb-6 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5" />
+          {error}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader className="w-8 h-8 text-cyan-400 animate-spin" />
+          <span className="ml-4 text-gray-400">Searching...</span>
+        </div>
+      )}
+
+      {/* Results Found */}
+      {!loading && (results.length > 0 || albums.length > 0) && (
+        <>
+          {/* Tabs */}
+          <div className="flex gap-4 mb-6 border-b border-slate-700">
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all ${
-                filter === f
-                  ? "bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20"
-                  : "bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-800"
+              onClick={() => setActiveTab("songs")}
+              className={`px-4 py-2 font-semibold transition ${
+                activeTab === "songs"
+                  ? "text-cyan-400 border-b-2 border-cyan-400"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
-              {f === "all" ? "All Results" : f + "s"}
+              Songs ({results.length})
             </button>
-          ))}
-        </div>
-      </div>
+            {albums.length > 0 && (
+              <button
+                onClick={() => setActiveTab("albums")}
+                className={`px-4 py-2 font-semibold transition ${
+                  activeTab === "albums"
+                    ? "text-cyan-400 border-b-2 border-cyan-400"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Albums ({albums.length})
+              </button>
+            )}
+          </div>
 
-      {/* Results List */}
-      <div className="space-y-3">
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 bg-slate-900/60 rounded-2xl animate-pulse"></div>
-            ))}
-          </div>
-        ) : filteredResults.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-500 space-y-2">
-            <Music2 className="w-12 h-12 stroke-1" />
-            <p className="text-sm font-medium">No YouTube Music results found for "{query}".</p>
-          </div>
-        ) : (
-          filteredResults.map((item: any, idx: number) => (
-            <div
-              key={`sr_${item.id}_${idx}`}
-              className="group flex items-center justify-between p-3 rounded-2xl bg-slate-900/40 hover:bg-slate-800/80 border border-slate-800/50 hover:border-slate-700 transition-all relative"
-            >
-              <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-slate-800">
-                  <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => onPlayTrack(item)}
-                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+          {/* Songs Tab */}
+          {activeTab === "songs" && results.length > 0 && (
+            <>
+              {/* Play All Button */}
+              <div className="mb-6">
+                <button
+                  onClick={handlePlayAll}
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition"
+                >
+                  <Play className="w-5 h-5" fill="white" />
+                  Play All ({results.length})
+                </button>
+              </div>
+
+              {/* Songs List */}
+              <div className="space-y-2">
+                {results.map((track, index) => (
+                  <div
+                    key={track.id || index}
+                    className="flex items-center gap-4 p-3 bg-slate-800/50 hover:bg-slate-700 rounded cursor-pointer transition group"
+                    onClick={() => handleSongClick(track)}
                   >
-                    <Play className="w-5 h-5 text-white fill-white" />
-                  </button>
-                </div>
+                    {/* Index */}
+                    <span className="text-gray-400 w-6 text-right">
+                      {index + 1}
+                    </span>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4
-                      onClick={() => onPlayTrack(item)}
-                      className="text-sm font-bold text-white truncate cursor-pointer hover:text-cyan-300"
-                      title={item.title}
-                    >
-                      {cleanTrackTitle(item.title, item.artist)}
-                    </h4>
-                    {item.type && item.type !== "track" && (
-                      <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
-                        {item.type}
+                    {/* Cover Art */}
+                    {track.coverUrl && (
+                      <img
+                        src={track.coverUrl}
+                        alt={track.title}
+                        className="w-12 h-12 rounded object-cover"
+                        loading="lazy"
+                      />
+                    )}
+
+                    {/* Track Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white truncate">
+                        {track.title}
+                      </p>
+                      <p className="text-sm text-gray-400 truncate">
+                        {track.artist}
+                      </p>
+                    </div>
+
+                    {/* Duration */}
+                    {track.duration > 0 && (
+                      <span className="text-sm text-gray-400">
+                        {Math.floor(track.duration / 60)}:
+                        {String(track.duration % 60).padStart(2, "0")}
                       </span>
                     )}
+
+                    {/* Action Buttons */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSongClick(track);
+                      }}
+                      className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition"
+                      title="Play"
+                    >
+                      <Play className="w-4 h-4 ml-0.5" fill="white" />
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddToQueue(track);
+                      }}
+                      className="bg-slate-600 hover:bg-slate-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition"
+                      title="Add to queue"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
                   </div>
-                  <p className="text-xs text-slate-400 truncate">{item.artist}</p>
-                </div>
+                ))}
               </div>
+            </>
+          )}
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => onAddToQueue(item)}
-                  className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs flex items-center gap-1 transition-colors"
-                  title="Queue Next"
+          {/* Albums Tab */}
+          {activeTab === "albums" && albums.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {albums.map((album) => (
+                <div
+                  key={album.id}
+                  className="group cursor-pointer"
+                  onClick={() => handleAlbumClick(album)}
                 >
-                  <Radio className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="hidden sm:inline">Queue</span>
-                </button>
+                  <div className="relative overflow-hidden rounded-lg mb-4 bg-slate-800 aspect-square">
+                    {album.coverUrl && (
+                      <img
+                        src={album.coverUrl}
+                        alt={album.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition"
+                        loading="lazy"
+                      />
+                    )}
 
-                {/* Playlist addition dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setOpenPlaylistMenuId(openPlaylistMenuId === item.id ? null : item.id)
-                    }
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs flex items-center gap-1 transition-colors"
-                    title="Add to Playlist"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-
-                  {openPlaylistMenuId === item.id && (
-                    <div className="absolute right-0 top-10 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-30 space-y-1">
-                      <p className="text-[10px] font-mono text-slate-500 uppercase px-3 py-1">
-                        Add to Playlist
-                      </p>
-                      {playlists.map((pl, idx) => (
-                        <button
-                          key={`dd_pl_${pl.id}_${idx}`}
-                          onClick={() => {
-                            onAddTrackToPlaylist(item, pl.id);
-                            setOpenPlaylistMenuId(null);
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl truncate transition-colors flex items-center gap-2"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                          <span>{pl.title}</span>
-                        </button>
-                      ))}
+                    {/* Play Button */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAlbumClick(album);
+                        }}
+                        className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full p-3 transform scale-0 group-hover:scale-100 transition"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <button
-                  onClick={() => onPlayTrack(item)}
-                  className="p-2.5 bg-cyan-400 hover:bg-cyan-300 text-slate-950 rounded-xl transition-all active:scale-95 shadow-md shadow-cyan-400/20"
-                >
-                  <Play className="w-4 h-4 fill-slate-950" />
-                </button>
-              </div>
+                  {/* Album Info */}
+                  <h3 className="font-semibold text-white truncate group-hover:text-cyan-400 transition">
+                    {album.title}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {album.artist || album.tracks?.length || "Album"}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))
-        )}
-      </div>
+          )}
+        </>
+      )}
+
+      {/* Empty State */}
+      {!loading && query === "" && results.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Music2 className="w-16 h-16 text-gray-500 mb-4" />
+          <p className="text-gray-400 text-lg">Start searching for music</p>
+          <p className="text-gray-500">Enter a song, album, or artist name</p>
+        </div>
+      )}
+
+      {/* No Results State */}
+      {!loading && query !== "" && results.length === 0 && albums.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <AlertCircle className="w-16 h-16 text-gray-500 mb-4" />
+          <p className="text-gray-400 text-lg">No results found</p>
+          <p className="text-gray-500">Try a different search term</p>
+        </div>
+      )}
     </div>
   );
-};
+}
+
+export default SearchView;
