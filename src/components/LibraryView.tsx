@@ -27,7 +27,6 @@ export function LibraryView({
   onPlayQueue,
   onAddToQueue,
 }: LibraryViewProps) {
-  // STATE MANAGEMENT
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [cachedTracks, setCachedTracks] = useState<Track[]>([]);
@@ -47,7 +46,6 @@ export function LibraryView({
   // CRITICAL FIX: FETCH USER PLAYLISTS ON MOUNT
   useEffect(() => {
     const fetchUserPlaylists = async () => {
-      // Only fetch if user is authenticated
       if (!playerState?.user?.id) {
         console.log("Not authenticated, skipping playlist fetch");
         return;
@@ -59,7 +57,6 @@ export function LibraryView({
 
         console.log("Fetching user playlists...");
 
-        // Call API to get user's YouTube playlists
         const response = await fetch("/api/youtube/playlists", {
           headers: {
             Authorization: `Bearer ${playerState.tokens?.access_token}`,
@@ -73,7 +70,6 @@ export function LibraryView({
         const data = await response.json();
         console.log("Playlists fetched:", data);
 
-        // Handle response structure
         const playlists = data.playlists || data.items || [];
         setUserPlaylists(playlists);
 
@@ -93,17 +89,14 @@ export function LibraryView({
     fetchUserPlaylists();
   }, [playerState?.user?.id, playerState?.tokens?.access_token]);
 
-  // CRITICAL FIX: LOAD PLAYLIST TRACKS WHEN PLAYLIST SELECTED
   const handlePlaylistClick = async (playlist: Playlist) => {
     setSelectedPlaylistId(playlist.id);
 
-    // If tracks already exist in playlist object, use them
     if (playlist.tracks && playlist.tracks.length > 0) {
       setPlaylistTracks(playlist.tracks);
       return;
     }
 
-    // Otherwise, fetch tracks from API
     try {
       setLoadingTracks(true);
 
@@ -129,7 +122,6 @@ export function LibraryView({
     }
   };
 
-  // CRITICAL FIX: PLAY TRACKS FROM PLAYLIST
   const handlePlayPlaylist = (playlist: Playlist) => {
     if (!onPlayQueue) return;
 
@@ -140,10 +132,8 @@ export function LibraryView({
     }
   };
 
-  // RENDER
   return (
     <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950 min-h-screen">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Music className="w-8 h-8 text-cyan-400" />
@@ -173,7 +163,6 @@ export function LibraryView({
         </div>
       </div>
 
-      {/* Loading State */}
       {loadingPlaylists && (
         <div className="flex items-center justify-center py-12">
           <Loader className="w-8 h-8 text-cyan-400 animate-spin" />
@@ -181,14 +170,12 @@ export function LibraryView({
         </div>
       )}
 
-      {/* Error State */}
       {playlistError && (
         <div className="bg-red-900/20 border border-red-500 text-red-300 p-4 rounded mb-6">
           ⚠️ {playlistError}
         </div>
       )}
 
-      {/* Playlists Grid / List */}
       {!loadingPlaylists && userPlaylists.length > 0 && (
         <>
           <h2 className="text-xl font-semibold text-white mb-6">
@@ -196,7 +183,6 @@ export function LibraryView({
           </h2>
 
           {viewMode === "grid" ? (
-            // GRID VIEW
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
               {userPlaylists.map((playlist) => (
                 <div
@@ -205,7 +191,6 @@ export function LibraryView({
                   onClick={() => handlePlaylistClick(playlist)}
                 >
                   <div className="relative overflow-hidden rounded-lg mb-4 bg-slate-800 aspect-square">
-                    {/* Playlist Cover Art */}
                     {playlist.coverUrl ? (
                       <img
                         src={playlist.coverUrl}
@@ -219,7 +204,6 @@ export function LibraryView({
                       </div>
                     )}
 
-                    {/* Play Button Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                       <button
                         onClick={(e) => {
@@ -233,7 +217,6 @@ export function LibraryView({
                     </div>
                   </div>
 
-                  {/* Playlist Info */}
                   <h3 className="font-semibold text-white truncate group-hover:text-cyan-400 transition">
                     {playlist.name}
                   </h3>
@@ -244,7 +227,6 @@ export function LibraryView({
               ))}
             </div>
           ) : (
-            // LIST VIEW
             <div className="space-y-2 mb-12">
               {userPlaylists.map((playlist) => (
                 <div
@@ -252,7 +234,6 @@ export function LibraryView({
                   onClick={() => handlePlaylistClick(playlist)}
                   className="flex items-center gap-4 p-4 bg-slate-800/50 hover:bg-slate-700 rounded cursor-pointer transition"
                 >
-                  {/* Thumbnail */}
                   <div className="w-16 h-16 rounded flex-shrink-0">
                     {playlist.coverUrl ? (
                       <img
@@ -268,7 +249,6 @@ export function LibraryView({
                     )}
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-white truncate">
                       {playlist.name}
@@ -278,7 +258,6 @@ export function LibraryView({
                     </p>
                   </div>
 
-                  {/* Play Button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -295,7 +274,6 @@ export function LibraryView({
         </>
       )}
 
-      {/* Playlist Detail / Tracks View */}
       {selectedPlaylistId && playlistTracks.length > 0 && (
         <>
           <div className="mb-8">
@@ -327,12 +305,10 @@ export function LibraryView({
                     className="flex items-center gap-4 p-3 bg-slate-800/50 hover:bg-slate-700 rounded cursor-pointer transition group"
                     onClick={() => onPlayTrack(track)}
                   >
-                    {/* Index */}
                     <span className="text-gray-400 w-6 text-right">
                       {index + 1}
                     </span>
 
-                    {/* Cover */}
                     <img
                       src={track.coverUrl || ""}
                       alt={track.title}
@@ -340,7 +316,6 @@ export function LibraryView({
                       loading="lazy"
                     />
 
-                    {/* Track Info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-white truncate">
                         {cleanTrackTitle(track.title)}
@@ -350,7 +325,6 @@ export function LibraryView({
                       </p>
                     </div>
 
-                    {/* Play Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -368,7 +342,6 @@ export function LibraryView({
         </>
       )}
 
-      {/* Empty State */}
       {!loadingPlaylists && userPlaylists.length === 0 && !playlistError && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Music className="w-16 h-16 text-gray-500 mb-4" />
