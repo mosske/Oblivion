@@ -32,7 +32,6 @@ export function SearchView({
   const [activeTab, setActiveTab] = useState<"songs" | "albums">("songs");
   const [filter, setFilter] = useState("all");
 
-  // ENHANCED: Search function with debouncing
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults([]);
@@ -46,7 +45,6 @@ export function SearchView({
 
       console.log("Searching for:", searchQuery);
 
-      // Call search API - NOW AVAILABLE via new server endpoint!
       const response = await fetch(
         `/api/youtube/search?q=${encodeURIComponent(searchQuery)}&type=${filter}`,
         {
@@ -65,7 +63,6 @@ export function SearchView({
       const data = await response.json();
       console.log("Search results:", data);
 
-      // Extract songs and albums
       const songs = data.tracks || data.items || [];
       const albumsData = data.albums || [];
 
@@ -85,7 +82,6 @@ export function SearchView({
     }
   };
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query) {
@@ -96,16 +92,11 @@ export function SearchView({
     return () => clearTimeout(timer);
   }, [query]);
 
-  // ENHANCED: Handle album click - fetch tracks from album
   const handleAlbumClick = async (album: any) => {
     try {
       setLoading(true);
 
-      // Note: YouTube API search doesn't return albums per se,
-      // but we filter by artist instead
-      // In a real implementation, this would fetch related tracks by the artist
       if (album.id || album.artistId) {
-        // Search for more tracks by this artist
         const artistQuery = album.artist || album.title;
         await handleSearch(artistQuery);
       }
@@ -122,9 +113,7 @@ export function SearchView({
     }
   };
 
-  // ENHANCED: Handle song click - play it immediately
   const handleSongClick = (track: Track) => {
-    // Verify track has required fields
     if (!track.id || !track.title) {
       console.error("Invalid track:", track);
       return;
@@ -132,30 +121,24 @@ export function SearchView({
 
     console.log("Playing track:", track.title);
 
-    // Call the onPlayTrack handler from parent
     onPlayTrack(track);
   };
 
-  // ENHANCED: Queue all results for continuous play
   const handlePlayAll = () => {
     if (!onPlayQueue || results.length === 0) return;
 
-    // Play all results starting from first
     onPlayQueue(results, 0);
     console.log(`Queued ${results.length} songs for playback`);
   };
 
-  // RENDER
   return (
     <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950 min-h-screen">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
           <Search className="w-8 h-8 text-cyan-400" />
           Search YouTube Music
         </h1>
 
-        {/* Search Input */}
         <div className="relative">
           <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
           <input
@@ -168,7 +151,6 @@ export function SearchView({
         </div>
       </div>
 
-      {/* Error State */}
       {error && (
         <div className="bg-red-900/20 border border-red-500 text-red-300 p-4 rounded mb-6 flex items-center gap-2">
           <AlertCircle className="w-5 h-5" />
@@ -176,7 +158,6 @@ export function SearchView({
         </div>
       )}
 
-      {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center py-12">
           <Loader className="w-8 h-8 text-cyan-400 animate-spin" />
@@ -184,10 +165,8 @@ export function SearchView({
         </div>
       )}
 
-      {/* Results Found */}
       {!loading && (results.length > 0 || albums.length > 0) && (
         <>
-          {/* Tabs */}
           <div className="flex gap-4 mb-6 border-b border-slate-700">
             <button
               onClick={() => setActiveTab("songs")}
@@ -213,10 +192,8 @@ export function SearchView({
             )}
           </div>
 
-          {/* Songs Tab */}
           {activeTab === "songs" && results.length > 0 && (
             <>
-              {/* Play All Button */}
               <div className="mb-6">
                 <button
                   onClick={handlePlayAll}
@@ -227,7 +204,6 @@ export function SearchView({
                 </button>
               </div>
 
-              {/* Songs List */}
               <div className="space-y-2">
                 {results.map((track, index) => (
                   <div
@@ -235,12 +211,10 @@ export function SearchView({
                     className="flex items-center gap-4 p-3 bg-slate-800/50 hover:bg-slate-700 rounded cursor-pointer transition group"
                     onClick={() => handleSongClick(track)}
                   >
-                    {/* Index */}
                     <span className="text-gray-400 w-6 text-right">
                       {index + 1}
                     </span>
 
-                    {/* Cover Art */}
                     {track.coverUrl && (
                       <img
                         src={track.coverUrl}
@@ -250,7 +224,6 @@ export function SearchView({
                       />
                     )}
 
-                    {/* Track Info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-white truncate">
                         {track.title}
@@ -260,7 +233,6 @@ export function SearchView({
                       </p>
                     </div>
 
-                    {/* Duration */}
                     {track.duration > 0 && (
                       <span className="text-sm text-gray-400">
                         {Math.floor(track.duration / 60)}:
@@ -268,7 +240,6 @@ export function SearchView({
                       </span>
                     )}
 
-                    {/* Action Buttons */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -296,7 +267,6 @@ export function SearchView({
             </>
           )}
 
-          {/* Albums Tab */}
           {activeTab === "albums" && albums.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {albums.map((album) => (
@@ -315,7 +285,6 @@ export function SearchView({
                       />
                     )}
 
-                    {/* Play Button */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                       <button
                         onClick={(e) => {
@@ -329,7 +298,6 @@ export function SearchView({
                     </div>
                   </div>
 
-                  {/* Album Info */}
                   <h3 className="font-semibold text-white truncate group-hover:text-cyan-400 transition">
                     {album.title}
                   </h3>
@@ -343,7 +311,6 @@ export function SearchView({
         </>
       )}
 
-      {/* Empty State */}
       {!loading && query === "" && results.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Music2 className="w-16 h-16 text-gray-500 mb-4" />
@@ -352,7 +319,6 @@ export function SearchView({
         </div>
       )}
 
-      {/* No Results State */}
       {!loading && query !== "" && results.length === 0 && albums.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <AlertCircle className="w-16 h-16 text-gray-500 mb-4" />
