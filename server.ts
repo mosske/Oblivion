@@ -116,6 +116,34 @@ app.post("/api/auth/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
+app.get("/api/youtube/playlists", async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req);
+    if (!accessToken) {
+      return res.status(401).json({ success: false, playlists: [] });
+    }
+    const response = await fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&mine=true&maxResults=25&access_token=" + accessToken);
+    if (!response.ok) {
+      return res.status(500).json({ success: false, playlists: [] });
+    }
+    const data = await response.json();
+    const playlists = (data.items || []).map((item: any) => ({
+      id: item.id,
+      name: item.snippet?.title || "Untitled",
+      description: item.snippet?.description || "",
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      tracks: [],
+      isPrivate: false,
+      createdAt: item.snippet?.publishedAt || new Date().toISOString(),
+      itemCount: item.contentDetails?.itemCount || 0,
+    }));
+    res.json({ success: true, playlists, count: playlists.length });
+  } catch (error) {
+    console.error("Playlists error:", error);
+    res.status(500).json({ success: false, playlists: [] });
+  }
+});
+
 async function startServer() {
   const distPath = path.join(process.cwd(), "dist");
   app.use(express.static(distPath));
