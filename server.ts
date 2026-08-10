@@ -182,19 +182,19 @@ app.get("/api/youtube/playlists/:playlistId", async (req, res) => {
 
 app.get("/api/youtube/recommendations", async (req, res) => {
   try {
-    const accessToken = await getValidAccessToken(req);
-    const apiKey = process.env.YOUTUBE_API_KEY || "";
-    if (!accessToken && !apiKey) {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) {
       return res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
     }
     const url = "https://www.googleapis.com/youtube/v3/videos";
-    let queryStr = "part=snippet,statistics&chart=mostPopular&videoCategoryId=10&maxResults=20&regionCode=US";
-    if (accessToken) {
-      queryStr += "&access_token=" + accessToken;
-    } else if (apiKey) {
-      queryStr += "&key=" + apiKey;
-    }
-    const response = await fetch(url + "?" + queryStr);
+    const params = new URLSearchParams();
+    params.append("part", "snippet,statistics");
+    params.append("chart", "mostPopular");
+    params.append("videoCategoryId", "10");
+    params.append("maxResults", "20");
+    params.append("regionCode", "US");
+    params.append("key", apiKey);
+    const response = await fetch(url + "?" + params.toString());
     if (!response.ok) {
       return res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
     }
@@ -216,6 +216,49 @@ app.get("/api/youtube/recommendations", async (req, res) => {
   } catch (error) {
     console.error("Recommendations error:", error);
     res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
+  }
+});
+
+app.get("/api/youtube/search", async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    if (!query) {
+      return res.status(400).json({ success: false, tracks: [], albums: [] });
+    }
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) {
+      return res.json({ success: true, tracks: [], albums: [], count: 0 });
+    }
+    const url = "https://www.googleapis.com/youtube/v3/search";
+    const params = new URLSearchParams();
+    params.append("q", query);
+    params.append("part", "snippet");
+    params.append("type", "video");
+    params.append("videoCategoryId", "10");
+    params.append("maxResults", "20");
+    params.append("relevanceLanguage", "en");
+    params.append("key", apiKey);
+    const response = await fetch(url + "?" + params.toString());
+    if (!response.ok) {
+      return res.json({ success: true, tracks: [], albums: [], count: 0 });
+    }
+    const data = await response.json();
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.id?.videoId || item.id,
+      youtubeVideoId: item.id?.videoId,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      audioUrl: "https://www.youtube.com/watch?v=" + item.id?.videoId,
+      genre: "Music",
+      playsCount: 0,
+    }));
+    res.json({ success: true, tracks, albums: [], count: tracks.length });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.json({ success: true, tracks: [], albums: [], count: 0 });
   }
 });
 
