@@ -144,6 +144,42 @@ app.get("/api/youtube/playlists", async (req, res) => {
   }
 });
 
+app.get("/api/youtube/playlists/:playlistId", async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+    const accessToken = await getValidAccessToken(req);
+    if (!playlistId) {
+      return res.status(400).json({ success: false, tracks: [] });
+    }
+    const apiKey = process.env.YOUTUBE_API_KEY || "";
+    const token = accessToken || apiKey;
+    if (!token) {
+      return res.status(401).json({ success: false, tracks: [] });
+    }
+    const response = await fetch("https://www.googleapis.com/youtube/v3/playlistItems?playlistId=" + playlistId + "&part=snippet,contentDetails&maxResults=50&" + (accessToken ? "access_token=" + accessToken : "key=" + apiKey));
+    if (!response.ok) {
+      return res.status(500).json({ success: false, tracks: [] });
+    }
+    const data = await response.json();
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.contentDetails?.videoId || item.id,
+      youtubeVideoId: item.contentDetails?.videoId,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      audioUrl: "https://www.youtube.com/watch?v=" + item.contentDetails?.videoId,
+      genre: "Music",
+      playsCount: 0,
+    }));
+    res.json({ success: true, tracks, count: tracks.length });
+  } catch (error) {
+    console.error("Playlist tracks error:", error);
+    res.status(500).json({ success: false, tracks: [] });
+  }
+});
+
 async function startServer() {
   const distPath = path.join(process.cwd(), "dist");
   app.use(express.static(distPath));
