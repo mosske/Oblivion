@@ -180,6 +180,45 @@ app.get("/api/youtube/playlists/:playlistId", async (req, res) => {
   }
 });
 
+app.get("/api/youtube/recommendations", async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req);
+    const apiKey = process.env.YOUTUBE_API_KEY || "";
+    if (!accessToken && !apiKey) {
+      return res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
+    }
+    const url = "https://www.googleapis.com/youtube/v3/videos";
+    let queryStr = "part=snippet,statistics&chart=mostPopular&videoCategoryId=10&maxResults=20&regionCode=US";
+    if (accessToken) {
+      queryStr += "&access_token=" + accessToken;
+    } else if (apiKey) {
+      queryStr += "&key=" + apiKey;
+    }
+    const response = await fetch(url + "?" + queryStr);
+    if (!response.ok) {
+      return res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
+    }
+    const data = await response.json();
+    const tracks = (data.items || []).map((item: any) => ({
+      id: item.id,
+      youtubeVideoId: item.id,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      audioUrl: "https://www.youtube.com/watch?v=" + item.id,
+      genre: "Music",
+      playsCount: parseInt(item.statistics?.viewCount || "0"),
+    }));
+    const quickPicks = tracks.slice(0, 5);
+    res.json({ success: true, trendingTracks: tracks, quickPicks, count: tracks.length });
+  } catch (error) {
+    console.error("Recommendations error:", error);
+    res.json({ success: true, trendingTracks: [], quickPicks: [], count: 0 });
+  }
+});
+
 async function startServer() {
   const distPath = path.join(process.cwd(), "dist");
   app.use(express.static(distPath));
