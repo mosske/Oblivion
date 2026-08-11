@@ -6,7 +6,11 @@ interface Playlist {
   itemCount: number;
 }
 
-export function LibraryView() {
+interface LibraryViewProps {
+  onPlaylistSelect?: (playlistId: string, playlistName: string) => void;
+}
+
+export function LibraryView({ onPlaylistSelect }: LibraryViewProps) {
   const [playlists, setPlaylists] = React.useState<Playlist[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
@@ -70,6 +74,7 @@ export function LibraryView() {
         {playlists.map((playlist) => (
           <div
             key={playlist.id}
+            onClick={() => onPlaylistSelect?.(playlist.id, playlist.name)}
             className="bg-slate-800/50 p-4 rounded hover:bg-slate-700/50 cursor-pointer transition"
           >
             <h3 className="font-semibold">{playlist.name}</h3>
