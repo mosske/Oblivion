@@ -4,11 +4,23 @@ import HomeView from './components/HomeView';
 import SearchView from './components/SearchView';
 import LibraryView from './components/LibraryView';
 import PlaylistDetailView from './components/PlaylistDetailView';
+import Player from './components/Player';
+
+interface Track {
+  id: string;
+  youtubeVideoId: string;
+  title: string;
+  artist: string;
+  coverUrl: string;
+}
 
 export function App() {
   const [currentView, setCurrentView] = React.useState<'home' | 'search' | 'library'>('home');
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = React.useState<{ id: string; name: string } | null>(null);
+  const [currentTrack, setCurrentTrack] = React.useState<Track | null>(null);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [playlistTracks, setPlaylistTracks] = React.useState<Track[]>([]);
 
   React.useEffect(() => {
     const checkAuth = async () => {
@@ -90,6 +102,38 @@ export function App() {
     setSelectedPlaylist(null);
   };
 
+  const handleTrackSelect = (track: Track) => {
+    setCurrentTrack(track);
+    setIsPlaying(true);
+  };
+
+  const handlePlaylistTrackSelect = (track: Track) => {
+    setPlaylistTracks([track, ...playlistTracks.filter((t) => t.id !== track.id)]);
+    handleTrackSelect(track);
+  };
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleNext = () => {
+    if (selectedPlaylist && playlistTracks.length > 0) {
+      const currentIndex = playlistTracks.findIndex((t) => t.id === currentTrack?.id);
+      if (currentIndex < playlistTracks.length - 1) {
+        setCurrentTrack(playlistTracks[currentIndex + 1]);
+      }
+    }
+  };
+
+  const handlePrevious = () => {
+    if (selectedPlaylist && playlistTracks.length > 0) {
+      const currentIndex = playlistTracks.findIndex((t) => t.id === currentTrack?.id);
+      if (currentIndex > 0) {
+        setCurrentTrack(playlistTracks[currentIndex - 1]);
+      }
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white">
       <div className="w-48 bg-slate-950/50 border-r border-slate-700 p-4 flex flex-col">
@@ -149,12 +193,13 @@ export function App() {
           )}
         </button>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 overflow-auto pb-32">
         {selectedPlaylist ? (
           <PlaylistDetailView
             playlistId={selectedPlaylist.id}
             playlistName={selectedPlaylist.name}
             onBack={handleBackFromPlaylist}
+            onTrackSelect={handlePlaylistTrackSelect}
           />
         ) : (
           <>
@@ -164,6 +209,17 @@ export function App() {
           </>
         )}
       </div>
+      {currentTrack && (
+        <Player
+          currentTrack={currentTrack}
+          playlist={playlistTracks}
+          isPlaying={isPlaying}
+          onPlayPause={handlePlayPause}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onTrackSelect={handleTrackSelect}
+        />
+      )}
     </div>
   );
 }
