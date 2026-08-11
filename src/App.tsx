@@ -3,10 +3,12 @@ import { Music, LogIn, LogOut } from 'lucide-react';
 import HomeView from './components/HomeView';
 import SearchView from './components/SearchView';
 import LibraryView from './components/LibraryView';
+import PlaylistDetailView from './components/PlaylistDetailView';
 
 export function App() {
   const [currentView, setCurrentView] = React.useState<'home' | 'search' | 'library'>('home');
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = React.useState<{ id: string; name: string } | null>(null);
 
   React.useEffect(() => {
     const checkAuth = async () => {
@@ -58,7 +60,6 @@ export function App() {
       const checkInterval = setInterval(() => {
         if (authWindow?.closed) {
           clearInterval(checkInterval);
-          // Re-check auth status after OAuth completes
           const checkAuth = async () => {
             const res = await fetch('/api/auth/me');
             const data = await res.json();
@@ -81,6 +82,14 @@ export function App() {
     }
   };
 
+  const handlePlaylistSelect = (playlistId: string, playlistName: string) => {
+    setSelectedPlaylist({ id: playlistId, name: playlistName });
+  };
+
+  const handleBackFromPlaylist = () => {
+    setSelectedPlaylist(null);
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white">
       <div className="w-48 bg-slate-950/50 border-r border-slate-700 p-4 flex flex-col">
@@ -90,25 +99,34 @@ export function App() {
         </div>
         <nav className="space-y-2 flex-1">
           <button
-            onClick={() => setCurrentView('home')}
+            onClick={() => {
+              setCurrentView('home');
+              setSelectedPlaylist(null);
+            }}
             className={`w-full text-left px-4 py-2 rounded transition ${
-              currentView === 'home' ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
+              currentView === 'home' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
             }`}
           >
             Home
           </button>
           <button
-            onClick={() => setCurrentView('search')}
+            onClick={() => {
+              setCurrentView('search');
+              setSelectedPlaylist(null);
+            }}
             className={`w-full text-left px-4 py-2 rounded transition ${
-              currentView === 'search' ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
+              currentView === 'search' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
             }`}
           >
             Search
           </button>
           <button
-            onClick={() => setCurrentView('library')}
+            onClick={() => {
+              setCurrentView('library');
+              setSelectedPlaylist(null);
+            }}
             className={`w-full text-left px-4 py-2 rounded transition ${
-              currentView === 'library' ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
+              currentView === 'library' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
             }`}
           >
             Library
@@ -132,9 +150,19 @@ export function App() {
         </button>
       </div>
       <div className="flex-1">
-        {currentView === 'home' && <HomeView />}
-        {currentView === 'search' && <SearchView />}
-        {currentView === 'library' && <LibraryView />}
+        {selectedPlaylist ? (
+          <PlaylistDetailView
+            playlistId={selectedPlaylist.id}
+            playlistName={selectedPlaylist.name}
+            onBack={handleBackFromPlaylist}
+          />
+        ) : (
+          <>
+            {currentView === 'home' && <HomeView />}
+            {currentView === 'search' && <SearchView />}
+            {currentView === 'library' && <LibraryView onPlaylistSelect={handlePlaylistSelect} />}
+          </>
+        )}
       </div>
     </div>
   );
