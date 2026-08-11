@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 
 interface Track {
   id: string;
@@ -12,21 +12,21 @@ interface Track {
 interface PlayerProps {
   currentTrack: Track | null;
   playlist: Track[];
+  currentTrackIndex: number;
   isPlaying: boolean;
   onPlayPause: () => void;
   onNext: () => void;
   onPrevious: () => void;
-  onTrackSelect: (track: Track) => void;
 }
 
 export function Player({
   currentTrack,
   playlist,
+  currentTrackIndex,
   isPlaying,
   onPlayPause,
   onNext,
   onPrevious,
-  onTrackSelect,
 }: PlayerProps) {
   const [showPlayer, setShowPlayer] = React.useState(false);
 
@@ -34,8 +34,10 @@ export function Player({
     return null;
   }
 
+  const upNextTracks = playlist.slice(currentTrackIndex + 1).slice(0, 5);
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 shadow-lg z-50">
       {/* Now Playing Bar */}
       <div className="px-4 py-3 cursor-pointer hover:bg-slate-700/50 transition" onClick={() => setShowPlayer(!showPlayer)}>
         <div className="flex items-center gap-4">
@@ -43,14 +45,14 @@ export function Player({
             <img
               src={currentTrack.coverUrl}
               alt={currentTrack.title}
-              className="w-14 h-14 object-cover rounded"
+              className="w-14 h-14 object-cover rounded flex-shrink-0"
             />
           )}
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold truncate text-white">{currentTrack.title}</h4>
-            <p className="text-sm text-gray-400 truncate">{currentTrack.artist}</p>
+            <h4 className="font-semibold truncate text-white text-sm">{currentTrack.title}</h4>
+            <p className="text-xs text-gray-400 truncate">{currentTrack.artist}</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -58,7 +60,7 @@ export function Player({
               }}
               className="p-2 hover:bg-slate-700 rounded transition"
             >
-              <SkipBack className="w-5 h-5 text-white" />
+              <SkipBack className="w-4 h-4 text-white" />
             </button>
             <button
               onClick={(e) => {
@@ -68,9 +70,9 @@ export function Player({
               className="p-2 hover:bg-slate-700 rounded transition"
             >
               {isPlaying ? (
-                <Pause className="w-5 h-5 text-cyan-400" />
+                <Pause className="w-4 h-4 text-cyan-400" />
               ) : (
-                <Play className="w-5 h-5 text-cyan-400" />
+                <Play className="w-4 h-4 text-cyan-400" />
               )}
             </button>
             <button
@@ -80,7 +82,7 @@ export function Player({
               }}
               className="p-2 hover:bg-slate-700 rounded transition"
             >
-              <SkipForward className="w-5 h-5 text-white" />
+              <SkipForward className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>
@@ -88,45 +90,33 @@ export function Player({
 
       {/* Expanded Player */}
       {showPlayer && currentTrack.youtubeVideoId && (
-        <div className="bg-slate-900 p-4 border-t border-slate-700">
-          <div className="max-w-full">
-            {/* YouTube Embed */}
-            <div className="mb-4 rounded overflow-hidden">
-              <iframe
-                width="100%"
-                height="200"
-                src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}?autoplay=${isPlaying ? 1 : 0}`}
-                title={currentTrack.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
+        <div className="bg-slate-900 p-4 border-t border-slate-700 max-h-64 overflow-y-auto">
+          {/* YouTube Embed */}
+          <div className="mb-4 rounded overflow-hidden">
+            <iframe
+              width="100%"
+              height="180"
+              src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}?autoplay=${isPlaying ? 1 : 0}`}
+              title={currentTrack.title}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
 
-            {/* Queue */}
+          {/* Queue - Text Only */}
+          {upNextTracks.length > 0 && (
             <div>
-              <h5 className="text-sm font-semibold text-gray-400 mb-2">Up Next</h5>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {playlist.slice(playlist.indexOf(currentTrack) + 1).slice(0, 3).map((track) => (
-                  <div
-                    key={track.id}
-                    onClick={() => onTrackSelect(track)}
-                    className="flex gap-2 p-2 rounded hover:bg-slate-800 cursor-pointer transition text-sm"
-                  >
-                    <img
-                      src={track.coverUrl}
-                      alt={track.title}
-                      className="w-8 h-8 object-cover rounded flex-shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-white truncate">{track.title}</p>
-                      <p className="text-gray-400 text-xs truncate">{track.artist}</p>
-                    </div>
+              <h5 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Up Next</h5>
+              <div className="space-y-1">
+                {upNextTracks.map((track, idx) => (
+                  <div key={track.id} className="text-xs text-gray-300 p-1 hover:bg-slate-800 rounded cursor-pointer transition">
+                    {idx + 1}. {track.title}
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
