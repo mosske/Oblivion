@@ -21,6 +21,7 @@ export function App() {
   const [currentTrack, setCurrentTrack] = React.useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [playlistTracks, setPlaylistTracks] = React.useState<Track[]>([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = React.useState(0);
 
   React.useEffect(() => {
     const checkAuth = async () => {
@@ -102,14 +103,11 @@ export function App() {
     setSelectedPlaylist(null);
   };
 
-  const handleTrackSelect = (track: Track) => {
+  const handleTrackSelect = (track: Track, allTracks: Track[], index: number) => {
+    setPlaylistTracks(allTracks);
     setCurrentTrack(track);
+    setCurrentTrackIndex(index);
     setIsPlaying(true);
-  };
-
-  const handlePlaylistTrackSelect = (track: Track) => {
-    setPlaylistTracks([track, ...playlistTracks.filter((t) => t.id !== track.id)]);
-    handleTrackSelect(track);
   };
 
   const handlePlayPause = () => {
@@ -117,20 +115,20 @@ export function App() {
   };
 
   const handleNext = () => {
-    if (selectedPlaylist && playlistTracks.length > 0) {
-      const currentIndex = playlistTracks.findIndex((t) => t.id === currentTrack?.id);
-      if (currentIndex < playlistTracks.length - 1) {
-        setCurrentTrack(playlistTracks[currentIndex + 1]);
-      }
+    if (currentTrackIndex < playlistTracks.length - 1) {
+      const nextTrack = playlistTracks[currentTrackIndex + 1];
+      setCurrentTrack(nextTrack);
+      setCurrentTrackIndex(currentTrackIndex + 1);
+      setIsPlaying(true);
     }
   };
 
   const handlePrevious = () => {
-    if (selectedPlaylist && playlistTracks.length > 0) {
-      const currentIndex = playlistTracks.findIndex((t) => t.id === currentTrack?.id);
-      if (currentIndex > 0) {
-        setCurrentTrack(playlistTracks[currentIndex - 1]);
-      }
+    if (currentTrackIndex > 0) {
+      const prevTrack = playlistTracks[currentTrackIndex - 1];
+      setCurrentTrack(prevTrack);
+      setCurrentTrackIndex(currentTrackIndex - 1);
+      setIsPlaying(true);
     }
   };
 
@@ -193,13 +191,13 @@ export function App() {
           )}
         </button>
       </div>
-      <div className="flex-1 overflow-auto pb-32">
+      <div className="flex-1 overflow-auto">
         {selectedPlaylist ? (
           <PlaylistDetailView
             playlistId={selectedPlaylist.id}
             playlistName={selectedPlaylist.name}
             onBack={handleBackFromPlaylist}
-            onTrackSelect={handlePlaylistTrackSelect}
+            onTrackSelect={handleTrackSelect}
           />
         ) : (
           <>
@@ -213,11 +211,11 @@ export function App() {
         <Player
           currentTrack={currentTrack}
           playlist={playlistTracks}
+          currentTrackIndex={currentTrackIndex}
           isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          onTrackSelect={handleTrackSelect}
         />
       )}
     </div>
