@@ -90,6 +90,9 @@ export function App() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setIsLoggedIn(false);
+      setCurrentTrack(null);
+      setPlaylistTracks([]);
+      setCurrentTrackIndex(0);
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -203,7 +206,7 @@ export function App() {
           <>
             {currentView === 'home' && <HomeView />}
             {currentView === 'search' && <SearchView />}
-            {currentView === 'library' && <LibraryView onPlaylistSelect={handlePlaylistSelect} />}
+            {currentView === 'library' && <LibraryView isLoggedIn={isLoggedIn} onPlaylistSelect={handlePlaylistSelect} />}
           </>
         )}
       </div>
