@@ -161,6 +161,32 @@ app.get("/api/youtube/playlists/:playlistId/videos", async (req, res) => {
   }
 });
 
+app.get("/api/youtube/audio/:videoId", async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    // Redirect to a YouTube audio streaming service
+    // Using invidious API which provides audio streaming capabilities
+    const audioUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    
+    // Forward the request to YouTube with proper headers to get audio
+    const response = await fetch(audioUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
+    
+    if (response.ok) {
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Accept-Ranges', 'bytes');
+      response.body?.pipe(res);
+    } else {
+      res.status(404).json({ error: 'Audio not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to stream audio' });
+  }
+});
+
 app.get("/api/youtube/recommendations", async (req, res) => {
   try {
     const apiKey = process.env.YOUTUBE_API_KEY;
