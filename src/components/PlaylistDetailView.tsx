@@ -40,7 +40,7 @@ export function PlaylistDetailView({ playlistId, playlistName, onBack, onTrackSe
   }, [playlistId]);
 
   return (
-    <div className="p-8 pb-32">
+    <div className="p-8 pb-24">
       <button
         onClick={onBack}
         className="flex items-center gap-2 mb-6 text-gray-400 hover:text-white transition"
@@ -59,10 +59,10 @@ export function PlaylistDetailView({ playlistId, playlistName, onBack, onTrackSe
 
       {videos.length > 0 && (
         <div className="space-y-2">
-          {videos.map((video) => (
+          {videos.map((video, idx) => (
             <div
               key={video.id}
-              onClick={() => onTrackSelect(video)}
+              onClick={() => onTrackSelect(video, videos, idx)}
               className="flex gap-4 p-4 bg-slate-800/50 rounded hover:bg-slate-700/50 cursor-pointer transition"
             >
               {video.coverUrl && (
