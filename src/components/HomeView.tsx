@@ -2,6 +2,7 @@ import React from 'react';
 
 interface Track {
   id: string;
+  youtubeVideoId: string;
   title: string;
   artist: string;
   coverUrl: string;
