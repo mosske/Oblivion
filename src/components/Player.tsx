@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, X, AlertCircle } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2 } from 'lucide-react';
 
 interface Track {
   id: string;
@@ -29,12 +29,33 @@ export function Player({
   onPrevious,
 }: PlayerProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(0);
+  const [duration, setDuration] = React.useState(0);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+
+  React.useEffect(() => {
+    if (!audioRef.current || !currentTrack) return;
+
+    if (isPlaying) {
+      audioRef.current.play().catch(() => {
+        // Autoplay might be blocked, user needs to interact
+      });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying]);
 
   if (!currentTrack) {
     return null;
   }
 
   const upNextTracks = playlist.slice(currentTrackIndex + 1).slice(0, 5);
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   if (isExpanded) {
     // Full screen player
@@ -45,9 +66,9 @@ export function Player({
           <h2 className="text-xl font-semibold">Now Playing</h2>
           <button
             onClick={() => setIsExpanded(false)}
-            className="p-2 hover:bg-slate-700 rounded transition"
+            className="px-4 py-2 hover:bg-slate-700 rounded transition"
           >
-            <X className="w-6 h-6" />
+            Close
           </button>
         </div>
 
@@ -66,25 +87,24 @@ export function Player({
           <h1 className="text-3xl font-bold text-center mb-2">{currentTrack.title}</h1>
           <p className="text-xl text-gray-400 text-center mb-8">{currentTrack.artist}</p>
 
-          {/* Autoplay Notice */}
-          <div className="mb-6 p-4 bg-amber-500/20 border border-amber-500/50 rounded flex gap-2 max-w-2xl">
-            <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-100">
-              Click the Play button in the YouTube player below to start playback
-            </p>
-          </div>
-
-          {/* YouTube Embed */}
-          <div className="w-full max-w-2xl mb-8 rounded overflow-hidden">
-            <iframe
-              width="100%"
-              height="200"
-              src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}`}
-              title={currentTrack.title}
-              frameBorder="0"
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+          {/* Progress Bar */}
+          <div className="w-full max-w-2xl mb-6">
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              value={currentTime}
+              onChange={(e) => {
+                if (audioRef.current) {
+                  audioRef.current.currentTime = parseFloat(e.target.value);
+                }
+              }}
+              className="w-full cursor-pointer"
             />
+            <div className="flex justify-between text-sm text-gray-400 mt-2">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
           </div>
 
           {/* Controls */}
@@ -133,59 +153,101 @@ export function Player({
     );
   }
 
-  // Mini player at bottom - VERY PROMINENT
+  // FIXED mini player toolbar at bottom
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-800 to-slate-800/95 border-t-2 border-cyan-500/50 shadow-2xl z-50">
-      <div className="px-4 py-4 cursor-pointer hover:from-slate-700 hover:to-slate-700/95 transition" onClick={() => setIsExpanded(true)}>
-        <div className="flex items-center gap-4">
-          {currentTrack.coverUrl && (
-            <img
-              src={currentTrack.coverUrl}
-              alt={currentTrack.title}
-              className="w-16 h-16 object-cover rounded shadow-lg flex-shrink-0"
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <h4 className="font-bold truncate text-white text-base">{currentTrack.title}</h4>
-            <p className="text-sm text-cyan-300 truncate">{currentTrack.artist}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPrevious();
-              }}
-              className="p-2 hover:bg-slate-700 rounded-full transition"
-            >
-              <SkipBack className="w-5 h-5 text-white" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPlayPause();
-              }}
-              className="p-2 bg-cyan-500/30 hover:bg-cyan-500/50 rounded-full transition"
-            >
-              {isPlaying ? (
-                <Pause className="w-5 h-5 text-cyan-300" />
-              ) : (
-                <Play className="w-5 h-5 text-cyan-300" />
-              )}
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onNext();
-              }}
-              className="p-2 hover:bg-slate-700 rounded-full transition"
-            >
-              <SkipForward className="w-5 h-5 text-white" />
-            </button>
+    <>
+      {/* Hidden audio element */}
+      <audio
+        ref={audioRef}
+        src={`/api/youtube/audio/${currentTrack.youtubeVideoId}`}
+        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+        onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
+        onEnded={onNext}
+      />
+
+      {/* TRULY FIXED player toolbar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t-2 border-cyan-500 shadow-2xl z-50">
+        {/* Progress bar at top */}
+        <div className="h-1 bg-slate-800">
+          <div
+            className="h-full bg-cyan-500 transition-all"
+            style={{
+              width: duration ? `${(currentTime / duration) * 100}%` : '0%',
+            }}
+          />
+        </div>
+
+        {/* Player controls */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-4">
+            {/* Album art */}
+            {currentTrack.coverUrl && (
+              <img
+                src={currentTrack.coverUrl}
+                alt={currentTrack.title}
+                className="w-12 h-12 object-cover rounded shadow-lg flex-shrink-0 cursor-pointer hover:opacity-80 transition"
+                onClick={() => setIsExpanded(true)}
+              />
+            )}
+
+            {/* Track info */}
+            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setIsExpanded(true)}>
+              <h4 className="font-semibold truncate text-white text-sm">{currentTrack.title}</h4>
+              <p className="text-xs text-cyan-300 truncate">{currentTrack.artist}</p>
+            </div>
+
+            {/* Time display */}
+            <div className="text-xs text-gray-400 whitespace-nowrap">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPrevious();
+                }}
+                className="p-1.5 hover:bg-slate-700 rounded-full transition"
+              >
+                <SkipBack className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlayPause();
+                }}
+                className="p-2 bg-cyan-500/30 hover:bg-cyan-500/50 rounded-full transition"
+              >
+                {isPlaying ? (
+                  <Pause className="w-4 h-4" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNext();
+                }}
+                className="p-1.5 hover:bg-slate-700 rounded-full transition"
+              >
+                <SkipForward className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="p-1.5 hover:bg-slate-700 rounded-full transition ml-2"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
-        <p className="text-xs text-gray-400 mt-2 ml-20">Click to expand player</p>
       </div>
-    </div>
+
+      {/* Padding to prevent content from being hidden under player */}
+      <div className="h-20" />
+    </>
   );
 }
 
