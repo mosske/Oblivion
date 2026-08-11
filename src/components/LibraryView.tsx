@@ -8,19 +8,18 @@ interface Playlist {
 
 interface LibraryViewProps {
   onPlaylistSelect?: (playlistId: string, playlistName: string) => void;
+  isLoggedIn?: boolean;
 }
 
-export function LibraryView({ onPlaylistSelect }: LibraryViewProps) {
+export function LibraryView({ onPlaylistSelect, isLoggedIn }: LibraryViewProps) {
   const [playlists, setPlaylists] = React.useState<Playlist[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
     const checkAuthAndFetchPlaylists = async () => {
       try {
         const authRes = await fetch('/api/auth/me');
         const authData = await authRes.json();
-        setIsLoggedIn(authData.isLoggedIn);
 
         if (authData.isLoggedIn) {
           setLoading(true);
@@ -30,6 +29,8 @@ export function LibraryView({ onPlaylistSelect }: LibraryViewProps) {
             setPlaylists(playlistData.playlists || []);
           }
           setLoading(false);
+        } else {
+          setPlaylists([]);
         }
       } catch (error) {
         console.error('Failed to fetch playlists:', error);
@@ -38,11 +39,11 @@ export function LibraryView({ onPlaylistSelect }: LibraryViewProps) {
     };
 
     checkAuthAndFetchPlaylists();
-  }, []);
+  }, [isLoggedIn]);
 
-  if (!isLoggedIn) {
+  if (playlists.length === 0 && !loading) {
     return (
-      <div className="p-8">
+      <div className="p-8 pb-24">
         <h2 className="text-3xl font-bold mb-4">Your Library</h2>
         <p className="text-gray-400">Sign in to see your playlists</p>
       </div>
@@ -51,24 +52,15 @@ export function LibraryView({ onPlaylistSelect }: LibraryViewProps) {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-8 pb-24">
         <h2 className="text-3xl font-bold mb-4">Your Library</h2>
         <p className="text-gray-400">Loading playlists...</p>
       </div>
     );
   }
 
-  if (playlists.length === 0) {
-    return (
-      <div className="p-8">
-        <h2 className="text-3xl font-bold mb-4">Your Library</h2>
-        <p className="text-gray-400">No playlists found</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-8">
+    <div className="p-8 pb-24">
       <h2 className="text-3xl font-bold mb-6">Your Library</h2>
       <div className="grid grid-cols-2 gap-4">
         {playlists.map((playlist) => (
