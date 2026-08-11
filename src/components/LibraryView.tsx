@@ -1,16 +1,81 @@
-import React from "react";
-import { Music } from "lucide-react";
+import React from 'react';
+
+interface Playlist {
+  id: string;
+  name: string;
+  itemCount: number;
+}
 
 export function LibraryView() {
-  return (
-    <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950 min-h-screen">
-      <div className="flex items-center gap-3 mb-8">
-        <Music className="w-8 h-8 text-cyan-400" />
-        <h1 className="text-3xl font-bold text-white">Your Library</h1>
+  const [playlists, setPlaylists] = React.useState<Playlist[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkAuthAndFetchPlaylists = async () => {
+      try {
+        const authRes = await fetch('/api/auth/me');
+        const authData = await authRes.json();
+        setIsLoggedIn(authData.isLoggedIn);
+
+        if (authData.isLoggedIn) {
+          setLoading(true);
+          const playlistRes = await fetch('/api/youtube/playlists');
+          const playlistData = await playlistRes.json();
+          if (playlistData.success) {
+            setPlaylists(playlistData.playlists || []);
+          }
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch playlists:', error);
+        setLoading(false);
+      }
+    };
+
+    checkAuthAndFetchPlaylists();
+  }, []);
+
+  if (!isLoggedIn) {
+    return (
+      <div className="p-8">
+        <h2 className="text-3xl font-bold mb-4">Your Library</h2>
+        <p className="text-gray-400">Sign in to see your playlists</p>
       </div>
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Music className="w-16 h-16 text-gray-500 mb-4" />
-        <p className="text-gray-400 text-lg">Sign in to see your playlists</p>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <h2 className="text-3xl font-bold mb-4">Your Library</h2>
+        <p className="text-gray-400">Loading playlists...</p>
+      </div>
+    );
+  }
+
+  if (playlists.length === 0) {
+    return (
+      <div className="p-8">
+        <h2 className="text-3xl font-bold mb-4">Your Library</h2>
+        <p className="text-gray-400">No playlists found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8">
+      <h2 className="text-3xl font-bold mb-6">Your Library</h2>
+      <div className="grid grid-cols-2 gap-4">
+        {playlists.map((playlist) => (
+          <div
+            key={playlist.id}
+            className="bg-slate-800/50 p-4 rounded hover:bg-slate-700/50 cursor-pointer transition"
+          >
+            <h3 className="font-semibold">{playlist.name}</h3>
+            <p className="text-sm text-gray-400">{playlist.itemCount} songs</p>
+          </div>
+        ))}
       </div>
     </div>
   );
