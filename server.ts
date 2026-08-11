@@ -131,6 +131,36 @@ app.get("/api/youtube/playlists", async (req, res) => {
   }
 });
 
+app.get("/api/youtube/playlists/:playlistId/videos", async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+    const accessToken = await getValidAccessToken(req);
+    if (!accessToken) return res.status(401).json({ success: false, videos: [] });
+    
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=50&access_token=${accessToken}`
+    );
+    const data = await response.json();
+    
+    const videos = (data.items || []).map((item: any) => ({
+      id: item.contentDetails?.videoId || item.id,
+      youtubeVideoId: item.contentDetails?.videoId,
+      title: item.snippet?.title || "Unknown",
+      artist: item.snippet?.channelTitle || "Unknown",
+      album: "",
+      duration: 0,
+      coverUrl: item.snippet?.thumbnails?.medium?.url || "",
+      audioUrl: `https://www.youtube.com/watch?v=${item.contentDetails?.videoId}`,
+      genre: "Music",
+      playsCount: 0,
+    }));
+    
+    res.json({ success: true, videos, count: videos.length });
+  } catch (error) {
+    res.status(500).json({ success: false, videos: [] });
+  }
+});
+
 app.get("/api/youtube/recommendations", async (req, res) => {
   try {
     const apiKey = process.env.YOUTUBE_API_KEY;
