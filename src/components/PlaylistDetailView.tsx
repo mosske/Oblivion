@@ -13,9 +13,10 @@ interface PlaylistDetailViewProps {
   playlistId: string;
   playlistName: string;
   onBack: () => void;
+  onTrackSelect: (track: Video) => void;
 }
 
-export function PlaylistDetailView({ playlistId, playlistName, onBack }: PlaylistDetailViewProps) {
+export function PlaylistDetailView({ playlistId, playlistName, onBack, onTrackSelect }: PlaylistDetailViewProps) {
   const [videos, setVideos] = React.useState<Video[]>([]);
   const [loading, setLoading] = React.useState(false);
 
@@ -39,7 +40,7 @@ export function PlaylistDetailView({ playlistId, playlistName, onBack }: Playlis
   }, [playlistId]);
 
   return (
-    <div className="p-8">
+    <div className="p-8 pb-32">
       <button
         onClick={onBack}
         className="flex items-center gap-2 mb-6 text-gray-400 hover:text-white transition"
@@ -61,6 +62,7 @@ export function PlaylistDetailView({ playlistId, playlistName, onBack }: Playlis
           {videos.map((video) => (
             <div
               key={video.id}
+              onClick={() => onTrackSelect(video)}
               className="flex gap-4 p-4 bg-slate-800/50 rounded hover:bg-slate-700/50 cursor-pointer transition"
             >
               {video.coverUrl && (
