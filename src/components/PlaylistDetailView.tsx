@@ -13,7 +13,7 @@ interface PlaylistDetailViewProps {
   playlistId: string;
   playlistName: string;
   onBack: () => void;
-  onTrackSelect: (track: Video) => void;
+  onTrackSelect: (track: Video, allTracks: Video[], index: number) => void;
 }
 
 export function PlaylistDetailView({ playlistId, playlistName, onBack, onTrackSelect }: PlaylistDetailViewProps) {
