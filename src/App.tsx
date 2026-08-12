@@ -93,6 +93,7 @@ export function App() {
       setCurrentTrack(null);
       setPlaylistTracks([]);
       setCurrentTrackIndex(0);
+      setIsPlaying(false);
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -136,8 +137,9 @@ export function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white">
-      <div className="w-48 bg-slate-950/50 border-r border-slate-700 p-4 flex flex-col">
+    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-48 bg-slate-950/50 border-r border-slate-700 p-4 flex flex-col overflow-hidden">
         <div className="flex items-center gap-3 mb-8">
           <span className="text-xl">🎵</span>
           <h1 className="text-xl font-bold">Oblivion</h1>
@@ -194,7 +196,9 @@ export function App() {
           )}
         </button>
       </div>
-      <div className="flex-1 overflow-auto pb-20">
+
+      {/* Main content - pb-24 to account for fixed player */}
+      <div className="flex-1 overflow-auto pb-24">
         {selectedPlaylist ? (
           <PlaylistDetailView
             playlistId={selectedPlaylist.id}
@@ -210,17 +214,17 @@ export function App() {
           </>
         )}
       </div>
-      {currentTrack && (
-        <Player
-          currentTrack={currentTrack}
-          playlist={playlistTracks}
-          currentTrackIndex={currentTrackIndex}
-          isPlaying={isPlaying}
-          onPlayPause={handlePlayPause}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-        />
-      )}
+
+      {/* Player - ALWAYS visible */}
+      <Player
+        currentTrack={currentTrack}
+        playlist={playlistTracks}
+        currentTrackIndex={currentTrackIndex}
+        isPlaying={isPlaying}
+        onPlayPause={handlePlayPause}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+      />
     </div>
   );
 }
