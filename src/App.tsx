@@ -137,85 +137,88 @@ export function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-48 bg-slate-950/50 border-r border-slate-700 p-4 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-3 mb-8">
-          <span className="text-xl">🎵</span>
-          <h1 className="text-xl font-bold">Oblivion</h1>
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white">
+      {/* Main content area - flex row for sidebar + content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-48 bg-slate-950/50 border-r border-slate-700 p-4 flex flex-col overflow-hidden">
+          <div className="flex items-center gap-3 mb-8">
+            <span className="text-xl">🎵</span>
+            <h1 className="text-xl font-bold">Oblivion</h1>
+          </div>
+          <nav className="space-y-2 flex-1">
+            <button
+              onClick={() => {
+                setCurrentView('home');
+                setSelectedPlaylist(null);
+              }}
+              className={`w-full text-left px-4 py-2 rounded transition ${
+                currentView === 'home' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
+              }`}
+            >
+              Home
+            </button>
+            <button
+              onClick={() => {
+                setCurrentView('search');
+                setSelectedPlaylist(null);
+              }}
+              className={`w-full text-left px-4 py-2 rounded transition ${
+                currentView === 'search' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
+              }`}
+            >
+              Search
+            </button>
+            <button
+              onClick={() => {
+                setCurrentView('library');
+                setSelectedPlaylist(null);
+              }}
+              className={`w-full text-left px-4 py-2 rounded transition ${
+                currentView === 'library' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
+              }`}
+            >
+              Library
+            </button>
+          </nav>
+          <button
+            onClick={isLoggedIn ? handleSignOut : handleSignIn}
+            className="w-full flex items-center gap-2 px-4 py-2 rounded bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition"
+          >
+            {isLoggedIn ? (
+              <>
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </>
+            ) : (
+              <>
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </>
+            )}
+          </button>
         </div>
-        <nav className="space-y-2 flex-1">
-          <button
-            onClick={() => {
-              setCurrentView('home');
-              setSelectedPlaylist(null);
-            }}
-            className={`w-full text-left px-4 py-2 rounded transition ${
-              currentView === 'home' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
-            }`}
-          >
-            Home
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView('search');
-              setSelectedPlaylist(null);
-            }}
-            className={`w-full text-left px-4 py-2 rounded transition ${
-              currentView === 'search' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
-            }`}
-          >
-            Search
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView('library');
-              setSelectedPlaylist(null);
-            }}
-            className={`w-full text-left px-4 py-2 rounded transition ${
-              currentView === 'library' && !selectedPlaylist ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-slate-800'
-            }`}
-          >
-            Library
-          </button>
-        </nav>
-        <button
-          onClick={isLoggedIn ? handleSignOut : handleSignIn}
-          className="w-full flex items-center gap-2 px-4 py-2 rounded bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition"
-        >
-          {isLoggedIn ? (
-            <>
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </>
+
+        {/* Main scrollable content */}
+        <div className="flex-1 overflow-auto pb-24">
+          {selectedPlaylist ? (
+            <PlaylistDetailView
+              playlistId={selectedPlaylist.id}
+              playlistName={selectedPlaylist.name}
+              onBack={handleBackFromPlaylist}
+              onTrackSelect={handleTrackSelect}
+            />
           ) : (
             <>
-              <LogIn className="w-4 h-4" />
-              Sign In
+              {currentView === 'home' && <HomeView />}
+              {currentView === 'search' && <SearchView />}
+              {currentView === 'library' && <LibraryView isLoggedIn={isLoggedIn} onPlaylistSelect={handlePlaylistSelect} />}
             </>
           )}
-        </button>
+        </div>
       </div>
 
-      {/* Main content - pb-24 to account for fixed player */}
-      <div className="flex-1 overflow-auto pb-24">
-        {selectedPlaylist ? (
-          <PlaylistDetailView
-            playlistId={selectedPlaylist.id}
-            playlistName={selectedPlaylist.name}
-            onBack={handleBackFromPlaylist}
-            onTrackSelect={handleTrackSelect}
-          />
-        ) : (
-          <>
-            {currentView === 'home' && <HomeView />}
-            {currentView === 'search' && <SearchView />}
-            {currentView === 'library' && <LibraryView isLoggedIn={isLoggedIn} onPlaylistSelect={handlePlaylistSelect} />}
-          </>
-        )}
-      </div>
-
-      {/* Player - ALWAYS visible */}
+      {/* PLAYER - OUTSIDE scrollable area, TRULY FIXED AT BOTTOM */}
       <Player
         currentTrack={currentTrack}
         playlist={playlistTracks}
