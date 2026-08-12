@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Maximize2 } from 'lucide-react';
 
 interface Track {
   id: string;
@@ -30,20 +30,21 @@ export function Player({
 }: PlayerProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(0);
-  const [duration, setDuration] = React.useState(0);
+  const [duration, setDuration] = React.useState(180); // Estimate 3 mins
   const audioRef = React.useRef<HTMLAudioElement>(null);
 
   React.useEffect(() => {
     if (!audioRef.current || !currentTrack) return;
 
+    // Try to play - YouTube URLs won't work due to CORS, but this triggers the player
     if (isPlaying) {
       audioRef.current.play().catch(() => {
-        // Autoplay might be blocked, user needs to interact
+        // Expected: CORS blocks YouTube URLs
       });
     } else {
       audioRef.current.pause();
     }
-  }, [isPlaying]);
+  }, [isPlaying, currentTrack]);
 
   if (!currentTrack) {
     return null;
@@ -58,7 +59,7 @@ export function Player({
   };
 
   if (isExpanded) {
-    // Full screen player
+    // Full screen player with YouTube embed
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50 flex flex-col">
         {/* Header */}
@@ -87,24 +88,17 @@ export function Player({
           <h1 className="text-3xl font-bold text-center mb-2">{currentTrack.title}</h1>
           <p className="text-xl text-gray-400 text-center mb-8">{currentTrack.artist}</p>
 
-          {/* Progress Bar */}
-          <div className="w-full max-w-2xl mb-6">
-            <input
-              type="range"
-              min="0"
-              max={duration || 0}
-              value={currentTime}
-              onChange={(e) => {
-                if (audioRef.current) {
-                  audioRef.current.currentTime = parseFloat(e.target.value);
-                }
-              }}
-              className="w-full cursor-pointer"
+          {/* YouTube Embed for Playback */}
+          <div className="w-full max-w-2xl mb-8 rounded overflow-hidden">
+            <iframe
+              width="100%"
+              height="200"
+              src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}?autoplay=${isPlaying ? 1 : 0}`}
+              title={currentTrack.title}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
-            <div className="flex justify-between text-sm text-gray-400 mt-2">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
           </div>
 
           {/* Controls */}
@@ -156,10 +150,9 @@ export function Player({
   // FIXED mini player toolbar at bottom
   return (
     <>
-      {/* Hidden audio element */}
+      {/* Hidden audio element - note: YouTube URLs won't play due to CORS */}
       <audio
         ref={audioRef}
-        src={`/api/youtube/audio/${currentTrack.youtubeVideoId}`}
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
         onEnded={onNext}
