@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Maximize2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, X, Maximize2 } from 'lucide-react';
 
 interface Track {
   id: string;
@@ -29,34 +29,12 @@ export function Player({
   onPrevious,
 }: PlayerProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const [currentTime, setCurrentTime] = React.useState(0);
-  const [duration, setDuration] = React.useState(180); // Estimate 3 mins
-  const audioRef = React.useRef<HTMLAudioElement>(null);
-
-  React.useEffect(() => {
-    if (!audioRef.current || !currentTrack) return;
-
-    // Try to play - YouTube URLs won't work due to CORS, but this triggers the player
-    if (isPlaying) {
-      audioRef.current.play().catch(() => {
-        // Expected: CORS blocks YouTube URLs
-      });
-    } else {
-      audioRef.current.pause();
-    }
-  }, [isPlaying, currentTrack]);
 
   if (!currentTrack) {
     return null;
   }
 
   const upNextTracks = playlist.slice(currentTrackIndex + 1).slice(0, 5);
-  const formatTime = (seconds: number) => {
-    if (!seconds || isNaN(seconds)) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   if (isExpanded) {
     // Full screen player with YouTube embed
@@ -67,9 +45,9 @@ export function Player({
           <h2 className="text-xl font-semibold">Now Playing</h2>
           <button
             onClick={() => setIsExpanded(false)}
-            className="px-4 py-2 hover:bg-slate-700 rounded transition"
+            className="p-2 hover:bg-slate-700 rounded-full transition"
           >
-            Close
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -92,8 +70,8 @@ export function Player({
           <div className="w-full max-w-2xl mb-8 rounded overflow-hidden">
             <iframe
               width="100%"
-              height="200"
-              src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}?autoplay=${isPlaying ? 1 : 0}`}
+              height="300"
+              src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}?autoplay=1`}
               title={currentTrack.title}
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -147,100 +125,76 @@ export function Player({
     );
   }
 
-  // FIXED mini player toolbar at bottom
+  // MINI PLAYER - TRULY FIXED AT BROWSER BOTTOM
   return (
-    <>
-      {/* Hidden audio element - note: YouTube URLs won't play due to CORS */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-        onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={onNext}
-      />
-
-      {/* TRULY FIXED player toolbar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t-2 border-cyan-500 shadow-2xl z-50">
-        {/* Progress bar at top */}
-        <div className="h-1 bg-slate-800">
-          <div
-            className="h-full bg-cyan-500 transition-all"
-            style={{
-              width: duration ? `${(currentTime / duration) * 100}%` : '0%',
-            }}
-          />
-        </div>
-
-        {/* Player controls */}
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-4">
-            {/* Album art */}
-            {currentTrack.coverUrl && (
-              <img
-                src={currentTrack.coverUrl}
-                alt={currentTrack.title}
-                className="w-12 h-12 object-cover rounded shadow-lg flex-shrink-0 cursor-pointer hover:opacity-80 transition"
-                onClick={() => setIsExpanded(true)}
-              />
-            )}
-
-            {/* Track info */}
-            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setIsExpanded(true)}>
-              <h4 className="font-semibold truncate text-white text-sm">{currentTrack.title}</h4>
-              <p className="text-xs text-cyan-300 truncate">{currentTrack.artist}</p>
-            </div>
-
-            {/* Time display */}
-            <div className="text-xs text-gray-400 whitespace-nowrap">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPrevious();
-                }}
-                className="p-1.5 hover:bg-slate-700 rounded-full transition"
-              >
-                <SkipBack className="w-4 h-4" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPlayPause();
-                }}
-                className="p-2 bg-cyan-500/30 hover:bg-cyan-500/50 rounded-full transition"
-              >
-                {isPlaying ? (
-                  <Pause className="w-4 h-4" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onNext();
-                }}
-                className="p-1.5 hover:bg-slate-700 rounded-full transition"
-              >
-                <SkipForward className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setIsExpanded(true)}
-                className="p-1.5 hover:bg-slate-700 rounded-full transition ml-2"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t-2 border-cyan-500 shadow-2xl z-50 h-20">
+      {/* Progress bar at top */}
+      <div className="h-1 bg-slate-800">
+        <div className="h-full bg-cyan-500" />
       </div>
 
-      {/* Padding to prevent content from being hidden under player */}
-      <div className="h-20" />
-    </>
+      {/* Player content */}
+      <div className="px-4 py-2 h-full flex items-center gap-4 cursor-pointer hover:bg-slate-800/50 transition" onClick={() => setIsExpanded(true)}>
+        {/* Album art */}
+        {currentTrack.coverUrl && (
+          <img
+            src={currentTrack.coverUrl}
+            alt={currentTrack.title}
+            className="w-12 h-12 object-cover rounded shadow-lg flex-shrink-0"
+          />
+        )}
+
+        {/* Track info */}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold truncate text-white text-sm">{currentTrack.title}</h4>
+          <p className="text-xs text-cyan-300 truncate">{currentTrack.artist}</p>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrevious();
+            }}
+            className="p-1 hover:bg-slate-700 rounded transition"
+          >
+            <SkipBack className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlayPause();
+            }}
+            className="p-2 bg-cyan-500/30 hover:bg-cyan-500/50 rounded transition"
+          >
+            {isPlaying ? (
+              <Pause className="w-4 h-4" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
+            className="p-1 hover:bg-slate-700 rounded transition"
+          >
+            <SkipForward className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(true);
+            }}
+            className="p-1 hover:bg-slate-700 rounded transition ml-2"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
