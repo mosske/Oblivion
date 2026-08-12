@@ -194,7 +194,7 @@ export function App() {
           )}
         </button>
       </div>
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto pb-20">
         {selectedPlaylist ? (
           <PlaylistDetailView
             playlistId={selectedPlaylist.id}
