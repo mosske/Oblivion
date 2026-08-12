@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ChevronUp } from 'lucide-react';
 
 interface Track {
   id: string;
@@ -29,11 +29,10 @@ export function Player({
   onPrevious,
 }: PlayerProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   const upNextTracks = playlist.slice(currentTrackIndex + 1).slice(0, 5);
 
-  // Expanded full screen player
+  // Expanded full screen player with YouTube
   if (isExpanded && currentTrack) {
     return (
       <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col">
@@ -44,7 +43,7 @@ export function Player({
             onClick={() => setIsExpanded(false)}
             className="p-2 hover:bg-slate-700 rounded transition"
           >
-            <ChevronDown className="w-6 h-6" />
+            ✕
           </button>
         </div>
 
@@ -66,10 +65,9 @@ export function Player({
           {/* YouTube Player */}
           <div className="w-full max-w-2xl mb-8 rounded overflow-hidden">
             <iframe
-              ref={iframeRef}
               width="100%"
               height="300"
-              src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}?autoplay=${isPlaying ? 1 : 0}`}
+              src={`https://www.youtube.com/embed/${currentTrack.youtubeVideoId}?autoplay=1`}
               title={currentTrack.title}
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -123,70 +121,83 @@ export function Player({
     );
   }
 
-  if (!currentTrack) {
-    return null;
-  }
-
-  // MINI PLAYER - TRULY FIXED AT BROWSER BOTTOM
+  // MINI PLAYER TOOLBAR - ALWAYS VISIBLE (even with no track)
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t-2 border-cyan-500 shadow-2xl z-40 h-24">
       {/* Player bar */}
-      <div className="h-full px-4 py-3 flex items-center gap-4 cursor-pointer hover:bg-slate-800/50 transition" onClick={() => setIsExpanded(true)}>
-        {/* Album art */}
-        {currentTrack.coverUrl && (
+      <div className="h-full px-4 py-3 flex items-center gap-4">
+        {/* Album art or placeholder */}
+        {currentTrack?.coverUrl ? (
           <img
             src={currentTrack.coverUrl}
             alt={currentTrack.title}
-            className="w-16 h-16 object-cover rounded shadow-lg flex-shrink-0"
+            className="w-16 h-16 object-cover rounded shadow-lg flex-shrink-0 cursor-pointer hover:opacity-80 transition"
+            onClick={() => currentTrack && setIsExpanded(true)}
           />
+        ) : (
+          <div className="w-16 h-16 bg-slate-700 rounded shadow-lg flex-shrink-0 flex items-center justify-center">
+            <span className="text-2xl">🎵</span>
+          </div>
         )}
 
-        {/* Track info */}
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold truncate text-white">{currentTrack.title}</h4>
-          <p className="text-sm text-cyan-300 truncate">{currentTrack.artist}</p>
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrevious();
-            }}
-            className="p-2 hover:bg-slate-700 rounded transition"
-          >
-            <SkipBack className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPlayPause();
-            }}
-            className="p-2 bg-cyan-500/30 hover:bg-cyan-500/50 rounded transition"
-          >
-            {isPlaying ? (
-              <Pause className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext();
-            }}
-            className="p-2 hover:bg-slate-700 rounded transition"
-          >
-            <SkipForward className="w-4 h-4" />
-          </button>
-          <button
+        {/* Track info or placeholder */}
+        {currentTrack ? (
+          <div
+            className="flex-1 min-w-0 cursor-pointer hover:opacity-80 transition"
             onClick={() => setIsExpanded(true)}
-            className="p-2 hover:bg-slate-700 rounded transition ml-2"
           >
-            <ChevronUp className="w-4 h-4" />
-          </button>
-        </div>
+            <h4 className="font-semibold truncate text-white">{currentTrack.title}</h4>
+            <p className="text-sm text-cyan-300 truncate">{currentTrack.artist}</p>
+          </div>
+        ) : (
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-white">No track playing</h4>
+            <p className="text-sm text-gray-400">Click a playlist to start</p>
+          </div>
+        )}
+
+        {/* Controls - only show when track is playing */}
+        {currentTrack && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPrevious();
+              }}
+              className="p-2 hover:bg-slate-700 rounded transition"
+            >
+              <SkipBack className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlayPause();
+              }}
+              className="p-2 bg-cyan-500/30 hover:bg-cyan-500/50 rounded transition"
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onNext();
+              }}
+              className="p-2 hover:bg-slate-700 rounded transition"
+            >
+              <SkipForward className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="p-2 hover:bg-slate-700 rounded transition ml-2"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
