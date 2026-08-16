@@ -21,6 +21,24 @@ export interface ThemeMeta {
 
 export class ThemeRegistry {
   static THEMES: Record<ThemePreset, ThemeMeta> = {
+    "designer-ivory": {
+      id: "designer-ivory",
+      name: "Studio Designer",
+      description: "Atmospheric deep rich emerald gradient with off-white studio canvas, warm grey cards, and rich gold accents.",
+      category: "Light",
+      previewGradient: "from-[#081e17] via-[#0e2c22] to-[#c89b3c]",
+      accentClass: "text-[#c89b3c]",
+      accentText: "text-[#c89b3c]",
+      accentBg: "bg-[#c89b3c]",
+      borderAccent: "border-[#c89b3c]/40",
+      bgCanvas: "from-[#f8f7f4] via-[#f5f3ec] to-[#edeae2]",
+      cardBg: "bg-white/90 border-[#e5e1d7] shadow-md",
+      sidebarBg: "bg-[#fbfaf7]/95 border-[#e6e2d8]",
+      playerBg: "bg-[#ffffff]/95 border-[#e6e2d8]",
+      textColor: "text-[#181816]",
+      subtextColor: "text-[#6b675e]",
+      swatchColors: ["#13372c", "#fbfaf7", "#c89b3c", "#6b675e"]
+    },
     "oblivion-dark": {
       id: "oblivion-dark",
       name: "Oblivion Dark",

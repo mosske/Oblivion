@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { User, UserSettings, ThemePreset, AudioQuality, LyricsFontSize, LyricsAlignment } from "../types";
+import { User, UserSettings, ThemePreset, AudioQuality, LyricsFontSize, LyricsAlignment, MiniPlayerLayout, FullAppDesignId } from "../types";
 import { ThemeRegistry } from "../utils/themeMap";
+import { FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import {
   Settings,
   Sliders,
@@ -25,7 +26,9 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Layout,
+  Play
 } from "lucide-react";
 import { getCacheSizeMB, clearAllCache } from "../utils/offlineCache";
 
@@ -293,7 +296,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const currentThemeMeta = ThemeRegistry.getTheme(settings.themePreset);
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar pb-28 max-w-5xl select-none">
+    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar pb-40 md:pb-48 max-w-5xl select-none">
       <div>
         <h1 className="text-2xl font-bold font-mono flex items-center gap-2">
           <Settings className={`w-6 h-6 ${currentThemeMeta.accentClass}`} />
@@ -425,6 +428,103 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
       </section>
 
+      {/* 6 FULL APP DESIGNS & THEMES SUITE (Primary Option) */}
+      <section className={`p-6 ${currentThemeMeta.cardBg} border rounded-3xl space-y-6 shadow-xl relative overflow-hidden ring-1 ring-cyan-500/20`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 text-[10px] font-mono font-bold tracking-wider mb-1 border border-cyan-500/20">
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              <span>Full-App Archetypes</span>
+            </div>
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Layout className="w-4 h-4 text-cyan-400" />
+              <span>Full App Layout & Design Archetypes (6 Options)</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Select your preferred overall design. This transforms the entire application: background canvas, headers, navigation, cards, typography, and bottom player.
+            </p>
+          </div>
+          <span className="text-xs px-3 py-1 rounded-full font-mono font-bold bg-[#c89b3c] text-slate-950 self-start sm:self-auto shadow-md">
+            Active: {FULL_APP_DESIGNS[settings.fullAppDesign || "designer"]?.name || "Designer"}
+          </span>
+        </div>
+
+        {/* 6 Full App Design Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.values(FULL_APP_DESIGNS).map((design) => {
+            const isSelected = (settings.fullAppDesign || "designer") === design.id;
+
+            return (
+              <button
+                key={design.id}
+                onClick={() => {
+                  onUpdateSettings({
+                    fullAppDesign: design.id,
+                    themePreset: design.themePreset,
+                    miniPlayerLayout: design.playerLayout,
+                  });
+                }}
+                className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+                  isSelected
+                    ? `bg-slate-900 border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-xl ${design.glowRing} scale-[1.01]`
+                    : `bg-slate-950/70 border-slate-800 hover:border-slate-700 hover:bg-slate-900/60`
+                }`}
+              >
+                {/* Active Checkmark Badge */}
+                {isSelected && (
+                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[10px] flex items-center gap-1 shadow-md">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                    <span>ACTIVE</span>
+                  </div>
+                )}
+
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/60 text-slate-200 border border-white/10">
+                      {design.badge}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">{design.num} / 06</span>
+                  </div>
+
+                  <h4 className="text-sm font-bold text-white mb-1">{design.name}</h4>
+                  <p className="text-xs text-slate-300 mb-2 leading-snug">{design.subtitle}</p>
+
+                  <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-3">
+                    {design.description}
+                  </p>
+
+                  {/* Highlights */}
+                  <div className="space-y-1 text-[11px] text-slate-400 mb-3">
+                    {design.features.slice(0, 2).map((feat, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${design.accentBg}`} />
+                        <span className="truncate">{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Swatches & Selection Status Footer */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-auto">
+                  <div className="flex items-center gap-1.5">
+                    {design.swatchColors.map((color, idx) => (
+                      <span
+                        key={idx}
+                        className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-inner"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? "text-[#c89b3c] font-mono" : "text-slate-400 group-hover:text-white"}`}>
+                    {isSelected ? "● Live On App" : "Apply Design →"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* GUI & Theme Customization (Prominently Featured First) */}
       <section className={`p-6 ${currentThemeMeta.cardBg} border rounded-3xl space-y-6`}>
         <div className="flex items-center justify-between">
@@ -486,6 +586,88 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
             );
           })}
+        </div>
+
+        {/* Mini-Player Layout Selector (5 Possible Layouts) */}
+        <div className="pt-6 border-t border-slate-800/60 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-xs font-bold uppercase text-white flex items-center gap-2">
+                <Layout className="w-4 h-4 text-cyan-400" />
+                <span>Mini-Player Bottom Layout (5 Options)</span>
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                Choose how the persistent now-playing dock displays when browsing on mobile & desktop.
+              </p>
+            </div>
+            <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+              Active: {settings.miniPlayerLayout || "floating-dock"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              {
+                id: "floating-dock",
+                title: "1. Floating Glass Pill",
+                desc: "Modern cyberpunk floating capsule with frosted glass and glowing borders.",
+                tag: "Default • Popular"
+              },
+              {
+                id: "ytmusic-classic",
+                title: "2. YT Music Classic",
+                desc: "Edge-to-edge dark bar with top red micro-scrubber & cast shortcuts.",
+                tag: "Official Style"
+              },
+              {
+                id: "minimal-capsule",
+                title: "3. Dynamic Island Capsule",
+                desc: "Ultra-compact centered pill with animated equalizer pulse wave.",
+                tag: "Ultra Minimal"
+              },
+              {
+                id: "card-expanded",
+                title: "4. Cyberpunk Hologram Card",
+                desc: "Expanded deck with waveform scrubber, Hi-Res badge, and quick lyrics.",
+                tag: "Feature-Rich"
+              },
+              {
+                id: "split-slider",
+                title: "5. Split-Slider Gesture Deck",
+                desc: "One-handed touch bar with ±10s fast scrub buttons and wide track bar.",
+                tag: "Touch / DJ"
+              }
+            ].map((layout) => {
+              const isSelected = (settings.miniPlayerLayout || "floating-dock") === layout.id;
+              return (
+                <button
+                  key={layout.id}
+                  onClick={() => onUpdateSettings({ miniPlayerLayout: layout.id as MiniPlayerLayout })}
+                  className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all relative ${
+                    isSelected
+                      ? "bg-slate-900 border-cyan-400 ring-2 ring-cyan-400/40 shadow-lg shadow-cyan-500/10"
+                      : "bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/60"
+                  }`}
+                >
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 mb-1.5 inline-block">
+                      {layout.tag}
+                    </span>
+                    <h5 className="text-xs font-bold text-white mb-1">{layout.title}</h5>
+                    <p className="text-[11px] text-slate-400 leading-snug">{layout.desc}</p>
+                  </div>
+                  <span className={`text-[10px] font-bold mt-3 uppercase ${isSelected ? "text-cyan-400" : "text-slate-500"}`}>
+                    {isSelected ? "Active Layout" : "Select Layout"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Lyrics Preferences */}
@@ -578,24 +760,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {/* Toggles */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/60">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-800/60">
           <label className="flex items-center justify-between p-3 bg-slate-950/40 rounded-xl border border-slate-800/80 cursor-pointer">
-            <span className="text-xs font-semibold">Volume Normalization</span>
+            <div>
+              <span className="text-xs font-semibold block">Background Play</span>
+              <span className="text-[10px] text-slate-400">Play in bg tab / screen locked</span>
+            </div>
             <input
               type="checkbox"
-              checked={settings.normalizeVolume}
-              onChange={(e) => onUpdateSettings({ normalizeVolume: e.target.checked })}
-              className="w-4 h-4 accent-cyan-400 cursor-pointer"
+              checked={settings.backgroundPlay ?? true}
+              onChange={(e) => onUpdateSettings({ backgroundPlay: e.target.checked })}
+              className="w-4 h-4 accent-cyan-400 cursor-pointer ml-2 shrink-0"
             />
           </label>
 
           <label className="flex items-center justify-between p-3 bg-slate-950/40 rounded-xl border border-slate-800/80 cursor-pointer">
-            <span className="text-xs font-semibold">Autoplay Similar Radio</span>
+            <div>
+              <span className="text-xs font-semibold block">Volume Normalization</span>
+              <span className="text-[10px] text-slate-400">Even volume loudness</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.normalizeVolume}
+              onChange={(e) => onUpdateSettings({ normalizeVolume: e.target.checked })}
+              className="w-4 h-4 accent-cyan-400 cursor-pointer ml-2 shrink-0"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 bg-slate-950/40 rounded-xl border border-slate-800/80 cursor-pointer">
+            <div>
+              <span className="text-xs font-semibold block">Autoplay Similar Radio</span>
+              <span className="text-[10px] text-slate-400">Continuous queue stream</span>
+            </div>
             <input
               type="checkbox"
               checked={settings.autoPlaySimilar}
               onChange={(e) => onUpdateSettings({ autoPlaySimilar: e.target.checked })}
-              className="w-4 h-4 accent-cyan-400 cursor-pointer"
+              className="w-4 h-4 accent-cyan-400 cursor-pointer ml-2 shrink-0"
             />
           </label>
         </div>

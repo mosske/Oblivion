@@ -56,6 +56,7 @@ export interface LyricLine {
 }
 
 export type ThemePreset = 
+  | 'designer-ivory'
   | 'oblivion-dark' 
   | 'cyberpunk' 
   | 'midnight-blue' 
@@ -68,12 +69,31 @@ export type AudioQuality = 'normal' | 'high' | 'lossless';
 export type LyricsFontSize = 'sm' | 'md' | 'lg';
 export type LyricsAlignment = 'left' | 'center';
 
+export type MiniPlayerLayout = 
+  | 'designer-waveform'  // Option 6: Designer Floating Ivory Dock with Golden Waveform
+  | 'floating-dock'      // Option 1: Floating Glass Pill Deck (Default modern floating capsule)
+  | 'ytmusic-classic'    // Option 2: YouTube Music Standard Edge-to-Edge with top progress bar
+  | 'minimal-capsule'    // Option 3: Minimal Ultra-Compact Dynamic Island Capsule
+  | 'card-expanded'      // Option 4: Cyberpunk Holographic Card with waveform & quick actions
+  | 'split-slider';      // Option 5: Gestural Wave & Scrub Split Controller
+
+export type FullAppDesignId = 
+  | 'designer'           // 1. Designer (Off-White Studio Canvas, Shadows, Gold Accents & Emerald Backdrop)
+  | 'cyberpunk-neon'     // 2. Cyberpunk Neon Glass (Futuristic Obsidian & Electric Cyan)
+  | 'ytmusic-red'        // 3. YouTube Music Red (Authentic Edge-to-Edge Studio Dark)
+  | 'dynamic-emerald'    // 4. Dynamic Island Emerald (Ultra-Minimalist Monolith & Jade Pulse)
+  | 'audiophile-gold'    // 5. Studio Audiophile Gold (Warm Carbon, Vinyl Gold & VU Meter)
+  | 'twilight-vaporwave'; // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Ambient Aura)
+
 export interface UserSettings {
   audioQuality: AudioQuality;
   crossfadeDuration: number; // 0 - 10s
   normalizeVolume: boolean;
   autoPlaySimilar: boolean;
+  backgroundPlay: boolean;
   themePreset: ThemePreset;
+  miniPlayerLayout: MiniPlayerLayout;
+  fullAppDesign: FullAppDesignId;
   compactMode: boolean;
   lyricsFontSize: LyricsFontSize;
   lyricsAlignment: LyricsAlignment;

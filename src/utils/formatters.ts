@@ -51,21 +51,17 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
 }
 
 /**
- * Ensures an audio URL is a playable audio stream for HTML5 <audio>.
+ * Returns the track audio URL or stream endpoint without mock data.
  */
 export function getPlayableAudioUrl(track: Track | null | undefined): string {
-  if (!track) return "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-  if (
-    track.audioUrl &&
-    !track.audioUrl.includes("youtube.com") &&
-    !track.audioUrl.includes("youtu.be") &&
-    (track.audioUrl.startsWith("http") || track.audioUrl.startsWith("blob:"))
-  ) {
+  if (!track) return "";
+  if (track.audioUrl && (track.audioUrl.startsWith("http") || track.audioUrl.startsWith("blob:") || track.audioUrl.startsWith("/api/"))) {
     return track.audioUrl;
   }
-
-  const str = track.id || track.youtubeVideoId || track.title || "track";
-  const hash = Math.abs(str.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0));
-  const songIndex = (hash % 15) + 1;
-  return `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${songIndex}.mp3`;
+  const videoId = track.youtubeVideoId || track.id;
+  if (videoId) {
+    return `/api/youtube/stream/${videoId}`;
+  }
+  return "";
 }
+

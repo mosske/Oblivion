@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Playlist } from "../types";
-import { X, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
+import { X, Upload, Sparkles } from "lucide-react";
+import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
 interface PlaylistModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface PlaylistModalProps {
   onSave: (title: string, description: string, coverUrl: string) => void;
   initialPlaylist?: Playlist | null;
   isYouTubeSynced?: boolean;
+  designConfig?: FullAppDesignConfig;
 }
 
 export const PlaylistModal: React.FC<PlaylistModalProps> = ({
@@ -16,6 +18,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
   onSave,
   initialPlaylist,
   isYouTubeSynced,
+  designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const [title, setTitle] = useState(initialPlaylist?.title || "");
   const [description, setDescription] = useState(initialPlaylist?.description || "");
@@ -54,18 +57,18 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-200">
-        <div className="flex items-center justify-between p-5 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
+      <div className={`w-full max-w-lg ${designConfig.modalBg} border ${designConfig.borderSubtle} rounded-3xl shadow-2xl overflow-hidden ${designConfig.textSecondary}`}>
+        <div className={`flex items-center justify-between p-5 border-b ${designConfig.borderSubtle}`}>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-cyan-400" />
-            <h3 className="text-lg font-bold text-white">
+            <Sparkles className={`w-5 h-5 ${designConfig.accentText}`} />
+            <h3 className={`text-lg font-bold ${designConfig.textPrimary}`}>
               {initialPlaylist ? "Edit Playlist Details" : "Create New Playlist"}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl ${designConfig.isLight ? "hover:bg-[#ede8dc]" : "hover:bg-slate-800"} transition-colors`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -74,7 +77,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Cover Image Drag & Drop */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">
+            <label className={`block text-xs font-semibold ${designConfig.textMuted} uppercase mb-2`}>
               Playlist Cover Image
             </label>
 
@@ -82,7 +85,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
               <img
                 src={coverUrl}
                 alt="Playlist cover preview"
-                className="w-24 h-24 rounded-xl object-cover border border-slate-700 shadow-md shrink-0"
+                className={`w-24 h-24 rounded-2xl object-cover border ${designConfig.accentBorder} shadow-md shrink-0`}
               />
 
               <div
@@ -92,10 +95,10 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
                 }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
-                className={`flex-1 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
+                className={`flex-1 border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
                   isDragging
-                    ? "border-cyan-400 bg-cyan-950/20 text-cyan-300"
-                    : "border-slate-700 hover:border-slate-500 bg-slate-950/40 text-slate-400"
+                    ? `${designConfig.accentBorder} ${designConfig.accentText}`
+                    : `${designConfig.borderSubtle} ${designConfig.isLight ? "bg-[#f5f2eb]" : "bg-slate-950/40"} ${designConfig.textMuted}`
                 }`}
               >
                 <input
@@ -108,11 +111,11 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
                   id="playlist-cover-file-input"
                 />
                 <label htmlFor="playlist-cover-file-input" className="cursor-pointer flex flex-col items-center">
-                  <Upload className="w-6 h-6 mb-1 text-cyan-400" />
-                  <span className="text-xs font-semibold text-slate-200">
+                  <Upload className={`w-6 h-6 mb-1 ${designConfig.accentText}`} />
+                  <span className={`text-xs font-semibold ${designConfig.textPrimary}`}>
                     Click to upload or drag & drop image
                   </span>
-                  <span className="text-[10px] text-slate-500">JPG, PNG, WEBP</span>
+                  <span className={`text-[10px] ${designConfig.textMuted}`}>JPG, PNG, WEBP</span>
                 </label>
               </div>
             </div>
@@ -120,7 +123,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">
+            <label className={`block text-xs font-semibold ${designConfig.textMuted} uppercase mb-1`}>
               Title *
             </label>
             <input
@@ -129,13 +132,13 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Oblivion Synthwave Beats"
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors"
+              className={`w-full px-4 py-2.5 ${designConfig.inputBg} rounded-xl text-sm focus:outline-none transition-colors`}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">
+            <label className={`block text-xs font-semibold ${designConfig.textMuted} uppercase mb-1`}>
               Description
             </label>
             <textarea
@@ -143,30 +146,30 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add an optional description for this playlist..."
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors resize-none"
+              className={`w-full px-4 py-2.5 ${designConfig.inputBg} rounded-xl text-sm focus:outline-none transition-colors resize-none`}
             />
           </div>
 
           {/* Sync status notice */}
           {isYouTubeSynced && (
-            <div className="p-3 bg-cyan-950/30 border border-cyan-800/40 rounded-xl text-xs text-cyan-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 shrink-0 text-cyan-400" />
-              <span>This playlist will automatically update real-time on your YouTube account.</span>
+            <div className={`p-3 rounded-2xl ${designConfig.pillBg} text-xs flex items-center gap-2 font-mono`}>
+              <Sparkles className={`w-4 h-4 shrink-0 ${designConfig.accentText}`} />
+              <span className={designConfig.textPrimary}>This playlist will automatically update real-time on your YouTube account.</span>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <div className={`flex items-center justify-end gap-3 pt-4 border-t ${designConfig.borderSubtle}`}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors"
+              className={`px-4 py-2 text-sm ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl transition-colors`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 rounded-xl shadow-lg shadow-cyan-500/20 transition-all active:scale-95"
+              className={`px-5 py-2.5 text-sm font-semibold rounded-xl shadow-lg transition-all active:scale-95 ${designConfig.btnPrimary}`}
             >
               {initialPlaylist ? "Save Changes" : "Create Playlist"}
             </button>

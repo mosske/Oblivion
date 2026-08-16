@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LyricLine, Track, UserSettings } from "../types";
 import { Sparkles, RefreshCw, Music2 } from "lucide-react";
+import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
 interface LyricsViewProps {
   track: Track;
   currentTime: number;
   onSeek: (time: number) => void;
   settings: UserSettings;
+  designConfig?: FullAppDesignConfig;
 }
 
 export const LyricsView: React.FC<LyricsViewProps> = ({
@@ -14,6 +16,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   currentTime,
   onSeek,
   settings,
+  designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -110,15 +113,15 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   const alignClass = settings.lyricsAlignment === "center" ? "text-center" : "text-left";
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-950/90 rounded-2xl border border-slate-800/80 p-6 backdrop-blur-xl relative overflow-hidden select-none">
+    <div className={`flex flex-col h-full w-full ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} p-6 backdrop-blur-xl relative overflow-hidden select-none shadow-xl`}>
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800/60 mb-4 shrink-0">
-        <div className="flex items-center gap-2 text-cyan-400 font-semibold text-sm">
+      <div className={`flex items-center justify-between pb-4 border-b ${designConfig.borderSubtle} mb-4 shrink-0`}>
+        <div className={`flex items-center gap-2 ${designConfig.accentText} font-semibold text-sm`}>
           <Sparkles className="w-4 h-4 animate-pulse" />
           <span>Synchronized AI Lyrics</span>
         </div>
-        <div className="text-xs text-slate-400 flex items-center gap-2 font-mono">
-          <span>{track.title}</span>
+        <div className={`text-xs ${designConfig.textMuted} flex items-center gap-2 font-mono`}>
+          <span className={`font-semibold ${designConfig.textPrimary}`}>{track.title}</span>
           <span>•</span>
           <span>{track.artist}</span>
         </div>
@@ -130,12 +133,12 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         className="flex-1 overflow-y-auto custom-scrollbar space-y-6 py-12 px-4"
       >
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-3">
-            <RefreshCw className="w-8 h-8 animate-spin text-cyan-400" />
+          <div className={`flex flex-col items-center justify-center h-full ${designConfig.textMuted} space-y-3`}>
+            <RefreshCw className={`w-8 h-8 animate-spin ${designConfig.accentText}`} />
             <p className="text-sm font-mono">Syncing lyrics timing with track...</p>
           </div>
         ) : lyrics.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-2">
+          <div className={`flex flex-col items-center justify-center h-full ${designConfig.textMuted} space-y-2`}>
             <Music2 className="w-12 h-12" />
             <p className="text-sm">Instrumental track or lyrics unavailable.</p>
           </div>
@@ -151,10 +154,10 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                 onClick={() => onSeek(line.time)}
                 className={`cursor-pointer transition-all duration-300 transform origin-left ${alignClass} ${fontSizeClass} ${
                   isActive
-                    ? "text-cyan-300 scale-105 filter drop-shadow-[0_0_12px_rgba(34,211,238,0.4)] font-extrabold"
+                    ? `${designConfig.accentText} scale-105 font-extrabold drop-shadow-sm`
                     : isPast
-                    ? "text-slate-500 hover:text-slate-300"
-                    : "text-slate-400 opacity-60 hover:opacity-100 hover:text-slate-200"
+                    ? `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                    : `${designConfig.textSecondary} opacity-60 hover:opacity-100 hover:${designConfig.textPrimary}`
                 }`}
               >
                 {line.text}
