@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Track, Playlist } from "../types";
-import { Search, Play, Plus, Music2, Radio } from "lucide-react";
+import { Search, Play, Plus, Music2, Radio, Sparkles, TrendingUp } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
@@ -14,6 +14,19 @@ interface SearchViewProps {
   designConfig?: FullAppDesignConfig;
 }
 
+const SEARCH_EXPLORE_TAGS = [
+  "Top Hits 2026",
+  "Synthwave",
+  "Cyberpunk Electronic",
+  "Lo-Fi Chillhop",
+  "Hip-Hop Classics",
+  "Deep House & EDM",
+  "Indie Pop",
+  "Acoustic Coffeehouse",
+  "Rock Anthems",
+  "Ambient Soundscapes"
+];
+
 export const SearchView: React.FC<SearchViewProps> = ({
   onPlayTrack,
   onPlayQueue,
@@ -23,7 +36,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   onSelectPlaylist,
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
-  const [query, setQuery] = useState("Synthwave");
+  const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "track" | "album" | "artist">("all");
   const [results, setResults] = useState<Track[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -89,8 +102,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
     <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 custom-scrollbar pb-40 md:pb-48 select-none">
       {/* Search Header Bar */}
       <div className="space-y-4">
-        <h1 className={`text-2xl font-bold ${designConfig.textPrimary} font-mono flex items-center gap-2`}>
-          <Search className={`w-6 h-6 ${designConfig.accentText}`} />
+        <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.textPrimary} tracking-tight flex items-center gap-2.5`}>
+          <Search className={`w-7 h-7 ${designConfig.accentText}`} />
           <span>Search YouTube Music</span>
         </h1>
 
@@ -101,7 +114,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search songs, artists, albums, or genres..."
-            className={`w-full pl-12 pr-4 py-3 ${designConfig.inputBg} rounded-2xl text-sm focus:outline-none shadow-md transition-all`}
+            className={`w-full pl-12 pr-4 py-3 ${designConfig.inputBg} rounded-2xl text-sm focus:outline-none shadow-md transition-all font-medium`}
+            autoFocus
           />
         </div>
 
@@ -123,6 +137,27 @@ export const SearchView: React.FC<SearchViewProps> = ({
         </div>
       </div>
 
+      {/* Suggested Topics when search is blank */}
+      {!query.trim() && (
+        <div className="space-y-4 animate-fade-in pt-2">
+          <h3 className={`text-xs font-bold ${designConfig.textMuted} uppercase tracking-wider flex items-center gap-1.5 font-mono`}>
+            <TrendingUp className="w-4 h-4 text-[#c89b3c]" />
+            Trending Search Topics
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {SEARCH_EXPLORE_TAGS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setQuery(tag)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold ${designConfig.cardBg} ${designConfig.cardHover} ${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-all hover:scale-105 active:scale-95 shadow-sm`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Results List */}
       <div className="space-y-3">
         {loading ? (
@@ -131,7 +166,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
               <div key={i} className={`h-16 ${designConfig.cardBg} rounded-2xl animate-pulse`}></div>
             ))}
           </div>
-        ) : (filteredResults || []).length === 0 ? (
+        ) : query.trim() && (filteredResults || []).length === 0 ? (
           <div className={`flex flex-col items-center justify-center py-16 ${designConfig.textMuted} space-y-2`}>
             <Music2 className="w-12 h-12 stroke-1" />
             <p className="text-sm font-medium">No YouTube Music results found for "{query}".</p>
@@ -202,60 +237,53 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {!isAlbum && !isArtist && (
-                    <button
-                      onClick={() => onAddToQueue(item)}
-                      className={`p-2 ${designConfig.btnSecondary} rounded-xl text-xs flex items-center gap-1 transition-colors`}
-                      title="Queue Next"
-                    >
-                      <Radio className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
-                      <span className="hidden sm:inline">Queue</span>
-                    </button>
-                  )}
-
-                  {!isArtist && (
-                    <div className="relative">
+                {/* Actions */}
+                <div className="flex items-center gap-1">
+                  {(!item.type || item.type === "track") && (
+                    <>
                       <button
-                        onClick={() =>
-                          setOpenPlaylistMenuId(openPlaylistMenuId === item.id ? null : item.id)
-                        }
-                        className={`p-2 ${designConfig.btnSecondary} rounded-xl text-xs flex items-center gap-1 transition-colors`}
-                        title="Add to Playlist"
+                        onClick={() => onAddToQueue(item)}
+                        className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl hover:bg-black/10 transition-colors`}
+                        title="Add to queue"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Radio className="w-4 h-4" />
                       </button>
 
-                      {openPlaylistMenuId === item.id && (
-                        <div className={`absolute right-0 top-10 w-52 ${designConfig.modalBg} rounded-2xl shadow-2xl p-2 z-30 space-y-1`}>
-                          <p className={`text-[10px] font-mono ${designConfig.textMuted} uppercase px-3 py-1`}>
-                            Add to Playlist
-                          </p>
-                          {(playlists || []).map((pl, idx) => (
-                            <button
-                              key={`dd_pl_${pl.id}_${idx}`}
-                              onClick={() => {
-                                onAddTrackToPlaylist(item, pl.id);
-                                setOpenPlaylistMenuId(null);
-                              }}
-                              className={`w-full text-left px-3 py-2 text-xs font-semibold ${designConfig.textSecondary} hover:${designConfig.textPrimary} ${designConfig.isLight ? "hover:bg-[#ede8dc]" : "hover:bg-slate-800"} rounded-xl truncate transition-colors flex items-center gap-2`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full ${designConfig.accentBg}`}></span>
-                              <span>{pl.title}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenPlaylistMenuId(openPlaylistMenuId === item.id ? null : item.id)}
+                          className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl hover:bg-black/10 transition-colors`}
+                          title="Add to playlist"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
 
-                  <button
-                    onClick={handleItemClick}
-                    className={`p-2.5 ${designConfig.btnPrimary} rounded-xl transition-all active:scale-95 shadow-md`}
-                  >
-                    <Play className="w-4 h-4 fill-current" />
-                  </button>
+                        {openPlaylistMenuId === item.id && (
+                          <div className={`absolute right-0 top-10 z-30 w-48 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-2xl shadow-2xl p-2 space-y-1 animate-fade-in`}>
+                            <p className={`text-[10px] font-bold ${designConfig.textMuted} uppercase px-2 py-1`}>
+                              Add to Playlist
+                            </p>
+                            {playlists.length === 0 ? (
+                              <p className={`text-xs ${designConfig.textMuted} px-2 py-1`}>No playlists yet</p>
+                            ) : (
+                              playlists.map((pl) => (
+                                <button
+                                  key={pl.id}
+                                  onClick={() => {
+                                    onAddTrackToPlaylist(item, pl.id);
+                                    setOpenPlaylistMenuId(null);
+                                  }}
+                                  className={`w-full text-left px-2 py-1.5 rounded-xl text-xs ${designConfig.textPrimary} hover:${designConfig.accentBg} hover:text-white transition-colors truncate`}
+                                >
+                                  {pl.title}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             );

@@ -7,6 +7,7 @@ import { HomeView } from "./components/HomeView";
 import { SearchView } from "./components/SearchView";
 import { LibraryView } from "./components/LibraryView";
 import { SettingsView } from "./components/SettingsView";
+import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AuthModal } from "./components/AuthModal";
@@ -15,13 +16,13 @@ import { AlertTriangle, X, Disc3 } from "lucide-react";
 export default function App() {
   const [activeTab, setActiveTab] = useState<"home" | "search" | "library" | "settings">("home");
   
-  // Initialize saved user from localStorage
+  // Persistent user state - remains signed in until explicit sign out
   const [user, setUser] = useState<User | null>(() => {
     try {
       const saved = localStorage.getItem("oblivion_saved_user");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.name) {
+        if (parsed && (parsed.name || parsed.email)) {
           return { ...parsed, isLoggedIn: true };
         }
       }
@@ -58,6 +59,7 @@ export default function App() {
           lyricsAlignment: parsed.lyricsAlignment || "left",
           autoDownloadFavorites: parsed.autoDownloadFavorites ?? false,
           maxCacheSizeMB: parsed.maxCacheSizeMB || 500,
+          backgroundPlay: parsed.backgroundPlay ?? true,
         };
       }
     } catch {
@@ -76,18 +78,17 @@ export default function App() {
       lyricsAlignment: "left",
       autoDownloadFavorites: false,
       maxCacheSizeMB: 500,
+      backgroundPlay: true,
     };
   });
 
   const activeFullDesign = FULL_APP_DESIGNS[settings.fullAppDesign || "designer"] || FULL_APP_DESIGNS["designer"];
 
-  // Save settings whenever they update
+  // Save settings whenever updated
   useEffect(() => {
     try {
       localStorage.setItem("oblivion_user_settings", JSON.stringify(settings));
-    } catch {
-      // Silently ignore storage quota exceptions
-    }
+    } catch {}
   }, [settings]);
 
   const [playerState, setPlayerState] = useState<PlayerState>({
@@ -108,7 +109,7 @@ export default function App() {
     likedTrackIds: [],
   });
 
-  // Save user changes to localStorage
+  // Save user changes to localStorage to keep user signed in
   useEffect(() => {
     if (user && user.isLoggedIn) {
       localStorage.setItem("oblivion_saved_user", JSON.stringify(user));
@@ -184,7 +185,7 @@ export default function App() {
     fetchPlaylists();
   };
 
-  // Fetch Playlists
+  // Fetch Playlists with immediate tracks count
   const fetchPlaylists = async () => {
     setIsSyncingYouTube(true);
     try {
@@ -227,16 +228,25 @@ export default function App() {
             sanitizedTracks.push({ ...t, id: trId });
           }
 
+          const primaryCover =
+            pl.customCoverUrl ||
+            pl.coverUrl ||
+            (sanitizedTracks[0]?.coverUrl ?? "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80");
+
           sanitizedPlaylists.push({
             ...pl,
             id: plId,
+            coverUrl: primaryCover,
+            customCoverUrl: pl.customCoverUrl || pl.coverUrl || primaryCover,
+            isCustomCover: Boolean(pl.isCustomCover || pl.customCoverUrl),
             tracks: sanitizedTracks,
-            tracksCount: sanitizedTracks.length || pl.tracksCount || 0,
+            tracksCount: pl.tracksCount || sanitizedTracks.length || 0,
           });
         }
 
         setPlaylists(sanitizedPlaylists);
-        // If initial track is empty, set default from first playlist
+
+        // Preload default track if queue is empty
         if (!playerState.currentTrack && sanitizedPlaylists[0]?.tracks?.[0]) {
           const defaultTrack = sanitizedPlaylists[0].tracks[0];
           setPlayerState((prev) => ({
@@ -254,12 +264,33 @@ export default function App() {
     }
   };
 
-  // Fetch specific playlist items when selected
-  const fetchPlaylistDetails = async (playlistId: string) => {
+  // Fetch playlist or album details & tracks from YouTube Music
+  const fetchPlaylistDetails = async (playlistId: string, title = "", artist = "") => {
     try {
-      const res = await fetch(`/api/youtube/playlists/${playlistId}/items`);
+      let activeToken = user?.accessToken;
+      if (!activeToken) {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            activeToken = parsed?.accessToken;
+          }
+        } catch {}
+      }
+
+      const headers: Record<string, string> = {};
+      if (activeToken) {
+        headers["Authorization"] = `Bearer ${activeToken}`;
+      }
+
+      const qTitle = encodeURIComponent(title || selectedPlaylist?.title || "");
+      const qArtist = encodeURIComponent(artist || (selectedPlaylist as any)?.artist || selectedPlaylist?.description || "");
+      const isAlb = Boolean((selectedPlaylist as any)?.isAlbum || (selectedPlaylist as any)?.artist || playlistId.startsWith("MPREb_") || playlistId.startsWith("OLAK5uy_"));
+      const qType = isAlb ? "album" : "playlist";
+
+      const res = await fetch(`/api/youtube/playlists/${playlistId}/items?title=${qTitle}&artist=${qArtist}&type=${qType}`, { headers });
       const data = await res.json();
-      if (data.tracks) {
+      if (data.tracks && data.tracks.length > 0) {
         const seenIds = new Set<string>();
         const uniqueTracks: Track[] = [];
 
@@ -271,14 +302,19 @@ export default function App() {
           uniqueTracks.push({ ...t, id: trId });
         }
 
+        const customCover = data.customCoverUrl || data.coverUrl;
+        const isCustom = Boolean(data.isCustomCover || data.customCoverUrl || customCover);
+
         setPlaylists((prev) =>
           prev.map((p) =>
             p.id === playlistId
               ? {
                   ...p,
                   tracks: uniqueTracks,
-                  tracksCount: uniqueTracks.length,
-                  coverUrl: uniqueTracks[0]?.coverUrl || p.coverUrl,
+                  tracksCount: uniqueTracks.length || p.tracksCount || 0,
+                  coverUrl: customCover || p.customCoverUrl || p.coverUrl || uniqueTracks[0]?.coverUrl,
+                  customCoverUrl: customCover || p.customCoverUrl || p.coverUrl,
+                  isCustomCover: isCustom || p.isCustomCover,
                 }
               : p
           )
@@ -288,8 +324,10 @@ export default function App() {
             ? {
                 ...prev,
                 tracks: uniqueTracks,
-                tracksCount: uniqueTracks.length,
-                coverUrl: uniqueTracks[0]?.coverUrl || prev.coverUrl,
+                tracksCount: uniqueTracks.length || prev.tracksCount || 0,
+                coverUrl: customCover || (prev as any).customCoverUrl || prev.coverUrl || uniqueTracks[0]?.coverUrl,
+                customCoverUrl: customCover || (prev as any).customCoverUrl || prev.coverUrl,
+                isCustomCover: isCustom || (prev as any).isCustomCover,
               }
             : prev
         );
@@ -300,12 +338,16 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (selectedPlaylist?.id) {
-      fetchPlaylistDetails(selectedPlaylist.id);
+    if (selectedPlaylist?.id && (!selectedPlaylist.tracks || selectedPlaylist.tracks.length === 0)) {
+      fetchPlaylistDetails(
+        selectedPlaylist.id,
+        selectedPlaylist.title,
+        (selectedPlaylist as any).artist || selectedPlaylist.description
+      );
     }
   }, [selectedPlaylist?.id]);
 
-  // Play single track
+  // Immediate Auto-play single track
   const handlePlayTrack = (track: Track) => {
     const trId = track.id || track.youtubeVideoId;
     const cleanTrack = { ...track, id: trId };
@@ -329,7 +371,7 @@ export default function App() {
     });
   };
 
-  // Play array queue
+  // Immediate Auto-play queue
   const handlePlayQueue = (tracks: Track[], startIndex = 0) => {
     if (!tracks || tracks.length === 0) return;
     const seen = new Set<string>();
@@ -367,13 +409,22 @@ export default function App() {
     });
   };
 
-  // Next Track
+  // Next Track with immediate auto-play and full Shuffle support
   const handleNextTrack = () => {
     setPlayerState((prev) => {
       if (prev.queue.length === 0) return prev;
-      let nextIndex = prev.queueIndex + 1;
-      if (nextIndex >= prev.queue.length) {
-        nextIndex = 0;
+      let nextIndex: number;
+      if (prev.isShuffle && prev.queue.length > 1) {
+        let rand = Math.floor(Math.random() * prev.queue.length);
+        if (rand === prev.queueIndex) {
+          rand = (rand + 1) % prev.queue.length;
+        }
+        nextIndex = rand;
+      } else {
+        nextIndex = prev.queueIndex + 1;
+        if (nextIndex >= prev.queue.length) {
+          nextIndex = 0;
+        }
       }
       return {
         ...prev,
@@ -384,13 +435,22 @@ export default function App() {
     });
   };
 
-  // Previous Track
+  // Previous Track with immediate auto-play and full Shuffle support
   const handlePrevTrack = () => {
     setPlayerState((prev) => {
       if (prev.queue.length === 0) return prev;
-      let prevIndex = prev.queueIndex - 1;
-      if (prevIndex < 0) {
-        prevIndex = prev.queue.length - 1;
+      let prevIndex: number;
+      if (prev.isShuffle && prev.queue.length > 1) {
+        let rand = Math.floor(Math.random() * prev.queue.length);
+        if (rand === prev.queueIndex) {
+          rand = (rand - 1 + prev.queue.length) % prev.queue.length;
+        }
+        prevIndex = rand;
+      } else {
+        prevIndex = prev.queueIndex - 1;
+        if (prevIndex < 0) {
+          prevIndex = prev.queue.length - 1;
+        }
       }
       return {
         ...prev,
@@ -415,7 +475,6 @@ export default function App() {
   // Create or Update Playlist
   const handleSavePlaylist = async (title: string, description: string, coverUrl: string) => {
     if (editingPlaylist) {
-      // Update
       try {
         const res = await fetch(`/api/youtube/playlists/${editingPlaylist.id}`, {
           method: "PUT",
@@ -437,7 +496,6 @@ export default function App() {
         console.error("Update playlist error:", err);
       }
     } else {
-      // Create
       try {
         const res = await fetch("/api/youtube/playlists", {
           method: "POST",
@@ -469,13 +527,60 @@ export default function App() {
     }
   };
 
+  // Update Custom Playlist Cover
+  const handleUpdatePlaylistCover = async (playlistId: string, newCoverUrl: string, isCustom: boolean) => {
+    setPlaylists((prev) => {
+      const updated = prev.map((p) =>
+        p.id === playlistId
+          ? {
+              ...p,
+              coverUrl: newCoverUrl,
+              customCoverUrl: newCoverUrl,
+              isCustomCover: isCustom,
+            }
+          : p
+      );
+      try {
+        localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (selectedPlaylist?.id === playlistId) {
+      setSelectedPlaylist((prev) =>
+        prev
+          ? {
+              ...prev,
+              coverUrl: newCoverUrl,
+              customCoverUrl: newCoverUrl,
+              isCustomCover: isCustom,
+            }
+          : null
+      );
+    }
+
+    try {
+      await fetch(`/api/youtube/playlists/${playlistId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coverUrl: newCoverUrl,
+          customCoverUrl: newCoverUrl,
+          isCustomCover: isCustom,
+        }),
+      });
+    } catch (err) {
+      console.error("Update custom playlist cover error:", err);
+    }
+  };
+
   // Reorder Tracks inside Playlist
   const handleReorderPlaylistTracks = async (playlistId: string, newTracks: Track[]) => {
     setPlaylists((prev) =>
-      prev.map((p) => (p.id === playlistId ? { ...p, tracks: newTracks } : p))
+      prev.map((p) => (p.id === playlistId ? { ...p, tracks: newTracks, tracksCount: newTracks.length } : p))
     );
     if (selectedPlaylist?.id === playlistId) {
-      setSelectedPlaylist((prev) => (prev ? { ...prev, tracks: newTracks } : null));
+      setSelectedPlaylist((prev) => (prev ? { ...prev, tracks: newTracks, tracksCount: newTracks.length } : null));
     }
 
     try {
@@ -492,26 +597,28 @@ export default function App() {
   // Remove Track from Playlist
   const handleRemoveTrackFromPlaylist = async (playlistId: string, trackId: string) => {
     setPlaylists((prev) =>
-      prev.map((p) =>
-        p.id === playlistId
-          ? {
-              ...p,
-              tracks: p.tracks.filter((t) => t.id !== trackId),
-              tracksCount: p.tracks.length - 1,
-            }
-          : p
-      )
+      prev.map((p) => {
+        if (p.id === playlistId) {
+          const updated = p.tracks.filter((t) => t.id !== trackId);
+          return {
+            ...p,
+            tracks: updated,
+            tracksCount: updated.length,
+          };
+        }
+        return p;
+      })
     );
     if (selectedPlaylist?.id === playlistId) {
-      setSelectedPlaylist((prev) =>
-        prev
-          ? {
-              ...prev,
-              tracks: prev.tracks.filter((t) => t.id !== trackId),
-              tracksCount: prev.tracks.length - 1,
-            }
-          : null
-      );
+      setSelectedPlaylist((prev) => {
+        if (!prev) return null;
+        const updated = prev.tracks.filter((t) => t.id !== trackId);
+        return {
+          ...prev,
+          tracks: updated,
+          tracksCount: updated.length,
+        };
+      });
     }
 
     try {
@@ -571,7 +678,7 @@ export default function App() {
     }
   };
 
-  // Sync / Batch Save Playlist Tracks
+  // Sync / Commit changes to YouTube Music
   const handleSyncPlaylistTracks = async (playlistId: string, updatedTracks: Track[]) => {
     try {
       const res = await fetch(`/api/youtube/playlists/${playlistId}/sync`, {
@@ -581,18 +688,22 @@ export default function App() {
       });
       const data = await res.json();
       if (data.success) {
-        setPlaylists((prev) =>
-          prev.map((p) =>
+        setPlaylists((prev) => {
+          const updated = prev.map((p) =>
             p.id === playlistId
               ? {
                   ...p,
                   tracks: updatedTracks,
                   tracksCount: updatedTracks.length,
-                  coverUrl: updatedTracks[0]?.coverUrl || p.coverUrl,
+                  coverUrl: (p.isCustomCover && p.customCoverUrl) || p.customCoverUrl || p.coverUrl || updatedTracks[0]?.coverUrl,
                 }
               : p
-          )
-        );
+          );
+          try {
+            localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
         if (selectedPlaylist?.id === playlistId) {
           setSelectedPlaylist((prev) =>
             prev
@@ -600,7 +711,7 @@ export default function App() {
                   ...prev,
                   tracks: updatedTracks,
                   tracksCount: updatedTracks.length,
-                  coverUrl: updatedTracks[0]?.coverUrl || prev.coverUrl,
+                  coverUrl: ((prev as any).isCustomCover && (prev as any).customCoverUrl) || (prev as any).customCoverUrl || prev.coverUrl || updatedTracks[0]?.coverUrl,
                 }
               : null
           );
@@ -618,7 +729,10 @@ export default function App() {
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab) => {
+          setSelectedPlaylist(null);
+          setActiveTab(tab);
+        }}
         user={user}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
@@ -638,7 +752,13 @@ export default function App() {
       <main className={`flex-1 flex flex-col relative h-full overflow-hidden bg-gradient-to-b ${activeFullDesign.bgCanvas}`}>
         {/* Mobile Top App Bar */}
         <header className={`md:hidden flex items-center justify-between px-4 py-3 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-20`}>
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab("home")}>
+          <div
+            className="flex items-center gap-2.5 cursor-pointer"
+            onClick={() => {
+              setSelectedPlaylist(null);
+              setActiveTab("home");
+            }}
+          >
             <div className={`w-8 h-8 rounded-xl ${activeFullDesign.btnPrimary} p-0.5 flex items-center justify-center shadow-md`}>
               <div className={`w-full h-full ${activeFullDesign.isLight ? "bg-[#f5f2eb]" : "bg-slate-950"} rounded-[10px] flex items-center justify-center`}>
                 <Disc3 className={`w-4 h-4 ${activeFullDesign.accentText}`} />
@@ -677,72 +797,115 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === "home" && (
-          <HomeView
-            onPlayTrack={handlePlayTrack}
-            onPlayQueue={handlePlayQueue}
-            onSelectPlaylist={(pl) => {
-              setSelectedPlaylist(pl);
-              setActiveTab("library");
-            }}
-            playlists={playlists}
-            user={user}
-            onOpenSettings={() => setActiveTab("settings")}
-            currentTrack={playerState.currentTrack}
-            designConfig={activeFullDesign}
-          />
-        )}
-
-        {activeTab === "search" && (
-          <SearchView
+        {/* Fresh Screen: When a Playlist or Album is clicked, open PlaylistDetailView as a dedicated screen */}
+        {selectedPlaylist ? (
+          <PlaylistDetailView
+            item={selectedPlaylist}
+            isAlbum={Boolean(
+              (selectedPlaylist as any).isAlbum ||
+              (selectedPlaylist as any).artist ||
+              (selectedPlaylist.description && selectedPlaylist.description.toLowerCase().includes("album")) ||
+              selectedPlaylist.id?.startsWith("MPREb_") ||
+              selectedPlaylist.id?.startsWith("OLAK5uy_")
+            )}
+            onBack={() => setSelectedPlaylist(null)}
             onPlayTrack={handlePlayTrack}
             onPlayQueue={handlePlayQueue}
             onAddToQueue={handleAddToQueue}
             onAddTrackToPlaylist={handleAddTrackToPlaylist}
-            playlists={playlists}
-            onSelectPlaylist={(pl) => {
-              setSelectedPlaylist(pl);
-              setActiveTab("library");
-            }}
-            designConfig={activeFullDesign}
-          />
-        )}
-
-        {activeTab === "library" && (
-          <LibraryView
-            playlists={playlists}
-            selectedPlaylist={selectedPlaylist}
-            onSelectPlaylist={setSelectedPlaylist}
-            onCreatePlaylist={() => {
-              setEditingPlaylist(null);
-              setIsPlaylistModalOpen(true);
-            }}
             onEditPlaylist={(pl) => {
               setEditingPlaylist(pl);
               setIsPlaylistModalOpen(true);
             }}
-            onDeletePlaylist={handleDeletePlaylist}
-            onReorderPlaylistTracks={handleReorderPlaylistTracks}
-            onRemoveTrackFromPlaylist={handleRemoveTrackFromPlaylist}
-            onPlayTrack={handlePlayTrack}
-            onPlayQueue={handlePlayQueue}
+            onUpdateCover={(newCoverUrl, isCustom) =>
+              handleUpdatePlaylistCover(selectedPlaylist.id, newCoverUrl, isCustom)
+            }
             currentTrackId={playerState.currentTrack?.id}
-            likedTrackIds={playerState.likedTrackIds}
-            currentTrack={playerState.currentTrack}
-            onAddTrackToPlaylist={handleAddTrackToPlaylist}
-            onSyncPlaylistTracks={handleSyncPlaylistTracks}
+            isPlaying={playerState.isPlaying}
+            playlists={playlists}
+            isShuffle={playerState.isShuffle}
+            onToggleShuffle={() => setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))}
+            repeatMode={playerState.repeatMode}
+            onToggleRepeat={() =>
+              setPlayerState((prev) => ({
+                ...prev,
+                repeatMode:
+                  prev.repeatMode === "off" ? "all" : prev.repeatMode === "all" ? "one" : "off",
+              }))
+            }
+            onReorderTracks={(newTracks) => handleReorderPlaylistTracks(selectedPlaylist.id, newTracks)}
+            onRemoveTrack={(trackId) => handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId)}
+            onSyncToYouTube={(updatedTracks) => handleSyncPlaylistTracks(selectedPlaylist.id, updatedTracks)}
             designConfig={activeFullDesign}
           />
-        )}
+        ) : (
+          <>
+            {activeTab === "home" && (
+              <HomeView
+                onPlayTrack={handlePlayTrack}
+                onPlayQueue={handlePlayQueue}
+                onSelectPlaylist={(pl) => setSelectedPlaylist(pl)}
+                playlists={playlists}
+                user={user}
+                onOpenSettings={() => setActiveTab("settings")}
+                currentTrack={playerState.currentTrack}
+                designConfig={activeFullDesign}
+              />
+            )}
 
-        {activeTab === "settings" && (
-          <SettingsView
-            settings={settings}
-            onUpdateSettings={(newSet) => setSettings((prev) => ({ ...prev, ...newSet }))}
-            user={user}
-            onLoginSuccess={handleLoginSuccess}
-            onLogout={handleLogout}
-          />
+            {activeTab === "search" && (
+              <SearchView
+                onPlayTrack={handlePlayTrack}
+                onPlayQueue={handlePlayQueue}
+                onAddToQueue={handleAddToQueue}
+                onAddTrackToPlaylist={handleAddTrackToPlaylist}
+                playlists={playlists}
+                onSelectPlaylist={(pl) => setSelectedPlaylist(pl)}
+                designConfig={activeFullDesign}
+              />
+            )}
+
+            {activeTab === "library" && (
+              <LibraryView
+                playlists={playlists}
+                selectedPlaylist={null}
+                onSelectPlaylist={setSelectedPlaylist}
+                onCreatePlaylist={() => {
+                  setEditingPlaylist(null);
+                  setIsPlaylistModalOpen(true);
+                }}
+                onEditPlaylist={(pl) => {
+                  setEditingPlaylist(pl);
+                  setIsPlaylistModalOpen(true);
+                }}
+                onDeletePlaylist={handleDeletePlaylist}
+                onReorderPlaylistTracks={handleReorderPlaylistTracks}
+                onRemoveTrackFromPlaylist={handleRemoveTrackFromPlaylist}
+                onPlayTrack={handlePlayTrack}
+                onPlayQueue={handlePlayQueue}
+                currentTrackId={playerState.currentTrack?.id}
+                likedTrackIds={playerState.likedTrackIds}
+                currentTrack={playerState.currentTrack}
+                onAddTrackToPlaylist={handleAddTrackToPlaylist}
+                onSyncPlaylistTracks={handleSyncPlaylistTracks}
+                designConfig={activeFullDesign}
+                isSyncingYouTube={isSyncingYouTube}
+                onSyncYouTube={fetchPlaylists}
+                user={user}
+                onOpenAuthModal={() => setIsAuthModalOpen(true)}
+              />
+            )}
+
+            {activeTab === "settings" && (
+              <SettingsView
+                settings={settings}
+                onUpdateSettings={(newSet) => setSettings((prev) => ({ ...prev, ...newSet }))}
+                user={user}
+                onLoginSuccess={handleLoginSuccess}
+                onLogout={handleLogout}
+              />
+            )}
+          </>
         )}
 
         {/* Audio Player Component */}
@@ -761,13 +924,23 @@ export default function App() {
           onPlayTrack={handlePlayTrack}
           onAddToQueue={handleAddToQueue}
           settings={settings}
+          playlists={playlists}
+          onAddTrackToPlaylist={handleAddTrackToPlaylist}
+          designConfig={activeFullDesign}
         />
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} designConfig={activeFullDesign} />
+      <BottomNav
+        activeTab={activeTab}
+        setActiveTab={(tab) => {
+          setSelectedPlaylist(null);
+          setActiveTab(tab);
+        }}
+        designConfig={activeFullDesign}
+      />
 
-      {/* Playlist Create/Edit Modal */}
+      {/* Playlist Create/Edit Modal with Custom YouTube Images */}
       <PlaylistModal
         isOpen={isPlaylistModalOpen}
         onClose={() => {

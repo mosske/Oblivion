@@ -17,6 +17,8 @@ export interface Playlist {
   title: string;
   description: string;
   coverUrl: string;
+  customCoverUrl?: string;
+  isCustomCover?: boolean;
   isYouTubeSynced?: boolean;
   tracksCount: number;
   updatedAt: string;
