@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Home,
+  Compass,
   Search,
   Library,
   Settings,
@@ -13,12 +14,13 @@ import {
   Plus,
   Sparkles,
 } from "lucide-react";
-import { User, Playlist, ThemePreset } from "../types";
+import { User, Playlist, ThemePreset, NavTab } from "../types";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { PlaylistCoverArt } from "./PlaylistCoverArt";
 
 interface SidebarProps {
-  activeTab: "home" | "search" | "library" | "settings";
-  setActiveTab: (tab: "home" | "search" | "library" | "settings") => void;
+  activeTab: NavTab;
+  setActiveTab: (tab: NavTab) => void;
   user: User | null;
   onOpenAuthModal: () => void;
   onLogout: () => void;
@@ -45,15 +47,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const cleanPlaylists = React.useMemo(() => {
+    let hiddenIds: string[] = [];
+    try {
+      const stored = localStorage.getItem("oblivion_hidden_playlists");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) hiddenIds = parsed;
+      }
+    } catch {}
+
     const seen = new Set<string>();
     return (playlists || []).filter((pl) => {
       if (!pl) return false;
       const id = pl.id || pl.playlistId;
-      if (!id || seen.has(id)) return false;
+      if (!id || seen.has(id) || hiddenIds.includes(id)) return false;
       seen.add(id);
       return true;
     });
   }, [playlists]);
+
 
   return (
     <aside className={`w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col h-full ${designConfig.textPrimary} select-none z-20 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg`}>
@@ -96,16 +108,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         <button
-          id="nav-search-btn"
-          onClick={() => setActiveTab("search")}
+          id="nav-explore-btn"
+          onClick={() => setActiveTab("explore")}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-            activeTab === "search"
+            activeTab === "explore"
               ? designConfig.navActive
               : designConfig.navInactive
           }`}
         >
-          <Search className={`w-5 h-5 ${activeTab === "search" ? designConfig.accentText : ""}`} />
-          <span>Search</span>
+          <Compass className={`w-5 h-5 ${activeTab === "explore" ? designConfig.accentText : ""}`} />
+          <span>Explore</span>
         </button>
 
         <button
@@ -217,11 +229,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }}
             className={`w-full group flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium ${designConfig.textSecondary} hover:${designConfig.textPrimary} ${designConfig.isLight ? "hover:bg-[#f4f1ea]" : "hover:bg-slate-900/80"} transition-all text-left`}
           >
-            <img
-              src={pl.coverUrl}
-              alt={pl.title}
-              className={`w-7 h-7 rounded-md object-cover border ${designConfig.borderSubtle}`}
-            />
+            <div className="w-7 h-7 rounded-md overflow-hidden shrink-0">
+              <PlaylistCoverArt
+                playlist={pl}
+                className={`w-full h-full object-cover border ${designConfig.borderSubtle}`}
+              />
+            </div>
             <div className="flex-1 min-w-0">
               <p className={`truncate font-medium group-hover:${designConfig.accentText}`}>{pl.title}</p>
               <p className={`text-[10px] ${designConfig.textMuted} flex items-center gap-1`}>

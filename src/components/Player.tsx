@@ -54,6 +54,56 @@ declare global {
   }
 }
 
+// Generate valid PCM silent WAV with real headers & samples to keep background media locks active
+function writeWavString(view: DataView, offset: number, string: string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
+function createSilentAudioUrl(): string {
+  try {
+    const sampleRate = 8000;
+    const numChannels = 1;
+    const bitsPerSample = 16;
+    const numSamples = sampleRate * 2; // 2 seconds
+    const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
+    const blockAlign = (numChannels * bitsPerSample) / 8;
+    const dataSize = numSamples * blockAlign;
+    const buffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buffer);
+
+    writeWavString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeWavString(view, 8, 'WAVE');
+
+    writeWavString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitsPerSample, true);
+
+    writeWavString(view, 36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  } catch {
+    return "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+  }
+}
+
+let cachedSilentUrl: string | null = null;
+function getSilentAudioUrl(): string {
+  if (!cachedSilentUrl) {
+    cachedSilentUrl = createSilentAudioUrl();
+  }
+  return cachedSilentUrl;
+}
+
 export const Player: React.FC<PlayerProps> = ({
   playerState,
   setPlayerState,
@@ -76,6 +126,9 @@ export const Player: React.FC<PlayerProps> = ({
   const isYtReadyRef = useRef<boolean>(false);
   const isChangingTrackRef = useRef<boolean>(false);
   const isChangingTrackTimeoutRef = useRef<any>(null);
+  const userManualPauseRef = useRef<boolean>(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
 
   const [isCachedOffline, setIsCachedOffline] = useState(false);
   const [isCaching, setIsCaching] = useState(false);
@@ -124,6 +177,7 @@ export const Player: React.FC<PlayerProps> = ({
       (currentTrack.id && currentTrack.id.length === 11 ? currentTrack.id : null);
 
     const initOrUpdateYT = () => {
+      userManualPauseRef.current = false;
       if (!window.YT || !window.YT.Player) {
         window.onYouTubeIframeAPIReady = () => {
           initOrUpdateYT();
@@ -158,10 +212,11 @@ export const Player: React.FC<PlayerProps> = ({
                 // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING, 5 = CUED
                 if (event.data === 1) {
                   isChangingTrackRef.current = false;
+                  userManualPauseRef.current = false;
                   setPlayerState((prev) => (prev.isPlaying ? prev : { ...prev, isPlaying: true }));
                 } else if (event.data === 2) {
-                  // If transitioning between tracks, YouTube fires state 2 (paused) internally. Ignore it and force play!
-                  if (isChangingTrackRef.current) {
+                  // If transitioning between tracks OR browser was minimized/backgrounded without manual pause:
+                  if (isChangingTrackRef.current || (!userManualPauseRef.current && isPlaying)) {
                     try {
                       event.target.playVideo();
                     } catch {}
@@ -209,6 +264,7 @@ export const Player: React.FC<PlayerProps> = ({
         const cachedBlob = await getCachedTrackAudioUrl(currentTrack.id);
         if (cachedBlob) {
           audioRef.current.src = cachedBlob;
+          audioRef.current.loop = false;
           audioRef.current.play().catch(() => {});
           setPlayerState((prev) => ({ ...prev, isPlaying: true }));
           return;
@@ -220,7 +276,7 @@ export const Player: React.FC<PlayerProps> = ({
     cachedCheck();
   }, [currentTrack?.id, currentTrack?.youtubeVideoId]);
 
-  // Sync isPlaying state to players
+  // Sync isPlaying state to players and maintain background audio keepalive
   useEffect(() => {
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
@@ -231,14 +287,24 @@ export const Player: React.FC<PlayerProps> = ({
         }
       } catch {}
     }
+
     if (audioRef.current) {
       if (isPlaying) {
+        if (!isCachedOffline) {
+          // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
+          const silentUrl = getSilentAudioUrl();
+          if (audioRef.current.src !== silentUrl) {
+            audioRef.current.src = silentUrl;
+            audioRef.current.loop = true;
+            audioRef.current.volume = 0.001;
+          }
+        }
         audioRef.current.play().catch(() => {});
       } else if (!isChangingTrackRef.current) {
         audioRef.current.pause();
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, isCachedOffline]);
 
   // Sync volume state to players
   useEffect(() => {
@@ -248,10 +314,10 @@ export const Player: React.FC<PlayerProps> = ({
         ytPlayerRef.current.setVolume?.(effectiveVolume * 100);
       } catch {}
     }
-    if (audioRef.current) {
+    if (audioRef.current && isCachedOffline) {
       audioRef.current.volume = effectiveVolume;
     }
-  }, [volume, isMuted]);
+  }, [volume, isMuted, isCachedOffline]);
 
   // Timer loop for YouTube current timestamp & progress
   useEffect(() => {
@@ -274,42 +340,125 @@ export const Player: React.FC<PlayerProps> = ({
     return () => clearInterval(interval);
   }, [isPlaying, isCachedOffline, currentTrack?.duration]);
 
-  // Background play setting
+  // User manual play/pause toggle handler
+  const handleUserTogglePlay = (explicitPlay?: boolean) => {
+    if (explicitPlay !== undefined) {
+      userManualPauseRef.current = !explicitPlay;
+    } else {
+      userManualPauseRef.current = isPlaying;
+    }
+    onTogglePlay();
+  };
+
+  // Background play & minimize listener
   useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden && isPlaying && !userManualPauseRef.current) {
+        try {
+          ytPlayerRef.current?.playVideo?.();
+          if (audioRef.current && !isCachedOffline) {
+            audioRef.current.play().catch(() => {});
+          }
+        } catch {}
+      }
+    };
+
     if (settings.backgroundPlay === false) {
       const handleVisibilityChange = () => {
         if (document.hidden && isPlaying) {
-          onTogglePlay();
+          handleUserTogglePlay(false);
         }
       };
       document.addEventListener("visibilitychange", handleVisibilityChange);
       return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    } else {
+      document.addEventListener("visibilitychange", handleVisibility);
+      window.addEventListener("pagehide", handleVisibility);
+      return () => {
+        document.removeEventListener("visibilitychange", handleVisibility);
+        window.removeEventListener("pagehide", handleVisibility);
+      };
     }
-  }, [settings.backgroundPlay, isPlaying, onTogglePlay]);
+  }, [settings.backgroundPlay, isPlaying, isCachedOffline]);
 
-  // MediaSession API Integration for background playback & lockscreen controls
+  // MediaSession API Integration for background playback & Android pull-down notification controls
   useEffect(() => {
     if ("mediaSession" in navigator && currentTrack) {
+      const cover = currentTrack.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80";
+      
       navigator.mediaSession.metadata = new MediaMetadata({
         title: cleanTrackTitle(currentTrack.title, currentTrack.artist),
-        artist: currentTrack.artist,
-        album: currentTrack.album || "YouTube Music",
+        artist: currentTrack.artist || "YouTube Music",
+        album: currentTrack.album || "Oblivion Live Stream",
         artwork: [
-          { src: currentTrack.coverUrl, sizes: "512x512", type: "image/jpeg" },
+          { src: cover, sizes: "96x96", type: "image/jpeg" },
+          { src: cover, sizes: "128x128", type: "image/jpeg" },
+          { src: cover, sizes: "192x192", type: "image/jpeg" },
+          { src: cover, sizes: "256x256", type: "image/jpeg" },
+          { src: cover, sizes: "384x384", type: "image/jpeg" },
+          { src: cover, sizes: "512x512", type: "image/jpeg" },
         ],
       });
 
       navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
 
-      navigator.mediaSession.setActionHandler("play", () => onTogglePlay());
-      navigator.mediaSession.setActionHandler("pause", () => onTogglePlay());
-      navigator.mediaSession.setActionHandler("previoustrack", () => onPrevTrack());
-      navigator.mediaSession.setActionHandler("nexttrack", () => onNextTrack());
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        if (details.seekTime !== undefined) onSeek(details.seekTime);
+      // Register full action handlers so Android pulls down Prev, Next, Play, Pause, Seek controls
+      const mediaActions: [MediaSessionAction, MediaSessionActionHandler][] = [
+        ["play", () => {
+          userManualPauseRef.current = false;
+          if (!isPlaying) onTogglePlay();
+        }],
+        ["pause", () => {
+          userManualPauseRef.current = true;
+          if (isPlaying) onTogglePlay();
+        }],
+        ["previoustrack", () => {
+          userManualPauseRef.current = false;
+          onPrevTrack();
+        }],
+        ["nexttrack", () => {
+          userManualPauseRef.current = false;
+          onNextTrack();
+        }],
+        ["seekto", (details) => {
+          if (details.seekTime !== undefined && !isNaN(details.seekTime)) {
+            handleSeekInternal(details.seekTime);
+          }
+        }],
+        ["seekbackward", (details) => {
+          const offset = details.seekOffset || 10;
+          handleSeekInternal(Math.max(0, currentTime - offset));
+        }],
+        ["seekforward", (details) => {
+          const offset = details.seekOffset || 10;
+          handleSeekInternal(Math.min(duration || 1000, currentTime + offset));
+        }],
+        ["stop", () => {
+          userManualPauseRef.current = true;
+          onTogglePlay();
+        }],
+      ];
+
+      mediaActions.forEach(([action, handler]) => {
+        try {
+          navigator.mediaSession.setActionHandler(action, handler);
+        } catch {
+          // Ignore unsupported action on browser
+        }
       });
+
+      // Update position state for Android notification scrubber
+      if ("setPositionState" in navigator.mediaSession && duration > 0 && !isNaN(duration) && !isNaN(currentTime)) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: Math.max(duration, 1),
+            playbackRate: 1,
+            position: Math.min(Math.max(currentTime, 0), duration),
+          });
+        } catch {}
+      }
     }
-  }, [currentTrack?.id, currentTrack?.title, isPlaying]);
+  }, [currentTrack?.id, currentTrack?.title, currentTrack?.artist, isPlaying, duration, currentTime, onPrevTrack, onNextTrack, onTogglePlay]);
 
   // Time update event handler for HTML5 audio
   const handleTimeUpdate = () => {
@@ -379,15 +528,17 @@ export const Player: React.FC<PlayerProps> = ({
 
   return (
     <>
-      {/* Hidden YouTube IFrame Streaming Engine */}
+      {/* Background-persistent YouTube IFrame Streaming Engine */}
       <div
         id="oblivion-yt-stream-engine"
-        className="fixed -bottom-[999px] -right-[999px] w-1 h-1 pointer-events-none opacity-0 -z-50"
+        className="fixed bottom-0 right-0 w-4 h-4 pointer-events-none opacity-[0.01] z-0 overflow-hidden"
       />
 
-      {/* Hidden Native Audio Element for Offline Cache */}
+      {/* Hidden Native Audio Element for Offline Cache & Mobile Background Audio Session */}
       <audio
         ref={audioRef}
+        playsInline
+        autoPlay
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onError={() => console.warn("Audio element fallback")}
@@ -656,7 +807,7 @@ export const Player: React.FC<PlayerProps> = ({
                 </button>
 
                 <button
-                  onClick={onTogglePlay}
+                  onClick={() => handleUserTogglePlay()}
                   className={`p-4 ${designConfig.btnPrimary} text-white rounded-2xl shadow-xl transition-all active:scale-95`}
                   title={isPlaying ? "Pause" : "Play"}
                 >
@@ -735,7 +886,7 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* Left Play/Pause and Track Info */}
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <button
-                    onClick={onTogglePlay}
+                    onClick={() => handleUserTogglePlay()}
                     className={`w-10 h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
                     title={isPlaying ? "Pause" : "Play"}
                   >
@@ -969,7 +1120,7 @@ export const Player: React.FC<PlayerProps> = ({
               </button>
 
               <button
-                onClick={onTogglePlay}
+                onClick={() => handleUserTogglePlay()}
                 className={`w-9 h-9 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-lg transition-transform active:scale-95`}
               >
                 {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}

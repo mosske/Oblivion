@@ -120,3 +120,6 @@ export interface PlayerState {
   showSimilar: boolean;
   likedTrackIds: string[];
 }
+
+export type NavTab = 'home' | 'explore' | 'library' | 'search' | 'settings';
+

@@ -28,6 +28,7 @@ import { cacheTrackAudio, isTrackCached } from "../utils/offlineCache";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCustomCoverModal } from "./PlaylistCustomCoverModal";
+import { PlaylistCoverArt } from "./PlaylistCoverArt";
 
 interface PlaylistDetailViewProps {
   item: Playlist | Album;
@@ -74,7 +75,22 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   isShuffle = false,
   onToggleShuffle,
 }) => {
-  const [tracks, setTracks] = useState<Track[]>(item.tracks || []);
+  if (!item) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center select-none">
+        <p className="text-sm text-slate-400 mb-4">No playlist or album selected.</p>
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-[#c89b3c] hover:bg-[#b58b34] text-slate-950 font-bold rounded-xl text-xs"
+        >
+          Return to Library
+        </button>
+      </div>
+    );
+  }
+
+  const [tracks, setTracks] = useState<Track[]>(Array.isArray(item.tracks) ? item.tracks.filter(Boolean) : []);
+
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
@@ -158,20 +174,23 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     };
   }, [tracks]);
 
-  // Calculate total duration in minutes
-  const totalDurationSecs = tracks.reduce((acc, t) => acc + (t.duration || 210), 0);
-  const durationMins = Math.floor(totalDurationSecs / 60);
+  const safeTracks = React.useMemo(() => (Array.isArray(tracks) ? tracks.filter(Boolean) : []), [tracks]);
+
+  // Calculate total duration in minutes safely
+  const totalDurationSecs = safeTracks.reduce((acc, t) => acc + (t?.duration || 210), 0);
+  const durationMins = isNaN(totalDurationSecs) ? 0 : Math.max(0, Math.floor(totalDurationSecs / 60));
 
   // Download entire playlist with live progress bar
   const handleDownloadAll = async () => {
-    if (isDownloading || tracks.length === 0) return;
+    if (isDownloading || safeTracks.length === 0) return;
     setIsDownloading(true);
     setDownloadProgress(0);
     setDownloadCurrentIndex(0);
 
     const newMap = { ...cachedTrackMap };
-    for (let i = 0; i < tracks.length; i++) {
-      const track = tracks[i];
+    for (let i = 0; i < safeTracks.length; i++) {
+      const track = safeTracks[i];
+
       setDownloadCurrentIndex(i + 1);
       const trId = track.id || track.youtubeVideoId;
       if (trId && !newMap[trId]) {
@@ -319,20 +338,26 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             {/* Playlist Cover Art with YouTube Floating Edit Button */}
             <div className="relative group shrink-0">
               <div className="relative">
-                <img
-                  src={
-                    (item as Playlist).customCoverUrl ||
-                    item.coverUrl ||
-                    tracks[0]?.coverUrl ||
-                    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80"
-                  }
-                  alt={item.title}
-                  className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80";
-                  }}
-                />
+                {!isAlbum ? (
+                  <PlaylistCoverArt
+                    playlist={{ ...(item as Playlist), tracks }}
+                    className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
+                  />
+                ) : (
+                  <img
+                    src={
+                      item.coverUrl ||
+                      tracks[0]?.coverUrl ||
+                      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80"
+                    }
+                    alt={item.title}
+                    className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80";
+                    }}
+                  />
+                )}
 
                 {/* Custom Image Badge if custom */}
                 {((item as Playlist).isCustomCover || (item as Playlist).customCoverUrl) && (
@@ -379,7 +404,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 {item.title}
               </h1>
 
-              <p className={`text-sm ${designConfig.textMuted} line-clamp-2 max-w-2xl`}>
+              <p className={`text-sm ${designConfig.textSecondary} line-clamp-2 max-w-2xl font-normal`}>
                 {(item as any).description || (isAlbum ? `Album by ${(item as Album).artist} • Released ${(item as Album).releaseYear}` : "Curated YouTube Music track collection.")}
               </p>
 
@@ -522,7 +547,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         {/* Songs List */}
         <div className="space-y-2">
           <div className="flex items-center justify-between px-3 py-1">
-            <h3 className={`text-sm font-bold ${designConfig.textPrimary} uppercase tracking-wider font-mono`}>
+            <h3 className={`text-sm font-bold ${designConfig.headingPrimary} uppercase tracking-wider font-mono`}>
               Tracks ({tracks.length})
             </h3>
             {isReorderMode && (
@@ -640,9 +665,9 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                       )}
 
                       <span className={`text-[11px] sm:text-xs font-mono ${designConfig.textMuted}`}>
-                        {track.duration
+                        {track.duration && track.duration > 0
                           ? `${Math.floor(track.duration / 60)}:${String(Math.floor(track.duration % 60)).padStart(2, "0")}`
-                          : "3:30"}
+                          : "--:--"}
                       </span>
 
                       {/* Drag Handle in Reorder Mode */}

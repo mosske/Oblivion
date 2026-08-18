@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { User, Playlist, Track, PlayerState, UserSettings } from "./types";
+import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from "./types";
 import { FULL_APP_DESIGNS } from "./utils/appDesignThemes";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { HomeView } from "./components/HomeView";
+import { ExploreView } from "./components/ExploreView";
 import { SearchView } from "./components/SearchView";
 import { LibraryView } from "./components/LibraryView";
 import { SettingsView } from "./components/SettingsView";
@@ -11,10 +12,28 @@ import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AuthModal } from "./components/AuthModal";
-import { AlertTriangle, X, Disc3 } from "lucide-react";
+import { AlertTriangle, X, Disc3, Search, CheckCircle2 } from "lucide-react";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"home" | "search" | "library" | "settings">("home");
+  // Persistent activeTab state
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    try {
+      const saved = localStorage.getItem("oblivion_active_tab");
+      if (saved && ["home", "explore", "search", "library", "settings"].includes(saved)) {
+        return saved as NavTab;
+      }
+    } catch {}
+    return "home";
+  });
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((prev) => (prev === msg ? null : prev));
+    }, 3500);
+  };
   
   // Persistent user state - remains signed in until explicit sign out
   const [user, setUser] = useState<User | null>(() => {
@@ -32,8 +51,29 @@ export default function App() {
     return null;
   });
 
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  // Persistent playlists state
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    try {
+      const saved = localStorage.getItem("oblivion_saved_playlists");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
+  // Persistent selectedPlaylist state so user stays in the playlist they were viewing
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(() => {
+    try {
+      const saved = localStorage.getItem("oblivion_selected_playlist");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && (parsed.id || parsed.title)) return parsed;
+      }
+    } catch {}
+    return null;
+  });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
@@ -91,23 +131,96 @@ export default function App() {
     } catch {}
   }, [settings]);
 
-  const [playerState, setPlayerState] = useState<PlayerState>({
-    currentTrack: null,
-    queue: [],
-    queueIndex: 0,
-    isPlaying: false,
-    volume: 0.8,
-    isMuted: false,
-    currentTime: 0,
-    duration: 0,
-    repeatMode: "off",
-    isShuffle: false,
-    isFullscreen: false,
-    showLyrics: false,
-    showQueue: false,
-    showSimilar: false,
-    likedTrackIds: [],
+  // Persist activeTab
+  useEffect(() => {
+    try {
+      localStorage.setItem("oblivion_active_tab", activeTab);
+    } catch {}
+  }, [activeTab]);
+
+  // Persist selectedPlaylist
+  useEffect(() => {
+    try {
+      if (selectedPlaylist) {
+        localStorage.setItem("oblivion_selected_playlist", JSON.stringify(selectedPlaylist));
+      } else {
+        localStorage.removeItem("oblivion_selected_playlist");
+      }
+    } catch {}
+  }, [selectedPlaylist]);
+
+  // Persistent player state
+  const [playerState, setPlayerState] = useState<PlayerState>(() => {
+    const defaultState: PlayerState = {
+      currentTrack: null,
+      queue: [],
+      queueIndex: 0,
+      isPlaying: false,
+      volume: 0.8,
+      isMuted: false,
+      currentTime: 0,
+      duration: 0,
+      repeatMode: "off",
+      isShuffle: false,
+      isFullscreen: false,
+      showLyrics: false,
+      showQueue: false,
+      showSimilar: false,
+      likedTrackIds: [],
+    };
+    try {
+      const saved = localStorage.getItem("oblivion_saved_player_state");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.currentTrack) {
+          return {
+            ...defaultState,
+            currentTrack: parsed.currentTrack,
+            queue: parsed.queue && parsed.queue.length > 0 ? parsed.queue : [parsed.currentTrack],
+            queueIndex: parsed.queueIndex || 0,
+            currentTime: parsed.currentTime || 0,
+            duration: parsed.duration || parsed.currentTrack.duration || 0,
+            volume: parsed.volume ?? 0.8,
+            repeatMode: parsed.repeatMode || "off",
+            isShuffle: parsed.isShuffle || false,
+            likedTrackIds: parsed.likedTrackIds || [],
+            isPlaying: false,
+          };
+        }
+      }
+    } catch {}
+    return defaultState;
   });
+
+  // Save player state changes to localStorage
+  useEffect(() => {
+    try {
+      if (playerState.currentTrack) {
+        localStorage.setItem(
+          "oblivion_saved_player_state",
+          JSON.stringify({
+            currentTrack: playerState.currentTrack,
+            queue: playerState.queue,
+            queueIndex: playerState.queueIndex,
+            currentTime: playerState.currentTime,
+            duration: playerState.duration,
+            volume: playerState.volume,
+            repeatMode: playerState.repeatMode,
+            isShuffle: playerState.isShuffle,
+            likedTrackIds: playerState.likedTrackIds,
+          })
+        );
+      }
+    } catch {}
+  }, [
+    playerState.currentTrack?.id,
+    playerState.queue.length,
+    playerState.queueIndex,
+    playerState.volume,
+    playerState.repeatMode,
+    playerState.isShuffle,
+    playerState.likedTrackIds.length,
+  ]);
 
   // Save user changes to localStorage to keep user signed in
   useEffect(() => {
@@ -245,6 +358,16 @@ export default function App() {
         }
 
         setPlaylists(sanitizedPlaylists);
+        try {
+          localStorage.setItem("oblivion_saved_playlists", JSON.stringify(sanitizedPlaylists));
+        } catch {}
+
+        // Sync currently viewed playlist if one is open
+        setSelectedPlaylist((prev) => {
+          if (!prev) return null;
+          const match = sanitizedPlaylists.find((p) => p.id === prev.id);
+          return match ? { ...prev, ...match } : prev;
+        });
 
         // Preload default track if queue is empty
         if (!playerState.currentTrack && sanitizedPlaylists[0]?.tracks?.[0]) {
@@ -635,6 +758,8 @@ export default function App() {
     const trId = track.id || track.youtubeVideoId;
     if (!trId) return;
     const cleanTrack = { ...track, id: trId };
+    const targetPl = playlists.find((p) => p.id === playlistId || (p as any).playlistId === playlistId);
+    const playlistName = targetPl?.title || "Playlist";
 
     try {
       const res = await fetch(`/api/youtube/playlists/${playlistId}/items`, {
@@ -672,6 +797,7 @@ export default function App() {
             };
           });
         }
+        showToast(`Added to ${playlistName} Playlist`);
       }
     } catch (err) {
       console.error("Add track error:", err);
@@ -750,8 +876,8 @@ export default function App() {
 
       {/* Main Content Workspace Area */}
       <main className={`flex-1 flex flex-col relative h-full overflow-hidden bg-gradient-to-b ${activeFullDesign.bgCanvas}`}>
-        {/* Mobile Top App Bar */}
-        <header className={`md:hidden flex items-center justify-between px-4 py-3 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-20`}>
+        {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
+        <header className={`flex items-center justify-between px-4 sm:px-6 py-3 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-20`}>
           <div
             className="flex items-center gap-2.5 cursor-pointer"
             onClick={() => {
@@ -767,17 +893,45 @@ export default function App() {
             <span className={`text-sm font-bold tracking-wider ${activeFullDesign.textPrimary} font-mono`}>OBLIVION</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Top Search Button (Magnifying Glass Icon) */}
+            <button
+              id="top-header-search-btn"
+              onClick={() => {
+                setSelectedPlaylist(null);
+                setActiveTab("search");
+              }}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
+                activeTab === "search"
+                  ? `${activeFullDesign.btnPrimary} shadow-md`
+                  : `${activeFullDesign.btnSecondary} ${activeFullDesign.textPrimary} hover:scale-105 active:scale-95`
+              }`}
+              title="Search music, albums, artists"
+            >
+              <Search className="w-4 h-4" />
+              <span className="text-xs font-semibold hidden sm:inline">Search</span>
+            </button>
+
             {!user?.isLoggedIn && (
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className={`px-3 py-1.5 rounded-xl ${activeFullDesign.pillBg} ${activeFullDesign.textPrimary} text-xs font-semibold`}
+                className={`px-3 py-1.5 rounded-xl ${activeFullDesign.pillBg} ${activeFullDesign.textPrimary} text-xs font-semibold hover:scale-105 active:scale-95 transition-transform`}
               >
                 Sign In
               </button>
             )}
           </div>
         </header>
+
+        {/* Global Toast Notification */}
+        {toastMessage && (
+          <div className="fixed top-16 right-4 sm:right-8 z-50 animate-bounce">
+            <div className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl ${activeFullDesign.cardBg} border ${activeFullDesign.accentBorder} shadow-2xl backdrop-blur-xl text-xs font-bold ${activeFullDesign.textPrimary}`}>
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>{toastMessage}</span>
+            </div>
+          </div>
+        )}
 
         {oauthBannerError && (
           <div className="bg-red-500/15 border-b border-red-500/30 px-4 py-3 flex items-center justify-between text-red-200 text-xs font-medium shrink-0 shadow-lg z-20 animate-fade-in">
@@ -849,6 +1003,21 @@ export default function App() {
                 user={user}
                 onOpenSettings={() => setActiveTab("settings")}
                 currentTrack={playerState.currentTrack}
+                designConfig={activeFullDesign}
+              />
+            )}
+
+            {activeTab === "explore" && (
+              <ExploreView
+                onPlayTrack={handlePlayTrack}
+                onPlayQueue={handlePlayQueue}
+                onSelectAlbum={(alb: any) => setSelectedPlaylist(alb)}
+                onSearchGenre={(genreQuery) => {
+                  setSelectedPlaylist(null);
+                  setActiveTab("search");
+                }}
+                currentTrackId={playerState.currentTrack?.id}
+                isPlaying={playerState.isPlaying}
                 designConfig={activeFullDesign}
               />
             )}

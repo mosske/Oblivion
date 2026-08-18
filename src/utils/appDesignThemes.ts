@@ -30,6 +30,9 @@ export interface FullAppDesignConfig {
   pillBg: string;
   pillActive: string;
   bottomNavBg: string;
+  headingPrimary: string;
+  headingSecondary: string;
+  headingMuted: string;
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
@@ -77,13 +80,16 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     pillBg: "bg-[#f4f1ea] text-[#6b675e] hover:text-[#181816] hover:bg-[#ede8dc] border border-[#e2ddd1]",
     pillActive: "bg-[#c89b3c] text-white shadow-md shadow-[#c89b3c]/25 border border-[#c89b3c]",
     bottomNavBg: "bg-[#fbfaf7]/95 border-[#e6e2d8] text-[#181816] backdrop-blur-2xl",
+    headingPrimary: "text-white",
+    headingSecondary: "text-emerald-100",
+    headingMuted: "text-emerald-200/90",
     textPrimary: "text-[#181816]",
-    textSecondary: "text-[#6b675e]",
-    textMuted: "text-[#8c887e]",
+    textSecondary: "text-[#47433b]",
+    textMuted: "text-[#6b675e]",
     borderSubtle: "border-[#e6e2d8]",
     inputBg: "bg-[#f4f1ea] border border-[#e2ddd1] text-[#181816] placeholder-[#8c887e] focus:border-[#c89b3c]",
     btnPrimary: "bg-[#c89b3c] hover:bg-[#d8a846] text-white shadow-md shadow-[#c89b3c]/25 font-bold",
-    btnSecondary: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border border-[#d8d2c4] font-semibold",
+    btnSecondary: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border border-[#d8d2c4] font-semibold shadow-sm",
     navActive: "bg-[#ede8dc] text-[#181816] shadow-sm border border-[#d8d2c4] font-bold",
     navInactive: "text-[#6b675e] hover:text-[#181816] hover:bg-[#f4f1ea]",
     modalBg: "bg-[#fbfaf7] border border-[#e6e2d8] text-[#181816]",
@@ -128,6 +134,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     pillBg: "bg-slate-800/80 text-cyan-300 border border-cyan-500/30",
     pillActive: "bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20 font-bold",
     bottomNavBg: "bg-slate-950/95 border-slate-800/80 backdrop-blur-2xl text-slate-200",
+    headingPrimary: "text-white",
+    headingSecondary: "text-cyan-100",
+    headingMuted: "text-slate-300",
     textPrimary: "text-white",
     textSecondary: "text-slate-300",
     textMuted: "text-slate-400",
@@ -179,6 +188,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     pillBg: "bg-[#272727] text-white hover:bg-[#383838] border border-neutral-700",
     pillActive: "bg-red-600 text-white shadow-md shadow-red-600/20 font-bold",
     bottomNavBg: "bg-[#121212] border-neutral-800 text-neutral-200",
+    headingPrimary: "text-white",
+    headingSecondary: "text-neutral-100",
+    headingMuted: "text-neutral-300",
     textPrimary: "text-white",
     textSecondary: "text-neutral-300",
     textMuted: "text-neutral-400",
@@ -230,6 +242,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     pillBg: "bg-zinc-800/80 text-emerald-300 border border-emerald-500/30",
     pillActive: "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-bold",
     bottomNavBg: "bg-black/95 border-zinc-800/80 backdrop-blur-2xl text-zinc-200",
+    headingPrimary: "text-white",
+    headingSecondary: "text-emerald-100",
+    headingMuted: "text-zinc-300",
     textPrimary: "text-zinc-50",
     textSecondary: "text-zinc-300",
     textMuted: "text-zinc-400",
@@ -281,6 +296,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     pillBg: "bg-amber-950/60 text-amber-300 border border-amber-500/40",
     pillActive: "bg-amber-500 text-stone-950 shadow-md shadow-amber-500/20 font-bold",
     bottomNavBg: "bg-[#14100c]/95 border-amber-900/50 backdrop-blur-2xl text-amber-100",
+    headingPrimary: "text-amber-50",
+    headingSecondary: "text-amber-100",
+    headingMuted: "text-amber-200/80",
     textPrimary: "text-amber-50",
     textSecondary: "text-amber-200/80",
     textMuted: "text-amber-300/60",
@@ -332,6 +350,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     pillBg: "bg-purple-900/50 text-purple-200 border border-purple-500/30",
     pillActive: "bg-purple-600 text-white shadow-md shadow-purple-600/25 font-bold",
     bottomNavBg: "bg-[#110620]/95 border-purple-900/50 backdrop-blur-2xl text-purple-200",
+    headingPrimary: "text-white",
+    headingSecondary: "text-purple-100",
+    headingMuted: "text-purple-200/80",
     textPrimary: "text-purple-50",
     textSecondary: "text-purple-200/80",
     textMuted: "text-purple-300/60",

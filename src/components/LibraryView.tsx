@@ -15,10 +15,13 @@ import {
   SlidersHorizontal,
   FolderOpen,
   RefreshCw,
-  LogIn
+  LogIn,
+  CheckCircle2
 } from "lucide-react";
 import { getAllCachedTracks, getCacheSizeMB, removeCachedTrack } from "../utils/offlineCache";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { PlaylistCoverArt } from "./PlaylistCoverArt";
+import { ManageVisibilityModal } from "./ManageVisibilityModal";
 
 interface LibraryViewProps {
   playlists: Playlist[];
@@ -66,6 +69,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   const [cacheSizeMB, setCacheSizeMB] = useState(0);
   const [isOfflineCacheExpanded, setIsOfflineCacheExpanded] = useState(true);
   const [showHidden, setShowHidden] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [toastText, setToastText] = useState<string | null>(null);
 
   // Persistent Sort and Hidden Playlist state from LocalStorage
   const [sortOption, setSortOption] = useState<SortOption>(() => {
@@ -75,7 +80,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   const [hiddenPlaylistIds, setHiddenPlaylistIds] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem("oblivion_hidden_playlists");
-      return stored ? JSON.parse(stored) : [];
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -87,16 +94,31 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     localStorage.setItem("oblivion_playlist_sort", newSort);
   };
 
-  // Toggle hiding a playlist
+  // Save hidden playlist IDs and persist to storage
+  const handleSaveHiddenPlaylists = (newHiddenIds: string[]) => {
+    const safeIds = Array.isArray(newHiddenIds) ? newHiddenIds : [];
+    setHiddenPlaylistIds(safeIds);
+    try {
+      localStorage.setItem("oblivion_hidden_playlists", JSON.stringify(safeIds));
+    } catch {}
+    setToastText("Playlist visibility preferences saved");
+    setTimeout(() => setToastText(null), 3000);
+  };
+
+  // Toggle hiding a single playlist directly
   const toggleHidePlaylist = (e: React.MouseEvent, playlistId: string) => {
     e.stopPropagation();
     setHiddenPlaylistIds((prev) => {
-      const isHidden = prev.includes(playlistId);
-      const updated = isHidden ? prev.filter((id) => id !== playlistId) : [...prev, playlistId];
-      localStorage.setItem("oblivion_hidden_playlists", JSON.stringify(updated));
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const isHidden = safePrev.includes(playlistId);
+      const updated = isHidden ? safePrev.filter((id) => id !== playlistId) : [...safePrev, playlistId];
+      try {
+        localStorage.setItem("oblivion_hidden_playlists", JSON.stringify(updated));
+      } catch {}
       return updated;
     });
   };
+
 
   useEffect(() => {
     const loadCachedTracks = async () => {
@@ -174,16 +196,31 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.textPrimary} flex items-center gap-2.5 tracking-tight`}>
+              <h2 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} flex items-center gap-2.5 tracking-tight`}>
                 <Library className={`w-7 h-7 ${designConfig.accentText}`} />
                 Library Playlists
               </h2>
-              <p className={`text-xs ${designConfig.textMuted} mt-1`}>
+              <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
                 All your curated YouTube Music collections with live track counts and offline synchronization.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                id="library-manage-visibility-btn"
+                onClick={() => setIsManageModalOpen(true)}
+                className={`px-3.5 py-2.5 ${designConfig.btnSecondary} rounded-xl transition-all font-semibold flex items-center gap-2 text-xs shadow-sm hover:scale-[1.02] active:scale-95`}
+                title="Manage hidden playlists"
+              >
+                <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                <span>Hide / Unhide</span>
+                {hiddenCount > 0 && (
+                  <span className="px-1.5 py-0.2 bg-amber-500/30 text-amber-300 rounded-full text-[10px] font-mono">
+                    {hiddenCount}
+                  </span>
+                )}
+              </button>
+
               {onSyncYouTube && (
                 <button
                   onClick={onSyncYouTube}
@@ -298,19 +335,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   >
                     {/* Cover Art */}
                     <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-black/10 shadow-inner">
-                      <img
-                        src={
-                          pl.customCoverUrl ||
-                          pl.coverUrl ||
-                          pl.tracks?.[0]?.coverUrl ||
-                          "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80"
-                        }
-                        alt={pl.title}
+                      <PlaylistCoverArt
+                        playlist={pl}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80";
-                        }}
                       />
 
                       {/* Custom Image Badge if custom */}
@@ -385,11 +412,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               onClick={() => setIsOfflineCacheExpanded(!isOfflineCacheExpanded)}
             >
               <div>
-                <h2 className={`text-lg font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
+                <h2 className={`text-lg font-bold ${designConfig.headingPrimary} flex items-center gap-2`}>
                   <HardDrive className={`w-5 h-5 ${designConfig.accentText}`} />
                   Offline Storage ({cacheSizeMB.toFixed(1)} MB)
                 </h2>
-                <p className={`text-xs ${designConfig.textMuted}`}>
+                <p className={`text-xs ${designConfig.headingMuted} font-medium`}>
                   {cleanCachedTracks.length} tracks cached locally for zero-latency playback.
                 </p>
               </div>
@@ -434,6 +461,24 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Hide / Unhide Management Modal */}
+      <ManageVisibilityModal
+        isOpen={isManageModalOpen}
+        onClose={() => setIsManageModalOpen(false)}
+        playlists={cleanPlaylists}
+        initialHiddenIds={hiddenPlaylistIds}
+        onSave={handleSaveHiddenPlaylists}
+        designConfig={designConfig}
+      />
+
+      {/* Floating Save Toast */}
+      {toastText && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-emerald-500/90 text-white text-xs font-bold shadow-2xl backdrop-blur-md flex items-center gap-2 border border-emerald-400/30 animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+          <span>{toastText}</span>
+        </div>
+      )}
     </div>
   );
 };

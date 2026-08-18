@@ -102,7 +102,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
     <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 custom-scrollbar pb-40 md:pb-48 select-none">
       {/* Search Header Bar */}
       <div className="space-y-4">
-        <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.textPrimary} tracking-tight flex items-center gap-2.5`}>
+        <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2.5`}>
           <Search className={`w-7 h-7 ${designConfig.accentText}`} />
           <span>Search YouTube Music</span>
         </h1>
@@ -140,7 +140,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
       {/* Suggested Topics when search is blank */}
       {!query.trim() && (
         <div className="space-y-4 animate-fade-in pt-2">
-          <h3 className={`text-xs font-bold ${designConfig.textMuted} uppercase tracking-wider flex items-center gap-1.5 font-mono`}>
+          <h3 className={`text-xs font-bold ${designConfig.headingMuted} uppercase tracking-wider flex items-center gap-1.5 font-mono`}>
             <TrendingUp className="w-4 h-4 text-[#c89b3c]" />
             Trending Search Topics
           </h3>
