@@ -1,19 +1,30 @@
 import React, { useEffect, useState } from "react";
+import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from "./types";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Player } from "./components/Player";
-import { Home, Search, Music, Settings, PlayCircle, LogOut } from "lucide-react";
-import { Track, PlayerState } from "./types";
-
-type NavTab = "home" | "explore" | "library" | "settings";
 
 function AppContent() {
+  const [user, setUser] = useState<User | null>(null);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [currentView, setCurrentView] = useState<NavTab>("home");
-  const [playlists, setPlaylists] = useState<any[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playlistSongs, setPlaylistSongs] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [settings, setSettings] = useState<UserSettings>(() => {
+    try {
+      const saved = localStorage.getItem("oblivion_user_settings");
+      return saved ? JSON.parse(saved) : {
+        theme: "default",
+        audioQuality: "high",
+        autoDownload: false,
+      };
+    } catch {
+      return { theme: "default", audioQuality: "high", autoDownload: false };
+    }
+  });
+
+  // Player state with auto-play fix (#3)
   const [playerState, setPlayerState] = useState<PlayerState>(() => {
     try {
       const saved = localStorage.getItem("oblivion_player_state");
@@ -21,7 +32,7 @@ function AppContent() {
         const parsed = JSON.parse(saved);
         return {
           ...parsed,
-          isPlaying: false,
+          isPlaying: false, // FIX #3: Never auto-play on return
         };
       }
     } catch (error) {
@@ -48,26 +59,25 @@ function AppContent() {
     try {
       const response = await fetch("/api/auth/me");
       const data = await response.json();
-      if (data.isLoggedIn) {
-        setIsLoggedIn(true);
+      if (data.isLoggedIn && data.user) {
+        setUser(data.user);
         fetchPlaylists();
-      } else {
-        setLoading(false);
       }
     } catch (error) {
-      console.error("Auth check failed", error);
+      console.error("Auth check failed:", error);
+    } finally {
       setLoading(false);
     }
   };
 
   const fetchPlaylists = async () => {
-    setLoading(true);
     try {
       const response = await fetch("/api/youtube/playlists");
       const data = await response.json();
       if (data.success && data.playlists) {
         setPlaylists(data.playlists);
         localStorage.setItem("oblivion_saved_playlists", JSON.stringify(data.playlists));
+        localStorage.setItem("oblivion_playlist_sync_time", new Date().toISOString());
       }
     } catch (error) {
       console.error("Failed to fetch playlists:", error);
@@ -77,8 +87,6 @@ function AppContent() {
           setPlaylists(JSON.parse(cached));
         }
       } catch {}
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -87,15 +95,14 @@ function AppContent() {
       const response = await fetch(`/api/youtube/playlists/${playlistId}/videos`);
       const data = await response.json();
       if (data.success && data.videos) {
-        setPlaylistSongs(
-          data.videos.map((video: any) => ({
-            id: video.id,
-            youtubeVideoId: video.videoId,
-            title: video.title,
-            artist: video.channelTitle,
-            coverUrl: video.thumbnail,
-          }))
-        );
+        const songs = data.videos.map((video: any) => ({
+          id: video.id,
+          youtubeVideoId: video.videoId,
+          title: video.title,
+          artist: video.channelTitle,
+          coverUrl: video.thumbnail,
+        }));
+        setPlaylistSongs(songs);
       }
     } catch (error) {
       console.error("Failed to fetch playlist songs:", error);
@@ -134,7 +141,7 @@ function AppContent() {
   const handleSignOut = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      setIsLoggedIn(false);
+      setUser(null);
       setPlaylists([]);
       setSelectedPlaylistId(null);
     } catch (error) {
@@ -186,57 +193,62 @@ function AppContent() {
     }
   };
 
-  const renderView = () => {
-    if (selectedPlaylistId) {
-      const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId);
-      return (
-        <div className="p-6">
-          <button
-            onClick={() => setSelectedPlaylistId(null)}
-            className="mb-6 text-cyan-400 hover:text-cyan-300 transition"
-          >
-            ← Back
-          </button>
-          <div className="mb-6">
-            {selectedPlaylist?.coverUrl && (
-              <img
-                src={selectedPlaylist.coverUrl}
-                alt={selectedPlaylist.title}
-                className="w-40 h-40 rounded-lg object-cover mb-4"
-              />
-            )}
-            <h1 className="text-3xl font-bold mb-2">{selectedPlaylist?.title}</h1>
-            <p className="text-gray-400">{playlistSongs.length} songs</p>
-          </div>
+  const renderPlaylistDetail = () => {
+    const playlist = playlists.find((p) => p.id === selectedPlaylistId);
+    if (!playlist) return null;
 
-          {playlistSongs.length === 0 ? (
-            <div className="text-gray-400 text-center py-12">No songs in this playlist</div>
-          ) : (
-            <div className="space-y-2">
-              {playlistSongs.map((song, index) => (
-                <div
-                  key={song.id}
-                  onClick={() => handlePlayTrack(playlistSongs, playlistSongs, index)}
-                  className="flex items-center gap-4 p-3 bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer transition"
-                >
-                  {song.coverUrl && (
-                    <img
-                      src={song.coverUrl}
-                      alt={song.title}
-                      className="w-12 h-12 rounded object-cover flex-shrink-0"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate text-white text-sm">{song.title}</h3>
-                    <p className="text-xs text-gray-400 truncate">{song.artist}</p>
-                  </div>
-                  <PlayCircle className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                </div>
-              ))}
-            </div>
+    return (
+      <div className="p-6">
+        <button
+          onClick={() => setSelectedPlaylistId(null)}
+          className="mb-6 text-cyan-400 hover:text-cyan-300 transition"
+        >
+          ← Back to Library
+        </button>
+        <div className="mb-6">
+          {playlist.coverUrl && (
+            <img
+              src={playlist.coverUrl}
+              alt={playlist.title}
+              className="w-48 h-48 rounded-lg object-cover mb-4"
+            />
           )}
+          <h1 className="text-4xl font-bold mb-2">{playlist.title}</h1>
+          <p className="text-gray-400">Playlist • {playlistSongs.length} songs</p>
         </div>
-      );
+
+        {playlistSongs.length === 0 ? (
+          <div className="text-gray-400 text-center py-12">No songs in this playlist</div>
+        ) : (
+          <div className="space-y-2">
+            {playlistSongs.map((song, index) => (
+              <div
+                key={song.id}
+                onClick={() => handlePlayTrack(playlistSongs, playlistSongs, index)}
+                className="flex items-center gap-4 p-3 bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer transition"
+              >
+                {song.coverUrl && (
+                  <img
+                    src={song.coverUrl}
+                    alt={song.title}
+                    className="w-12 h-12 rounded object-cover flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold truncate text-white">{song.title}</h3>
+                  <p className="text-sm text-gray-400 truncate">{song.artist}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderContent = () => {
+    if (selectedPlaylistId) {
+      return renderPlaylistDetail();
     }
 
     switch (currentView) {
@@ -248,74 +260,62 @@ function AppContent() {
               <p className="text-gray-400">Your YouTube Music library</p>
             </div>
 
-            <div className="mb-8">
-              <button
-                onClick={() => fetchPlaylists()}
-                className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white font-medium transition"
-              >
-                🔄 Refresh
-              </button>
-              {!isLoggedIn && (
+            {!user ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 mb-6">Sign in to see your playlists</p>
                 <button
                   onClick={handleSignIn}
-                  className="ml-4 px-6 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-full text-white font-medium transition"
+                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
                 >
-                  Sign In
+                  Sign In to YouTube Music
                 </button>
-              )}
-            </div>
-
-            {loading ? (
-              <div className="text-gray-400 text-center py-12">Loading...</div>
-            ) : playlists.length === 0 ? (
-              <div className="text-gray-400 text-center py-12">
-                {isLoggedIn ? "No playlists found" : "Sign in to see your playlists"}
               </div>
             ) : (
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Your Playlists</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {playlists.map((playlist) => (
-                    <div
-                      key={playlist.id}
-                      onClick={() => {
-                        setSelectedPlaylistId(playlist.id);
-                        fetchPlaylistSongs(playlist.id);
-                      }}
-                      className="bg-white/5 hover:bg-white/10 rounded-lg overflow-hidden cursor-pointer transition transform hover:scale-105 group"
-                    >
-                      {playlist.coverUrl && (
-                        <div className="relative aspect-square overflow-hidden">
-                          <img
-                            src={playlist.coverUrl}
-                            alt={playlist.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition"
-                          />
-                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
-                            <PlayCircle className="w-12 h-12 text-white" />
+              <>
+                <div className="mb-8">
+                  <button
+                    onClick={() => fetchPlaylists()}
+                    className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full font-medium transition"
+                  >
+                    🔄 Refresh Playlists
+                  </button>
+                </div>
+
+                {playlists.length === 0 ? (
+                  <div className="text-gray-400 text-center py-12">No playlists found</div>
+                ) : (
+                  <div>
+                    <h2 className="text-2xl font-bold mb-6">Your Playlists</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {playlists.map((playlist) => (
+                        <div
+                          key={playlist.id}
+                          onClick={() => {
+                            setSelectedPlaylistId(playlist.id);
+                            fetchPlaylistSongs(playlist.id);
+                          }}
+                          className="bg-white/5 hover:bg-white/10 rounded-lg overflow-hidden cursor-pointer transition transform hover:scale-105 group"
+                        >
+                          {playlist.coverUrl && (
+                            <div className="relative aspect-square overflow-hidden">
+                              <img
+                                src={playlist.coverUrl}
+                                alt={playlist.title}
+                                className="w-full h-full object-cover group-hover:scale-110 transition"
+                              />
+                            </div>
+                          )}
+                          <div className="p-4">
+                            <h3 className="font-semibold truncate text-white">{playlist.title}</h3>
+                            <p className="text-sm text-gray-400">{playlist.itemCount} songs</p>
                           </div>
                         </div>
-                      )}
-                      <div className="p-4">
-                        <h3 className="font-semibold truncate text-white">{playlist.title}</h3>
-                        <p className="text-sm text-gray-400 truncate">Playlist • {playlist.itemCount} songs</p>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                )}
+              </>
             )}
-          </div>
-        );
-
-      case "explore":
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold mb-6">Explore</h1>
-            <div className="text-gray-400 text-center py-12">
-              <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Coming soon</p>
-            </div>
           </div>
         );
 
@@ -324,33 +324,30 @@ function AppContent() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-3xl font-bold">Your Library</h1>
-              <div className="flex gap-2">
-                {!isLoggedIn && (
-                  <button
-                    onClick={handleSignIn}
-                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg transition text-sm font-medium"
-                  >
-                    Sign In
-                  </button>
-                )}
-                {isLoggedIn && (
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
-                )}
-              </div>
+              {user && (
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+                >
+                  Sign Out
+                </button>
+              )}
             </div>
 
-            {playlists.length === 0 ? (
-              <div className="text-gray-400 text-center py-12">
-                {isLoggedIn ? "No playlists" : "Sign in to see your library"}
+            {!user ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 mb-6">Sign in to access your library</p>
+                <button
+                  onClick={handleSignIn}
+                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
+                >
+                  Sign In
+                </button>
               </div>
+            ) : playlists.length === 0 ? (
+              <div className="text-gray-400 text-center py-12">No playlists</div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {playlists.map((playlist) => (
                   <div
                     key={playlist.id}
@@ -371,7 +368,6 @@ function AppContent() {
                       <h3 className="font-semibold truncate text-white">{playlist.title}</h3>
                       <p className="text-sm text-gray-400">{playlist.itemCount} songs</p>
                     </div>
-                    <PlayCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   </div>
                 ))}
               </div>
@@ -379,14 +375,27 @@ function AppContent() {
           </div>
         );
 
+      case "explore":
+        return (
+          <div className="p-6">
+            <h1 className="text-3xl font-bold mb-6">Explore</h1>
+            <div className="text-gray-400 text-center py-12">Coming soon</div>
+          </div>
+        );
+
+      case "search":
+        return (
+          <div className="p-6">
+            <h1 className="text-3xl font-bold mb-6">Search</h1>
+            <div className="text-gray-400 text-center py-12">Coming soon</div>
+          </div>
+        );
+
       case "settings":
         return (
           <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Settings</h1>
-            <div className="text-gray-400 text-center py-12">
-              <Settings className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Coming soon</p>
-            </div>
+            <div className="text-gray-400 text-center py-12">Coming soon</div>
           </div>
         );
 
@@ -395,50 +404,43 @@ function AppContent() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-3xl font-bold mb-4">Oblivion</div>
+          <div className="text-gray-400">Starting...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
-      {/* Main content area */}
-      <div className="flex-1 overflow-auto pb-24">{renderView()}</div>
+      {/* Main content */}
+      <div className="flex-1 overflow-auto pb-24">{renderContent()}</div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 border-t border-slate-700 backdrop-blur-sm">
-        <div className="flex items-center justify-around h-20">
-          <button
-            onClick={() => setCurrentView("home")}
-            className={`flex flex-col items-center gap-1 py-2 px-4 transition ${
-              currentView === "home" ? "text-cyan-400" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <Home className="w-6 h-6" />
-            <span className="text-xs font-medium">Home</span>
-          </button>
-          <button
-            onClick={() => setCurrentView("explore")}
-            className={`flex flex-col items-center gap-1 py-2 px-4 transition ${
-              currentView === "explore" ? "text-cyan-400" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <Search className="w-6 h-6" />
-            <span className="text-xs font-medium">Explore</span>
-          </button>
-          <button
-            onClick={() => setCurrentView("library")}
-            className={`flex flex-col items-center gap-1 py-2 px-4 transition ${
-              currentView === "library" ? "text-cyan-400" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <Music className="w-6 h-6" />
-            <span className="text-xs font-medium">Library</span>
-          </button>
-          <button
-            onClick={() => setCurrentView("settings")}
-            className={`flex flex-col items-center gap-1 py-2 px-4 transition ${
-              currentView === "settings" ? "text-cyan-400" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <Settings className="w-6 h-6" />
-            <span className="text-xs font-medium">Settings</span>
-          </button>
+      <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 border-t border-slate-700 backdrop-blur-sm z-10">
+        <div className="flex items-center justify-around h-20 max-w-screen">
+          {[
+            { id: "home", label: "Home", icon: "🏠" },
+            { id: "explore", label: "Explore", icon: "🔍" },
+            { id: "library", label: "Library", icon: "🎵" },
+            { id: "search", label: "Search", icon: "🔎" },
+            { id: "settings", label: "Settings", icon: "⚙️" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setCurrentView(tab.id as NavTab)}
+              className={`flex flex-col items-center gap-1 py-2 px-4 transition ${
+                currentView === tab.id ? "text-cyan-400" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <span className="text-xl">{tab.icon}</span>
+              <span className="text-xs font-medium">{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
