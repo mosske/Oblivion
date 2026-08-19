@@ -1,484 +1,140 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Playlist, Track, User } from "../types";
-import {
-  Library,
-  Sparkles,
-  Plus,
-  Play,
-  Trash2,
-  Edit,
-  HardDrive,
-  ArrowUpDown,
-  Music,
-  EyeOff,
-  Eye,
-  SlidersHorizontal,
-  FolderOpen,
-  RefreshCw,
-  LogIn,
-  CheckCircle2
-} from "lucide-react";
-import { getAllCachedTracks, getCacheSizeMB, removeCachedTrack } from "../utils/offlineCache";
-import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
-import { PlaylistCoverArt } from "./PlaylistCoverArt";
-import { ManageVisibilityModal } from "./ManageVisibilityModal";
+import React, { useState, useEffect } from "react";
+import { Settings, Plus } from "lucide-react";
+import { Playlist } from "../types";
+import { LibrarySettings } from "./LibrarySettings";
 
 interface LibraryViewProps {
-  playlists: Playlist[];
-  onSelectPlaylist: (playlist: Playlist) => void;
-  onCreatePlaylist: () => void;
-  onEditPlaylist: (playlist: Playlist) => void;
-  onDeletePlaylist: (playlistId: string) => void;
-  onPlayTrack: (track: Track) => void;
-  onPlayQueue: (tracks: Track[], startIndex: number) => void;
-  currentTrackId?: string;
-  likedTrackIds: string[];
-  currentTrack?: Track | null;
-  designConfig?: FullAppDesignConfig;
-  isSyncingYouTube?: boolean;
-  onSyncYouTube?: () => void;
-  user?: User | null;
-  onOpenAuthModal?: () => void;
-  selectedPlaylist?: any;
-  onReorderPlaylistTracks?: any;
-  onRemoveTrackFromPlaylist?: any;
-  onAddTrackToPlaylist?: any;
-  onSyncPlaylistTracks?: any;
+  onPlaylistSelect?: (playlistId: string, playlistName: string) => void;
+  isLoggedIn?: boolean;
 }
 
-type SortOption = "recent" | "name-asc" | "name-desc" | "tracks-desc" | "tracks-asc";
-
-export const LibraryView: React.FC<LibraryViewProps> = ({
-  playlists,
-  onSelectPlaylist,
-  onCreatePlaylist,
-  onEditPlaylist,
-  onDeletePlaylist,
-  onPlayTrack,
-  onPlayQueue,
-  currentTrackId,
-  likedTrackIds,
-  currentTrack,
-  designConfig = FULL_APP_DESIGNS["designer"],
-  isSyncingYouTube = false,
-  onSyncYouTube,
-  user,
-  onOpenAuthModal,
-}) => {
-  const [cachedTracks, setCachedTracks] = useState<Track[]>([]);
-  const [cacheSizeMB, setCacheSizeMB] = useState(0);
-  const [isOfflineCacheExpanded, setIsOfflineCacheExpanded] = useState(true);
-  const [showHidden, setShowHidden] = useState(false);
-  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
-  const [toastText, setToastText] = useState<string | null>(null);
-
-  // Persistent Sort and Hidden Playlist state from LocalStorage
-  const [sortOption, setSortOption] = useState<SortOption>(() => {
-    return (localStorage.getItem("oblivion_playlist_sort") as SortOption) || "recent";
-  });
-
-  const [hiddenPlaylistIds, setHiddenPlaylistIds] = useState<string[]>(() => {
+export function LibraryView({ onPlaylistSelect, isLoggedIn }: LibraryViewProps) {
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [hiddenPlaylistIds, setHiddenPlaylistIds] = useState<Set<string>>(() => {
     try {
-      const stored = localStorage.getItem("oblivion_hidden_playlists");
-      if (!stored) return [];
-      const parsed = JSON.parse(stored);
-      return Array.isArray(parsed) ? parsed : [];
+      const saved = localStorage.getItem("oblivion_hidden_playlists");
+      return new Set(saved ? JSON.parse(saved) : []);
     } catch {
-      return [];
+      return new Set();
     }
   });
 
-  // Save sort option whenever it changes
-  const handleSortChange = (newSort: SortOption) => {
-    setSortOption(newSort);
-    localStorage.setItem("oblivion_playlist_sort", newSort);
-  };
-
-  // Save hidden playlist IDs and persist to storage
-  const handleSaveHiddenPlaylists = (newHiddenIds: string[]) => {
-    const safeIds = Array.isArray(newHiddenIds) ? newHiddenIds : [];
-    setHiddenPlaylistIds(safeIds);
-    try {
-      localStorage.setItem("oblivion_hidden_playlists", JSON.stringify(safeIds));
-    } catch {}
-    setToastText("Playlist visibility preferences saved");
-    setTimeout(() => setToastText(null), 3000);
-  };
-
-  // Toggle hiding a single playlist directly
-  const toggleHidePlaylist = (e: React.MouseEvent, playlistId: string) => {
-    e.stopPropagation();
-    setHiddenPlaylistIds((prev) => {
-      const safePrev = Array.isArray(prev) ? prev : [];
-      const isHidden = safePrev.includes(playlistId);
-      const updated = isHidden ? safePrev.filter((id) => id !== playlistId) : [...safePrev, playlistId];
-      try {
-        localStorage.setItem("oblivion_hidden_playlists", JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-  };
-
-
   useEffect(() => {
-    const loadCachedTracks = async () => {
-      const cached = await getAllCachedTracks();
-      setCachedTracks(cached);
-      const size = await getCacheSizeMB();
-      setCacheSizeMB(size);
-    };
-    loadCachedTracks();
-  }, []);
+    if (isLoggedIn) {
+      fetchPlaylists();
+    }
+  }, [isLoggedIn]);
 
-  // Filter and deduplicate playlists
-  const cleanPlaylists = useMemo(() => {
-    const seen = new Set<string>();
-    return (playlists || []).filter((pl) => {
-      if (!pl) return false;
-      const id = pl.id || pl.playlistId;
-      if (!id || seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    });
-  }, [playlists]);
-
-  // Sort and apply Hidden filter
-  const displayedPlaylists = useMemo(() => {
-    let list = cleanPlaylists.filter((pl) => {
-      const isHidden = hiddenPlaylistIds.includes(pl.id);
-      return showHidden ? isHidden : !isHidden;
-    });
-
-    return list.sort((a, b) => {
-      if (sortOption === "name-asc") {
-        return (a.title || "").localeCompare(b.title || "");
+  const fetchPlaylists = async () => {
+    setLoading(true);
+    try {
+      // Try loading from cache first
+      const cachedPlaylists = localStorage.getItem("oblivion_saved_playlists");
+      if (cachedPlaylists) {
+        const parsed = JSON.parse(cachedPlaylists);
+        setPlaylists(parsed);
       }
-      if (sortOption === "name-desc") {
-        return (b.title || "").localeCompare(a.title || "");
-      }
-      if (sortOption === "tracks-desc") {
-        const countA = a.tracks?.length || a.tracksCount || 0;
-        const countB = b.tracks?.length || b.tracksCount || 0;
-        return countB - countA;
-      }
-      if (sortOption === "tracks-asc") {
-        const countA = a.tracks?.length || a.tracksCount || 0;
-        const countB = b.tracks?.length || b.tracksCount || 0;
-        return countA - countB;
-      }
-      return 0; // "recent" preserves default server order
-    });
-  }, [cleanPlaylists, hiddenPlaylistIds, showHidden, sortOption]);
 
-  const cleanCachedTracks = useMemo(() => {
-    const seen = new Set<string>();
-    return (cachedTracks || []).filter((tr) => {
-      if (!tr) return false;
-      const id = tr.id || tr.youtubeVideoId;
-      if (!id || seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    });
-  }, [cachedTracks]);
-
-  const handleRemoveFromCache = async (trackId: string) => {
-    await removeCachedTrack(trackId);
-    const updated = cachedTracks.filter((t) => (t.id || t.youtubeVideoId) !== trackId);
-    setCachedTracks(updated);
+      // Fetch fresh from server
+      const response = await fetch("/api/youtube/playlists");
+      const data = await response.json();
+      if (data.success) {
+        setPlaylists(data.playlists);
+        localStorage.setItem("oblivion_saved_playlists", JSON.stringify(data.playlists));
+        localStorage.setItem("oblivion_playlist_sync_time", new Date().toISOString());
+      }
+    } catch (error) {
+      console.error("Failed to fetch playlists:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const hiddenCount = hiddenPlaylistIds.filter((id) => cleanPlaylists.some((pl) => pl.id === id)).length;
+  // Filter out hidden playlists
+  const visiblePlaylists = playlists.filter(p => !hiddenPlaylistIds.has(p.id));
+
+  const handleSaveHiddenState = (hiddenIds: string[]) => {
+    setHiddenPlaylistIds(new Set(hiddenIds));
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="p-8">
+        <h2 className="text-3xl font-bold text-white mb-4">Your Library</h2>
+        <div className="text-gray-400">Sign in to see your playlists</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden select-none">
-      <div className="flex-1 overflow-y-auto space-y-8 p-6 md:p-8 custom-scrollbar pb-40 md:pb-48">
-        {/* Playlists Section Header */}
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} flex items-center gap-2.5 tracking-tight`}>
-                <Library className={`w-7 h-7 ${designConfig.accentText}`} />
-                Library Playlists
-              </h2>
-              <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
-                All your curated YouTube Music collections with live track counts and offline synchronization.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                id="library-manage-visibility-btn"
-                onClick={() => setIsManageModalOpen(true)}
-                className={`px-3.5 py-2.5 ${designConfig.btnSecondary} rounded-xl transition-all font-semibold flex items-center gap-2 text-xs shadow-sm hover:scale-[1.02] active:scale-95`}
-                title="Manage hidden playlists"
-              >
-                <EyeOff className="w-3.5 h-3.5 text-amber-400" />
-                <span>Hide / Unhide</span>
-                {hiddenCount > 0 && (
-                  <span className="px-1.5 py-0.2 bg-amber-500/30 text-amber-300 rounded-full text-[10px] font-mono">
-                    {hiddenCount}
-                  </span>
-                )}
-              </button>
-
-              {onSyncYouTube && (
-                <button
-                  onClick={onSyncYouTube}
-                  disabled={isSyncingYouTube}
-                  className={`px-3.5 py-2.5 ${designConfig.btnSecondary} rounded-xl transition-all font-semibold flex items-center gap-2 text-xs shadow-sm hover:scale-[1.02] active:scale-95 disabled:opacity-50`}
-                  title="Sync playlists from YouTube Music"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingYouTube ? "animate-spin text-[#c89b3c]" : ""}`} />
-                  <span>{isSyncingYouTube ? "Syncing..." : "Sync YouTube"}</span>
-                </button>
-              )}
-              <button
-                onClick={onCreatePlaylist}
-                className={`px-4 py-2.5 ${designConfig.btnPrimary} rounded-xl transition-all font-bold flex items-center gap-2 text-xs shadow-lg active:scale-95`}
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Playlist</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Sort and Hide Filter Toolbar */}
-          <div className={`flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle}`}>
-            {/* Sort Control */}
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className={`w-3.5 h-3.5 ${designConfig.textMuted}`} />
-              <span className={`text-xs font-semibold ${designConfig.textMuted}`}>Sort:</span>
-              <select
-                value={sortOption}
-                onChange={(e) => handleSortChange(e.target.value as SortOption)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${designConfig.inputBg} ${designConfig.textPrimary} border border-transparent focus:outline-none cursor-pointer`}
-              >
-                <option value="recent">Recently Added (Default)</option>
-                <option value="name-asc">Name (A → Z)</option>
-                <option value="name-desc">Name (Z → A)</option>
-                <option value="tracks-desc">Most Songs</option>
-                <option value="tracks-asc">Fewest Songs</option>
-              </select>
-            </div>
-
-            {/* Hidden Toggle */}
-            <div className="flex items-center gap-2">
-              {hiddenCount > 0 && (
-                <button
-                  onClick={() => setShowHidden(!showHidden)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
-                    showHidden
-                      ? "bg-[#c89b3c] text-white border-[#c89b3c] shadow-sm"
-                      : `${designConfig.btnSecondary} ${designConfig.textSecondary}`
-                  }`}
-                >
-                  {showHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                  <span>{showHidden ? "Viewing Hidden" : `Hidden (${hiddenCount})`}</span>
-                </button>
-              )}
-
-              <span className={`text-xs font-mono ${designConfig.textMuted}`}>
-                {displayedPlaylists.length} {showHidden ? "hidden" : "active"} playlists
-              </span>
-            </div>
-          </div>
-
-          {/* Playlists Grid */}
-          {displayedPlaylists.length === 0 ? (
-            <div className={`p-12 text-center ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} flex flex-col items-center justify-center`}>
-              <Music className={`w-12 h-12 mx-auto mb-3 ${designConfig.textMuted}`} />
-              <p className={`text-sm font-semibold ${designConfig.textPrimary} mb-4`}>
-                {showHidden ? "No hidden playlists found." : "No playlists yet. Create one or sync from YouTube!"}
-              </p>
-              {showHidden ? (
-                <button
-                  onClick={() => setShowHidden(false)}
-                  className={`px-4 py-2 text-xs font-semibold ${designConfig.btnPrimary} rounded-xl`}
-                >
-                  Back to Active Playlists
-                </button>
-              ) : (
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  {onSyncYouTube && (
-                    <button
-                      onClick={onSyncYouTube}
-                      disabled={isSyncingYouTube}
-                      className={`px-4 py-2 text-xs font-bold ${designConfig.btnPrimary} rounded-xl shadow-md flex items-center gap-2`}
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncingYouTube ? "animate-spin" : ""}`} />
-                      <span>{isSyncingYouTube ? "Syncing from YouTube..." : "Sync from YouTube"}</span>
-                    </button>
-                  )}
-                  {!user?.isLoggedIn && onOpenAuthModal && (
-                    <button
-                      onClick={onOpenAuthModal}
-                      className={`px-4 py-2 text-xs font-bold ${designConfig.btnSecondary} ${designConfig.textPrimary} rounded-xl flex items-center gap-2 border ${designConfig.borderSubtle}`}
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>Sign In with Google</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {displayedPlaylists.map((pl) => {
-                const count = pl.tracks?.length || pl.tracksCount || 0;
-                const isHidden = hiddenPlaylistIds.includes(pl.id);
-
-                return (
-                  <div
-                    key={pl.id}
-                    onClick={() => onSelectPlaylist(pl)}
-                    className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${designConfig.cardBg} ${designConfig.cardHover} border border-transparent hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl`}
-                  >
-                    {/* Cover Art */}
-                    <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-black/10 shadow-inner">
-                      <PlaylistCoverArt
-                        playlist={pl}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-
-                      {/* Custom Image Badge if custom */}
-                      {(pl.isCustomCover || pl.customCoverUrl) && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[9px] font-mono text-white flex items-center gap-1 shadow-lg z-10">
-                          <Sparkles className="w-2.5 h-2.5 text-[#c89b3c]" />
-                          <span>Custom</span>
-                        </div>
-                      )}
-
-                      {/* Play overlay button */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <div className="w-11 h-11 rounded-full bg-[#c89b3c] text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                          <Play className="w-5 h-5 fill-white ml-0.5" />
-                        </div>
-                      </div>
-
-                      {/* Quick Edit Cover Pencil */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditPlaylist(pl);
-                        }}
-                        className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white opacity-0 group-hover:opacity-100 hover:bg-[#c89b3c] hover:text-white transition-all z-10"
-                        title="Edit Playlist & Cover"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Hide/Unhide Quick Button */}
-                      <button
-                        onClick={(e) => toggleHidePlaylist(e, pl.id)}
-                        className={`absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white opacity-0 group-hover:opacity-100 hover:bg-black/80 transition-all ${
-                          isHidden ? "!opacity-100 text-[#c89b3c]" : ""
-                        }`}
-                        title={isHidden ? "Unhide playlist" : "Hide playlist"}
-                      >
-                        {isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-
-                    {/* Playlist Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                          {pl.title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className={`text-xs font-mono font-medium ${designConfig.accentText}`}>
-                          {count} {count === 1 ? "track" : "tracks"}
-                        </span>
-                        {pl.isYouTubeSynced && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${designConfig.pillBg} font-mono`}>
-                            Synced
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">Your Library</h2>
+          <div className="text-gray-400 text-sm">{visiblePlaylists.length} visible playlists</div>
         </div>
-
-        {/* Cached Offline Tracks Section */}
-        {cleanCachedTracks.length > 0 && (
-          <div className={`border-t ${designConfig.borderSubtle} pt-8 space-y-4`}>
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => setIsOfflineCacheExpanded(!isOfflineCacheExpanded)}
-            >
-              <div>
-                <h2 className={`text-lg font-bold ${designConfig.headingPrimary} flex items-center gap-2`}>
-                  <HardDrive className={`w-5 h-5 ${designConfig.accentText}`} />
-                  Offline Storage ({cacheSizeMB.toFixed(1)} MB)
-                </h2>
-                <p className={`text-xs ${designConfig.headingMuted} font-medium`}>
-                  {cleanCachedTracks.length} tracks cached locally for zero-latency playback.
-                </p>
-              </div>
-              <ArrowUpDown className={`w-4 h-4 ${designConfig.textMuted} transition-transform ${isOfflineCacheExpanded ? "rotate-180" : ""}`} />
-            </div>
-
-            {isOfflineCacheExpanded && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
-                {cleanCachedTracks.map((track, idx) => (
-                  <div
-                    key={track.id || `cache_${idx}`}
-                    className={`group flex items-center justify-between p-2.5 ${designConfig.cardBg} rounded-xl ${designConfig.cardHover} transition-colors border border-transparent hover:${designConfig.borderSubtle}`}
-                  >
-                    <div
-                      onClick={() => onPlayQueue(cleanCachedTracks, idx)}
-                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                    >
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0">
-                        <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <Play className="w-3.5 h-3.5 text-white fill-white" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-semibold ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText}`}>{track.title}</p>
-                        <p className={`text-[11px] ${designConfig.textMuted} truncate`}>{track.artist}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleRemoveFromCache(track.id)}
-                        className="p-1.5 hover:bg-rose-500/20 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
-                        title="Remove from offline cache"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <button
+          onClick={() => setShowSettings(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-600 transition"
+        >
+          <Settings className="w-4 h-4" />
+          Manage
+        </button>
       </div>
 
-      {/* Hide / Unhide Management Modal */}
-      <ManageVisibilityModal
-        isOpen={isManageModalOpen}
-        onClose={() => setIsManageModalOpen(false)}
-        playlists={cleanPlaylists}
-        initialHiddenIds={hiddenPlaylistIds}
-        onSave={handleSaveHiddenPlaylists}
-        designConfig={designConfig}
-      />
-
-      {/* Floating Save Toast */}
-      {toastText && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-emerald-500/90 text-white text-xs font-bold shadow-2xl backdrop-blur-md flex items-center gap-2 border border-emerald-400/30 animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-          <span>{toastText}</span>
+      {loading && !playlists.length && (
+        <div className="text-center py-12">
+          <div className="text-gray-400">Loading playlists...</div>
         </div>
+      )}
+
+      {visiblePlaylists.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-400 mb-4">No visible playlists</div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="px-4 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition"
+          >
+            Unhide Playlists
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visiblePlaylists.map((playlist) => (
+            <div
+              key={playlist.id}
+              onClick={() => onPlaylistSelect?.(playlist.id, playlist.title)}
+              className="bg-slate-800 rounded-lg overflow-hidden cursor-pointer hover:bg-slate-700 transition group"
+            >
+              {playlist.coverUrl && (
+                <div className="aspect-square overflow-hidden">
+                  <img
+                    src={playlist.coverUrl}
+                    alt={playlist.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition"
+                  />
+                </div>
+              )}
+              <div className="p-4">
+                <h3 className="text-white font-semibold truncate mb-1">{playlist.title}</h3>
+                <p className="text-gray-400 text-sm">{playlist.itemCount} songs</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showSettings && (
+        <LibrarySettings
+          playlists={playlists}
+          onClose={() => setShowSettings(false)}
+          onSave={handleSaveHiddenState}
+        />
       )}
     </div>
   );
-};
+}
+
+export default LibraryView;
