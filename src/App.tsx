@@ -12,6 +12,7 @@ function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playlistSongs, setPlaylistSongs] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [playerState, setPlayerState] = useState<PlayerState>(() => {
     try {
@@ -50,13 +51,17 @@ function AppContent() {
       if (data.isLoggedIn) {
         setIsLoggedIn(true);
         fetchPlaylists();
+      } else {
+        setLoading(false);
       }
     } catch (error) {
-      console.error("Auth check failed (this is OK):", error);
+      console.error("Auth check failed", error);
+      setLoading(false);
     }
   };
 
   const fetchPlaylists = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/youtube/playlists");
       const data = await response.json();
@@ -72,6 +77,8 @@ function AppContent() {
           setPlaylists(JSON.parse(cached));
         }
       } catch {}
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -241,64 +248,62 @@ function AppContent() {
               <p className="text-gray-400">Your YouTube Music library</p>
             </div>
 
-            {!isLoggedIn ? (
-              <div className="bg-white/5 rounded-lg p-8 text-center">
-                <p className="text-gray-400 mb-6">Sign in to access your YouTube Music library</p>
+            <div className="mb-8">
+              <button
+                onClick={() => fetchPlaylists()}
+                className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white font-medium transition"
+              >
+                🔄 Refresh
+              </button>
+              {!isLoggedIn && (
                 <button
                   onClick={handleSignIn}
-                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
+                  className="ml-4 px-6 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-full text-white font-medium transition"
                 >
-                  Sign In to YouTube Music
+                  Sign In
                 </button>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="text-gray-400 text-center py-12">Loading...</div>
+            ) : playlists.length === 0 ? (
+              <div className="text-gray-400 text-center py-12">
+                {isLoggedIn ? "No playlists found" : "Sign in to see your playlists"}
               </div>
             ) : (
-              <>
-                <div className="mb-8">
-                  <button
-                    onClick={() => fetchPlaylists()}
-                    className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white font-medium transition"
-                  >
-                    🔄 Refresh
-                  </button>
-                </div>
-
-                {playlists.length === 0 ? (
-                  <div className="text-gray-400 text-center py-12">No playlists found</div>
-                ) : (
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Your Playlists</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {playlists.map((playlist) => (
-                        <div
-                          key={playlist.id}
-                          onClick={() => {
-                            setSelectedPlaylistId(playlist.id);
-                            fetchPlaylistSongs(playlist.id);
-                          }}
-                          className="bg-white/5 hover:bg-white/10 rounded-lg overflow-hidden cursor-pointer transition transform hover:scale-105 group"
-                        >
-                          {playlist.coverUrl && (
-                            <div className="relative aspect-square overflow-hidden">
-                              <img
-                                src={playlist.coverUrl}
-                                alt={playlist.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition"
-                              />
-                              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <PlayCircle className="w-12 h-12 text-white" />
-                              </div>
-                            </div>
-                          )}
-                          <div className="p-4">
-                            <h3 className="font-semibold truncate text-white">{playlist.title}</h3>
-                            <p className="text-sm text-gray-400 truncate">Playlist • {playlist.itemCount} songs</p>
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Your Playlists</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {playlists.map((playlist) => (
+                    <div
+                      key={playlist.id}
+                      onClick={() => {
+                        setSelectedPlaylistId(playlist.id);
+                        fetchPlaylistSongs(playlist.id);
+                      }}
+                      className="bg-white/5 hover:bg-white/10 rounded-lg overflow-hidden cursor-pointer transition transform hover:scale-105 group"
+                    >
+                      {playlist.coverUrl && (
+                        <div className="relative aspect-square overflow-hidden">
+                          <img
+                            src={playlist.coverUrl}
+                            alt={playlist.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <PlayCircle className="w-12 h-12 text-white" />
                           </div>
                         </div>
-                      ))}
+                      )}
+                      <div className="p-4">
+                        <h3 className="font-semibold truncate text-white">{playlist.title}</h3>
+                        <p className="text-sm text-gray-400 truncate">Playlist • {playlist.itemCount} songs</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         );
@@ -319,29 +324,31 @@ function AppContent() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-3xl font-bold">Your Library</h1>
-              {isLoggedIn && (
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
-              )}
+              <div className="flex gap-2">
+                {!isLoggedIn && (
+                  <button
+                    onClick={handleSignIn}
+                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg transition text-sm font-medium"
+                  >
+                    Sign In
+                  </button>
+                )}
+                {isLoggedIn && (
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                )}
+              </div>
             </div>
 
-            {!isLoggedIn ? (
-              <div className="bg-white/5 rounded-lg p-8 text-center">
-                <p className="text-gray-400 mb-6">Sign in to access your YouTube Music library</p>
-                <button
-                  onClick={handleSignIn}
-                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
-                >
-                  Sign In to YouTube Music
-                </button>
+            {playlists.length === 0 ? (
+              <div className="text-gray-400 text-center py-12">
+                {isLoggedIn ? "No playlists" : "Sign in to see your library"}
               </div>
-            ) : playlists.length === 0 ? (
-              <div className="text-gray-400 text-center py-12">No playlists</div>
             ) : (
               <div className="space-y-2">
                 {playlists.map((playlist) => (
