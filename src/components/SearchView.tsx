@@ -5,6 +5,7 @@ import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
 interface SearchViewProps {
+  initialQuery?: string;
   onPlayTrack: (track: Track) => void;
   onPlayQueue?: (tracks: Track[], startIndex: number) => void;
   onAddToQueue: (track: Track) => void;
@@ -28,6 +29,7 @@ const SEARCH_EXPLORE_TAGS = [
 ];
 
 export const SearchView: React.FC<SearchViewProps> = ({
+  initialQuery = "",
   onPlayTrack,
   onPlayQueue,
   onAddToQueue,
@@ -36,11 +38,17 @@ export const SearchView: React.FC<SearchViewProps> = ({
   onSelectPlaylist,
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<"all" | "track" | "album" | "artist">("all");
   const [results, setResults] = useState<Track[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [openPlaylistMenuId, setOpenPlaylistMenuId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialQuery && initialQuery !== query) {
+      setQuery(initialQuery);
+    }
+  }, [initialQuery]);
 
   useEffect(() => {
     if (!query.trim()) {

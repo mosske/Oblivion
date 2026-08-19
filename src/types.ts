@@ -14,6 +14,7 @@ export interface Track {
 
 export interface Playlist {
   id: string;
+  playlistId?: string;
   title: string;
   description: string;
   coverUrl: string;
@@ -21,7 +22,7 @@ export interface Playlist {
   isCustomCover?: boolean;
   isYouTubeSynced?: boolean;
   tracksCount: number;
-  updatedAt: string;
+  updatedAt?: string;
   tracks: Track[];
 }
 
@@ -50,6 +51,7 @@ export interface User {
   email: string;
   picture: string;
   isLoggedIn: boolean;
+  accessToken?: string;
 }
 
 export interface LyricLine {

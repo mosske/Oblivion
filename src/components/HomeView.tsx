@@ -69,14 +69,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   const fetchHomeFeed = async (mood = "All") => {
     try {
-      let activeToken = "";
-      try {
-        const saved = localStorage.getItem("oblivion_saved_user");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          activeToken = parsed?.accessToken || "";
-        }
-      } catch {}
+      let activeToken = user?.accessToken || "";
+      if (!activeToken) {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            activeToken = parsed?.accessToken || "";
+          }
+        } catch {}
+      }
 
       const headers: Record<string, string> = {};
       if (activeToken) {
@@ -100,11 +102,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
     }
   };
 
-  // Always perform a fresh pull every time Home view loads or mood changes
+  // Always perform a fresh pull every time Home view loads, mood changes, or auth status changes
   useEffect(() => {
     setLoading(true);
     fetchHomeFeed(activeMood);
-  }, [activeMood]);
+  }, [activeMood, user?.accessToken, user?.isLoggedIn]);
 
   const handleMoodSelect = (filter: string) => {
     if (filter === activeMood) return;

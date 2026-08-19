@@ -1,61 +1,90 @@
-import React, { ReactNode, ErrorInfo } from "react";
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   children: ReactNode;
+  fallbackMessage?: string;
+  onReset?: () => void;
 }
 
 interface State {
   hasError: boolean;
-  errorCount: number;
+  error: Error | null;
+  retryCount: number;
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
+  private retryTimeout: any = null;
+  private resetCounterTimeout: any = null;
+
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, errorCount: 0 };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
-  }
-
-  handleRetry = () => {
-    this.setState((state) => ({
+    this.state = {
       hasError: false,
-      errorCount: state.errorCount + 1,
-    }));
-  };
+      error: null,
+      retryCount: 0,
+    };
+  }
 
-  render() {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
+    return { hasError: true, error };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.warn("ErrorBoundary caught temporary view error, performing automatic seamless retry:", error, errorInfo);
+    
+    const nextCount = this.state.retryCount + 1;
+    this.setState({ retryCount: nextCount });
+
+    if (nextCount <= 3) {
+      // Seamlessly retry the view automatically within 50ms without showing recovery UI prompt
+      if (this.retryTimeout) clearTimeout(this.retryTimeout);
+      this.retryTimeout = setTimeout(() => {
+        this.setState({ hasError: false, error: null });
+        if (this.props.onReset) {
+          try {
+            this.props.onReset();
+          } catch {}
+        }
+      }, 50);
+    } else {
+      // If retry view fails 3 times, automatically perform a clean Reload App
+      console.warn("View retry limit reached (3 times). Automatically reloading application...");
+      if (this.retryTimeout) clearTimeout(this.retryTimeout);
+      this.retryTimeout = setTimeout(() => {
+        window.location.reload();
+      }, 300);
+    }
+  }
+
+  public componentDidMount() {
+    this.scheduleCounterReset();
+  }
+
+  public componentDidUpdate(prevProps: Props, prevState: State) {
+    if (prevState.hasError && !this.state.hasError) {
+      this.scheduleCounterReset();
+    }
+  }
+
+  public componentWillUnmount() {
+    if (this.retryTimeout) clearTimeout(this.retryTimeout);
+    if (this.resetCounterTimeout) clearTimeout(this.resetCounterTimeout);
+  }
+
+  private scheduleCounterReset() {
+    if (this.resetCounterTimeout) clearTimeout(this.resetCounterTimeout);
+    this.resetCounterTimeout = setTimeout(() => {
+      this.setState({ retryCount: 0 });
+    }, 10000);
+  }
+
+  public render() {
     if (this.state.hasError) {
-      if (this.state.errorCount < 3) {
-        setTimeout(this.handleRetry, 500);
-        return (
-          <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 to-slate-950">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white mb-4">Loading...</div>
-              <div className="text-gray-400">Retrying view (Attempt {this.state.errorCount + 1}/3)</div>
-            </div>
-          </div>
-        );
-      }
-
+      // Return a seamless subtle placeholder during the fast retry cycle instead of the recovery prompt screen
       return (
-        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 to-slate-950">
-          <div className="text-center p-8">
-            <div className="text-3xl font-bold text-red-400 mb-4">Error Loading View</div>
-            <div className="text-gray-400 mb-6">Critical error after 3 retries. Please refresh.</div>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition font-semibold"
-            >
-              Reload App
-            </button>
-          </div>
+        <div className="flex-1 flex items-center justify-center min-h-[300px] p-8 text-center select-none">
+          <Loader2 className="w-6 h-6 text-[#c89b3c] animate-spin opacity-60" />
         </div>
       );
     }
@@ -64,4 +93,3 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
