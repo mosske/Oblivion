@@ -9,8 +9,8 @@ import { Track, PlayerState } from "./types";
 type NavTab = "home" | "search" | "library" | "settings" | "explore";
 
 function AppContent() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // Default to logged in
+  const [loading, setLoading] = useState(false);
   const [currentView, setCurrentView] = useState<NavTab>("home");
   const [playlists, setPlaylists] = useState([]);
 
@@ -42,25 +42,8 @@ function AppContent() {
   });
 
   useEffect(() => {
-    checkAuth();
+    fetchPlaylists();
   }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch("/api/auth/me", { timeout: 5000 });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.isLoggedIn) {
-          setIsLoggedIn(true);
-          fetchPlaylists();
-        }
-      }
-    } catch (err) {
-      console.log("Auth check skipped");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchPlaylists = async () => {
     try {
@@ -149,37 +132,6 @@ function AppContent() {
       localStorage.setItem("oblivion_player_state", JSON.stringify(newState));
     }
   };
-
-  // Loading screen
-  if (loading) {
-    return (
-      <div className="h-screen bg-gradient-to-br from-slate-900 to-slate-950 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-3xl font-bold mb-4">🎵 Oblivion</div>
-          <div className="text-gray-400">Starting up...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Login screen
-  if (!isLoggedIn) {
-    return (
-      <div className="h-screen bg-gradient-to-br from-slate-900 to-slate-950 text-white flex items-center justify-center">
-        <div className="text-center max-w-md p-8">
-          <div className="text-6xl mb-4">🎵</div>
-          <h1 className="text-5xl font-bold mb-2">Oblivion</h1>
-          <p className="text-xl text-gray-400 mb-8">Your YouTube Music Player</p>
-          <button
-            onClick={handleSignIn}
-            className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition font-semibold text-lg"
-          >
-            Sign In with Google
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // Main app with sidebar
   return (
