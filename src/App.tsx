@@ -97,6 +97,7 @@ export default function App() {
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [isSyncingYouTube, setIsSyncingYouTube] = useState<boolean>(false);
+  const [isSyncingPlaylist, setIsSyncingPlaylist] = useState<boolean>(false);
   const [oauthBannerError, setOauthBannerError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -411,8 +412,11 @@ export default function App() {
     }
   };
 
-  // Fetch playlist or album details & tracks from YouTube Music
-  const fetchPlaylistDetails = async (playlistId: string, title = "", artist = "") => {
+  // Fetch playlist or album details & tracks from YouTube Music with live sync check
+  const fetchPlaylistDetails = async (playlistId: string, title = "", artist = "", forceRefresh = true) => {
+    if (!playlistId) return;
+    setIsSyncingPlaylist(true);
+    const cleanId = playlistId.replace(/^VL/, "");
     try {
       let activeToken = user?.accessToken;
       if (!activeToken) {
@@ -434,61 +438,78 @@ export default function App() {
       const qArtist = encodeURIComponent(artist || (selectedPlaylist as any)?.artist || selectedPlaylist?.description || "");
       const isAlb = Boolean((selectedPlaylist as any)?.isAlbum || (selectedPlaylist as any)?.artist || playlistId.startsWith("MPREb_") || playlistId.startsWith("OLAK5uy_"));
       const qType = isAlb ? "album" : "playlist";
+      const refreshParam = forceRefresh ? "&refresh=true" : "";
 
-      const res = await fetch(`/api/youtube/playlists/${playlistId}/items?title=${qTitle}&artist=${qArtist}&type=${qType}`, { headers });
+      const res = await fetch(
+        `/api/youtube/playlists/${playlistId}/items?title=${qTitle}&artist=${qArtist}&type=${qType}${refreshParam}&_t=${Date.now()}`,
+        { headers }
+      );
       const data = await res.json();
-      if (data.tracks && data.tracks.length > 0) {
-        const seenIds = new Set<string>();
-        const uniqueTracks: Track[] = [];
-
-        for (const t of data.tracks) {
-          if (!t) continue;
-          const trId = t.id || t.youtubeVideoId;
-          if (!trId || seenIds.has(trId)) continue;
-          seenIds.add(trId);
-          uniqueTracks.push({ ...t, id: trId });
-        }
+      if (data.tracks && Array.isArray(data.tracks)) {
+        const uniqueTracks: Track[] = data.tracks
+          .filter(Boolean)
+          .map((t: any, idx: number) => {
+            const vidId = t.youtubeVideoId || t.id;
+            return {
+              ...t,
+              id: t.id ? String(t.id) : (vidId ? `${vidId}_${idx}` : `track_${idx}`),
+              youtubeVideoId: vidId || t.id,
+            };
+          });
 
         const customCoversMap = getStoredCustomCovers();
-        const userStoredCover = customCoversMap[playlistId];
+        const userStoredCover = customCoversMap[playlistId] || customCoversMap[cleanId];
 
         const customCover = userStoredCover?.customCoverUrl || data.customCoverUrl || data.coverUrl;
         const isCustom = Boolean(userStoredCover?.isCustomCover || data.isCustomCover || data.customCoverUrl || customCover);
 
-        setPlaylists((prev) =>
-          prev.map((p) =>
-            p.id === playlistId
-              ? {
-                  ...p,
-                  tracks: uniqueTracks,
-                  tracksCount: uniqueTracks.length || p.tracksCount || 0,
-                  coverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
-                  customCoverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
-                  isCustomCover: isCustom || p.isCustomCover,
-                }
-              : p
-          )
-        );
-        setSelectedPlaylist((prev) =>
-          prev && prev.id === playlistId
-            ? {
-                ...prev,
+        setPlaylists((prev) => {
+          const updated = prev.map((p) => {
+            const pClean = (p.id || p.playlistId || "").replace(/^VL/, "");
+            if (p.id === playlistId || p.playlistId === playlistId || pClean === cleanId) {
+              return {
+                ...p,
                 tracks: uniqueTracks,
-                tracksCount: uniqueTracks.length || prev.tracksCount || 0,
-                coverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
-                customCoverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
-                isCustomCover: isCustom || (prev as any).isCustomCover,
-              }
-            : prev
-        );
+                tracksCount: uniqueTracks.length,
+                coverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
+                customCoverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
+                isCustomCover: isCustom || p.isCustomCover,
+              };
+            }
+            return p;
+          });
+          try {
+            localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+
+        setSelectedPlaylist((prev) => {
+          if (!prev) return null;
+          const prevClean = (prev.id || prev.playlistId || "").replace(/^VL/, "");
+          if (prev.id === playlistId || prev.playlistId === playlistId || prevClean === cleanId) {
+            return {
+              ...prev,
+              tracks: uniqueTracks,
+              tracksCount: uniqueTracks.length,
+              coverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
+              customCoverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
+              isCustomCover: isCustom || (prev as any).isCustomCover,
+            };
+          }
+          return prev;
+        });
       }
     } catch (err) {
       console.error("Fetch playlist details error:", err);
+    } finally {
+      setIsSyncingPlaylist(false);
     }
   };
 
+  // When a Playlist or Album is opened, immediately perform a live sync check with YouTube Music
   useEffect(() => {
-    if (selectedPlaylist?.id && (!selectedPlaylist.tracks || selectedPlaylist.tracks.length === 0)) {
+    if (selectedPlaylist?.id) {
       fetchPlaylistDetails(
         selectedPlaylist.id,
         selectedPlaylist.title,
@@ -1028,6 +1049,14 @@ export default function App() {
             onReorderTracks={(newTracks) => handleReorderPlaylistTracks(selectedPlaylist.id, newTracks)}
             onRemoveTrack={(trackId) => handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId)}
             onSyncToYouTube={(updatedTracks) => handleSyncPlaylistTracks(selectedPlaylist.id, updatedTracks)}
+            isSyncingLive={isSyncingPlaylist}
+            onSyncLive={() =>
+              fetchPlaylistDetails(
+                selectedPlaylist.id,
+                selectedPlaylist.title,
+                (selectedPlaylist as any).artist || selectedPlaylist.description
+              )
+            }
             designConfig={activeFullDesign}
           />
         ) : (

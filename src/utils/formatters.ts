@@ -51,8 +51,21 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
 }
 
 /**
- * Returns the track audio URL or stream endpoint without mock data.
+ * Returns high-definition cover art from YouTube Music or album covers
  */
+export function getHdCoverUrl(url?: string): string {
+  if (!url) return "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=95";
+  // YouTube Music image dimension upscaling
+  if (url.includes("googleusercontent.com") || url.includes("ggpht.com")) {
+    return url.replace(/=w\d+-h\d+[^"]*/, "=w1200-h1200-l90-rj").replace(/=s\d+[^"]*/, "=s1200");
+  }
+  // YouTube video thumbnail max resolution
+  if (url.includes("ytimg.com/vi/")) {
+    return url.replace(/\/(default|mqdefault|hqdefault|sddefault)\.jpg/, "/maxresdefault.jpg");
+  }
+  return url;
+}
+
 export function getPlayableAudioUrl(track: Track | null | undefined): string {
   if (!track) return "";
   if (track.audioUrl && (track.audioUrl.startsWith("http") || track.audioUrl.startsWith("blob:") || track.audioUrl.startsWith("/api/"))) {

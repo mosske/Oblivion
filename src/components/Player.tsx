@@ -12,6 +12,7 @@ import {
   Shuffle,
   Maximize2,
   Minimize2,
+  ChevronDown,
   Sparkles,
   ListMusic,
   Radio,
@@ -26,7 +27,7 @@ import {
 import { LyricsView } from "./LyricsView";
 import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { cacheTrackAudio, isTrackCached, getCachedTrackAudioUrl } from "../utils/offlineCache";
-import { cleanTrackTitle, getPlayableAudioUrl } from "../utils/formatters";
+import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
 interface PlayerProps {
@@ -717,36 +718,65 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
       )}
 
-      {/* Fullscreen Player Modal / Expansion - Now Styled with Selected App Theme! */}
+      {/* Fullscreen Player Modal / Expansion - 100% Full-Screen Opaque Immersive Studio */}
       {isFullscreen && (
-        <div className={`fixed inset-0 z-40 ${designConfig.bgCanvas} flex flex-col overflow-hidden animate-fade-in ${designConfig.textPrimary}`}>
-          {/* Ambient Background Glow */}
-          <div className="absolute inset-0 pointer-events-none opacity-20 blur-3xl scale-125">
+        <div className="fixed inset-0 z-[100] w-screen h-screen min-h-screen bg-[#04060a] text-white flex flex-col justify-between overflow-hidden select-none animate-fade-in">
+          {/* Animated Dynamic Ambient Background based on the HD Cover Art */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+            {/* Layer 1: Ambient Pulsing Blurred Artwork */}
             <img
-              src={currentTrack.coverUrl}
+              src={getHdCoverUrl(currentTrack.coverUrl)}
               alt=""
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover blur-[100px] opacity-45 scale-135 animate-ambient-pulse"
+              onError={(e) => {
+                // Fallback to standard cover if HD upscaled URL encounters 404
+                if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                  e.currentTarget.src = currentTrack.coverUrl;
+                }
+              }}
             />
+            {/* Layer 2: Moving Ambient Color Orbs */}
+            <div className="absolute -top-32 left-1/4 w-[550px] h-[550px] rounded-full bg-[#c89b3c]/20 blur-[130px] animate-ambient-orb" />
+            <div className="absolute -bottom-32 right-1/4 w-[500px] h-[500px] rounded-full bg-cyan-600/15 blur-[140px] animate-ambient-orb" />
+            {/* Layer 3: Pure Opaque Gradient Veil to prevent any background visibility */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#04060a]/90 via-[#04060a]/50 to-[#04060a]/95" />
           </div>
 
-          {/* Top Bar */}
-          <div className={`relative z-10 flex items-center justify-between p-4 sm:p-6 border-b ${designConfig.borderSubtle} ${designConfig.headerBg} backdrop-blur-xl`}>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#c89b3c] animate-pulse"></span>
-              <span className={`text-xs font-mono uppercase tracking-widest ${designConfig.textMuted}`}>
-                Now Playing in Oblivion
-              </span>
+          {/* Top Bar Navigation */}
+          <div className="relative z-20 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#04060a]/40 backdrop-blur-2xl">
+            {/* Left: Minimize Button */}
+            <button
+              onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: false }))}
+              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xl transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center gap-1.5"
+              title="Minimize Full Player"
+            >
+              <ChevronDown className="w-6 h-6" />
+              <span className="text-xs font-semibold hidden sm:inline">Minimize</span>
+            </button>
+
+            {/* Center: Now Playing Info Badge */}
+            <div className="text-center px-4 max-w-md truncate">
+              <div className="flex items-center justify-center gap-2 mb-0.5">
+                <span className="w-2 h-2 rounded-full bg-[#c89b3c] animate-pulse"></span>
+                <span className="text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase text-[#c89b3c]">
+                  NOW PLAYING IN OBLIVION
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-white/90 truncate">
+                {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+              </p>
             </div>
 
+            {/* Right: Quick Toggles (Lyrics, Radio, Minimize) */}
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() =>
                   setPlayerState((prev) => ({ ...prev, showLyrics: !prev.showLyrics, showSimilar: false }))
                 }
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
                   showLyrics
-                    ? `${designConfig.btnPrimary} shadow-lg`
-                    : `${designConfig.btnSecondary} ${designConfig.textSecondary}`
+                    ? "bg-[#c89b3c] text-slate-950 border-[#c89b3c] shadow-lg font-bold"
+                    : "bg-white/10 hover:bg-white/15 text-white/90 border-white/10"
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -757,28 +787,20 @@ export const Player: React.FC<PlayerProps> = ({
                 onClick={() =>
                   setPlayerState((prev) => ({ ...prev, showSimilar: !prev.showSimilar, showLyrics: false }))
                 }
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
                   showSimilar
-                    ? `${designConfig.btnPrimary} shadow-lg`
-                    : `${designConfig.btnSecondary} ${designConfig.textSecondary}`
+                    ? "bg-[#c89b3c] text-slate-950 border-[#c89b3c] shadow-lg font-bold"
+                    : "bg-white/10 hover:bg-white/15 text-white/90 border-white/10"
                 }`}
               >
                 <Radio className="w-3.5 h-3.5" />
                 <span>Radio</span>
               </button>
-
-              <button
-                onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: false }))}
-                className={`p-2 ${designConfig.btnSecondary} ${designConfig.textPrimary} rounded-xl transition-colors`}
-                title="Minimize player"
-              >
-                <Minimize2 className="w-5 h-5" />
-              </button>
             </div>
           </div>
 
-          {/* Main Fullscreen Body */}
-          <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-8 overflow-hidden">
+          {/* Main Fullscreen Center Body */}
+          <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center p-4 sm:p-6 md:p-8 gap-6 sm:gap-8 overflow-hidden min-h-0">
             {/* Lyrics View overlay if active */}
             {showLyrics ? (
               <div className="w-full max-w-2xl h-full flex items-center justify-center">
@@ -802,36 +824,53 @@ export const Player: React.FC<PlayerProps> = ({
                 />
               </div>
             ) : (
-              /* Central Album Artwork & Vinyl Effect */
-              <div className="flex flex-col items-center justify-center space-y-6 max-w-md w-full animate-fade-in">
-                <div className={`relative w-64 h-64 sm:w-80 sm:h-80 rounded-3xl overflow-hidden shadow-2xl border-2 ${designConfig.accentBorder} group`}>
-                  <img
-                    src={currentTrack.coverUrl}
-                    alt={currentTrack.title}
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              /* Central HD Album Artwork & Dynamic Stage */
+              <div className="flex flex-col items-center justify-center space-y-6 sm:space-y-7 max-w-md w-full animate-fade-in my-auto">
+                {/* HD Cover Art with Ambient Shadow and Glowing Ring */}
+                <div className="relative group">
+                  {/* Subtle dynamic glow ring around the album artwork */}
+                  <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-[#c89b3c]/30 to-cyan-500/20 blur-xl opacity-75 group-hover:opacity-100 transition duration-500 pointer-events-none" />
+
+                  <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-3xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.9)] border-2 border-white/20">
+                    <img
+                      src={getHdCoverUrl(currentTrack.coverUrl)}
+                      alt={currentTrack.title}
+                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                      onError={(e) => {
+                        if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                          e.currentTarget.src = currentTrack.coverUrl;
+                        }
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  </div>
                 </div>
 
-                <div className="text-center space-y-1.5 max-w-xs sm:max-w-md">
-                  <h2 className={`text-xl sm:text-2xl font-bold ${designConfig.textPrimary} tracking-tight truncate`}>
+                {/* Song Title, Artist, & Master Quality Tag */}
+                <div className="text-center space-y-2 max-w-xs sm:max-w-md w-full px-2">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight truncate drop-shadow-md">
                     {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                   </h2>
-                  <p className={`text-sm sm:text-base ${designConfig.accentText} font-semibold truncate`}>
+                  <p className="text-sm sm:text-base text-[#c89b3c] font-semibold truncate">
                     {currentTrack.artist}
                   </p>
-                  <p className={`text-xs ${designConfig.textMuted} font-mono`}>
-                    {currentTrack.album || "YouTube Music Lossless"}
-                  </p>
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[11px] font-mono text-white/80">
+                      {currentTrack.album || "YouTube Music HD"}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#c89b3c]/20 border border-[#c89b3c]/30 text-[11px] font-mono text-[#c89b3c]">
+                      Lossless Audio
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Fullscreen Player Controls Bar */}
-          <div className={`relative z-10 p-6 ${designConfig.cardBg} backdrop-blur-2xl border-t ${designConfig.borderSubtle} space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl shadow-2xl`}>
+          <div className="relative z-20 p-5 sm:p-6 border-t border-white/10 bg-[#04060a]/80 backdrop-blur-2xl space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl shadow-2xl">
             {/* Seekbar Slider */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="relative flex items-center group cursor-pointer">
                 <input
                   type="range"
@@ -842,11 +881,11 @@ export const Player: React.FC<PlayerProps> = ({
                     const time = Number(e.target.value);
                     handleSeekInternal(time);
                   }}
-                  className={`w-full h-2 ${designConfig.isLight ? "bg-[#e5e0d4]" : "bg-slate-800"} rounded-lg appearance-none cursor-pointer accent-[#c89b3c] focus:outline-none`}
+                  className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#c89b3c] focus:outline-none"
                 />
               </div>
 
-              <div className={`flex items-center justify-between text-xs font-mono ${designConfig.textMuted}`}>
+              <div className="flex items-center justify-between text-xs font-mono text-white/60">
                 <span>
                   {Math.floor(currentTime / 60)}:
                   {String(Math.floor(currentTime % 60)).padStart(2, "0")}
@@ -858,16 +897,16 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             </div>
 
-            {/* Main Buttons Bar: Add to Playlist, Download, Repeat, Shuffle, Play/Pause */}
+            {/* Main Buttons Bar: Like, Add to Playlist, Download, Shuffle, Prev, Play/Pause, Next, Repeat, Volume */}
             <div className="flex items-center justify-between gap-2">
-              {/* Left Group: Like, Add to Playlist, Download with progress */}
-              <div className="flex items-center gap-2">
+              {/* Left Group: Like, Add to Playlist, Download */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
-                  className={`p-2.5 rounded-xl transition-colors ${
+                  className={`p-2.5 rounded-xl border transition-all active:scale-95 ${
                     isLiked
-                      ? "bg-rose-500/20 text-rose-500"
-                      : `${designConfig.btnSecondary} ${designConfig.textSecondary}`
+                      ? "bg-rose-500/20 text-rose-500 border-rose-500/30"
+                      : "bg-white/10 hover:bg-white/15 text-white/80 border-white/10"
                   }`}
                   title="Like track"
                 >
@@ -877,21 +916,21 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* Add to Playlist Button */}
                 <button
                   onClick={() => setShowAddToPlaylistModal(true)}
-                  className={`p-2.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} transition-colors flex items-center gap-1.5 text-xs font-semibold`}
+                  className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 hover:text-white border border-white/10 transition-all flex items-center gap-1.5 text-xs font-semibold active:scale-95"
                   title="Add to Playlist"
                 >
                   <Plus className="w-5 h-5" />
-                  <span className="hidden sm:inline">Add to Playlist</span>
+                  <span className="hidden md:inline">Add</span>
                 </button>
 
                 {/* Download Song Button with Progress */}
                 <button
                   onClick={handleCacheOffline}
                   disabled={isCaching || isCachedOffline}
-                  className={`p-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors ${
+                  className={`p-2.5 rounded-xl text-xs flex items-center gap-1.5 border transition-all active:scale-95 ${
                     isCachedOffline
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : `${designConfig.btnSecondary} ${designConfig.textSecondary}`
+                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                      : "bg-white/10 hover:bg-white/15 text-white/80 border-white/10"
                   }`}
                   title={isCachedOffline ? "Saved Locally" : isCaching ? `Downloading (${cacheProgress}%)` : "Download Song"}
                 >
@@ -900,20 +939,20 @@ export const Player: React.FC<PlayerProps> = ({
                   ) : (
                     <DownloadCloud className={`w-5 h-5 ${isCaching ? "animate-bounce text-[#c89b3c]" : ""}`} />
                   )}
-                  <span className="hidden sm:inline">
-                    {isCachedOffline ? "Downloaded" : isCaching ? `${cacheProgress}%` : "Download"}
+                  <span className="hidden md:inline">
+                    {isCachedOffline ? "Saved" : isCaching ? `${cacheProgress}%` : "Download"}
                   </span>
                 </button>
               </div>
 
               {/* Center Group: Shuffle, Previous, Play/Pause, Next, Repeat */}
-              <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <button
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
                   className={`p-2 rounded-lg transition-colors ${
-                    isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                    isShuffle ? "text-[#c89b3c]" : "text-white/60 hover:text-white"
                   }`}
                   title="Shuffle"
                 >
@@ -922,7 +961,7 @@ export const Player: React.FC<PlayerProps> = ({
 
                 <button
                   onClick={onPrevTrack}
-                  className={`p-3 ${designConfig.btnSecondary} ${designConfig.textPrimary} rounded-2xl transition-all active:scale-95`}
+                  className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/10 transition-all active:scale-95 shadow-md"
                   title="Previous Song"
                 >
                   <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -930,19 +969,19 @@ export const Player: React.FC<PlayerProps> = ({
 
                 <button
                   onClick={() => handleUserTogglePlay()}
-                  className={`p-4 ${designConfig.btnPrimary} text-white rounded-2xl shadow-xl transition-all active:scale-95`}
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#c89b3c] hover:bg-[#d8ab4c] text-slate-950 flex items-center justify-center shadow-[0_0_30px_rgba(200,155,60,0.45)] ring-4 ring-[#c89b3c]/20 transition-all active:scale-95"
                   title={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
-                    <Pause className="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+                    <Pause className="w-6 h-6 sm:w-7 sm:h-7 fill-slate-950" />
                   ) : (
-                    <Play className="w-6 h-6 sm:w-7 sm:h-7 fill-current ml-0.5" />
+                    <Play className="w-6 h-6 sm:w-7 sm:h-7 fill-slate-950 ml-0.5" />
                   )}
                 </button>
 
                 <button
                   onClick={onNextTrack}
-                  className={`p-3 ${designConfig.btnSecondary} ${designConfig.textPrimary} rounded-2xl transition-all active:scale-95`}
+                  className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/10 transition-all active:scale-95 shadow-md"
                   title="Next Song"
                 >
                   <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -951,7 +990,7 @@ export const Player: React.FC<PlayerProps> = ({
                 <button
                   onClick={cycleRepeatMode}
                   className={`p-2 rounded-lg transition-colors ${
-                    repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                    repeatMode !== "off" ? "text-[#c89b3c]" : "text-white/60 hover:text-white"
                   }`}
                   title={`Repeat: ${repeatMode}`}
                 >
@@ -965,10 +1004,10 @@ export const Player: React.FC<PlayerProps> = ({
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isMuted: !prev.isMuted }))
                   }
-                  className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                  className="p-2 text-white/60 hover:text-white transition-colors"
                 >
                   {isMuted || volume === 0 ? (
-                    <VolumeX className="w-5 h-5 text-red-400" />
+                    <VolumeX className="w-5 h-5 text-rose-400" />
                   ) : (
                     <Volume2 className="w-5 h-5" />
                   )}
@@ -980,7 +1019,7 @@ export const Player: React.FC<PlayerProps> = ({
                   step={0.01}
                   value={isMuted ? 0 : volume}
                   onChange={(e) => onVolumeChange(Number(e.target.value))}
-                  className={`w-20 h-1.5 ${designConfig.isLight ? "bg-[#e5e0d4]" : "bg-slate-800"} rounded-lg appearance-none cursor-pointer accent-[#c89b3c] focus:outline-none`}
+                  className="w-20 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#c89b3c] focus:outline-none"
                 />
               </div>
             </div>

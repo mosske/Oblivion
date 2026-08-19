@@ -22,6 +22,7 @@ import {
   Layers,
   Share2,
   Loader2,
+  RefreshCw,
   Image as ImageIcon
 } from "lucide-react";
 import { cacheTrackAudio, isTrackCached } from "../utils/offlineCache";
@@ -51,6 +52,8 @@ interface PlaylistDetailViewProps {
   onToggleRepeat?: () => void;
   isShuffle?: boolean;
   onToggleShuffle?: () => void;
+  isSyncingLive?: boolean;
+  onSyncLive?: () => void;
 }
 
 export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
@@ -74,6 +77,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   onToggleRepeat,
   isShuffle = false,
   onToggleShuffle,
+  isSyncingLive = false,
+  onSyncLive,
 }) => {
   if (!item) {
     return (
@@ -90,6 +95,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   }
 
   const [tracks, setTracks] = useState<Track[]>(Array.isArray(item.tracks) ? item.tracks.filter(Boolean) : []);
+  const [isInternalSyncing, setIsInternalSyncing] = useState<boolean>(false);
+  const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
 
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -106,47 +113,69 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   // Sync state if props item changes
   useEffect(() => {
     if (item.tracks && item.tracks.length > 0) {
-      setTracks(item.tracks);
+      setTracks(item.tracks.filter(Boolean));
       setIsLoadingTracks(false);
-    } else {
-      setIsLoadingTracks(true);
-      // Auto-fetch tracks if empty
-      const fetchAlbumOrPlaylistTracks = async () => {
-        try {
-          let activeToken = "";
-          try {
-            const saved = localStorage.getItem("oblivion_saved_user");
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              activeToken = parsed?.accessToken || "";
-            }
-          } catch {}
-
-          const headers: Record<string, string> = {};
-          if (activeToken) {
-            headers["Authorization"] = `Bearer ${activeToken}`;
-          }
-
-          const titleParam = encodeURIComponent(item.title || "");
-          const artistParam = encodeURIComponent((item as any).artist || (item as any).description || "");
-          const typeParam = isAlbum ? "album" : "playlist";
-          const res = await fetch(
-            `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}`,
-            { headers }
-          );
-          const data = await res.json();
-          if (data.tracks && data.tracks.length > 0) {
-            setTracks(data.tracks);
-          }
-        } catch (err) {
-          console.warn("Failed to auto-load album tracks:", err);
-        } finally {
-          setIsLoadingTracks(false);
-        }
-      };
-      fetchAlbumOrPlaylistTracks();
     }
-  }, [item.id, item.tracks]);
+  }, [item.tracks]);
+
+  // Execute sync check with YouTube Music on open or when triggered
+  const executeSyncCheck = async () => {
+    if (onSyncLive) {
+      onSyncLive();
+    }
+    setIsInternalSyncing(true);
+    try {
+      let activeToken = "";
+      try {
+        const saved = localStorage.getItem("oblivion_saved_user");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          activeToken = parsed?.accessToken || "";
+        }
+      } catch {}
+
+      const headers: Record<string, string> = {};
+      if (activeToken) {
+        headers["Authorization"] = `Bearer ${activeToken}`;
+      }
+
+      const titleParam = encodeURIComponent(item.title || "");
+      const artistParam = encodeURIComponent((item as any).artist || (item as any).description || "");
+      const typeParam = isAlbum ? "album" : "playlist";
+      const res = await fetch(
+        `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`,
+        { headers }
+      );
+      const data = await res.json();
+      if (data.tracks && Array.isArray(data.tracks)) {
+        const clean: Track[] = data.tracks
+          .filter(Boolean)
+          .map((t: any, idx: number) => {
+            const vidId = t.youtubeVideoId || t.id;
+            return {
+              ...t,
+              id: t.id ? String(t.id) : (vidId ? `${vidId}_${idx}` : `track_${idx}`),
+              youtubeVideoId: vidId || t.id,
+            };
+          });
+        setTracks(clean);
+        if (onReorderTracks) {
+          onReorderTracks(clean);
+        }
+      }
+      setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      console.warn("Sync with YouTube Music failed:", err);
+    } finally {
+      setIsInternalSyncing(false);
+      setIsLoadingTracks(false);
+    }
+  };
+
+  // Trigger sync check immediately whenever this playlist is opened
+  useEffect(() => {
+    executeSyncCheck();
+  }, [item.id]);
 
   // Check which tracks are already cached
   useEffect(() => {
@@ -314,6 +343,21 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               <span>Saved & Synced to YouTube Music!</span>
             </div>
           )}
+
+          {/* Live Sync Check Button */}
+          <button
+            onClick={executeSyncCheck}
+            disabled={isInternalSyncing || isSyncingLive}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95`}
+            title="Sync with YouTube Music to fetch latest songs"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${
+                isInternalSyncing || isSyncingLive ? "animate-spin text-[#c89b3c]" : "text-[#c89b3c]"
+              }`}
+            />
+            <span>{isInternalSyncing || isSyncingLive ? "Syncing..." : "Sync with YouTube"}</span>
+          </button>
 
           {!isAlbum && (
             <button

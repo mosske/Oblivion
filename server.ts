@@ -195,11 +195,19 @@ function deduplicateById<T extends { id?: string }>(items: T[]): T[] {
   return unique;
 }
 
-async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistId: string): Promise<any[]> {
+async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistId: string, forceRefresh: boolean = false): Promise<any[]> {
   const cleanPlId = playlistId.replace(/^VL/, "");
   const cacheKey = `pl_items:${accessToken ? 'auth' : 'pub'}:${cleanPlId}`;
-  const cached = getFromCache<any[]>(cacheKey);
-  if (cached && cached.length > 0) return cached;
+  
+  if (forceRefresh) {
+    delFromCache(cacheKey);
+    delFromCache(`pl_items:auth:${cleanPlId}`);
+    delFromCache(`pl_items:pub:${cleanPlId}`);
+    delFromCache(`pub_pl:${cleanPlId}`);
+  } else {
+    const cached = getFromCache<any[]>(cacheKey);
+    if (cached && cached.length > 0) return cached;
+  }
 
   const allTracks: any[] = [];
 
@@ -208,7 +216,7 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
     try {
       let pageToken: string | undefined = undefined;
       let pagesFetched = 0;
-      const maxPages = 5; // Up to 250 tracks
+      const maxPages = 8; // Up to 400 tracks
 
       do {
         const url = `https://www.googleapis.com/youtube/v3/playlistItems`;
@@ -221,7 +229,10 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
 
         const response = await fetch(`${url}?${params}`, {
           signal: AbortSignal.timeout(8000),
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Cache-Control": "no-cache",
+          }
         });
 
         if (!response.ok) {
@@ -230,7 +241,8 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
 
         const data = await response.json();
         if (data.items && Array.isArray(data.items)) {
-          for (const item of data.items) {
+          for (let idx = 0; idx < data.items.length; idx++) {
+            const item = data.items[idx];
             const vidId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId;
             const title = item.snippet?.title || '';
             // Skip deleted or private placeholders
@@ -243,8 +255,11 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
               item.snippet?.thumbnails?.default?.url ||
               `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg`;
 
+            const uniqueId = item.id || `${vidId}_${allTracks.length}`;
+
             allTracks.push({
-              id: vidId,
+              id: uniqueId,
+              playlistItemId: item.id,
               youtubeVideoId: vidId,
               title,
               artist: item.snippet?.videoOwnerChannelTitle || item.snippet?.channelTitle || 'YouTube Artist',
@@ -264,9 +279,8 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
 
       if (allTracks.length > 0) {
         const enriched = await enrichTracksWithDuration(allTracks, accessToken);
-        const deduped = deduplicateById(enriched);
-        setInCache(cacheKey, deduped);
-        return deduped;
+        setInCache(cacheKey, enriched);
+        return enriched;
       }
     } catch (err) {
       console.warn('YouTube Data API playlistItems error, trying InnerTube fallback:', cleanPlId);
@@ -285,6 +299,7 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "X-Origin": "https://music.youtube.com",
             Authorization: `Bearer ${accessToken}`,
+            "Cache-Control": "no-cache",
           },
           body: JSON.stringify({
             context: {
@@ -330,8 +345,9 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
                   const durationSecs = parseDurationText(durStr);
 
                   if (vidId && title && title !== "Private video" && title !== "Deleted video") {
+                    const uniqueId = renderer.playlistItemData?.playlistSetVideoId || `${vidId}_${innerTracks.length}`;
                     innerTracks.push({
-                      id: vidId,
+                      id: uniqueId,
                       youtubeVideoId: vidId,
                       title,
                       artist,
@@ -350,9 +366,8 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
 
           if (innerTracks.length > 0) {
             const enriched = await enrichTracksWithDuration(innerTracks, accessToken);
-            const deduped = deduplicateById(enriched);
-            setInCache(cacheKey, deduped);
-            return deduped;
+            setInCache(cacheKey, enriched);
+            return enriched;
           }
         }
       } catch (_innerErr) {
@@ -362,11 +377,10 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
   }
 
   // 3. Fallback: extract videos directly from public YouTube playlist page
-  const publicResult = await getPublicYouTubePlaylistItems(cleanPlId);
+  const publicResult = await getPublicYouTubePlaylistItems(cleanPlId, forceRefresh);
   const enriched = await enrichTracksWithDuration(publicResult.tracks || [], accessToken);
-  const items = deduplicateById(enriched);
-  if (items.length > 0) setInCache(cacheKey, items);
-  return items;
+  if (enriched.length > 0) setInCache(cacheKey, enriched);
+  return enriched;
 }
 
 function formatHighResCover(url: string | undefined | null): string | null {
@@ -671,10 +685,15 @@ async function fetchYouTubePlaylistCustomImage(
   return null;
 }
 
-async function getPublicYouTubePlaylistItems(playlistId: string): Promise<{ tracks: any[]; coverUrl?: string; title?: string }> {
-  const cacheKey = `pub_pl:${playlistId}`;
-  const cached = getFromCache<{ tracks: any[]; coverUrl?: string; title?: string }>(cacheKey);
-  if (cached) return cached;
+async function getPublicYouTubePlaylistItems(playlistId: string, forceRefresh: boolean = false): Promise<{ tracks: any[]; coverUrl?: string; title?: string }> {
+  const cleanPlId = playlistId.replace(/^VL/, "");
+  const cacheKey = `pub_pl:${cleanPlId}`;
+  if (forceRefresh) {
+    delFromCache(cacheKey);
+  } else {
+    const cached = getFromCache<{ tracks: any[]; coverUrl?: string; title?: string }>(cacheKey);
+    if (cached) return cached;
+  }
 
   try {
     const url = `https://www.youtube.com/playlist?list=${playlistId}`;
@@ -713,7 +732,7 @@ async function getPublicYouTubePlaylistItems(playlistId: string): Promise<{ trac
           if (item.playlistVideoRenderer) {
             const v = item.playlistVideoRenderer;
             videoItems.push({
-              id: v.videoId,
+              id: `${v.videoId}_${videoItems.length}`,
               youtubeVideoId: v.videoId,
               title: v.title?.runs?.[0]?.text || "Unknown Track",
               artist: v.shortBylineText?.runs?.[0]?.text || "YouTube",
@@ -728,7 +747,7 @@ async function getPublicYouTubePlaylistItems(playlistId: string): Promise<{ trac
             const coverUrl = l.contentImage?.collectionThumbnailViewModel?.primaryThumbnail?.thumbnailViewModel?.image?.sources?.slice(-1)?.[0]?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
             if (videoId && l.contentType?.includes("VIDEO")) {
               videoItems.push({
-                id: videoId,
+                id: `${videoId}_${videoItems.length}`,
                 youtubeVideoId: videoId,
                 title,
                 artist: "YouTube Artist",
@@ -741,9 +760,8 @@ async function getPublicYouTubePlaylistItems(playlistId: string): Promise<{ trac
         }
       }
     }
-    const deduped = deduplicateById(videoItems);
-    const result = { tracks: deduped, coverUrl: customHeaderCover, title: playlistTitle };
-    if (deduped.length > 0) setInCache(cacheKey, result);
+    const result = { tracks: videoItems, coverUrl: customHeaderCover, title: playlistTitle };
+    if (videoItems.length > 0) setInCache(cacheKey, result);
     return result;
   } catch (err: any) {
     if (err?.name === "TimeoutError" || err?.message?.includes("aborted")) {
@@ -1171,12 +1189,17 @@ app.get("/api/youtube/playlists", async (req, res) => {
   try {
     let accessToken = await getValidAccessToken(req);
     let ytPlaylists: any[] = [];
+    const isForceRefresh = req.query.refresh === "true" || req.query.force === "true" || req.query.sync === "true";
 
-    // Check fast server-side cache if user is authenticated
+    // Check fast server-side cache if user is authenticated and not force refreshing
     const userCacheKey = accessToken ? `user_pls_${accessToken.slice(-20)}` : "user_pls_anon";
-    const cachedUserPlaylists = getFromCache<any[]>(userCacheKey);
-    if (cachedUserPlaylists && cachedUserPlaylists.length > 0) {
-      return res.json({ playlists: cachedUserPlaylists });
+    if (isForceRefresh) {
+      delFromCache(userCacheKey);
+    } else {
+      const cachedUserPlaylists = getFromCache<any[]>(userCacheKey);
+      if (cachedUserPlaylists && cachedUserPlaylists.length > 0) {
+        return res.json({ playlists: cachedUserPlaylists });
+      }
     }
 
     if (accessToken) {
@@ -1383,6 +1406,7 @@ app.get("/api/youtube/playlists/:id/items", async (req, res) => {
   const title = (req.query.title as string) || "";
   const artist = (req.query.artist as string) || "";
   const type = (req.query.type as string) || "";
+  const forceRefresh = req.query.refresh === "true" || req.query.force === "true" || req.query.sync === "true" || true;
 
   try {
     const accessToken = await getValidAccessToken(req);
@@ -1396,9 +1420,9 @@ app.get("/api/youtube/playlists/:id/items", async (req, res) => {
       customCover = await fetchYouTubePlaylistCustomImage(id, accessToken);
     }
 
-    // 1. For authentic YouTube playlists, always fetch actual YouTube items first
+    // 1. For authentic YouTube playlists, always fetch live YouTube items
     if (id && !id.startsWith("pl_custom_")) {
-      const ytTracks = await getPlaylistItemsFromYouTube(accessToken, id);
+      const ytTracks = await getPlaylistItemsFromYouTube(accessToken, id, forceRefresh);
       if (ytTracks && ytTracks.length > 0) {
         if (found) {
           found.tracks = ytTracks;
@@ -1564,6 +1588,21 @@ app.delete("/api/youtube/playlists/:id", (req, res) => {
   res.json({ success: true });
 });
 
+app.put("/api/youtube/playlists/:id/reorder", (req, res) => {
+  const { id } = req.params;
+  const { tracks } = req.body;
+
+  if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
+  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id);
+  if (found && Array.isArray(tracks)) {
+    found.tracks = tracks;
+    found.tracksCount = tracks.length;
+  }
+  localPlaylistsStore = req.session.playlists;
+
+  res.json({ success: true, tracksCount: found?.tracksCount || 0 });
+});
+
 app.post("/api/youtube/playlists/:id/items", async (req, res) => {
   const { id } = req.params;
   const { track } = req.body;
@@ -1632,6 +1671,24 @@ app.delete("/api/youtube/playlists/:id/items/:trackId", async (req, res) => {
   delFromCache(`pl_items:pub:${id}`);
 
   res.json({ success: true });
+});
+
+app.post("/api/youtube/playlists/:id/sync", async (req, res) => {
+  const { id } = req.params;
+  const { tracks } = req.body;
+
+  if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
+  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id);
+  if (found && Array.isArray(tracks)) {
+    found.tracks = tracks;
+    found.tracksCount = tracks.length;
+  }
+  localPlaylistsStore = req.session.playlists;
+
+  delFromCache(`pl_items:auth:${id}`);
+  delFromCache(`pl_items:pub:${id}`);
+
+  res.json({ success: true, tracksCount: found?.tracksCount || tracks?.length || 0 });
 });
 
 // YouTube Music Home Feed (Always fresh pull on request: personalized when signed in, trending when signed out)
