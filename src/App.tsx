@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Player } from "./components/Player";
-import { Home, Search, Music, Settings, PlayCircle, LogOut, LogIn } from "lucide-react";
+import { Home, Search, Music, Settings, PlayCircle, LogOut } from "lucide-react";
 import { Track, PlayerState } from "./types";
 
 type NavTab = "home" | "explore" | "library" | "settings";
@@ -9,7 +9,6 @@ type NavTab = "home" | "explore" | "library" | "settings";
 function AppContent() {
   const [currentView, setCurrentView] = useState<NavTab>("home");
   const [playlists, setPlaylists] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playlistSongs, setPlaylistSongs] = useState<Track[]>([]);
@@ -51,17 +50,13 @@ function AppContent() {
       if (data.isLoggedIn) {
         setIsLoggedIn(true);
         fetchPlaylists();
-      } else {
-        setLoading(false);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
-      setLoading(false);
+      console.error("Auth check failed (this is OK):", error);
     }
   };
 
   const fetchPlaylists = async () => {
-    setLoading(true);
     try {
       const response = await fetch("/api/youtube/playlists");
       const data = await response.json();
@@ -77,8 +72,6 @@ function AppContent() {
           setPlaylists(JSON.parse(cached));
         }
       } catch {}
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -115,6 +108,7 @@ function AppContent() {
       const scopes = [
         "https://www.googleapis.com/auth/youtube.readonly",
         "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile",
       ];
 
       const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -187,21 +181,31 @@ function AppContent() {
 
   const renderView = () => {
     if (selectedPlaylistId) {
+      const selectedPlaylist = playlists.find((p) => p.id === selectedPlaylistId);
       return (
         <div className="p-6">
           <button
             onClick={() => setSelectedPlaylistId(null)}
             className="mb-6 text-cyan-400 hover:text-cyan-300 transition"
           >
-            ← Back to Library
+            ← Back
           </button>
-          <h1 className="text-3xl font-bold mb-6">
-            {playlists.find((p) => p.id === selectedPlaylistId)?.title}
-          </h1>
+          <div className="mb-6">
+            {selectedPlaylist?.coverUrl && (
+              <img
+                src={selectedPlaylist.coverUrl}
+                alt={selectedPlaylist.title}
+                className="w-40 h-40 rounded-lg object-cover mb-4"
+              />
+            )}
+            <h1 className="text-3xl font-bold mb-2">{selectedPlaylist?.title}</h1>
+            <p className="text-gray-400">{playlistSongs.length} songs</p>
+          </div>
+
           {playlistSongs.length === 0 ? (
-            <div className="text-gray-400">Loading songs...</div>
+            <div className="text-gray-400 text-center py-12">No songs in this playlist</div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {playlistSongs.map((song, index) => (
                 <div
                   key={song.id}
@@ -216,8 +220,8 @@ function AppContent() {
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate text-white">{song.title}</h3>
-                    <p className="text-sm text-gray-400 truncate">{song.artist}</p>
+                    <h3 className="font-semibold truncate text-white text-sm">{song.title}</h3>
+                    <p className="text-xs text-gray-400 truncate">{song.artist}</p>
                   </div>
                   <PlayCircle className="w-5 h-5 text-cyan-400 flex-shrink-0" />
                 </div>
@@ -238,14 +242,13 @@ function AppContent() {
             </div>
 
             {!isLoggedIn ? (
-              <div className="text-center py-12">
-                <LogIn className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-gray-400 mb-6">Sign in to see your playlists</p>
+              <div className="bg-white/5 rounded-lg p-8 text-center">
+                <p className="text-gray-400 mb-6">Sign in to access your YouTube Music library</p>
                 <button
                   onClick={handleSignIn}
-                  className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
+                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
                 >
-                  Sign In with Google
+                  Sign In to YouTube Music
                 </button>
               </div>
             ) : (
@@ -259,9 +262,7 @@ function AppContent() {
                   </button>
                 </div>
 
-                {loading ? (
-                  <div className="text-gray-400 text-center py-12">Loading playlists...</div>
-                ) : playlists.length === 0 ? (
+                {playlists.length === 0 ? (
                   <div className="text-gray-400 text-center py-12">No playlists found</div>
                 ) : (
                   <div>
@@ -274,14 +275,19 @@ function AppContent() {
                             setSelectedPlaylistId(playlist.id);
                             fetchPlaylistSongs(playlist.id);
                           }}
-                          className="bg-white/5 hover:bg-white/10 rounded-lg overflow-hidden cursor-pointer transition transform hover:scale-105"
+                          className="bg-white/5 hover:bg-white/10 rounded-lg overflow-hidden cursor-pointer transition transform hover:scale-105 group"
                         >
                           {playlist.coverUrl && (
-                            <img
-                              src={playlist.coverUrl}
-                              alt={playlist.title}
-                              className="w-full aspect-square object-cover"
-                            />
+                            <div className="relative aspect-square overflow-hidden">
+                              <img
+                                src={playlist.coverUrl}
+                                alt={playlist.title}
+                                className="w-full h-full object-cover group-hover:scale-110 transition"
+                              />
+                              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <PlayCircle className="w-12 h-12 text-white" />
+                              </div>
+                            </div>
                           )}
                           <div className="p-4">
                             <h3 className="font-semibold truncate text-white">{playlist.title}</h3>
@@ -316,7 +322,7 @@ function AppContent() {
               {isLoggedIn && (
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out
@@ -325,20 +331,19 @@ function AppContent() {
             </div>
 
             {!isLoggedIn ? (
-              <div className="text-center py-12">
-                <LogIn className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-gray-400 mb-6">Sign in to see your library</p>
+              <div className="bg-white/5 rounded-lg p-8 text-center">
+                <p className="text-gray-400 mb-6">Sign in to access your YouTube Music library</p>
                 <button
                   onClick={handleSignIn}
-                  className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
+                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
                 >
-                  Sign In with Google
+                  Sign In to YouTube Music
                 </button>
               </div>
             ) : playlists.length === 0 ? (
               <div className="text-gray-400 text-center py-12">No playlists</div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {playlists.map((playlist) => (
                   <div
                     key={playlist.id}
