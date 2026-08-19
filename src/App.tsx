@@ -4,7 +4,6 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -12,63 +11,64 @@ function AppContent() {
 
   const checkAuth = async () => {
     try {
-      setLoading(true);
-      const response = await fetch("/api/auth/me");
-      const data = await response.json();
-      setIsLoggedIn(data.isLoggedIn || false);
+      const response = await fetch("/api/auth/me", { timeout: 5000 });
+      if (response.ok) {
+        const data = await response.json();
+        setIsLoggedIn(data.isLoggedIn || false);
+      }
     } catch (err) {
-      console.error("Auth check failed:", err);
-      setError("Failed to check auth");
+      // Silently fail - user can still sign in
+      console.log("Auth check skipped");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white flex flex-col items-center justify-center">
-      {error && (
-        <div className="mb-4 p-4 bg-red-600 rounded text-center max-w-md">
-          {error}
-        </div>
-      )}
+  const handleSignIn = () => {
+    window.location.href = "/auth/login";
+  };
 
-      {loading ? (
-        <div className="text-center">
-          <div className="text-2xl font-bold mb-4">Loading Oblivion...</div>
-          <div className="text-gray-400">Initializing app</div>
-        </div>
-      ) : (
-        <div className="text-center">
-          <div className="text-4xl font-bold mb-4">🎵 Oblivion</div>
-          <div className="text-xl mb-8">Your YouTube Music Player</div>
-          
+  return (
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white flex flex-col items-center justify-center p-4">
+      {!loading && (
+        <div className="text-center max-w-md">
+          {/* Logo */}
+          <div className="text-6xl mb-4">🎵</div>
+          <h1 className="text-5xl font-bold mb-2">Oblivion</h1>
+          <p className="text-xl text-gray-400 mb-12">Your YouTube Music Player</p>
+
+          {/* Status */}
           {isLoggedIn ? (
             <div>
-              <div className="text-green-400 mb-4">✅ Signed In</div>
-              <div className="text-gray-400 mb-8">App is loading components...</div>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition"
-              >
-                Reload Page
-              </button>
+              <div className="text-lg text-green-400 mb-4">✅ Signed In</div>
+              <div className="text-gray-400 mb-6">Loading full app...</div>
             </div>
           ) : (
             <div>
-              <div className="text-gray-400 mb-4">Not signed in</div>
+              <div className="text-lg text-gray-400 mb-6">Sign in to get started</div>
               <button
-                onClick={() => window.location.href = "/api/auth/google/config"}
-                className="px-6 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition"
+                onClick={handleSignIn}
+                className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition font-semibold text-lg"
               >
                 Sign In with Google
               </button>
+              <div className="mt-6 text-xs text-gray-500">
+                Secure authentication via Google
+              </div>
             </div>
           )}
         </div>
       )}
 
-      <div className="absolute bottom-4 right-4 text-xs text-gray-500">
-        App Version: Minimal Build
+      {loading && (
+        <div className="text-center">
+          <div className="text-3xl font-bold mb-4">🎵 Oblivion</div>
+          <div className="text-gray-400">Starting up...</div>
+        </div>
+      )}
+
+      <div className="absolute bottom-4 right-4 text-xs text-gray-600">
+        v1.0 • Minimal Build
       </div>
     </div>
   );
