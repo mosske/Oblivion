@@ -68,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 
   return (
-    <aside className={`w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col h-full ${designConfig.textPrimary} select-none z-20 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg`}>
+    <aside className={`w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col fixed left-0 top-0 bottom-0 h-screen ${designConfig.textPrimary} select-none z-30 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg`}>
       {/* Brand Logo */}
       <div className="p-6 pb-4 flex items-center justify-between">
         <div

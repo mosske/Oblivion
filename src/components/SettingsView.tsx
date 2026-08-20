@@ -1,23 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { User, UserSettings, ThemePreset, AudioQuality, LyricsFontSize, LyricsAlignment, MiniPlayerLayout, FullAppDesignId } from "../types";
-import { ThemeRegistry } from "../utils/themeMap";
+import { User, UserSettings, AudioQuality } from "../types";
 import { FULL_APP_DESIGNS, FullAppDesignConfig } from "../utils/appDesignThemes";
 import {
   Settings,
   Sliders,
-  Palette,
   HardDrive,
   Sparkles,
-  Volume2,
-  Radio,
-  Type,
   Trash2,
   Check,
   Smartphone,
   Download,
   Layout,
-  Music,
-  CheckCircle2,
   Info
 } from "lucide-react";
 import { getCacheSizeMB, clearAllCache } from "../utils/offlineCache";
@@ -36,7 +29,6 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
   onUpdateSettings,
-  user,
   designConfig = FULL_APP_DESIGNS["designer"],
   deferredPrompt,
   onInstallPwa,
@@ -82,10 +74,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  const isLight = designConfig.isLight;
-
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-8 custom-scrollbar pb-40 md:pb-48 max-w-5xl select-none">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-40 md:pb-48 max-w-5xl select-none">
       {/* Header */}
       <div>
         <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2.5`}>
@@ -93,7 +83,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <span>Oblivion Settings</span>
         </h1>
         <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
-          Customize your full app design layout, themes, mini-player dock, audio engine quality, and offline storage.
+          Customize your full app design layout, audio engine quality, and offline storage.
         </p>
       </div>
 
@@ -237,197 +227,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
             );
           })}
-        </div>
-      </section>
-
-      {/* GUI & Theme Customization */}
-      <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-sm text-zinc-900">
-            <Palette className="w-4 h-4 text-[#c89b3c]" />
-            <span>Select App Design & Aesthetic Preset</span>
-          </div>
-          <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold bg-[#ede8dc] text-zinc-900 border border-[#d8d2c4]">
-            Active: {ThemeRegistry.getTheme(settings.themePreset).name}
-          </span>
-        </div>
-
-        {/* Theme Presets Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.values(ThemeRegistry.THEMES).map((t) => {
-            const isSelected = settings.themePreset === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => onUpdateSettings({ themePreset: t.id })}
-                className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group bg-gradient-to-br ${t.previewGradient} ${
-                  isSelected
-                    ? "border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-lg scale-[1.02]"
-                    : "border-zinc-300 opacity-90 hover:opacity-100 hover:scale-[1.01] shadow-sm"
-                }`}
-              >
-                {/* Active Checkmark Badge */}
-                {isSelected && (
-                  <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#c89b3c] text-slate-950 flex items-center justify-center shadow-md">
-                    <Check className="w-4 h-4 stroke-[3]" />
-                  </div>
-                )}
-
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/40 text-slate-100 border border-white/10 font-bold">
-                      {t.category}
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1 drop-shadow-sm">{t.name}</h4>
-                  <p className="text-[11px] text-slate-200 line-clamp-2 leading-relaxed mb-4 font-medium">
-                    {t.description}
-                  </p>
-                </div>
-
-                {/* Color Swatches Bar */}
-                <div className="flex items-center gap-1.5 pt-3 border-t border-white/20">
-                  {t.swatchColors.map((color, idx) => (
-                    <span
-                      key={idx}
-                      className="w-4 h-4 rounded-full border border-white/40 shadow-inner"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                  <span className="ml-auto text-[10px] font-bold text-white uppercase tracking-wider">
-                    {isSelected ? "Selected" : "Select"}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Mini-Player Layout Selector (5 Possible Layouts) */}
-        <div className="pt-6 border-t border-zinc-200 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-xs font-bold uppercase text-zinc-900 flex items-center gap-2">
-                <Layout className="w-4 h-4 text-[#c89b3c]" />
-                <span>Mini-Player Bottom Layout (5 Options)</span>
-              </h4>
-              <p className="text-[11px] text-zinc-600 font-medium">
-                Choose how the persistent now-playing dock displays when browsing on mobile & desktop.
-              </p>
-            </div>
-            <span className="text-[10px] font-mono font-bold text-zinc-900 bg-[#ede8dc] px-2 py-0.5 rounded border border-[#d8d2c4]">
-              Active: {settings.miniPlayerLayout || "designer-waveform"}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-              {
-                id: "designer-waveform",
-                title: "1. Designer Golden Waveform",
-                desc: "Warm studio dock with responsive golden waveform equalizer and quick action controls.",
-                tag: "Designer Default"
-              },
-              {
-                id: "floating-dock",
-                title: "2. Floating Glass Pill",
-                desc: "Modern cyberpunk floating capsule with frosted glass and glowing borders.",
-                tag: "Popular"
-              },
-              {
-                id: "ytmusic-classic",
-                title: "3. YT Music Classic",
-                desc: "Edge-to-edge dark bar with top red micro-scrubber & cast shortcuts.",
-                tag: "Official Style"
-              },
-              {
-                id: "minimal-capsule",
-                title: "4. Dynamic Island Capsule",
-                desc: "Ultra-compact centered pill with animated equalizer pulse wave.",
-                tag: "Ultra Minimal"
-              },
-              {
-                id: "card-expanded",
-                title: "5. Cyberpunk Hologram Card",
-                desc: "Expanded deck with waveform scrubber, Hi-Res badge, and quick lyrics.",
-                tag: "Feature-Rich"
-              }
-            ].map((layout) => {
-              const isSelected = (settings.miniPlayerLayout || "designer-waveform") === layout.id;
-              return (
-                <button
-                  key={layout.id}
-                  onClick={() => onUpdateSettings({ miniPlayerLayout: layout.id as MiniPlayerLayout })}
-                  className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all relative ${
-                    isSelected
-                      ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
-                      : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-sm"
-                  }`}
-                >
-                  {isSelected && (
-                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#c89b3c] text-slate-950 flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-800 border border-zinc-300 mb-1.5 inline-block">
-                      {layout.tag}
-                    </span>
-                    <h5 className="text-xs font-bold text-zinc-900 mb-1">{layout.title}</h5>
-                    <p className="text-[11px] text-zinc-600 font-medium leading-snug">{layout.desc}</p>
-                  </div>
-                  <span className={`text-[10px] font-bold mt-3 uppercase ${isSelected ? "text-[#855f10]" : "text-zinc-500"}`}>
-                    {isSelected ? "Active Layout" : "Select Layout"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Lyrics Preferences */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-zinc-200">
-          <div>
-            <label className="block text-xs font-bold uppercase text-zinc-900 mb-2">
-              Lyrics Font Size
-            </label>
-            <div className="flex items-center gap-2">
-              {(["sm", "md", "lg"] as const).map((size) => (
-                <button
-                  key={size}
-                  onClick={() => onUpdateSettings({ lyricsFontSize: size })}
-                  className={`flex-1 py-2 text-xs font-bold uppercase rounded-xl transition-all ${
-                    settings.lyricsFontSize === size
-                      ? `${designConfig.btnPrimary} text-white shadow-sm`
-                      : `${designConfig.btnSecondary} text-zinc-900 hover:bg-zinc-200 border border-zinc-300/80`
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase text-zinc-900 mb-2">
-              Lyrics Alignment
-            </label>
-            <div className="flex items-center gap-2">
-              {(["left", "center"] as const).map((align) => (
-                <button
-                  key={align}
-                  onClick={() => onUpdateSettings({ lyricsAlignment: align })}
-                  className={`flex-1 py-2 text-xs font-bold uppercase rounded-xl transition-all ${
-                    settings.lyricsAlignment === align
-                      ? `${designConfig.btnPrimary} text-white shadow-sm`
-                      : `${designConfig.btnSecondary} text-zinc-900 hover:bg-zinc-200 border border-zinc-300/80`
-                  }`}
-                >
-                  {align}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 

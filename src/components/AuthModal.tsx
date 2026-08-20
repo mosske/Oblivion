@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { User } from "../types";
-import { X, Sparkles, User as UserIcon, RefreshCw, Key, ExternalLink, Copy, Check } from "lucide-react";
+import { X, Sparkles, User as UserIcon, RefreshCw } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
 interface AuthModalProps {
@@ -17,74 +17,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const [loading, setLoading] = useState(false);
-  const [showConfig, setShowConfig] = useState(false);
-  const [clientIdInput, setClientIdInput] = useState("");
-  const [clientSecretInput, setClientSecretInput] = useState("");
-  const [redirectUri, setRedirectUri] = useState("");
-  const [savingConfig, setSavingConfig] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      // Fetch current config status
-      fetch("/api/auth/google/config")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.redirectUri) {
-            setRedirectUri(data.redirectUri);
-          } else {
-            setRedirectUri(`${window.location.origin}/api/auth/google/callback`);
-          }
-          if (data.clientId) setClientIdInput(data.clientId);
-          if (!data.configured) {
-            setShowConfig(true);
-          } else {
-            setShowConfig(false);
-          }
-        })
-        .catch(() => {
-          setRedirectUri(`${window.location.origin}/api/auth/google/callback`);
-        });
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleCopyUri = () => {
-    if (redirectUri) {
-      navigator.clipboard.writeText(redirectUri);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleSaveConfig = async () => {
-    if (!clientIdInput.trim()) {
-      alert("Please enter a valid Google OAuth Client ID.");
-      return;
-    }
-    setSavingConfig(true);
-    try {
-      const res = await fetch("/api/auth/google/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: clientIdInput.trim(),
-          clientSecret: clientSecretInput.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (data.configured) {
-        setShowConfig(false);
-        startGooglePopup();
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save credentials.");
-    } finally {
-      setSavingConfig(false);
-    }
-  };
 
   const startGooglePopup = async () => {
     setLoading(true);
@@ -94,28 +28,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const data = await res.json();
 
       let targetUrl = data.url;
-      if (!res.ok || !data.configured || !targetUrl) {
-        if (!clientIdInput.trim()) {
-          setShowConfig(true);
-          setLoading(false);
-          return;
-        }
-        const currentOrigin = window.location.origin;
-        const currentRedirect = `${currentOrigin}/api/auth/google/callback`;
-        const scopes = [
-          "https://www.googleapis.com/auth/youtube",
-          "https://www.googleapis.com/auth/userinfo.profile",
-          "https://www.googleapis.com/auth/userinfo.email",
-        ].join(" ");
-
-        targetUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
-          client_id: clientIdInput.trim(),
-          redirect_uri: currentRedirect,
-          response_type: "code",
-          scope: scopes,
-          access_type: "offline",
-          prompt: "consent",
-        }).toString();
+      if (!res.ok || !targetUrl) {
+        throw new Error(data.error || "Failed to generate Google Sign-In URL.");
       }
 
       const width = 500;
@@ -180,16 +94,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }, 1000);
     } catch (err: any) {
       console.error("Auth error:", err);
-      alert("Failed to initiate Google login.");
+      alert(err.message || "Failed to initiate Google login.");
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    if (showConfig) {
-      handleSaveConfig();
-    } else {
-      startGooglePopup();
     }
   };
 
@@ -221,75 +127,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </p>
           </div>
 
-          {showConfig && (
-            <div className={`text-left ${designConfig.isLight ? "bg-[#f5f2eb]" : "bg-slate-950/80"} p-4 border ${designConfig.borderSubtle} rounded-2xl space-y-3`}>
-              <div className={`flex items-center justify-between text-xs font-bold ${designConfig.accentText}`}>
-                <span className="flex items-center gap-1.5">
-                  <Key className="w-4 h-4" />
-                  <span>Google OAuth Client Setup</span>
-                </span>
-                <a
-                  href="https://console.cloud.google.com/apis/credentials"
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`text-[11px] ${designConfig.textMuted} hover:${designConfig.accentText} flex items-center gap-1 underline`}
-                >
-                  <span>Google Console</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-
-              <div className="space-y-1">
-                <label className={`text-[11px] ${designConfig.textPrimary} font-semibold`}>Google Client ID</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
-                  value={clientIdInput}
-                  onChange={(e) => setClientIdInput(e.target.value)}
-                  className={`w-full px-3 py-2 ${designConfig.inputBg} rounded-xl text-xs focus:outline-none`}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className={`text-[11px] ${designConfig.textPrimary} font-semibold`}>Client Secret (Optional)</label>
-                <input
-                  type="password"
-                  placeholder="e.g. GOCSPX-..."
-                  value={clientSecretInput}
-                  onChange={(e) => setClientSecretInput(e.target.value)}
-                  className={`w-full px-3 py-2 ${designConfig.inputBg} rounded-xl text-xs focus:outline-none`}
-                />
-              </div>
-
-              {redirectUri && (
-                <div className="pt-1 text-[10px] space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className={`font-semibold ${designConfig.textPrimary}`}>Redirect URI for Console:</span>
-                    <button
-                      type="button"
-                      onClick={handleCopyUri}
-                      className={`flex items-center gap-1 ${designConfig.accentText} hover:underline font-mono text-[10px]`}
-                    >
-                      {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      <span>{copied ? "Copied" : "Copy URI"}</span>
-                    </button>
-                  </div>
-                  <div className={`font-mono text-[10px] ${designConfig.inputBg} p-2 rounded-xl border ${designConfig.borderSubtle} ${designConfig.accentText} break-all select-all`}>
-                    {redirectUri}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="pt-1 space-y-2">
+          <div className="pt-2">
             <button
               id="auth-modal-google-btn"
-              onClick={handleGoogleLogin}
-              disabled={loading || savingConfig}
+              onClick={startGooglePopup}
+              disabled={loading}
               className={`w-full py-3.5 px-4 ${designConfig.btnPrimary} font-bold text-sm rounded-xl shadow-lg flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50`}
             >
-              {loading || savingConfig ? (
+              {loading ? (
                 <RefreshCw className="w-5 h-5 animate-spin" />
               ) : (
                 <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
@@ -311,22 +156,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   />
                 </svg>
               )}
-              <span>{showConfig ? "Save Credentials & Sign In" : "Sign in with Google"}</span>
+              <span>Sign in with Google</span>
             </button>
-
-            {!showConfig && (
-              <button
-                onClick={() => setShowConfig(true)}
-                className={`text-[11px] ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors pt-1`}
-              >
-                Configure OAuth Credentials
-              </button>
-            )}
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-

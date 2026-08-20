@@ -938,7 +938,7 @@ export default function App() {
   };
 
   return (
-    <div className={`flex h-screen w-screen bg-gradient-to-b ${activeFullDesign.bgCanvas} text-slate-100 overflow-hidden font-sans select-none`}>
+    <div className={`flex min-h-screen w-full bg-gradient-to-b ${activeFullDesign.bgCanvas} text-slate-100 font-sans select-none`}>
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
@@ -962,9 +962,9 @@ export default function App() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`flex-1 flex flex-col relative h-full overflow-hidden bg-gradient-to-b ${activeFullDesign.bgCanvas}`}>
+      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative bg-gradient-to-b ${activeFullDesign.bgCanvas}`}>
         {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
-        <header className={`flex items-center justify-between px-4 sm:px-6 py-3 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-20`}>
+        <header className={`sticky top-0 flex items-center justify-between px-4 sm:px-6 py-3 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-20`}>
           <div
             className="flex items-center gap-2.5 cursor-pointer"
             onClick={() => {

@@ -126,7 +126,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-8 custom-scrollbar pb-40 md:pb-48 select-none">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-40 md:pb-48 select-none">
       {/* Top Greeting & Fresh Pull Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

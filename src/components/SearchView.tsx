@@ -113,7 +113,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   });
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 custom-scrollbar pb-40 md:pb-48 select-none">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 pb-40 md:pb-48 select-none">
       {/* Search Header Bar */}
       <div className="space-y-4">
         <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2.5`}>

@@ -325,7 +325,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar select-none pb-40 md:pb-48">
+    <div className="flex-1 flex flex-col select-none pb-40 md:pb-48">
       {/* Top Sticky Header with Back Button */}
       <div className={`sticky top-0 z-20 flex items-center justify-between p-4 sm:p-6 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle}`}>
         <button
