@@ -24,6 +24,8 @@ export interface Playlist {
   tracksCount: number;
   updatedAt?: string;
   tracks: Track[];
+  artist?: string;
+  isAlbum?: boolean;
 }
 
 export interface Album {

@@ -839,6 +839,8 @@ export const Player: React.FC<PlayerProps> = ({
                       onError={(e) => {
                         if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
                           e.currentTarget.src = currentTrack.coverUrl;
+                        } else {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=95";
                         }
                       }}
                     />

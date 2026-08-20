@@ -1,23 +1,26 @@
 {
   "short_name": "Oblivion",
-  "name": "Oblivion YouTube Music",
+  "name": "Oblivion Music",
   "icons": [
     {
       "src": "/icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "id": "/",
   "start_url": "/",
+  "scope": "/",
   "background_color": "#020617",
   "theme_color": "#06b6d4",
   "display": "standalone",
-  "orientation": "portrait",
-  "description": "YouTube Music client player with Google account sync, background playback, and offline audio caching."
+  "orientation": "portrait-primary",
+  "description": "Oblivion Music - Google account sync, background playback, and offline audio caching."
 }

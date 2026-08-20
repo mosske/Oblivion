@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Track, Playlist } from "../types";
-import { Search, Play, Plus, Music2, Radio, Sparkles, TrendingUp } from "lucide-react";
+import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
 interface SearchViewProps {
   initialQuery?: string;
+  onQueryChange?: (query: string) => void;
   onPlayTrack: (track: Track) => void;
   onPlayQueue?: (tracks: Track[], startIndex: number) => void;
   onAddToQueue: (track: Track) => void;
@@ -13,6 +14,9 @@ interface SearchViewProps {
   playlists: Playlist[];
   onSelectPlaylist?: (playlist: Playlist) => void;
   designConfig?: FullAppDesignConfig;
+  currentTrackId?: string;
+  currentTrack?: Track | null;
+  isPlaying?: boolean;
 }
 
 const SEARCH_EXPLORE_TAGS = [
@@ -30,6 +34,7 @@ const SEARCH_EXPLORE_TAGS = [
 
 export const SearchView: React.FC<SearchViewProps> = ({
   initialQuery = "",
+  onQueryChange,
   onPlayTrack,
   onPlayQueue,
   onAddToQueue,
@@ -37,6 +42,9 @@ export const SearchView: React.FC<SearchViewProps> = ({
   playlists,
   onSelectPlaylist,
   designConfig = FULL_APP_DESIGNS["designer"],
+  currentTrackId,
+  currentTrack,
+  isPlaying = false,
 }) => {
   const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<"all" | "track" | "album" | "artist">("all");
@@ -45,9 +53,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const [openPlaylistMenuId, setOpenPlaylistMenuId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialQuery && initialQuery !== query) {
-      setQuery(initialQuery);
-    }
+    setQuery(initialQuery || "");
   }, [initialQuery]);
 
   useEffect(() => {
@@ -107,12 +113,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
   });
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 custom-scrollbar pb-40 md:pb-48 select-none">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 custom-scrollbar pb-40 md:pb-48 select-none">
       {/* Search Header Bar */}
       <div className="space-y-4">
         <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2.5`}>
-          <Search className={`w-7 h-7 ${designConfig.accentText}`} />
-          <span>Search YouTube Music</span>
+          <Search className={`w-6 h-6 ${designConfig.accentText}`} />
+          <span>Search Oblivion Music</span>
         </h1>
 
         <div className="relative max-w-2xl">
@@ -120,7 +126,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              onQueryChange?.(e.target.value);
+            }}
             placeholder="Search songs, artists, albums, or genres..."
             className={`w-full pl-12 pr-4 py-3 ${designConfig.inputBg} rounded-2xl text-sm focus:outline-none shadow-md transition-all font-medium`}
             autoFocus
@@ -156,7 +165,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
             {SEARCH_EXPLORE_TAGS.map((tag) => (
               <button
                 key={tag}
-                onClick={() => setQuery(tag)}
+                onClick={() => {
+                  setQuery(tag);
+                  onQueryChange?.(tag);
+                }}
                 className={`px-3.5 py-2 rounded-xl text-xs font-semibold ${designConfig.cardBg} ${designConfig.cardHover} ${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-all hover:scale-105 active:scale-95 shadow-sm`}
               >
                 {tag}
@@ -177,31 +189,40 @@ export const SearchView: React.FC<SearchViewProps> = ({
         ) : query.trim() && (filteredResults || []).length === 0 ? (
           <div className={`flex flex-col items-center justify-center py-16 ${designConfig.textMuted} space-y-2`}>
             <Music2 className="w-12 h-12 stroke-1" />
-            <p className="text-sm font-medium">No YouTube Music results found for "{query}".</p>
+            <p className="text-sm font-medium">No results found for "{query}".</p>
           </div>
         ) : (
           (filteredResults || []).map((item: any, idx: number) => {
             const isAlbum = item.type === "album" || Boolean(item.playlistId);
             const isArtist = item.type === "artist" || Boolean(item.channelId);
+            const itemVid = item.youtubeVideoId || item.id;
+            const isCurrent = Boolean(
+              (!isAlbum && !isArtist) && (
+                (currentTrackId && (itemVid === currentTrackId || item.id === currentTrackId)) ||
+                (currentTrack?.title && item.title && item.title.toLowerCase().trim() === currentTrack.title.toLowerCase().trim())
+              )
+            );
 
             const handleItemClick = () => {
               if (isAlbum && onSelectPlaylist) {
                 onSelectPlaylist({
                   id: item.playlistId || item.id,
                   title: item.title,
+                  artist: item.artist,
                   description: item.artist || "YouTube Album",
                   coverUrl: item.coverUrl,
                   tracks: [],
                   isYouTubeSynced: true,
+                  isAlbum: true,
                   tracksCount: item.tracksCount || 10
                 });
               } else if (isArtist) {
                 setQuery(item.title);
+                onQueryChange?.(item.title);
                 setFilter("all");
               } else {
                 const trackResults = (filteredResults || []).filter((i: any) => !i.type || i.type === "track");
-                const itemTrId = item.id || item.youtubeVideoId;
-                const trackIdx = trackResults.findIndex((t: any) => (t.id || t.youtubeVideoId) === itemTrId);
+                const trackIdx = trackResults.findIndex((t: any) => (t.id || t.youtubeVideoId) === itemVid);
                 if (onPlayQueue && trackResults.length > 0) {
                   onPlayQueue(trackResults, trackIdx >= 0 ? trackIdx : 0);
                 } else {
@@ -213,24 +234,46 @@ export const SearchView: React.FC<SearchViewProps> = ({
             return (
               <div
                 key={`sr_${item.id || item.youtubeVideoId || item.playlistId || 'item'}_${idx}`}
-                className={`group flex items-center justify-between p-3 rounded-2xl ${designConfig.cardBg} ${designConfig.cardHover} transition-all relative shadow-sm`}
+                className={`group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
+                  isCurrent
+                    ? `${designConfig.cardBg} ring-2 ring-[#c89b3c] shadow-lg bg-[#c89b3c]/5`
+                    : `${designConfig.cardBg} ${designConfig.cardHover}`
+                }`}
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <div
                     onClick={handleItemClick}
-                    className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} cursor-pointer`}
+                    className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${isCurrent ? "border-[#c89b3c]" : designConfig.borderSubtle} cursor-pointer shadow-sm`}
                   >
-                    <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
-                    <button className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Play className="w-5 h-5 text-white fill-white" />
-                    </button>
+                    <img
+                      src={item.coverUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80"}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+
+                    {/* Playing Equalizer Animation Overlay if Active Song */}
+                    {isCurrent && isPlaying ? (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <div className="flex items-end justify-center gap-0.5 h-4">
+                          <span className="w-1 bg-[#c89b3c] animate-bounce h-3 rounded-full"></span>
+                          <span className="w-1 bg-[#c89b3c] animate-bounce delay-75 h-4 rounded-full"></span>
+                          <span className="w-1 bg-[#c89b3c] animate-bounce delay-150 h-2 rounded-full"></span>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <Play className="w-5 h-5 text-white fill-white" />
+                      </button>
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h4
                         onClick={handleItemClick}
-                        className={`text-sm font-bold ${designConfig.textPrimary} truncate cursor-pointer group-hover:${designConfig.accentText}`}
+                        className={`text-sm font-bold truncate cursor-pointer transition-colors ${
+                          isCurrent ? designConfig.accentText : `${designConfig.textPrimary} group-hover:${designConfig.accentText}`
+                        }`}
                         title={item.title}
                       >
                         {cleanTrackTitle(item.title, item.artist)}
@@ -238,6 +281,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
                       {item.type && item.type !== "track" && (
                         <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${designConfig.pillBg}`}>
                           {item.type}
+                        </span>
+                      )}
+                      {isCurrent && isPlaying && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c89b3c]/20 text-[#855f10] text-[10px] font-mono font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#c89b3c] animate-ping" />
+                          Playing
                         </span>
                       )}
                     </div>
@@ -281,7 +330,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                                     onAddTrackToPlaylist(item, pl.id);
                                     setOpenPlaylistMenuId(null);
                                   }}
-                                  className={`w-full text-left px-2 py-1.5 rounded-xl text-xs ${designConfig.textPrimary} hover:${designConfig.accentBg} hover:text-white transition-colors truncate`}
+                                  className={`w-full text-left px-2 py-1.5 rounded-xl text-xs font-semibold ${designConfig.textPrimary} hover:bg-black/10 truncate`}
                                 >
                                   {pl.title}
                                 </button>

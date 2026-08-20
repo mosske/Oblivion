@@ -59,9 +59,9 @@ export function getHdCoverUrl(url?: string): string {
   if (url.includes("googleusercontent.com") || url.includes("ggpht.com")) {
     return url.replace(/=w\d+-h\d+[^"]*/, "=w1200-h1200-l90-rj").replace(/=s\d+[^"]*/, "=s1200");
   }
-  // YouTube video thumbnail max resolution
+  // YouTube video thumbnail max resolution with hqdefault fallback
   if (url.includes("ytimg.com/vi/")) {
-    return url.replace(/\/(default|mqdefault|hqdefault|sddefault)\.jpg/, "/maxresdefault.jpg");
+    return url.replace(/\/(default|mqdefault|sddefault)\.jpg/, "/hqdefault.jpg");
   }
   return url;
 }

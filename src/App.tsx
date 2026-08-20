@@ -12,7 +12,7 @@ import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AuthModal } from "./components/AuthModal";
-import { AlertTriangle, X, Disc3, Search, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 // Helpers to read and write user-customized covers persistently
 const getStoredCustomCovers = (): Record<string, { customCoverUrl: string; isCustomCover: boolean }> => {
@@ -94,12 +94,38 @@ export default function App() {
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [isSyncingYouTube, setIsSyncingYouTube] = useState<boolean>(false);
   const [isSyncingPlaylist, setIsSyncingPlaylist] = useState<boolean>(false);
   const [oauthBannerError, setOauthBannerError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === "accepted") {
+        showToast("Oblivion Music installed successfully!");
+      }
+      setDeferredPrompt(null);
+    } else {
+      showToast("To install on Chrome: Tap menu (⋮) -> 'Install App'");
+    }
+  };
 
   const [settings, setSettings] = useState<UserSettings>(() => {
     try {
@@ -305,6 +331,7 @@ export default function App() {
     setUser(fullUser);
     localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
     fetchPlaylists();
+    showToast(`Signed in as ${loggedUser.name || loggedUser.email || "Google User"}`);
   };
 
   const handleLogout = async () => {
@@ -316,6 +343,7 @@ export default function App() {
     setUser(null);
     localStorage.removeItem("oblivion_saved_user");
     fetchPlaylists();
+    showToast("Signed out successfully.");
   };
 
   // Fetch Playlists with immediate tracks count
@@ -957,13 +985,14 @@ export default function App() {
             <button
               id="top-header-search-btn"
               onClick={() => {
+                setSearchQuery("");
                 setSelectedPlaylist(null);
                 setActiveTab("search");
               }}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
                 activeTab === "search"
-                  ? `${activeFullDesign.btnPrimary} shadow-md`
-                  : `${activeFullDesign.btnSecondary} ${activeFullDesign.textPrimary} hover:scale-105 active:scale-95`
+                  ? `${activeFullDesign.btnPrimary} text-white shadow-md`
+                  : `${activeFullDesign.btnSecondary} ${activeFullDesign.textPrimary} hover:scale-105 active:scale-95 border border-zinc-300/80`
               }`}
               title="Search music, albums, artists"
             >
@@ -971,13 +1000,88 @@ export default function App() {
               <span className="text-xs font-semibold hidden sm:inline">Search</span>
             </button>
 
-            {!user?.isLoggedIn && (
+            {/* User Auth Section: Sign-In Button OR User Portrait with Pop-up Sign Out */}
+            {!user?.isLoggedIn ? (
               <button
+                id="top-header-signin-btn"
                 onClick={() => setIsAuthModalOpen(true)}
-                className={`px-3 py-1.5 rounded-xl ${activeFullDesign.pillBg} ${activeFullDesign.textPrimary} text-xs font-semibold hover:scale-105 active:scale-95 transition-transform`}
+                className={`px-4 py-2 rounded-xl ${activeFullDesign.btnPrimary} text-white text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5`}
               >
-                Sign In
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
               </button>
+            ) : (
+              <div className="relative">
+                <button
+                  id="top-header-user-avatar-btn"
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                  className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#c89b3c] shadow-md hover:scale-105 active:scale-95 transition-transform flex items-center justify-center bg-zinc-800 focus:outline-none ring-2 ring-[#c89b3c]/30"
+                  title={user.name || user.email || "Account Profile"}
+                >
+                  {user.picture ? (
+                    <img src={user.picture} alt={user.name || "User"} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold text-white">{(user.name || user.email || "U")[0].toUpperCase()}</span>
+                  )}
+                </button>
+
+                {/* Account Pop-Up Window */}
+                {isUserMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    />
+                    <div className={`absolute right-0 top-12 z-50 w-72 bg-white border border-zinc-200 rounded-3xl shadow-2xl p-5 space-y-4 animate-fade-in text-left select-none ring-1 ring-black/5`}>
+                      {/* Header with Close X */}
+                      <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-bold">
+                          Account Profile
+                        </span>
+                        <button
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="p-1 rounded-full text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                          title="Close"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* User Info */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border border-zinc-300 shrink-0 shadow-sm bg-zinc-800 flex items-center justify-center">
+                          {user.picture ? (
+                            <img src={user.picture} alt={user.name || "User"} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-sm font-bold text-white">{(user.name || user.email || "U")[0].toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-bold text-zinc-900 truncate">{user.name || "Google User"}</h4>
+                          <p className="text-xs text-zinc-600 truncate font-medium">{user.email}</p>
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold border border-emerald-300">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            YouTube Synced
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Sign Out Button */}
+                      <button
+                        id="user-menu-signout-btn"
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 font-bold text-xs rounded-2xl border border-red-200 flex items-center justify-center gap-2 transition-all shadow-sm hover:scale-[1.02]"
+                      >
+                        <LogOut className="w-4 h-4 text-red-600" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </header>
@@ -1105,6 +1209,7 @@ export default function App() {
             {activeTab === "search" && (
               <SearchView
                 initialQuery={searchQuery}
+                onQueryChange={setSearchQuery}
                 onPlayTrack={handlePlayTrack}
                 onPlayQueue={handlePlayQueue}
                 onAddToQueue={handleAddToQueue}
@@ -1112,6 +1217,9 @@ export default function App() {
                 playlists={playlists}
                 onSelectPlaylist={(pl) => setSelectedPlaylist(pl)}
                 designConfig={activeFullDesign}
+                currentTrackId={playerState.currentTrack?.id || playerState.currentTrack?.youtubeVideoId}
+                currentTrack={playerState.currentTrack}
+                isPlaying={playerState.isPlaying}
               />
             )}
 
@@ -1153,6 +1261,9 @@ export default function App() {
                 user={user}
                 onLoginSuccess={handleLoginSuccess}
                 onLogout={handleLogout}
+                designConfig={activeFullDesign}
+                deferredPrompt={deferredPrompt}
+                onInstallPwa={handleInstallPwa}
               />
             )}
           </>
