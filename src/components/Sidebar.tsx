@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Plus,
   Sparkles,
+  Download,
 } from "lucide-react";
 import { User, Playlist, ThemePreset, NavTab } from "../types";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -31,6 +32,8 @@ interface SidebarProps {
   onSyncYouTube: () => void;
   activeTheme?: ThemePreset;
   designConfig?: FullAppDesignConfig;
+  onInstallPwa?: () => void;
+  isInstalled?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -45,6 +48,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isSyncingYouTube,
   onSyncYouTube,
   designConfig = FULL_APP_DESIGNS["designer"],
+  onInstallPwa,
+  isInstalled,
 }) => {
   const cleanPlaylists = React.useMemo(() => {
     let hiddenIds: string[] = [];
@@ -245,6 +250,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         ))}
       </div>
+
+      {/* Install PWA Prompt Button if not installed */}
+      {!isInstalled && onInstallPwa && (
+        <div className="px-3 pb-2">
+          <button
+            id="sidebar-install-pwa-btn"
+            onClick={onInstallPwa}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-500 hover:text-amber-400 font-bold text-xs shadow-sm transition-all transform active:scale-95 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Install App</span>
+          </button>
+        </div>
+      )}
 
       {/* Offline Caching Quick Info */}
       <div className={`p-3 border-t ${designConfig.borderSubtle} text-[11px] ${designConfig.textSecondary} flex items-center justify-between`}>

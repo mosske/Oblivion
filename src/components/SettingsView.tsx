@@ -55,23 +55,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleInstallClick = async () => {
+    const promptEvent = deferredPrompt || (window as any).__deferredPrompt;
+    if (promptEvent) {
+      try {
+        await promptEvent.prompt();
+        const choiceResult = await promptEvent.userChoice;
+        if (choiceResult && choiceResult.outcome === "accepted") {
+          setInstallSuccessMsg("🎉 Oblivion Music installed successfully!");
+          setIsInstalled(true);
+        }
+      } catch (err) {
+        console.error("Install prompt error:", err);
+      }
+      return;
+    }
+
     if (onInstallPwa) {
       onInstallPwa();
       return;
     }
 
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      if (choiceResult.outcome === "accepted") {
-        setInstallSuccessMsg("Oblivion Music installed successfully!");
-        setIsInstalled(true);
-      }
+    if (isInstalled) {
+      setInstallSuccessMsg("Oblivion Music is already installed on this device!");
     } else {
-      // Guide the user clearly for Android Chrome
-      setInstallSuccessMsg("To install on Android Chrome: Tap the top-right menu (⋮) in Chrome, then tap 'Install app' or 'Add to Home screen'.");
-      setTimeout(() => setInstallSuccessMsg(""), 8000);
+      const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        setInstallSuccessMsg("To install on Apple Safari: Tap the Share button (⎋), then select 'Add to Home Screen'.");
+      } else {
+        setInstallSuccessMsg("To install on Chrome: Tap the top-right menu (⋮), then tap 'Install app' or 'Add to Home screen'.");
+      }
     }
+    setTimeout(() => setInstallSuccessMsg(""), 7000);
   };
 
   return (
@@ -107,10 +121,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
               </div>
               <h3 className="text-base font-bold text-zinc-900">
-                Install Oblivion Music (Android / Chrome)
+                Install Oblivion Music App
               </h3>
               <p className="text-xs text-zinc-700 font-medium leading-relaxed max-w-xl mt-0.5">
-                Install as a native standalone app on your Android device over Google Chrome for instant home-screen launching, seamless lock-screen controls, and offline listening.
+                Install as a standalone progressive web app (PWA) on your Android, Apple Safari, or desktop browser for instant home-screen launching, background playback, and offline caching.
               </p>
             </div>
           </div>
@@ -121,7 +135,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             className={`px-5 py-3 rounded-2xl ${designConfig.btnPrimary} text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shrink-0`}
           >
             <Download className="w-4 h-4 text-white" />
-            <span>Install App (Android)</span>
+            <span>Install App</span>
           </button>
         </div>
 

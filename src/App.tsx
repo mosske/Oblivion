@@ -12,7 +12,7 @@ import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AuthModal } from "./components/AuthModal";
-import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
+import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon, Download } from "lucide-react";
 
 // Helpers to read and write user-customized covers persistently
 const getStoredCustomCovers = (): Record<string, { customCoverUrl: string; isCustomCover: boolean }> => {
@@ -96,6 +96,16 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isPwaInstalled, setIsPwaInstalled] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes("android-app://")
+      );
+    }
+    return false;
+  });
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [isSyncingYouTube, setIsSyncingYouTube] = useState<boolean>(false);
@@ -104,26 +114,79 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
+    // Check if app is already running as standalone PWA
+    const checkStandalone = () => {
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes("android-app://");
+      setIsPwaInstalled(standalone);
+    };
+    checkStandalone();
+
+    const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      (window as any).__deferredPrompt = e;
+
+      // Automatically trigger the native Android Chrome install dialog on initial load
+      const promptedSession = sessionStorage.getItem("oblivion_pwa_native_prompted");
+      if (!promptedSession && !isPwaInstalled) {
+        sessionStorage.setItem("oblivion_pwa_native_prompted", "true");
+        // Give the page a brief moment to render before prompting native dialog
+        setTimeout(() => {
+          try {
+            e.prompt();
+          } catch (err) {
+            console.log("Native prompt triggered on user interaction:", err);
+          }
+        }, 800);
+      }
     };
+
+    const handleAppInstalled = () => {
+      setIsPwaInstalled(true);
+      setDeferredPrompt(null);
+      (window as any).__deferredPrompt = null;
+      showToast("🎉 Oblivion Music installed successfully!");
+    };
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, []);
+  }, [isPwaInstalled]);
 
   const handleInstallPwa = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      if (choice.outcome === "accepted") {
-        showToast("Oblivion Music installed successfully!");
+    const promptEvent = deferredPrompt || (window as any).__deferredPrompt;
+    if (promptEvent) {
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice && choice.outcome === "accepted") {
+          setIsPwaInstalled(true);
+          showToast("🎉 Oblivion Music installed successfully!");
+        }
+      } catch (err) {
+        console.error("PWA prompt error:", err);
       }
       setDeferredPrompt(null);
+      (window as any).__deferredPrompt = null;
     } else {
-      showToast("To install on Chrome: Tap menu (⋮) -> 'Install App'");
+      if (isPwaInstalled) {
+        showToast("Oblivion Music is already installed on your device!");
+      } else {
+        // In Safari / iOS or non-Chromium browsers
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        if (isIOS) {
+          showToast("Tap the Share button (⎋) in Safari and choose 'Add to Home Screen'");
+        } else {
+          showToast("Tap browser menu (⋮) -> 'Install App' or 'Add to Home Screen'");
+        }
+      }
     }
   };
 
@@ -959,6 +1022,8 @@ export default function App() {
         onSyncYouTube={fetchPlaylists}
         activeTheme={settings.themePreset}
         designConfig={activeFullDesign}
+        onInstallPwa={handleInstallPwa}
+        isInstalled={isPwaInstalled}
       />
 
       {/* Main Content Workspace Area */}
@@ -981,6 +1046,19 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Install App Header Pill if not installed */}
+            {!isPwaInstalled && (
+              <button
+                id="top-header-install-app-btn"
+                onClick={handleInstallPwa}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-sm"
+                title="Install Oblivion Music PWA"
+              >
+                <Download className="w-3.5 h-3.5 text-amber-400" />
+                <span>Install App</span>
+              </button>
+            )}
+
             {/* Top Search Button (Magnifying Glass Icon) */}
             <button
               id="top-header-search-btn"

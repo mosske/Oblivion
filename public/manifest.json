@@ -1,26 +1,70 @@
 {
-  "short_name": "Oblivion",
+  "id": "/",
   "name": "Oblivion Music",
+  "short_name": "Oblivion",
+  "description": "Oblivion Music - Google account sync, lossless audio streaming, background playback, and offline music caching.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "background_color": "#0a0e17",
+  "theme_color": "#c89b3c",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "categories": ["music", "entertainment", "audio"],
   "icons": [
     {
       "src": "/icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
     }
   ],
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
-  "background_color": "#020617",
-  "theme_color": "#06b6d4",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "description": "Oblivion Music - Google account sync, background playback, and offline audio caching."
+  "shortcuts": [
+    {
+      "name": "Home Dashboard",
+      "short_name": "Home",
+      "description": "Open Oblivion Music Home",
+      "url": "/?tab=home",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Music Library",
+      "short_name": "Library",
+      "description": "View saved playlists and tracks",
+      "url": "/?tab=library",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search Music",
+      "short_name": "Search",
+      "description": "Search songs, albums, and artists",
+      "url": "/?tab=search",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }
