@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User } from "../types";
 import { X, Sparkles, User as UserIcon, RefreshCw } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { OblivionLogo } from "./OblivionLogo";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -103,8 +104,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
       <div className={`w-full max-w-md ${designConfig.modalBg} border ${designConfig.borderSubtle} rounded-3xl shadow-2xl overflow-hidden ${designConfig.textSecondary}`}>
         <div className={`flex items-center justify-between p-5 border-b ${designConfig.borderSubtle}`}>
-          <div className="flex items-center gap-2">
-            <Sparkles className={`w-5 h-5 ${designConfig.accentText}`} />
+          <div className="flex items-center gap-2.5">
+            <OblivionLogo size={20} />
             <h3 className={`text-base font-bold ${designConfig.textPrimary}`}>Connect YouTube Music</h3>
           </div>
           <button
@@ -116,9 +117,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         <div className="p-6 space-y-5 text-center">
-          <div className={`w-14 h-14 ${designConfig.btnPrimary} rounded-2xl mx-auto flex items-center justify-center shadow-lg`}>
-            <UserIcon className="w-7 h-7 fill-current" />
-          </div>
+          <OblivionLogo size={68} withAura className="mx-auto" />
 
           <div className="space-y-1.5">
             <h4 className={`text-base font-bold ${designConfig.textPrimary}`}>Sign in with Google</h4>

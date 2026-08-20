@@ -131,10 +131,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight`}>
-            {timeGreeting}
-            {user?.isLoggedIn && (
-              <span className={designConfig.accentText}>, {user.name.split(" ")[0]}</span>
-            )}
+            {timeGreeting}{user?.isLoggedIn && user?.name ? `, ${user.name.split(" ")[0]}` : ""}
           </h1>
           <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
             Your fresh YouTube Music dashboard • Live lossless streaming

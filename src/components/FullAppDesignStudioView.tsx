@@ -27,6 +27,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
+import { OblivionLogo } from "./OblivionLogo";
 
 interface FullAppDesignStudioViewProps {
   activeDesignId: FullAppDesignId;
@@ -152,10 +153,8 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                   <div className="rounded-2xl border border-white/10 bg-black/50 p-3 space-y-2.5 shadow-2xl backdrop-blur-md">
                     {/* Simulated Header */}
                     <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3.5 h-3.5 rounded-lg ${design.accentBg} flex items-center justify-center`}>
-                          <Disc3 className="w-2 h-2 text-white animate-spin-slow" />
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        <OblivionLogo size={14} />
                         <div className="h-2.5 w-16 rounded bg-white/40 font-mono text-[8px] flex items-center px-1 text-white">
                           OBLIVION
                         </div>

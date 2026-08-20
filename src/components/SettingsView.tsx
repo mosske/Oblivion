@@ -14,6 +14,7 @@ import {
   Info
 } from "lucide-react";
 import { getCacheSizeMB, clearAllCache } from "../utils/offlineCache";
+import { OblivionLogo } from "./OblivionLogo";
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -105,9 +106,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-4 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className={`p-3 rounded-2xl ${designConfig.btnSecondary} text-zinc-900 shrink-0 border border-zinc-300/80 shadow-sm`}>
-              <Smartphone className="w-6 h-6 text-[#c89b3c]" />
-            </div>
+            <OblivionLogo size={46} withAura className="shrink-0" />
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30 uppercase">

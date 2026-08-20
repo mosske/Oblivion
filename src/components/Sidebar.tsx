@@ -17,6 +17,7 @@ import {
 import { User, Playlist, ThemePreset, NavTab } from "../types";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
+import { OblivionLogo } from "./OblivionLogo";
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -82,11 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => setActiveTab("home")}
           className="flex items-center gap-3 cursor-pointer group"
         >
-          <div className={`relative flex items-center justify-center w-10 h-10 rounded-xl ${designConfig.accentBg} p-0.5 shadow-md ${designConfig.glowRing} group-hover:scale-105 transition-transform duration-300`}>
-            <div className={`w-full h-full ${designConfig.isLight ? "bg-[#fbfaf7]" : "bg-slate-950"} rounded-[10px] flex items-center justify-center`}>
-              <Disc3 className={`w-6 h-6 ${designConfig.accentText} animate-spin-slow`} />
-            </div>
-          </div>
+          <OblivionLogo size={42} animated withAura />
           <div>
             <h1 className={`text-xl font-bold tracking-wider ${designConfig.textPrimary} font-mono flex items-center gap-1.5`}>
               OBLIVION

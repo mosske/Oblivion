@@ -12,6 +12,7 @@ import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AuthModal } from "./components/AuthModal";
+import { OblivionLogo } from "./components/OblivionLogo";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 // Helpers to read and write user-customized covers persistently
@@ -1031,17 +1032,13 @@ export default function App() {
         {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
         <header className={`sticky top-0 flex items-center justify-between px-4 sm:px-6 py-3 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-20`}>
           <div
-            className="flex items-center gap-2.5 cursor-pointer"
+            className="flex items-center gap-2.5 cursor-pointer group"
             onClick={() => {
               setSelectedPlaylist(null);
               setActiveTab("home");
             }}
           >
-            <div className={`w-8 h-8 rounded-xl ${activeFullDesign.btnPrimary} p-0.5 flex items-center justify-center shadow-md`}>
-              <div className={`w-full h-full ${activeFullDesign.isLight ? "bg-[#f5f2eb]" : "bg-slate-950"} rounded-[10px] flex items-center justify-center`}>
-                <Disc3 className={`w-4 h-4 ${activeFullDesign.accentText}`} />
-              </div>
-            </div>
+            <OblivionLogo size={34} withAura animated />
             <span className={`text-sm font-bold tracking-wider ${activeFullDesign.textPrimary} font-mono`}>OBLIVION</span>
           </div>
 
