@@ -105,6 +105,192 @@ function getSilentAudioUrl(): string {
   return cachedSilentUrl;
 }
 
+function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
+  switch (design.id) {
+    case "designer":
+      return {
+        bgCanvas: "bg-gradient-to-b from-[#081e17] via-[#0d2820] to-[#040f0b]",
+        orb1: "bg-[#c89b3c]/25",
+        orb2: "bg-emerald-600/20",
+        veil: "bg-gradient-to-b from-[#081e17]/90 via-[#081e17]/50 to-[#040f0b]/95",
+        topBar: "bg-[#fbfaf7]/95 border-[#e6e2d8] text-[#181816] shadow-sm",
+        minimizeBtn: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border-[#d8d2c4] shadow-sm",
+        nowPlayingDot: "bg-[#c89b3c]",
+        nowPlayingLabel: "text-[#c89b3c]",
+        nowPlayingTitle: "text-[#181816]",
+        tabActive: "bg-[#c89b3c] text-white border-[#c89b3c] shadow-md font-bold",
+        tabInactive: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border-[#d8d2c4]",
+        artGlowRing: "from-[#c89b3c]/40 via-emerald-600/30 to-[#c89b3c]/40",
+        artBorder: "border-[#e6e2d8]/60 shadow-[0_25px_60px_rgba(0,0,0,0.6)]",
+        stageTitle: "text-white drop-shadow-md",
+        stageArtist: "text-[#c89b3c]",
+        stageTagAccent: "bg-[#c89b3c]/20 border-[#c89b3c]/40 text-[#c89b3c]",
+        stageTagNeutral: "bg-white/10 border-white/20 text-white",
+        bottomDeck: "bg-[#fbfaf7]/98 border-[#e6e2d8] text-[#181816] shadow-2xl ring-1 ring-[#c89b3c]/20",
+        seekbarTrack: "bg-[#e2ddd1]",
+        seekbarAccent: "accent-[#c89b3c]",
+        timeText: "text-[#6b675e]",
+        playBtn: "bg-[#c89b3c] hover:bg-[#d8a846] text-white shadow-[0_0_25px_rgba(200,155,60,0.45)] ring-4 ring-[#c89b3c]/25",
+        playIconFill: "fill-white",
+        ctrlBtn: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border-[#d8d2c4] shadow-sm",
+        activeText: "text-[#c89b3c]",
+        mutedText: "text-[#8c887e] hover:text-[#181816]",
+        volSlider: "bg-[#e2ddd1] accent-[#c89b3c]",
+      };
+    case "cyberpunk-neon":
+      return {
+        bgCanvas: "bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950",
+        orb1: "bg-cyan-500/30",
+        orb2: "bg-fuchsia-600/25",
+        veil: "bg-gradient-to-b from-slate-950/90 via-slate-950/50 to-slate-950/95",
+        topBar: "bg-slate-950/90 border-slate-800/80 text-white shadow-sm",
+        minimizeBtn: "bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border-slate-700/80 shadow-sm",
+        nowPlayingDot: "bg-cyan-400",
+        nowPlayingLabel: "text-cyan-400",
+        nowPlayingTitle: "text-white",
+        tabActive: "bg-cyan-400 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] font-bold",
+        tabInactive: "bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700",
+        artGlowRing: "from-cyan-500/40 via-fuchsia-500/30 to-cyan-500/40",
+        artBorder: "border-cyan-500/40 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
+        stageTitle: "text-white drop-shadow-md",
+        stageArtist: "text-cyan-400",
+        stageTagAccent: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300",
+        stageTagNeutral: "bg-slate-800/80 border-slate-700 text-slate-300",
+        bottomDeck: "bg-slate-950/95 border-slate-800/90 text-slate-100 shadow-2xl ring-1 ring-cyan-500/20",
+        seekbarTrack: "bg-slate-800",
+        seekbarAccent: "accent-cyan-400",
+        timeText: "text-slate-400",
+        playBtn: "bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/30",
+        playIconFill: "fill-slate-950",
+        ctrlBtn: "bg-slate-900/90 hover:bg-slate-800 text-slate-200 border-slate-700/80 shadow-md",
+        activeText: "text-cyan-400",
+        mutedText: "text-slate-500 hover:text-slate-200",
+        volSlider: "bg-slate-800 accent-cyan-400",
+      };
+    case "ytmusic-red":
+      return {
+        bgCanvas: "bg-gradient-to-b from-[#0f0f0f] via-[#141414] to-[#0f0f0f]",
+        orb1: "bg-red-600/30",
+        orb2: "bg-rose-950/40",
+        veil: "bg-gradient-to-b from-[#0f0f0f]/90 via-[#0f0f0f]/50 to-[#0f0f0f]/95",
+        topBar: "bg-[#0f0f0f]/95 border-neutral-800 text-white shadow-sm",
+        minimizeBtn: "bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border-neutral-700/80 shadow-sm",
+        nowPlayingDot: "bg-red-600",
+        nowPlayingLabel: "text-red-500",
+        nowPlayingTitle: "text-white",
+        tabActive: "bg-red-600 text-white border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)] font-bold",
+        tabInactive: "bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border-neutral-700",
+        artGlowRing: "from-red-600/40 via-rose-900/30 to-amber-600/20",
+        artBorder: "border-neutral-700/80 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
+        stageTitle: "text-white drop-shadow-md",
+        stageArtist: "text-red-500",
+        stageTagAccent: "bg-red-600/20 border-red-500/40 text-red-400",
+        stageTagNeutral: "bg-neutral-800 border-neutral-700 text-neutral-300",
+        bottomDeck: "bg-[#141414]/95 border-neutral-800 text-neutral-100 shadow-2xl ring-1 ring-red-600/20",
+        seekbarTrack: "bg-neutral-800",
+        seekbarAccent: "accent-red-600",
+        timeText: "text-neutral-400",
+        playBtn: "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_30px_rgba(220,38,38,0.5)] ring-4 ring-red-600/30",
+        playIconFill: "fill-white",
+        ctrlBtn: "bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border-neutral-700/80 shadow-md",
+        activeText: "text-red-500",
+        mutedText: "text-neutral-500 hover:text-neutral-200",
+        volSlider: "bg-neutral-800 accent-red-600",
+      };
+    case "dynamic-emerald":
+      return {
+        bgCanvas: "bg-gradient-to-b from-black via-zinc-950 to-black",
+        orb1: "bg-emerald-500/30",
+        orb2: "bg-teal-600/20",
+        veil: "bg-gradient-to-b from-black/90 via-black/50 to-black/95",
+        topBar: "bg-black/95 border-zinc-800/80 text-white shadow-sm",
+        minimizeBtn: "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 shadow-sm",
+        nowPlayingDot: "bg-emerald-500",
+        nowPlayingLabel: "text-emerald-400",
+        nowPlayingTitle: "text-zinc-100",
+        tabActive: "bg-emerald-500 text-slate-950 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)] font-bold",
+        tabInactive: "bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800",
+        artGlowRing: "from-emerald-500/40 via-teal-500/30 to-emerald-500/40",
+        artBorder: "border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
+        stageTitle: "text-white drop-shadow-md",
+        stageArtist: "text-emerald-400",
+        stageTagAccent: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300",
+        stageTagNeutral: "bg-zinc-900 border-zinc-800 text-zinc-300",
+        bottomDeck: "bg-zinc-950/95 border-zinc-800 text-zinc-100 shadow-2xl ring-1 ring-emerald-500/20",
+        seekbarTrack: "bg-zinc-800",
+        seekbarAccent: "accent-emerald-500",
+        timeText: "text-zinc-400",
+        playBtn: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.5)] ring-4 ring-emerald-500/30",
+        playIconFill: "fill-slate-950",
+        ctrlBtn: "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 shadow-md",
+        activeText: "text-emerald-400",
+        mutedText: "text-zinc-500 hover:text-zinc-200",
+        volSlider: "bg-zinc-800 accent-emerald-500",
+      };
+    case "audiophile-gold":
+      return {
+        bgCanvas: "bg-gradient-to-b from-[#14100c] via-[#1c1612] to-[#14100c]",
+        orb1: "bg-amber-500/30",
+        orb2: "bg-yellow-600/20",
+        veil: "bg-gradient-to-b from-[#14100c]/90 via-[#14100c]/50 to-[#14100c]/95",
+        topBar: "bg-[#14100c]/95 border-amber-900/40 text-amber-50 shadow-sm",
+        minimizeBtn: "bg-[#221c17] hover:bg-[#2c241e] text-amber-100 border-amber-900/50 shadow-sm",
+        nowPlayingDot: "bg-amber-500",
+        nowPlayingLabel: "text-amber-400",
+        nowPlayingTitle: "text-amber-100",
+        tabActive: "bg-amber-500 text-stone-950 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)] font-bold",
+        tabInactive: "bg-[#221c17] hover:bg-[#2c241e] text-amber-200 border-amber-900/50",
+        artGlowRing: "from-amber-500/40 via-yellow-600/30 to-amber-500/40",
+        artBorder: "border-amber-900/50 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
+        stageTitle: "text-amber-50 drop-shadow-md",
+        stageArtist: "text-amber-400",
+        stageTagAccent: "bg-amber-500/20 border-amber-500/40 text-amber-300",
+        stageTagNeutral: "bg-[#221c17] border-amber-900/50 text-amber-200",
+        bottomDeck: "bg-[#18130e]/95 border-amber-900/50 text-amber-50 shadow-2xl ring-1 ring-amber-500/20",
+        seekbarTrack: "bg-stone-800",
+        seekbarAccent: "accent-amber-500",
+        timeText: "text-amber-300/60",
+        playBtn: "bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-[0_0_30px_rgba(245,158,11,0.5)] ring-4 ring-amber-500/30",
+        playIconFill: "fill-stone-950",
+        ctrlBtn: "bg-[#221c17] hover:bg-[#2c241e] text-amber-100 border-amber-900/50 shadow-md",
+        activeText: "text-amber-400",
+        mutedText: "text-amber-400/60 hover:text-amber-100",
+        volSlider: "bg-stone-800 accent-amber-500",
+      };
+    case "twilight-vaporwave":
+    default:
+      return {
+        bgCanvas: "bg-gradient-to-b from-[#1e1035] via-[#160a29] to-[#0d051a]",
+        orb1: "bg-purple-600/30",
+        orb2: "bg-pink-600/25",
+        veil: "bg-gradient-to-b from-[#1e1035]/90 via-[#1e1035]/50 to-[#0d051a]/95",
+        topBar: "bg-[#160a29]/95 border-purple-800/40 text-purple-50 shadow-sm",
+        minimizeBtn: "bg-purple-950/80 hover:bg-purple-900 text-purple-200 border-purple-800/50 shadow-sm",
+        nowPlayingDot: "bg-purple-500",
+        nowPlayingLabel: "text-purple-300",
+        nowPlayingTitle: "text-purple-100",
+        tabActive: "bg-purple-600 text-white border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)] font-bold",
+        tabInactive: "bg-purple-950/80 hover:bg-purple-900 text-purple-200 border-purple-800/50",
+        artGlowRing: "from-purple-500/40 via-pink-500/30 to-purple-500/40",
+        artBorder: "border-purple-800/50 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
+        stageTitle: "text-purple-50 drop-shadow-md",
+        stageArtist: "text-purple-300",
+        stageTagAccent: "bg-purple-600/20 border-purple-500/40 text-purple-300",
+        stageTagNeutral: "bg-purple-950/80 border-purple-800 text-purple-200",
+        bottomDeck: "bg-[#180b2a]/95 border-purple-800/50 text-purple-50 shadow-2xl ring-1 ring-purple-500/20",
+        seekbarTrack: "bg-purple-950/80",
+        seekbarAccent: "accent-purple-500",
+        timeText: "text-purple-300/60",
+        playBtn: "bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.5)] ring-4 ring-purple-500/30",
+        playIconFill: "fill-white",
+        ctrlBtn: "bg-purple-950/80 hover:bg-purple-900 text-purple-100 border-purple-800/50 shadow-md",
+        activeText: "text-purple-300",
+        mutedText: "text-purple-400/60 hover:text-purple-100",
+        volSlider: "bg-purple-950/80 accent-purple-500",
+      };
+  }
+}
+
 export const Player: React.FC<PlayerProps> = ({
   playerState,
   setPlayerState,
@@ -149,6 +335,8 @@ export const Player: React.FC<PlayerProps> = ({
     showLyrics,
     showSimilar,
   } = playerState;
+
+  const fpTheme = getFullPlayerThemeStyles(designConfig);
 
   const isPlayingRef = useRef<boolean>(isPlaying);
   useEffect(() => {
@@ -720,14 +908,14 @@ export const Player: React.FC<PlayerProps> = ({
 
       {/* Fullscreen Player Modal / Expansion - 100% Full-Screen Opaque Immersive Studio */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-[100] w-screen h-screen min-h-screen bg-[#04060a] text-white flex flex-col justify-between overflow-hidden select-none animate-fade-in">
-          {/* Animated Dynamic Ambient Background based on the HD Cover Art */}
+        <div className={`fixed inset-0 z-[100] w-screen h-screen min-h-screen ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}>
+          {/* Animated Dynamic Ambient Background based on the HD Cover Art & Theme Orbs */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
             {/* Layer 1: Ambient Pulsing Blurred Artwork */}
             <img
               src={getHdCoverUrl(currentTrack.coverUrl)}
               alt=""
-              className="w-full h-full object-cover blur-[100px] opacity-45 scale-135 animate-ambient-pulse"
+              className="w-full h-full object-cover blur-[100px] opacity-40 scale-135 animate-ambient-pulse"
               onError={(e) => {
                 // Fallback to standard cover if HD upscaled URL encounters 404
                 if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
@@ -735,34 +923,34 @@ export const Player: React.FC<PlayerProps> = ({
                 }
               }}
             />
-            {/* Layer 2: Moving Ambient Color Orbs */}
-            <div className="absolute -top-32 left-1/4 w-[550px] h-[550px] rounded-full bg-[#c89b3c]/20 blur-[130px] animate-ambient-orb" />
-            <div className="absolute -bottom-32 right-1/4 w-[500px] h-[500px] rounded-full bg-cyan-600/15 blur-[140px] animate-ambient-orb" />
-            {/* Layer 3: Pure Opaque Gradient Veil to prevent any background visibility */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#04060a]/90 via-[#04060a]/50 to-[#04060a]/95" />
+            {/* Layer 2: Moving Ambient Color Orbs matching active theme */}
+            <div className={`absolute -top-32 left-1/4 w-[550px] h-[550px] rounded-full ${fpTheme.orb1} blur-[130px] animate-ambient-orb`} />
+            <div className={`absolute -bottom-32 right-1/4 w-[500px] h-[500px] rounded-full ${fpTheme.orb2} blur-[140px] animate-ambient-orb`} />
+            {/* Layer 3: Theme-Specific Gradient Veil */}
+            <div className={`absolute inset-0 ${fpTheme.veil}`} />
           </div>
 
           {/* Top Bar Navigation */}
-          <div className="relative z-20 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#04060a]/40 backdrop-blur-2xl">
+          <div className={`relative z-20 flex items-center justify-between p-4 sm:p-6 border-b backdrop-blur-2xl ${fpTheme.topBar}`}>
             {/* Left: Minimize Button */}
             <button
               onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: false }))}
-              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xl transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center gap-1.5"
+              className={`p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
               title="Minimize Full Player"
             >
-              <ChevronDown className="w-6 h-6" />
+              <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />
               <span className="text-xs font-semibold hidden sm:inline">Minimize</span>
             </button>
 
             {/* Center: Now Playing Info Badge */}
             <div className="text-center px-4 max-w-md truncate">
               <div className="flex items-center justify-center gap-2 mb-0.5">
-                <span className="w-2 h-2 rounded-full bg-[#c89b3c] animate-pulse"></span>
-                <span className="text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase text-[#c89b3c]">
+                <span className={`w-2 h-2 rounded-full ${fpTheme.nowPlayingDot} animate-pulse`}></span>
+                <span className={`text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase ${fpTheme.nowPlayingLabel}`}>
                   NOW PLAYING IN OBLIVION
                 </span>
               </div>
-              <p className="text-xs sm:text-sm font-semibold text-white/90 truncate">
+              <p className={`text-xs sm:text-sm font-semibold truncate ${fpTheme.nowPlayingTitle}`}>
                 {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
               </p>
             </div>
@@ -774,9 +962,7 @@ export const Player: React.FC<PlayerProps> = ({
                   setPlayerState((prev) => ({ ...prev, showLyrics: !prev.showLyrics, showSimilar: false }))
                 }
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
-                  showLyrics
-                    ? "bg-[#c89b3c] text-slate-950 border-[#c89b3c] shadow-lg font-bold"
-                    : "bg-white/10 hover:bg-white/15 text-white/90 border-white/10"
+                  showLyrics ? fpTheme.tabActive : fpTheme.tabInactive
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -788,9 +974,7 @@ export const Player: React.FC<PlayerProps> = ({
                   setPlayerState((prev) => ({ ...prev, showSimilar: !prev.showSimilar, showLyrics: false }))
                 }
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
-                  showSimilar
-                    ? "bg-[#c89b3c] text-slate-950 border-[#c89b3c] shadow-lg font-bold"
-                    : "bg-white/10 hover:bg-white/15 text-white/90 border-white/10"
+                  showSimilar ? fpTheme.tabActive : fpTheme.tabInactive
                 }`}
               >
                 <Radio className="w-3.5 h-3.5" />
@@ -812,6 +996,7 @@ export const Player: React.FC<PlayerProps> = ({
                     onSeek(t);
                   }}
                   settings={settings}
+                  designConfig={designConfig}
                 />
               </div>
             ) : showSimilar ? (
@@ -821,6 +1006,7 @@ export const Player: React.FC<PlayerProps> = ({
                   onPlayTrack={onPlayTrack}
                   onAddToQueue={onAddToQueue}
                   onClose={() => setPlayerState((prev) => ({ ...prev, showSimilar: false }))}
+                  designConfig={designConfig}
                 />
               </div>
             ) : (
@@ -829,9 +1015,9 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* HD Cover Art with Ambient Shadow and Glowing Ring */}
                 <div className="relative group">
                   {/* Subtle dynamic glow ring around the album artwork */}
-                  <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-[#c89b3c]/30 to-cyan-500/20 blur-xl opacity-75 group-hover:opacity-100 transition duration-500 pointer-events-none" />
+                  <div className={`absolute -inset-2 rounded-3xl bg-gradient-to-tr ${fpTheme.artGlowRing} blur-xl opacity-75 group-hover:opacity-100 transition duration-500 pointer-events-none`} />
 
-                  <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-3xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.9)] border-2 border-white/20">
+                  <div className={`relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder}`}>
                     <img
                       src={getHdCoverUrl(currentTrack.coverUrl)}
                       alt={currentTrack.title}
@@ -850,17 +1036,17 @@ export const Player: React.FC<PlayerProps> = ({
 
                 {/* Song Title, Artist, & Master Quality Tag */}
                 <div className="text-center space-y-2 max-w-xs sm:max-w-md w-full px-2">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight truncate drop-shadow-md">
+                  <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle}`}>
                     {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                   </h2>
-                  <p className="text-sm sm:text-base text-[#c89b3c] font-semibold truncate">
+                  <p className={`text-sm sm:text-base font-semibold truncate ${fpTheme.stageArtist}`}>
                     {currentTrack.artist}
                   </p>
                   <div className="flex items-center justify-center gap-2 pt-1">
-                    <span className="px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[11px] font-mono text-white/80">
-                      {currentTrack.album || "YouTube Music HD"}
+                    <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-mono ${fpTheme.stageTagNeutral}`}>
+                      {currentTrack.album || "Oblivion HD"}
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#c89b3c]/20 border border-[#c89b3c]/30 text-[11px] font-mono text-[#c89b3c]">
+                    <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-mono ${fpTheme.stageTagAccent}`}>
                       Lossless Audio
                     </span>
                   </div>
@@ -870,7 +1056,7 @@ export const Player: React.FC<PlayerProps> = ({
           </div>
 
           {/* Fullscreen Player Controls Bar */}
-          <div className="relative z-20 p-5 sm:p-6 border-t border-white/10 bg-[#04060a]/80 backdrop-blur-2xl space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl shadow-2xl">
+          <div className={`relative z-20 p-5 sm:p-6 border-t backdrop-blur-2xl space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
             {/* Seekbar Slider */}
             <div className="space-y-1.5">
               <div className="relative flex items-center group cursor-pointer">
@@ -883,11 +1069,11 @@ export const Player: React.FC<PlayerProps> = ({
                     const time = Number(e.target.value);
                     handleSeekInternal(time);
                   }}
-                  className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#c89b3c] focus:outline-none"
+                  className={`w-full h-2 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.seekbarTrack} ${fpTheme.seekbarAccent}`}
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs font-mono text-white/60">
+              <div className={`flex items-center justify-between text-xs font-mono ${fpTheme.timeText}`}>
                 <span>
                   {Math.floor(currentTime / 60)}:
                   {String(Math.floor(currentTime % 60)).padStart(2, "0")}
@@ -908,17 +1094,17 @@ export const Player: React.FC<PlayerProps> = ({
                   className={`p-2.5 rounded-xl border transition-all active:scale-95 ${
                     isLiked
                       ? "bg-rose-500/20 text-rose-500 border-rose-500/30"
-                      : "bg-white/10 hover:bg-white/15 text-white/80 border-white/10"
+                      : fpTheme.ctrlBtn
                   }`}
                   title="Like track"
                 >
-                  <Heart className={`w-5 h-5 ${isLiked ? "fill-rose-500" : ""}`} />
+                  <Heart className={`w-5 h-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
                 </button>
 
                 {/* Add to Playlist Button */}
                 <button
                   onClick={() => setShowAddToPlaylistModal(true)}
-                  className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 hover:text-white border border-white/10 transition-all flex items-center gap-1.5 text-xs font-semibold active:scale-95"
+                  className={`p-2.5 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-semibold active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Add to Playlist"
                 >
                   <Plus className="w-5 h-5" />
@@ -932,14 +1118,14 @@ export const Player: React.FC<PlayerProps> = ({
                   className={`p-2.5 rounded-xl text-xs flex items-center gap-1.5 border transition-all active:scale-95 ${
                     isCachedOffline
                       ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                      : "bg-white/10 hover:bg-white/15 text-white/80 border-white/10"
+                      : fpTheme.ctrlBtn
                   }`}
                   title={isCachedOffline ? "Saved Locally" : isCaching ? `Downloading (${cacheProgress}%)` : "Download Song"}
                 >
                   {isCachedOffline ? (
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   ) : (
-                    <DownloadCloud className={`w-5 h-5 ${isCaching ? "animate-bounce text-[#c89b3c]" : ""}`} />
+                    <DownloadCloud className={`w-5 h-5 ${isCaching ? `animate-bounce ${fpTheme.activeText}` : ""}`} />
                   )}
                   <span className="hidden md:inline">
                     {isCachedOffline ? "Saved" : isCaching ? `${cacheProgress}%` : "Download"}
@@ -954,16 +1140,16 @@ export const Player: React.FC<PlayerProps> = ({
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
                   className={`p-2 rounded-lg transition-colors ${
-                    isShuffle ? "text-[#c89b3c]" : "text-white/60 hover:text-white"
+                    isShuffle ? fpTheme.activeText : fpTheme.mutedText
                   }`}
-                  title="Shuffle"
+                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
                   <Shuffle className="w-5 h-5" />
                 </button>
 
                 <button
                   onClick={onPrevTrack}
-                  className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/10 transition-all active:scale-95 shadow-md"
+                  className={`p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Previous Song"
                 >
                   <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -971,19 +1157,19 @@ export const Player: React.FC<PlayerProps> = ({
 
                 <button
                   onClick={() => handleUserTogglePlay()}
-                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#c89b3c] hover:bg-[#d8ab4c] text-slate-950 flex items-center justify-center shadow-[0_0_30px_rgba(200,155,60,0.45)] ring-4 ring-[#c89b3c]/20 transition-all active:scale-95"
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all active:scale-95 ${fpTheme.playBtn}`}
                   title={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
-                    <Pause className="w-6 h-6 sm:w-7 sm:h-7 fill-slate-950" />
+                    <Pause className={`w-6 h-6 sm:w-7 sm:h-7 ${fpTheme.playIconFill}`} />
                   ) : (
-                    <Play className="w-6 h-6 sm:w-7 sm:h-7 fill-slate-950 ml-0.5" />
+                    <Play className={`w-6 h-6 sm:w-7 sm:h-7 ${fpTheme.playIconFill} ml-0.5`} />
                   )}
                 </button>
 
                 <button
                   onClick={onNextTrack}
-                  className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/10 transition-all active:scale-95 shadow-md"
+                  className={`p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Next Song"
                 >
                   <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -992,7 +1178,7 @@ export const Player: React.FC<PlayerProps> = ({
                 <button
                   onClick={cycleRepeatMode}
                   className={`p-2 rounded-lg transition-colors ${
-                    repeatMode !== "off" ? "text-[#c89b3c]" : "text-white/60 hover:text-white"
+                    repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText
                   }`}
                   title={`Repeat: ${repeatMode}`}
                 >
@@ -1006,7 +1192,7 @@ export const Player: React.FC<PlayerProps> = ({
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isMuted: !prev.isMuted }))
                   }
-                  className="p-2 text-white/60 hover:text-white transition-colors"
+                  className={`p-2 transition-colors ${fpTheme.mutedText}`}
                 >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="w-5 h-5 text-rose-400" />
@@ -1021,7 +1207,7 @@ export const Player: React.FC<PlayerProps> = ({
                   step={0.01}
                   value={isMuted ? 0 : volume}
                   onChange={(e) => onVolumeChange(Number(e.target.value))}
-                  className="w-20 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#c89b3c] focus:outline-none"
+                  className={`w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
                 />
               </div>
             </div>
@@ -1034,7 +1220,7 @@ export const Player: React.FC<PlayerProps> = ({
         const layout = settings.miniPlayerLayout || "designer-waveform";
         const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-        // Layout 0: Designer Studio Floating Dock with Golden Waveform
+        // Layout 0: Designer Studio Floating Dock with Waveform
         if (layout === "designer-waveform") {
           const waveformBars = [
             18, 28, 42, 65, 80, 50, 35, 75, 95, 85, 45, 60, 90, 100, 70, 40,
@@ -1104,7 +1290,7 @@ export const Player: React.FC<PlayerProps> = ({
                     {isCachedOffline ? (
                       <Check className="w-4 h-4 text-emerald-500" />
                     ) : (
-                      <DownloadCloud className={`w-4 h-4 ${isCaching ? "animate-bounce text-[#c89b3c]" : ""}`} />
+                      <DownloadCloud className={`w-4 h-4 ${isCaching ? `animate-bounce ${designConfig.accentText}` : ""}`} />
                     )}
                   </button>
 
@@ -1157,10 +1343,10 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
               </div>
 
-              {/* Bottom Row: Golden Waveform Scrubber & Timestamps */}
+              {/* Bottom Row: Waveform Scrubber & Timestamps */}
               <div className="flex items-center gap-3 pt-0.5">
                 <div 
-                  className={`flex-1 h-8 flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer relative py-1 px-1 rounded-xl ${designConfig.inputBg} border ${designConfig.borderSubtle} hover:border-[#c89b3c]/50 transition-colors`}
+                  className={`flex-1 h-8 flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer relative py-1 px-1 rounded-xl ${designConfig.inputBg} border ${designConfig.borderSubtle} hover:${designConfig.accentBorder} transition-colors`}
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -1181,8 +1367,8 @@ export const Player: React.FC<PlayerProps> = ({
                         <span
                           className={`w-full rounded-full transition-all duration-150 ${
                             isPassed
-                              ? "bg-[#c89b3c]"
-                              : "bg-[#d8d2c4] dark:bg-slate-700 hover:bg-[#c89b3c]/60"
+                              ? designConfig.accentBg
+                              : `${designConfig.borderSubtle} dark:bg-slate-700 hover:opacity-80`
                           } ${isPlaying && isPassed ? "animate-pulse" : ""}`}
                           style={{
                             height: `${Math.max(15, isPlaying ? (heightPct * (0.7 + (Math.sin(idx + currentTime * 3) * 0.3))) : heightPct)}%`,
@@ -1258,7 +1444,7 @@ export const Player: React.FC<PlayerProps> = ({
                 {isCachedOffline ? (
                   <Check className="w-4 h-4 text-emerald-500" />
                 ) : (
-                  <DownloadCloud className={`w-4 h-4 ${isCaching ? "animate-bounce text-[#c89b3c]" : ""}`} />
+                  <DownloadCloud className={`w-4 h-4 ${isCaching ? `animate-bounce ${designConfig.accentText}` : ""}`} />
                 )}
               </button>
 
