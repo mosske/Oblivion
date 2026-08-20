@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Plus,
   Sparkles,
-  Download,
 } from "lucide-react";
 import { User, Playlist, ThemePreset, NavTab } from "../types";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -73,9 +72,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 
   return (
-    <aside className={`w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col fixed left-0 top-0 bottom-0 h-screen ${designConfig.textPrimary} select-none z-30 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg`}>
+    <aside
+      id="app-sidebar-nav"
+      className={`w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col fixed left-0 top-0 bottom-0 h-screen ${designConfig.textPrimary} select-none z-30 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg overflow-y-auto overflow-x-hidden custom-scrollbar`}
+    >
       {/* Brand Logo */}
-      <div className="p-6 pb-4 flex items-center justify-between">
+      <div className="p-6 pb-4 flex items-center justify-between shrink-0">
         <div
           onClick={() => setActiveTab("home")}
           className="flex items-center gap-3 cursor-pointer group"
@@ -98,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Main Navigation */}
-      <nav className="px-3 py-2 space-y-1">
+      <nav className="px-3 py-2 space-y-1 shrink-0">
         <button
           id="nav-home-btn"
           onClick={() => setActiveTab("home")}
@@ -153,7 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User / Google Sync Section */}
-      <div className={`px-4 py-3 my-2 mx-3 ${designConfig.cardBg} ${designConfig.borderSubtle} border rounded-2xl`}>
+      <div className={`px-4 py-3 my-2 mx-3 ${designConfig.cardBg} ${designConfig.borderSubtle} border rounded-2xl shrink-0`}>
         {user?.isLoggedIn ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -209,8 +211,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Playlists Quick List Header */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-1 custom-scrollbar">
+      {/* Playlists Quick List Section */}
+      <div className="px-3 space-y-1 my-1">
         <div className={`flex items-center justify-between px-3 py-2 text-xs font-semibold ${designConfig.textSecondary} uppercase tracking-wider`}>
           <span className="flex items-center gap-1.5">
             <ListMusic className="w-3.5 h-3.5" />
@@ -251,22 +253,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </div>
 
-      {/* Install PWA Prompt Button if not installed */}
-      {!isInstalled && onInstallPwa && (
-        <div className="px-3 pb-2">
-          <button
-            id="sidebar-install-pwa-btn"
-            onClick={onInstallPwa}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-500 hover:text-amber-400 font-bold text-xs shadow-sm transition-all transform active:scale-95 cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Install App</span>
-          </button>
-        </div>
-      )}
-
       {/* Offline Caching Quick Info */}
-      <div className={`p-3 border-t ${designConfig.borderSubtle} text-[11px] ${designConfig.textSecondary} flex items-center justify-between`}>
+      <div className={`p-3 border-t ${designConfig.borderSubtle} text-[11px] ${designConfig.textSecondary} flex items-center justify-between shrink-0 mt-auto`}>
         <span className="flex items-center gap-1.5">
           <DownloadCloud className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
           Offline Cache

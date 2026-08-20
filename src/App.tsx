@@ -12,7 +12,7 @@ import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AuthModal } from "./components/AuthModal";
-import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon, Download } from "lucide-react";
+import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 // Helpers to read and write user-customized covers persistently
 const getStoredCustomCovers = (): Record<string, { customCoverUrl: string; isCustomCover: boolean }> => {
@@ -1046,19 +1046,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Quick Install App Header Pill if not installed */}
-            {!isPwaInstalled && (
-              <button
-                id="top-header-install-app-btn"
-                onClick={handleInstallPwa}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-sm"
-                title="Install Oblivion Music PWA"
-              >
-                <Download className="w-3.5 h-3.5 text-amber-400" />
-                <span>Install App</span>
-              </button>
-            )}
-
             {/* Top Search Button (Magnifying Glass Icon) */}
             <button
               id="top-header-search-btn"
