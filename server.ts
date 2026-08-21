@@ -112,6 +112,26 @@ function parseDurationText(text: string | undefined | null): number {
   return 0;
 }
 
+function extractCleanVideoId(idOrUrl: string | undefined | null): string {
+  if (!idOrUrl) return "";
+  let v = String(idOrUrl).trim();
+  // Strip trailing _index if present (like dQw4w9WgXcQ_0)
+  if (/^[a-zA-Z0-9_-]{11}_\d+$/.test(v)) {
+    return v.split("_")[0];
+  }
+  if (v.includes("watch?v=")) {
+    const match = v.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
+    if (match) return match[1];
+  }
+  if (v.includes("youtu.be/")) {
+    const match = v.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+    if (match) return match[1];
+  }
+  const match = v.match(/([a-zA-Z0-9_-]{11})/);
+  if (match) return match[1];
+  return v;
+}
+
 async function enrichTracksWithDuration(tracks: any[], accessToken?: string | null): Promise<any[]> {
   if (!tracks || tracks.length === 0) return tracks;
 
@@ -1590,42 +1610,106 @@ app.delete("/api/youtube/playlists/:id", (req, res) => {
   res.json({ success: true });
 });
 
-app.put("/api/youtube/playlists/:id/reorder", (req, res) => {
+app.put("/api/youtube/playlists/:id/reorder", async (req, res) => {
   const { id } = req.params;
   const { tracks } = req.body;
+  const cleanPlId = id.replace(/^VL/, "");
 
   if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
-  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id);
+  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
   if (found && Array.isArray(tracks)) {
     found.tracks = tracks;
     found.tracksCount = tracks.length;
   }
   localPlaylistsStore = req.session.playlists;
 
-  res.json({ success: true, tracksCount: found?.tracksCount || 0 });
+  let syncedToYouTube = false;
+  try {
+    const accessToken = await getValidAccessToken(req);
+    if (accessToken && cleanPlId && !cleanPlId.startsWith("pl_custom_")) {
+      const plItemsRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${cleanPlId}&maxResults=50`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const plItemsData = await plItemsRes.json();
+      if (plItemsData.items && Array.isArray(plItemsData.items)) {
+        const videoToItemId = new Map<string, string>();
+        for (const it of plItemsData.items) {
+          const vId = it.contentDetails?.videoId || it.snippet?.resourceId?.videoId;
+          if (vId) videoToItemId.set(vId, it.id);
+        }
+
+        if (tracks && Array.isArray(tracks)) {
+          for (let pos = 0; pos < tracks.length; pos++) {
+            const tr = tracks[pos];
+            const vId = extractCleanVideoId(tr.youtubeVideoId || tr.id);
+            const itemId = videoToItemId.get(vId);
+            if (itemId) {
+              try {
+                await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet`, {
+                  method: "PUT",
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    id: itemId,
+                    snippet: {
+                      playlistId: cleanPlId,
+                      resourceId: {
+                        kind: "youtube#video",
+                        videoId: vId,
+                      },
+                      position: pos,
+                    },
+                  }),
+                });
+              } catch (updateErr) {
+                console.warn(`YouTube playlist item position update error for pos ${pos}:`, updateErr);
+              }
+            }
+          }
+          syncedToYouTube = true;
+        }
+      }
+    }
+  } catch (syncErr) {
+    console.warn("YouTube API playlist reorder sync error:", syncErr);
+  }
+
+  delFromCache(`pl_items:auth:${cleanPlId}`);
+  delFromCache(`pl_items:pub:${cleanPlId}`);
+  delFromCache(`pl_items:auth:${id}`);
+  delFromCache(`pl_items:pub:${id}`);
+
+  res.json({ success: true, count: tracks?.length || 0, syncedToYouTube });
 });
 
 app.post("/api/youtube/playlists/:id/items", async (req, res) => {
   const { id } = req.params;
   const { track } = req.body;
+  const cleanPlId = id.replace(/^VL/, "");
+
+  if (!track) {
+    return res.status(400).json({ error: "Missing track data" });
+  }
+
+  const vId = extractCleanVideoId(track?.youtubeVideoId || track?.id);
+  const cleanTrack = {
+    ...track,
+    id: track.id || vId,
+    youtubeVideoId: vId || track.youtubeVideoId,
+  };
 
   if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
-  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id);
-  if (found) {
-    if (!found.tracks) found.tracks = [];
-    const trId = track?.youtubeVideoId || track?.id;
-    if (!found.tracks.some((t: any) => (t.youtubeVideoId || t.id) === trId)) {
-      found.tracks.push(track);
-      found.tracksCount = found.tracks.length;
-    }
-  }
-  localPlaylistsStore = req.session.playlists;
+  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
 
   let syncedToYouTube = false;
+  let newPlaylistItemId: string | null = null;
+
   try {
     const accessToken = await getValidAccessToken(req);
-    const vId = track?.youtubeVideoId || track?.id;
-    if (accessToken && id && !id.startsWith("pl_custom_") && vId) {
+    if (accessToken && cleanPlId && !cleanPlId.startsWith("pl_custom_") && vId) {
       const addRes = await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
         method: "POST",
         headers: {
@@ -1634,7 +1718,7 @@ app.post("/api/youtube/playlists/:id/items", async (req, res) => {
         },
         body: JSON.stringify({
           snippet: {
-            playlistId: id,
+            playlistId: cleanPlId,
             resourceId: {
               kind: "youtube#video",
               videoId: vId,
@@ -1642,55 +1726,183 @@ app.post("/api/youtube/playlists/:id/items", async (req, res) => {
           },
         }),
       });
-      if (addRes.ok) {
+      const addData = await addRes.json();
+      if (addRes.ok && addData.id) {
         syncedToYouTube = true;
-        delFromCache(`pl_items:auth:${id}`);
-        delFromCache(`pl_items:pub:${id}`);
+        newPlaylistItemId = addData.id;
+        cleanTrack.id = addData.id;
+        cleanTrack.playlistItemId = addData.id;
+      } else {
+        console.warn("YouTube API add item response non-ok:", addRes.status, addData);
       }
     }
   } catch (addErr) {
     console.warn("YouTube API add item error:", addErr);
   }
 
+  if (found) {
+    if (!found.tracks) found.tracks = [];
+    const exists = found.tracks.some((t: any) => {
+      const tVid = extractCleanVideoId(t.youtubeVideoId || t.id);
+      return tVid === vId;
+    });
+    if (!exists) {
+      found.tracks.push(cleanTrack);
+      found.tracksCount = found.tracks.length;
+    }
+  }
+  localPlaylistsStore = req.session.playlists;
+
+  // Invalidate all caches for this playlist so immediate re-fetch shows new item
+  delFromCache(`pl_items:auth:${cleanPlId}`);
+  delFromCache(`pl_items:pub:${cleanPlId}`);
+  delFromCache(`pl_items:auth:${id}`);
+  delFromCache(`pl_items:pub:${id}`);
+  delFromCache(`pub_pl:${cleanPlId}`);
+  delFromCache(`pub_pl:${id}`);
+
   res.json({
     success: true,
     syncedToYouTube,
+    track: cleanTrack,
     playlistTitle: found?.title || "Playlist",
   });
 });
 
 app.delete("/api/youtube/playlists/:id/items/:trackId", async (req, res) => {
   const { id, trackId } = req.params;
+  const cleanPlId = id.replace(/^VL/, "");
+  const decodedTrackId = decodeURIComponent(trackId);
+  const vId = extractCleanVideoId(decodedTrackId);
+
   if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
-  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id);
+  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
   if (found && found.tracks) {
-    found.tracks = found.tracks.filter((t: any) => t.id !== trackId && t.youtubeVideoId !== trackId);
+    found.tracks = found.tracks.filter((t: any) => {
+      const tVid = extractCleanVideoId(t.youtubeVideoId || t.id);
+      const tPlItemId = t.playlistItemId || t.id;
+      return t.id !== decodedTrackId && t.youtubeVideoId !== decodedTrackId && tVid !== vId && tPlItemId !== decodedTrackId;
+    });
     found.tracksCount = found.tracks.length;
   }
   localPlaylistsStore = req.session.playlists;
 
+  let syncedToYouTube = false;
+  try {
+    const accessToken = await getValidAccessToken(req);
+    if (accessToken && cleanPlId && !cleanPlId.startsWith("pl_custom_")) {
+      // Fetch live playlist items from YouTube Data API to locate the playlistItemId
+      const plItemsRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?part=id,snippet,contentDetails&playlistId=${cleanPlId}&maxResults=50`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const plItemsData = await plItemsRes.json();
+      if (plItemsData.items && Array.isArray(plItemsData.items)) {
+        const matchingItem = plItemsData.items.find((it: any) => {
+          const itemVid = it.contentDetails?.videoId || it.snippet?.resourceId?.videoId;
+          return it.id === decodedTrackId || (vId && itemVid === vId);
+        });
+
+        if (matchingItem?.id) {
+          const delRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?id=${matchingItem.id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (delRes.ok || delRes.status === 204) {
+            syncedToYouTube = true;
+          } else {
+            console.warn("YouTube API delete playlistItem non-ok:", delRes.status);
+          }
+        }
+      }
+    }
+  } catch (delErr) {
+    console.warn("YouTube API delete item error:", delErr);
+  }
+
+  delFromCache(`pl_items:auth:${cleanPlId}`);
+  delFromCache(`pl_items:pub:${cleanPlId}`);
   delFromCache(`pl_items:auth:${id}`);
   delFromCache(`pl_items:pub:${id}`);
+  delFromCache(`pub_pl:${cleanPlId}`);
+  delFromCache(`pub_pl:${id}`);
 
-  res.json({ success: true });
+  res.json({ success: true, syncedToYouTube });
 });
 
 app.post("/api/youtube/playlists/:id/sync", async (req, res) => {
   const { id } = req.params;
   const { tracks } = req.body;
+  const cleanPlId = id.replace(/^VL/, "");
 
   if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
-  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id);
+  const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
   if (found && Array.isArray(tracks)) {
     found.tracks = tracks;
     found.tracksCount = tracks.length;
   }
   localPlaylistsStore = req.session.playlists;
 
+  let syncedToYouTube = false;
+  try {
+    const accessToken = await getValidAccessToken(req);
+    if (accessToken && cleanPlId && !cleanPlId.startsWith("pl_custom_")) {
+      const plItemsRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${cleanPlId}&maxResults=50`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const plItemsData = await plItemsRes.json();
+      if (plItemsData.items && Array.isArray(plItemsData.items)) {
+        const videoToItemId = new Map<string, string>();
+        for (const it of plItemsData.items) {
+          const vId = it.contentDetails?.videoId || it.snippet?.resourceId?.videoId;
+          if (vId) videoToItemId.set(vId, it.id);
+        }
+
+        if (tracks && Array.isArray(tracks)) {
+          for (let pos = 0; pos < tracks.length; pos++) {
+            const tr = tracks[pos];
+            const vId = extractCleanVideoId(tr.youtubeVideoId || tr.id);
+            const itemId = videoToItemId.get(vId);
+            if (itemId) {
+              try {
+                await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet`, {
+                  method: "PUT",
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    id: itemId,
+                    snippet: {
+                      playlistId: cleanPlId,
+                      resourceId: {
+                        kind: "youtube#video",
+                        videoId: vId,
+                      },
+                      position: pos,
+                    },
+                  }),
+                });
+              } catch (updateErr) {
+                console.warn(`YouTube playlist item position update error for pos ${pos}:`, updateErr);
+              }
+            }
+          }
+          syncedToYouTube = true;
+        }
+      }
+    }
+  } catch (syncErr) {
+    console.warn("YouTube API playlist sync error:", syncErr);
+  }
+
+  delFromCache(`pl_items:auth:${cleanPlId}`);
+  delFromCache(`pl_items:pub:${cleanPlId}`);
   delFromCache(`pl_items:auth:${id}`);
   delFromCache(`pl_items:pub:${id}`);
 
-  res.json({ success: true, tracksCount: found?.tracksCount || tracks?.length || 0 });
+  res.json({ success: true, count: tracks?.length || 0, syncedToYouTube });
 });
 
 // YouTube Music Home Feed (Always fresh pull on request: personalized when signed in, trending when signed out)
@@ -1988,144 +2200,6 @@ app.get("/api/youtube/explore", async (req, res) => {
       genres: [],
     });
   }
-});
-
-app.put("/api/youtube/playlists/:id/reorder", async (req, res) => {
-  const { id } = req.params;
-  const { tracks } = req.body;
-  if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
-  const found = req.session.playlists.find(p => p.id === id || p.playlistId === id);
-  if (found) {
-    found.tracks = tracks || [];
-    found.tracksCount = tracks?.length || found.tracksCount;
-  }
-  localPlaylistsStore = req.session.playlists;
-
-  // Sync to YouTube Data API if authenticated
-  let syncedToYouTube = false;
-  try {
-    const accessToken = await getValidAccessToken(req);
-    if (accessToken && id && !id.startsWith("pl_custom_")) {
-      const plItemsRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${id}&maxResults=50`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const plItemsData = await plItemsRes.json();
-      if (plItemsData.items && Array.isArray(plItemsData.items)) {
-        const videoToItemId = new Map<string, string>();
-        for (const it of plItemsData.items) {
-          const vId = it.contentDetails?.videoId || it.snippet?.resourceId?.videoId;
-          if (vId) videoToItemId.set(vId, it.id);
-        }
-
-        if (tracks && Array.isArray(tracks)) {
-          for (let pos = 0; pos < tracks.length; pos++) {
-            const tr = tracks[pos];
-            const vId = tr.youtubeVideoId || tr.id;
-            const itemId = videoToItemId.get(vId);
-            if (itemId) {
-              try {
-                await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet`, {
-                  method: "PUT",
-                  headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify({
-                    id: itemId,
-                    snippet: {
-                      playlistId: id,
-                      resourceId: {
-                        kind: "youtube#video",
-                        videoId: vId
-                      },
-                      position: pos
-                    }
-                  })
-                });
-              } catch (updateErr) {
-                console.warn(`YouTube playlist item position update error for pos ${pos}:`, updateErr);
-              }
-            }
-          }
-          syncedToYouTube = true;
-        }
-      }
-    }
-  } catch (syncErr) {
-    console.warn("YouTube API playlist reorder sync error:", syncErr);
-  }
-
-  res.json({ success: true, count: tracks?.length || 0, syncedToYouTube });
-});
-
-app.post("/api/youtube/playlists/:id/sync", async (req, res) => {
-  const { id } = req.params;
-  const { tracks } = req.body;
-  if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
-  const found = req.session.playlists.find(p => p.id === id || p.playlistId === id);
-  if (found) {
-    found.tracks = tracks || [];
-    found.tracksCount = tracks?.length || found.tracksCount;
-  }
-  localPlaylistsStore = req.session.playlists;
-
-  // Sync to YouTube Data API if authenticated
-  let syncedToYouTube = false;
-  try {
-    const accessToken = await getValidAccessToken(req);
-    if (accessToken && id && !id.startsWith("pl_custom_")) {
-      const plItemsRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${id}&maxResults=50`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const plItemsData = await plItemsRes.json();
-      if (plItemsData.items && Array.isArray(plItemsData.items)) {
-        const videoToItemId = new Map<string, string>();
-        for (const it of plItemsData.items) {
-          const vId = it.contentDetails?.videoId || it.snippet?.resourceId?.videoId;
-          if (vId) videoToItemId.set(vId, it.id);
-        }
-
-        if (tracks && Array.isArray(tracks)) {
-          for (let pos = 0; pos < tracks.length; pos++) {
-            const tr = tracks[pos];
-            const vId = tr.youtubeVideoId || tr.id;
-            const itemId = videoToItemId.get(vId);
-            if (itemId) {
-              try {
-                await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet`, {
-                  method: "PUT",
-                  headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify({
-                    id: itemId,
-                    snippet: {
-                      playlistId: id,
-                      resourceId: {
-                        kind: "youtube#video",
-                        videoId: vId
-                      },
-                      position: pos
-                    }
-                  })
-                });
-              } catch (updateErr) {
-                console.warn(`YouTube playlist item position update error for pos ${pos}:`, updateErr);
-              }
-            }
-          }
-          syncedToYouTube = true;
-        }
-      }
-    }
-  } catch (syncErr) {
-    console.warn("YouTube API playlist reorder sync error:", syncErr);
-  }
-
-  res.json({ success: true, count: tracks?.length || 0, syncedToYouTube });
 });
 
 app.get("/api/youtube/stream/:id", async (req, res) => {
