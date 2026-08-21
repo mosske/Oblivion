@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Playlist, Track, Album } from "../types";
 import {
-  ArrowLeft,
+  X,
   Play,
   Pause,
   Shuffle,
@@ -326,14 +326,15 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
   return (
     <div className="flex-1 flex flex-col select-none pb-40 md:pb-48">
-      {/* Top Sticky Header with Back Button */}
-      <div className={`sticky top-0 z-20 flex items-center justify-between p-4 sm:p-6 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle}`}>
+      {/* Top Sticky Header with Close (X) Button */}
+      <div className={`sticky top-14 sm:top-16 z-20 flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle} shadow-sm shrink-0`}>
         <button
           onClick={onBack}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm`}
+          aria-label="Close view"
+          className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm`}
+          title="Close and go back"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
+          <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-2">
@@ -382,26 +383,10 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             {/* Playlist Cover Art with YouTube Floating Edit Button */}
             <div className="relative group shrink-0">
               <div className="relative">
-                {!isAlbum ? (
-                  <PlaylistCoverArt
-                    playlist={{ ...(item as Playlist), tracks }}
-                    className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
-                  />
-                ) : (
-                  <img
-                    src={
-                      item.coverUrl ||
-                      tracks[0]?.coverUrl ||
-                      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80"
-                    }
-                    alt={item.title}
-                    className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80";
-                    }}
-                  />
-                )}
+                <PlaylistCoverArt
+                  playlist={item as Playlist}
+                  className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
+                />
 
                 {/* Custom Image Badge if custom */}
                 {((item as Playlist).isCustomCover || (item as Playlist).customCoverUrl) && (

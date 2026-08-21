@@ -129,20 +129,6 @@ export default function App() {
       e.preventDefault();
       setDeferredPrompt(e);
       (window as any).__deferredPrompt = e;
-
-      // Automatically trigger the native Android Chrome install dialog on initial load
-      const promptedSession = sessionStorage.getItem("oblivion_pwa_native_prompted");
-      if (!promptedSession && !isPwaInstalled) {
-        sessionStorage.setItem("oblivion_pwa_native_prompted", "true");
-        // Give the page a brief moment to render before prompting native dialog
-        setTimeout(() => {
-          try {
-            e.prompt();
-          } catch (err) {
-            console.log("Native prompt triggered on user interaction:", err);
-          }
-        }, 800);
-      }
     };
 
     const handleAppInstalled = () => {
@@ -248,15 +234,38 @@ export default function App() {
     } catch {}
   }, [activeTab]);
 
-  // Persist selectedPlaylist
+  // Persist selectedPlaylist & Sync with Browser History for Native Android Back Button
   useEffect(() => {
     try {
       if (selectedPlaylist) {
         localStorage.setItem("oblivion_selected_playlist", JSON.stringify(selectedPlaylist));
+        // Push a state entry if not already on the playlist state
+        if (!window.history.state || window.history.state.view !== "playlist_detail") {
+          window.history.pushState({ view: "playlist_detail", playlistId: selectedPlaylist.id }, "");
+        }
       } else {
         localStorage.removeItem("oblivion_selected_playlist");
+        // If the current history state was playlist_detail, replace or pop
+        if (window.history.state && window.history.state.view === "playlist_detail") {
+          window.history.replaceState({ view: "main_tabs" }, "");
+        }
       }
     } catch {}
+  }, [selectedPlaylist]);
+
+  // Handle native Android back button (popstate event)
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      // If user pressed native back button and we are currently viewing a playlist/album, exit the view
+      if (selectedPlaylist) {
+        setSelectedPlaylist(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, [selectedPlaylist]);
 
   // Persistent player state
@@ -457,20 +466,30 @@ export default function App() {
           const userStoredCover = customCoversMap[plId];
           const hasUserCustom = Boolean(userStoredCover?.customCoverUrl);
 
+          const thumbs = pl.thumbnails;
+          const bestThumb =
+            thumbs?.maxres?.url ||
+            thumbs?.standard?.url ||
+            thumbs?.high?.url ||
+            thumbs?.medium?.url ||
+            thumbs?.default?.url;
+
           const primaryCover =
             userStoredCover?.customCoverUrl ||
             pl.customCoverUrl ||
+            bestThumb ||
             pl.coverUrl ||
-            (sanitizedTracks[0]?.coverUrl ?? "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80");
+            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80";
 
           sanitizedPlaylists.push({
             ...pl,
             id: plId,
             coverUrl: primaryCover,
-            customCoverUrl: userStoredCover?.customCoverUrl || pl.customCoverUrl || pl.coverUrl || primaryCover,
+            customCoverUrl: userStoredCover?.customCoverUrl || pl.customCoverUrl || bestThumb || primaryCover,
             isCustomCover: hasUserCustom || Boolean(pl.isCustomCover || pl.customCoverUrl),
             tracks: sanitizedTracks,
             tracksCount: pl.tracksCount || sanitizedTracks.length || 0,
+            thumbnails: pl.thumbnails,
           });
         }
 
@@ -1030,7 +1049,7 @@ export default function App() {
       {/* Main Content Workspace Area */}
       <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative bg-gradient-to-b ${activeFullDesign.bgCanvas}`}>
         {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
-        <header className={`sticky top-0 flex items-center justify-between px-4 sm:px-6 py-3 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-20`}>
+        <header className={`sticky top-0 h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-30 shadow-xs`}>
           <div
             className="flex items-center gap-2.5 cursor-pointer group"
             onClick={() => {
@@ -1187,7 +1206,13 @@ export default function App() {
               selectedPlaylist.id?.startsWith("MPREb_") ||
               selectedPlaylist.id?.startsWith("OLAK5uy_")
             )}
-            onBack={() => setSelectedPlaylist(null)}
+            onBack={() => {
+              if (window.history.state && window.history.state.view === "playlist_detail") {
+                window.history.back();
+              } else {
+                setSelectedPlaylist(null);
+              }
+            }}
             onPlayTrack={handlePlayTrack}
             onPlayQueue={handlePlayQueue}
             onAddToQueue={handleAddToQueue}

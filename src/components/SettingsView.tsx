@@ -56,6 +56,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleInstallClick = async () => {
+    if (onInstallPwa) {
+      onInstallPwa();
+      return;
+    }
     const promptEvent = deferredPrompt || (window as any).__deferredPrompt;
     if (promptEvent) {
       try {
@@ -68,11 +72,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       } catch (err) {
         console.error("Install prompt error:", err);
       }
-      return;
-    }
-
-    if (onInstallPwa) {
-      onInstallPwa();
       return;
     }
 

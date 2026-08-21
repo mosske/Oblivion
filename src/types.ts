@@ -12,6 +12,20 @@ export interface Track {
   lyricsRaw?: string;
 }
 
+export interface YouTubeThumbnailItem {
+  url: string;
+  width?: number;
+  height?: number;
+}
+
+export interface YouTubeThumbnails {
+  maxres?: YouTubeThumbnailItem;
+  standard?: YouTubeThumbnailItem;
+  high?: YouTubeThumbnailItem;
+  medium?: YouTubeThumbnailItem;
+  default?: YouTubeThumbnailItem;
+}
+
 export interface Playlist {
   id: string;
   playlistId?: string;
@@ -26,6 +40,7 @@ export interface Playlist {
   tracks: Track[];
   artist?: string;
   isAlbum?: boolean;
+  thumbnails?: YouTubeThumbnails;
 }
 
 export interface Album {

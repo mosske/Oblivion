@@ -2,7 +2,7 @@
 
 html, body {
   min-height: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Custom scrollbar for modals / sidebar with high visibility and cross-browser support */

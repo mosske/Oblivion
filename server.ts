@@ -1310,6 +1310,7 @@ app.get("/api/youtube/playlists", async (req, res) => {
               isCustomCover: Boolean(resolvedCustom),
               isYouTubeSynced: true,
               tracksCount: item.contentDetails?.itemCount || ytmMatch?.tracksCount || 0,
+              thumbnails: thumbs || undefined,
               tracks: [],
             };
           });
@@ -1435,9 +1436,10 @@ app.get("/api/youtube/playlists/:id/items", async (req, res) => {
         }
         return res.json({
           tracks: ytTracks,
-          coverUrl: customCover || found?.customCoverUrl || found?.coverUrl || ytTracks[0]?.coverUrl,
-          customCoverUrl: customCover || found?.customCoverUrl || found?.coverUrl,
-          isCustomCover: Boolean(customCover),
+          coverUrl: customCover || found?.customCoverUrl || found?.coverUrl || undefined,
+          customCoverUrl: customCover || found?.customCoverUrl || found?.coverUrl || undefined,
+          isCustomCover: Boolean(customCover || found?.isCustomCover),
+          thumbnails: found?.thumbnails,
         });
       }
     }
