@@ -10,7 +10,8 @@ interface SearchViewProps {
   onPlayTrack: (track: Track) => void;
   onPlayQueue?: (tracks: Track[], startIndex: number) => void;
   onAddToQueue: (track: Track) => void;
-  onAddTrackToPlaylist: (track: Track, playlistId: string) => void;
+  onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
+  onOpenAddToPlaylistModal?: (track: Track) => void;
   playlists: Playlist[];
   onSelectPlaylist?: (playlist: Playlist) => void;
   designConfig?: FullAppDesignConfig;
@@ -39,6 +40,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   onPlayQueue,
   onAddToQueue,
   onAddTrackToPlaylist,
+  onOpenAddToPlaylistModal,
   playlists,
   onSelectPlaylist,
   designConfig = FULL_APP_DESIGNS["designer"],
@@ -306,39 +308,20 @@ export const SearchView: React.FC<SearchViewProps> = ({
                         <Radio className="w-4 h-4" />
                       </button>
 
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenPlaylistMenuId(openPlaylistMenuId === item.id ? null : item.id)}
-                          className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl hover:bg-black/10 transition-colors`}
-                          title="Add to playlist"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-
-                        {openPlaylistMenuId === item.id && (
-                          <div className={`absolute right-0 top-10 z-30 w-48 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-2xl shadow-2xl p-2 space-y-1 animate-fade-in`}>
-                            <p className={`text-[10px] font-bold ${designConfig.textMuted} uppercase px-2 py-1`}>
-                              Add to Playlist
-                            </p>
-                            {playlists.length === 0 ? (
-                              <p className={`text-xs ${designConfig.textMuted} px-2 py-1`}>No playlists yet</p>
-                            ) : (
-                              playlists.map((pl) => (
-                                <button
-                                  key={pl.id}
-                                  onClick={() => {
-                                    onAddTrackToPlaylist(item, pl.id);
-                                    setOpenPlaylistMenuId(null);
-                                  }}
-                                  className={`w-full text-left px-2 py-1.5 rounded-xl text-xs font-semibold ${designConfig.textPrimary} hover:bg-black/10 truncate`}
-                                >
-                                  {pl.title}
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      <button
+                        id={`search-add-playlist-btn-${item.id}`}
+                        onClick={() => {
+                          if (onOpenAddToPlaylistModal) {
+                            onOpenAddToPlaylistModal(item);
+                          } else if (onAddTrackToPlaylist && playlists.length > 0) {
+                            onAddTrackToPlaylist(item, playlists[0].id);
+                          }
+                        }}
+                        className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] rounded-xl hover:bg-black/10 transition-colors`}
+                        title="Add to playlist"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
                     </>
                   )}
                 </div>

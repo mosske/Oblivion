@@ -11,6 +11,7 @@ import { SettingsView } from "./components/SettingsView";
 import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
 import { PlaylistModal } from "./components/PlaylistModal";
+import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
@@ -109,6 +110,7 @@ export default function App() {
   });
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
+  const [trackForAddToPlaylist, setTrackForAddToPlaylist] = useState<Track | null>(null);
   const [isSyncingYouTube, setIsSyncingYouTube] = useState<boolean>(false);
   const [isSyncingPlaylist, setIsSyncingPlaylist] = useState<boolean>(false);
   const [oauthBannerError, setOauthBannerError] = useState<string | null>(null);
@@ -420,7 +422,7 @@ export default function App() {
   };
 
   // Fetch Playlists with immediate tracks count
-  const fetchPlaylists = async () => {
+  const fetchPlaylists = async (forceRefresh: boolean = false) => {
     setIsSyncingYouTube(true);
     try {
       let activeToken = user?.accessToken;
@@ -439,7 +441,8 @@ export default function App() {
         headers["Authorization"] = `Bearer ${activeToken}`;
       }
 
-      const res = await fetch("/api/youtube/playlists", { headers });
+      const url = forceRefresh ? `/api/youtube/playlists?refresh=true&_t=${Date.now()}` : "/api/youtube/playlists";
+      const res = await fetch(url, { headers });
       const data = await res.json();
       if (data.playlists) {
         const seenPlIds = new Set<string>();
@@ -578,10 +581,20 @@ export default function App() {
           const updated = prev.map((p) => {
             const pClean = (p.id || p.playlistId || "").replace(/^VL/, "");
             if (p.id === playlistId || p.playlistId === playlistId || pClean === cleanId) {
+              const serverVidIds = new Set(
+                uniqueTracks.map((t) => t.youtubeVideoId || t.id).filter(Boolean)
+              );
+              // Preserve any locally tracked items that might not have propagated through YouTube's API cache yet
+              const localUnsynced = (p.tracks || []).filter((t) => {
+                const vid = t.youtubeVideoId || t.id;
+                return vid && !serverVidIds.has(vid);
+              });
+              const mergedTracks = [...uniqueTracks, ...localUnsynced];
+
               return {
                 ...p,
-                tracks: uniqueTracks,
-                tracksCount: uniqueTracks.length,
+                tracks: mergedTracks,
+                tracksCount: mergedTracks.length,
                 coverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
                 customCoverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
                 isCustomCover: isCustom || p.isCustomCover,
@@ -599,10 +612,19 @@ export default function App() {
           if (!prev) return null;
           const prevClean = (prev.id || prev.playlistId || "").replace(/^VL/, "");
           if (prev.id === playlistId || prev.playlistId === playlistId || prevClean === cleanId) {
+            const serverVidIds = new Set(
+              uniqueTracks.map((t) => t.youtubeVideoId || t.id).filter(Boolean)
+            );
+            const localUnsynced = (prev.tracks || []).filter((t) => {
+              const vid = t.youtubeVideoId || t.id;
+              return vid && !serverVidIds.has(vid);
+            });
+            const mergedTracks = [...uniqueTracks, ...localUnsynced];
+
             return {
               ...prev,
-              tracks: uniqueTracks,
-              tracksCount: uniqueTracks.length,
+              tracks: mergedTracks,
+              tracksCount: mergedTracks.length,
               coverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
               customCoverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
               isCustomCover: isCustom || (prev as any).isCustomCover,
@@ -805,6 +827,125 @@ export default function App() {
     setEditingPlaylist(null);
   };
 
+  // Direct quick playlist creation (e.g. from AddToPlaylist modal)
+  const handleCreatePlaylist = async (title: string): Promise<Playlist | null> => {
+    try {
+      let activeToken = user?.accessToken;
+      if (!activeToken) {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) activeToken = JSON.parse(saved)?.accessToken;
+        } catch {}
+      }
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+
+      const res = await fetch("/api/youtube/playlists", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ title, description: "Created with Oblivion Music" }),
+      });
+      const data = await res.json();
+      if (data.playlist) {
+        setPlaylists((prev) => [data.playlist, ...prev]);
+        try {
+          localStorage.setItem("oblivion_saved_playlists", JSON.stringify([data.playlist, ...playlists]));
+        } catch {}
+        return data.playlist;
+      }
+    } catch (err) {
+      console.error("Create playlist error:", err);
+    }
+    return null;
+  };
+
+  // Dedicated creation with full details, custom artwork, and instant sync to YouTube Music
+  const handleCreatePlaylistWithTrack = async (
+    title: string,
+    description: string,
+    coverUrl: string,
+    track: Track
+  ) => {
+    const vId = (track.youtubeVideoId || track.id || "").replace(/^VL/, "");
+    const cleanTrack: Track = {
+      ...track,
+      id: track.id || vId,
+      youtubeVideoId: vId || track.youtubeVideoId,
+    };
+
+    try {
+      let activeToken = user?.accessToken;
+      if (!activeToken) {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) activeToken = JSON.parse(saved)?.accessToken;
+        } catch {}
+      }
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+
+      const res = await fetch("/api/youtube/playlists", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          title,
+          description,
+          coverUrl,
+          customCoverUrl: coverUrl,
+          isCustomCover: Boolean(coverUrl),
+          track: cleanTrack,
+        }),
+      });
+      const data = await res.json();
+      if (data.playlist) {
+        const createdPl: Playlist = {
+          ...data.playlist,
+          tracks: data.playlist.tracks?.length ? data.playlist.tracks : [cleanTrack],
+          tracksCount: data.playlist.tracksCount || 1,
+          coverUrl: coverUrl || data.playlist.coverUrl,
+          customCoverUrl: coverUrl || data.playlist.customCoverUrl,
+          isCustomCover: Boolean(coverUrl),
+        };
+
+        if (coverUrl) {
+          saveCustomCoverToStorage(createdPl.id, coverUrl, true);
+        }
+
+        setPlaylists((prev) => [createdPl, ...prev]);
+        try {
+          localStorage.setItem("oblivion_saved_playlists", JSON.stringify([createdPl, ...playlists]));
+        } catch {}
+
+        // Extra guarantee sync to YouTube Data API
+        if (createdPl.id && !createdPl.id.startsWith("pl_custom_")) {
+          try {
+            await fetch(`/api/youtube/playlists/${createdPl.id}/sync`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ tracks: [cleanTrack] }),
+            });
+          } catch (syncErr) {
+            console.warn("YouTube playlist whole sync error on creation:", syncErr);
+          }
+        }
+
+        if (data.syncedToYouTube) {
+          showToast(`Created "${title}" with custom artwork & synced to YouTube Music`);
+        } else {
+          showToast(`Created "${title}" and added song to playlist`);
+        }
+      }
+    } catch (err) {
+      console.error("Create playlist with track error:", err);
+      showToast("Error creating playlist. Please try again.");
+    }
+  };
+
+  const handleOpenAddToPlaylistModal = (track: Track) => {
+    setTrackForAddToPlaylist(track);
+    fetchPlaylists(true); // Pull up real-time number of songs in each Playlist!
+  };
+
   // Delete Playlist
   const handleDeletePlaylist = async (playlistId: string) => {
     if (!confirm("Are you sure you want to delete this playlist?")) return;
@@ -980,123 +1121,139 @@ export default function App() {
     }
   };
 
-  // Add Track to Playlist
+  // Add Track to Playlist: EXACT 3-STEP SEQUENCE:
+  // (1) IMMEDIATELY PULL ALL THE SONGS FROM THAT PLAYLIST FROM YOUTUBE MUSIC
+  // (2) ADD THE NEW SONG TO THE END OF THE LIST TO INCREASE THE SONG COUNT BY 1
+  // (3) IMMEDIATELY SYNC THE UPDATED LIST BACK TO YOUTUBE MUSIC
   const handleAddTrackToPlaylist = async (track: Track, playlistId: string) => {
-    const trId = track.id || track.youtubeVideoId;
-    if (!trId) return;
-    const cleanTrack = { ...track, id: trId, youtubeVideoId: track.youtubeVideoId || trId };
+    const rawVidId = track.youtubeVideoId || track.id || "";
+    const cleanVidId = rawVidId.replace(/^VL/, "");
+    if (!cleanVidId) return;
+
+    const cleanTrack: Track = {
+      ...track,
+      id: track.id || cleanVidId,
+      youtubeVideoId: cleanVidId,
+      audioUrl: track.audioUrl || `/api/youtube/stream/${cleanVidId}`,
+    };
+
     const cleanPlId = playlistId.replace(/^VL/, "");
     const targetPl = playlists.find(
-      (p) => (p.id || (p as any).playlistId) === playlistId || (p.id || (p as any).playlistId)?.replace(/^VL/, "") === cleanPlId
+      (p) =>
+        (p.id || (p as any).playlistId) === playlistId ||
+        (p.id || (p as any).playlistId)?.replace(/^VL/, "") === cleanPlId
     );
     const playlistName = targetPl?.title || "Playlist";
 
-    // Immediate optimistic update
-    setPlaylists((prev) => {
-      const updated = prev.map((p) => {
-        const pId = p.id || (p as any).playlistId;
-        if (pId === playlistId || pId?.replace(/^VL/, "") === cleanPlId) {
-          const exists = p.tracks.some((t) => (t.id || t.youtubeVideoId) === trId || (t.youtubeVideoId || t.id) === cleanTrack.youtubeVideoId);
-          if (exists) return p;
-          const updatedTracks = [...p.tracks, cleanTrack];
-          return {
-            ...p,
-            tracks: updatedTracks,
-            tracksCount: updatedTracks.length,
-          };
-        }
-        return p;
-      });
+    let activeToken = user?.accessToken;
+    if (!activeToken) {
       try {
-        localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
+        const saved = localStorage.getItem("oblivion_saved_user");
+        if (saved) activeToken = JSON.parse(saved)?.accessToken;
       } catch {}
-      return updated;
-    });
-
-    if (selectedPlaylist?.id === playlistId || (selectedPlaylist as any)?.playlistId === playlistId || selectedPlaylist?.id?.replace(/^VL/, "") === cleanPlId) {
-      setSelectedPlaylist((prev) => {
-        if (!prev) return null;
-        const exists = prev.tracks.some((t) => (t.id || t.youtubeVideoId) === trId || (t.youtubeVideoId || t.id) === cleanTrack.youtubeVideoId);
-        if (exists) return prev;
-        const updatedTracks = [...prev.tracks, cleanTrack];
-        return {
-          ...prev,
-          tracks: updatedTracks,
-          tracksCount: updatedTracks.length,
-        };
-      });
     }
+    const authHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (activeToken) authHeaders["Authorization"] = `Bearer ${activeToken}`;
 
     try {
-      let activeToken = user?.accessToken;
-      if (!activeToken) {
-        try {
-          const saved = localStorage.getItem("oblivion_saved_user");
-          if (saved) activeToken = JSON.parse(saved)?.accessToken;
-        } catch {}
+      // -------------------------------------------------------------
+      // (1) IMMEDIATELY PULL ALL THE SONGS FROM THAT PLAYLIST FROM YOUTUBE MUSIC
+      // -------------------------------------------------------------
+      let currentSongs: Track[] = [];
+      try {
+        const itemsRes = await fetch(
+          `/api/youtube/playlists/${encodeURIComponent(playlistId)}/items?refresh=true&force=true&_t=${Date.now()}`,
+          { headers: authHeaders }
+        );
+        if (itemsRes.ok) {
+          const itemsData = await itemsRes.json();
+          if (itemsData.tracks && Array.isArray(itemsData.tracks)) {
+            currentSongs = itemsData.tracks;
+          }
+        }
+      } catch (pullErr) {
+        console.warn("Pull playlist items error from YouTube Music:", pullErr);
       }
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
 
-      const res = await fetch(`/api/youtube/playlists/${playlistId}/items`, {
+      // If network pull returned 0 but we have local tracks in memory, safely keep them
+      if (currentSongs.length === 0 && targetPl?.tracks && targetPl.tracks.length > 0) {
+        currentSongs = targetPl.tracks;
+      }
+
+      // -------------------------------------------------------------
+      // (2) ADD THE NEW SONG TO THE END OF THE LIST TO INCREASE THE SONG COUNT BY 1
+      // -------------------------------------------------------------
+      // Filter out previous duplicate instance of this video if already present so it appends cleanly to the end
+      const filteredExisting = currentSongs.filter((t) => {
+        const tVid = (t.youtubeVideoId || t.id || "").replace(/^VL/, "");
+        return tVid !== cleanVidId && t.id !== cleanTrack.id;
+      });
+      const updatedPlaylistTracks: Track[] = [...filteredExisting, cleanTrack];
+      const newSongCount = updatedPlaylistTracks.length;
+
+      // Update UI state & localStorage immediately with new song and incremented count
+      setPlaylists((prev) => {
+        const updated = prev.map((p) => {
+          const pId = p.id || (p as any).playlistId;
+          if (pId === playlistId || pId?.replace(/^VL/, "") === cleanPlId) {
+            return {
+              ...p,
+              tracks: updatedPlaylistTracks,
+              tracksCount: newSongCount,
+            };
+          }
+          return p;
+        });
+        try {
+          localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      if (
+        selectedPlaylist?.id === playlistId ||
+        (selectedPlaylist as any)?.playlistId === playlistId ||
+        selectedPlaylist?.id?.replace(/^VL/, "") === cleanPlId
+      ) {
+        setSelectedPlaylist((prev) =>
+          prev
+            ? {
+                ...prev,
+                tracks: updatedPlaylistTracks,
+                tracksCount: newSongCount,
+              }
+            : null
+        );
+      }
+
+      // -------------------------------------------------------------
+      // (3) IMMEDIATELY COMMIT THE NEW SONG TO YOUTUBE MUSIC!
+      // -------------------------------------------------------------
+      const itemRes = await fetch(`/api/youtube/playlists/${encodeURIComponent(playlistId)}/items`, {
         method: "POST",
-        headers,
+        headers: authHeaders,
         body: JSON.stringify({ track: cleanTrack }),
       });
-      const data = await res.json();
-      if (data.success) {
-        const finalTrack = data.track || cleanTrack;
-        setPlaylists((prev) => {
-          const updated = prev.map((p) => {
-            const pId = p.id || (p as any).playlistId;
-            if (pId === playlistId || pId?.replace(/^VL/, "") === cleanPlId) {
-              const updatedTracks = p.tracks.map((t) =>
-                (t.id || t.youtubeVideoId) === trId ? { ...t, ...finalTrack } : t
-              );
-              if (!updatedTracks.some((t) => (t.id || t.youtubeVideoId) === (finalTrack.id || finalTrack.youtubeVideoId))) {
-                updatedTracks.push(finalTrack);
-              }
-              return {
-                ...p,
-                tracks: updatedTracks,
-                tracksCount: updatedTracks.length,
-              };
-            }
-            return p;
-          });
-          try {
-            localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
-          } catch {}
-          return updated;
-        });
 
-        if (selectedPlaylist?.id === playlistId || (selectedPlaylist as any)?.playlistId === playlistId || selectedPlaylist?.id?.replace(/^VL/, "") === cleanPlId) {
-          setSelectedPlaylist((prev) => {
-            if (!prev) return null;
-            const updatedTracks = prev.tracks.map((t) =>
-              (t.id || t.youtubeVideoId) === trId ? { ...t, ...finalTrack } : t
-            );
-            if (!updatedTracks.some((t) => (t.id || t.youtubeVideoId) === (finalTrack.id || finalTrack.youtubeVideoId))) {
-              updatedTracks.push(finalTrack);
-            }
-            return {
-              ...prev,
-              tracks: updatedTracks,
-              tracksCount: updatedTracks.length,
-            };
-          });
-        }
+      let syncedToYT = false;
+      let returnedErrMsg = "";
+      if (itemRes.ok) {
+        try {
+          const itemData = await itemRes.json();
+          if (itemData.syncedToYouTube) syncedToYT = true;
+          if (itemData.error) returnedErrMsg = itemData.error;
+        } catch {}
+      }
 
-        if (data.syncedToYouTube) {
-          showToast(`Added to "${playlistName}" & synced with YouTube Music`);
-        } else {
-          showToast(`Added to "${playlistName}"`);
-        }
+      if (syncedToYT) {
+        showToast(`Added "${cleanTrack.title}" to ${playlistName} (${newSongCount} songs) & synced to YouTube Music`);
+      } else if (returnedErrMsg && returnedErrMsg.toLowerCase().includes("permission")) {
+        showToast(`Added "${cleanTrack.title}" to ${playlistName} (${newSongCount} songs). Note: Re-authenticate to grant YouTube write permissions.`);
       } else {
-        showToast(`Added to "${playlistName}"`);
+        showToast(`Added "${cleanTrack.title}" to ${playlistName} (${newSongCount} songs)`);
       }
     } catch (err) {
-      console.error("Add track error:", err);
+      console.error("Add track to playlist error:", err);
       showToast(`Added to "${playlistName}"`);
     }
   };
@@ -1357,6 +1514,7 @@ export default function App() {
             onPlayQueue={handlePlayQueue}
             onAddToQueue={handleAddToQueue}
             onAddTrackToPlaylist={handleAddTrackToPlaylist}
+            onOpenAddToPlaylistModal={handleOpenAddToPlaylistModal}
             onEditPlaylist={(pl) => {
               setEditingPlaylist(pl);
               setIsPlaylistModalOpen(true);
@@ -1441,6 +1599,7 @@ export default function App() {
                 onPlayQueue={handlePlayQueue}
                 onAddToQueue={handleAddToQueue}
                 onAddTrackToPlaylist={handleAddTrackToPlaylist}
+                onOpenAddToPlaylistModal={handleOpenAddToPlaylistModal}
                 playlists={playlists}
                 onSelectPlaylist={(pl) => setSelectedPlaylist(pl)}
                 designConfig={activeFullDesign}
@@ -1515,6 +1674,7 @@ export default function App() {
         settings={settings}
         playlists={playlists}
         onAddTrackToPlaylist={handleAddTrackToPlaylist}
+        onOpenAddToPlaylistModal={handleOpenAddToPlaylistModal}
         designConfig={activeFullDesign}
       />
 
@@ -1538,6 +1698,18 @@ export default function App() {
         onSave={handleSavePlaylist}
         initialPlaylist={editingPlaylist}
         isYouTubeSynced={!!user?.isLoggedIn}
+        designConfig={activeFullDesign}
+      />
+
+      {/* Dedicated Add To Playlist Dialog Window */}
+      <AddToPlaylistModal
+        isOpen={Boolean(trackForAddToPlaylist)}
+        track={trackForAddToPlaylist}
+        playlists={playlists}
+        onClose={() => setTrackForAddToPlaylist(null)}
+        onSelectPlaylist={handleAddTrackToPlaylist}
+        onCreatePlaylist={handleCreatePlaylist}
+        onCreatePlaylistWithTrack={handleCreatePlaylistWithTrack}
         designConfig={activeFullDesign}
       />
 

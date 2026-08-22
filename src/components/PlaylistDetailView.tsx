@@ -44,6 +44,7 @@ interface PlaylistDetailViewProps {
   onSyncToYouTube?: (tracks: Track[]) => Promise<any>;
   onAddToQueue?: (track: Track) => void;
   onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
+  onOpenAddToPlaylistModal?: (track: Track) => void;
   currentTrackId?: string;
   isPlaying?: boolean;
   playlists?: Playlist[];
@@ -69,6 +70,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   onSyncToYouTube,
   onAddToQueue,
   onAddTrackToPlaylist,
+  onOpenAddToPlaylistModal,
   currentTrackId,
   isPlaying = false,
   playlists = [],
@@ -158,9 +160,18 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               youtubeVideoId: vidId || t.id,
             };
           });
-        setTracks(clean);
+
+        // Merge with existing in-memory tracks if any are missing from the network response
+        const liveVidIds = new Set(clean.map((t) => (t.youtubeVideoId || t.id || "").replace(/^VL/, "")));
+        const missingLocalTracks = (item.tracks || []).filter((t) => {
+          const vId = (t.youtubeVideoId || t.id || "").replace(/^VL/, "");
+          return vId && !liveVidIds.has(vId);
+        });
+
+        const merged = missingLocalTracks.length > 0 ? [...clean, ...missingLocalTracks] : clean;
+        setTracks(merged);
         if (onReorderTracks) {
-          onReorderTracks(clean);
+          onReorderTracks(merged);
         }
       }
       setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -711,40 +722,22 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                       )}
 
                       {/* Add to another playlist */}
-                      {!isReorderMode && onAddTrackToPlaylist && playlists.length > 0 && (
-                        <div className="relative">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenPlaylistDropdownId(openPlaylistDropdownId === trId ? null : trId);
-                            }}
-                            className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-lg hover:bg-black/10 transition-colors`}
-                            title="Add to another playlist"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-
-                          {openPlaylistDropdownId === trId && (
-                            <div className={`absolute right-0 top-8 z-30 w-48 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-2xl shadow-2xl p-2 space-y-1 animate-fade-in`}>
-                              <p className={`text-[10px] font-bold ${designConfig.textMuted} uppercase px-2 py-1`}>
-                                Add to Playlist
-                              </p>
-                              {playlists.map((pl) => (
-                                <button
-                                  key={pl.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onAddTrackToPlaylist(track, pl.id);
-                                    setOpenPlaylistDropdownId(null);
-                                  }}
-                                  className={`w-full text-left px-2 py-1.5 rounded-xl text-xs ${designConfig.textPrimary} hover:${designConfig.accentBg} hover:text-white transition-colors truncate`}
-                                >
-                                  {pl.title}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                      {!isReorderMode && (onOpenAddToPlaylistModal || onAddTrackToPlaylist) && (
+                        <button
+                          id={`playlist-detail-add-track-btn-${trId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onOpenAddToPlaylistModal) {
+                              onOpenAddToPlaylistModal(track);
+                            } else if (onAddTrackToPlaylist && playlists.length > 0) {
+                              onAddTrackToPlaylist(track, playlists[0].id);
+                            }
+                          }}
+                          className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] rounded-lg hover:bg-black/10 transition-colors`}
+                          title="Add to another playlist"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
                       )}
 
                       {/* Remove Song from Playlist */}

@@ -12,7 +12,7 @@ interface PlaylistModalProps {
   designConfig?: FullAppDesignConfig;
 }
 
-const YOUTUBE_ARTWORK_PRESETS = [
+export const YOUTUBE_ARTWORK_PRESETS = [
   {
     name: "Studio Gold",
     url: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",

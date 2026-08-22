@@ -45,6 +45,7 @@ interface PlayerProps {
   settings: UserSettings;
   playlists?: Playlist[];
   onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
+  onOpenAddToPlaylistModal?: (track: Track) => void;
   designConfig?: FullAppDesignConfig;
 }
 
@@ -306,6 +307,7 @@ export const Player: React.FC<PlayerProps> = ({
   settings,
   playlists = [],
   onAddTrackToPlaylist,
+  onOpenAddToPlaylistModal,
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -1103,7 +1105,14 @@ export const Player: React.FC<PlayerProps> = ({
 
                 {/* Add to Playlist Button */}
                 <button
-                  onClick={() => setShowAddToPlaylistModal(true)}
+                  id="player-fullscreen-add-playlist-btn"
+                  onClick={() => {
+                    if (onOpenAddToPlaylistModal && currentTrack) {
+                      onOpenAddToPlaylistModal(currentTrack);
+                    } else {
+                      setShowAddToPlaylistModal(true);
+                    }
+                  }}
                   className={`p-2.5 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-semibold active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Add to Playlist"
                 >
@@ -1271,8 +1280,15 @@ export const Player: React.FC<PlayerProps> = ({
 
                   {/* Add to Playlist button on Mini Player */}
                   <button
-                    onClick={() => setShowAddToPlaylistModal(true)}
-                    className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
+                    id="player-mini-add-playlist-btn"
+                    onClick={() => {
+                      if (onOpenAddToPlaylistModal && currentTrack) {
+                        onOpenAddToPlaylistModal(currentTrack);
+                      } else {
+                        setShowAddToPlaylistModal(true);
+                      }
+                    }}
+                    className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] transition-colors`}
                     title="Add to Playlist"
                   >
                     <Plus className="w-4 h-4" />
@@ -1426,8 +1442,15 @@ export const Player: React.FC<PlayerProps> = ({
               </button>
 
               <button
-                onClick={() => setShowAddToPlaylistModal(true)}
-                className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
+                id="player-bottom-add-playlist-btn"
+                onClick={() => {
+                  if (onOpenAddToPlaylistModal && currentTrack) {
+                    onOpenAddToPlaylistModal(currentTrack);
+                  } else {
+                    setShowAddToPlaylistModal(true);
+                  }
+                }}
+                className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] transition-colors`}
                 title="Add to Playlist"
               >
                 <Plus className="w-4 h-4" />
