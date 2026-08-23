@@ -43,16 +43,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [activeMood, setActiveMood] = useState<string>("All");
   const [filters, setFilters] = useState<string[]>([
     "All",
-    "Energize",
-    "Workout",
     "Relax",
+    "Workout",
     "Focus",
+    "Energize",
     "Commute",
+    "Party",
+    "Romance",
+    "Sleep",
   ]);
   const [quickPicks, setQuickPicks] = useState<Track[]>([]);
+  const [listenAgain, setListenAgain] = useState<Track[]>([]);
+  const [similarTo, setSimilarTo] = useState<{ artist: string; tracks: Track[] } | null>(null);
   const [trendingHits, setTrendingHits] = useState<Track[]>([]);
   const [mixedForYou, setMixedForYou] = useState<any[]>([]);
   const [recommendedAlbums, setRecommendedAlbums] = useState<Album[]>([]);
+  const [communityPlaylists, setCommunityPlaylists] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [timeGreeting, setTimeGreeting] = useState<string>("");
@@ -85,14 +91,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
         headers["Authorization"] = `Bearer ${activeToken}`;
       }
 
-      const res = await fetch(`/api/youtube/home?mood=${encodeURIComponent(mood)}`, { headers });
+      const res = await fetch(`/api/youtube/home?mood=${encodeURIComponent(mood)}&_t=${Date.now()}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setQuickPicks(data.quickPicks || []);
+        setListenAgain(data.listenAgain || []);
+        setSimilarTo(data.similarTo || null);
         setTrendingHits(data.trendingHits || []);
         setMixedForYou(data.mixedForYou || []);
         setRecommendedAlbums(data.recommendedAlbums || []);
-        if (data.filters) setFilters(data.filters);
+        setCommunityPlaylists(data.communityPlaylists || []);
+        if (data.filters && Array.isArray(data.filters)) setFilters(data.filters);
       }
     } catch (err) {
       console.warn("YouTube Home feed load error:", err);
@@ -253,7 +262,83 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </section>
           )}
 
-          {/* 2. Mixed for you */}
+          {/* 2. Listen Again (Live YouTube Music Stream) */}
+          {listenAgain.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-5 h-5 text-sky-500" />
+                  <div>
+                    <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                      Listen again
+                    </h2>
+                    <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>
+                      Live dynamic recommendations from YouTube Music
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onPlayQueue(listenAgain, 0)}
+                  className={`px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Play all</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {listenAgain.map((track, idx) => {
+                  const trId = track.id || track.youtubeVideoId;
+                  const isCurrent = currentTrack?.id === trId || currentTrack?.youtubeVideoId === trId;
+
+                  return (
+                    <div
+                      key={trId || idx}
+                      onClick={() => onPlayQueue(listenAgain, idx)}
+                      className={`group flex items-center justify-between p-2.5 rounded-2xl cursor-pointer transition-all ${
+                        isCurrent
+                          ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
+                          : `${designConfig.cardBg} ${designConfig.cardHover}`
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                          <img
+                            src={track.coverUrl}
+                            alt={track.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Play className="w-4 h-4 text-white fill-white" />
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
+                            {cleanTrackTitle(track.title)}
+                          </p>
+                          <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
+                            {track.artist}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className={`text-[11px] font-mono ${designConfig.textMuted} shrink-0 ml-2`}>
+                        {formatDuration(track.duration)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* 3. Mixed for you */}
           {mixedForYou.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
@@ -316,7 +401,81 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </section>
           )}
 
-          {/* 3. Recommended Albums */}
+          {/* 4. Similar to <Artist> */}
+          {similarTo && similarTo.tracks.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                  <div>
+                    <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                      Similar to {similarTo.artist}
+                    </h2>
+                    <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>Tracks you might love based on your music taste</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onPlayQueue(similarTo.tracks, 0)}
+                  className={`px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Play all</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {similarTo.tracks.map((track, idx) => {
+                  const trId = track.id || track.youtubeVideoId;
+                  const isCurrent = currentTrack?.id === trId || currentTrack?.youtubeVideoId === trId;
+
+                  return (
+                    <div
+                      key={trId || idx}
+                      onClick={() => onPlayQueue(similarTo.tracks, idx)}
+                      className={`group flex items-center justify-between p-2.5 rounded-2xl cursor-pointer transition-all ${
+                        isCurrent
+                          ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
+                          : `${designConfig.cardBg} ${designConfig.cardHover}`
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                          <img
+                            src={track.coverUrl}
+                            alt={track.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Play className="w-4 h-4 text-white fill-white" />
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
+                            {cleanTrackTitle(track.title)}
+                          </p>
+                          <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
+                            {track.artist}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className={`text-[11px] font-mono ${designConfig.textMuted} shrink-0 ml-2`}>
+                        {formatDuration(track.duration)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* 5. Recommended Albums */}
           {recommendedAlbums.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
@@ -325,7 +484,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                     Recommended Albums
                   </h2>
-                  <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>Official album releases</p>
+                  <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>Official album releases from YouTube Music</p>
                 </div>
               </div>
 
@@ -367,7 +526,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </section>
           )}
 
-          {/* 4. Trending Hits */}
+          {/* 6. Trending Hits */}
           {trendingHits.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
@@ -440,8 +599,72 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </div>
             </section>
           )}
+
+          {/* 7. Community & Curated Playlists */}
+          {communityPlaylists.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex items-center gap-2.5">
+                <Music2 className="w-5 h-5 text-[#c89b3c]" />
+                <div>
+                  <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                    Community & Curated Playlists
+                  </h2>
+                  <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>Top trending collections on YouTube Music</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {communityPlaylists.map((pl) => (
+                  <div
+                    key={pl.id}
+                    onClick={() => {
+                      if (onSelectPlaylist) {
+                        onSelectPlaylist({
+                          id: pl.id,
+                          title: pl.title,
+                          description: pl.description,
+                          coverUrl: pl.coverUrl,
+                          tracksCount: pl.tracksCount || 50,
+                          tracks: [],
+                          updatedAt: new Date().toISOString(),
+                        });
+                      }
+                    }}
+                    className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${designConfig.cardBg} ${designConfig.cardHover} border border-transparent hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl`}
+                  >
+                    <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-black/10 shadow-inner">
+                      <img
+                        src={pl.coverUrl}
+                        alt={pl.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <div className="p-3 rounded-full bg-white text-black shadow-lg transform group-hover:scale-110 transition-transform">
+                          <Play className="w-4 h-4 fill-current ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
+                        {pl.title}
+                      </h3>
+                      <p className={`text-[11px] ${designConfig.textMuted} line-clamp-2 mt-0.5 leading-snug`}>
+                        {pl.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>
   );
 };
+

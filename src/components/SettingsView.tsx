@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { User, UserSettings, AudioQuality } from "../types";
+import { User, UserSettings, AudioQuality, PlayerBackgroundAnimation } from "../types";
 import { FULL_APP_DESIGNS, FullAppDesignConfig } from "../utils/appDesignThemes";
 import {
   Settings,
   Sliders,
-  HardDrive,
   Sparkles,
-  Trash2,
   Check,
   Smartphone,
-  Download,
   Layout,
-  Info
+  Info,
+  Waves,
+  Film,
+  Activity,
+  CircleOff,
+  Eye
 } from "lucide-react";
-import { getCacheSizeMB, clearAllCache } from "../utils/offlineCache";
 import { OblivionLogo } from "./OblivionLogo";
 
 interface SettingsViewProps {
@@ -34,26 +35,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   deferredPrompt,
   onInstallPwa,
 }) => {
-  const [cacheMB, setCacheMB] = useState<number>(0);
-  const [cleared, setCleared] = useState<boolean>(false);
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   const [installSuccessMsg, setInstallSuccessMsg] = useState<string>("");
 
   useEffect(() => {
-    getCacheSizeMB().then(setCacheMB);
-
     // Check if running in standalone PWA mode
     if (window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true) {
       setIsInstalled(true);
     }
   }, []);
-
-  const handleClearCache = async () => {
-    await clearAllCache();
-    setCacheMB(0);
-    setCleared(true);
-    setTimeout(() => setCleared(false), 3000);
-  };
 
   const handleInstallClick = async () => {
     if (onInstallPwa) {
@@ -97,7 +87,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <span>Oblivion Settings</span>
         </h1>
         <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
-          Customize your full app design layout, audio engine quality, and offline storage.
+          Customize your full app design layout, audio engine quality, and playback settings.
         </p>
       </div>
 
@@ -122,7 +112,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 Install Oblivion Music App
               </h3>
               <p className="text-xs text-zinc-700 font-medium leading-relaxed max-w-xl mt-0.5">
-                Install as a standalone progressive web app (PWA) on your Android, Apple Safari, or desktop browser for instant home-screen launching, background playback, and offline caching.
+                Install as a standalone progressive web app (PWA) on your Android, Apple Safari, or desktop browser for instant home-screen launching and background playback.
               </p>
             </div>
           </div>
@@ -132,7 +122,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={handleInstallClick}
             className={`px-5 py-3 rounded-2xl ${designConfig.btnPrimary} text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shrink-0`}
           >
-            <Download className="w-4 h-4 text-white" />
+            <Smartphone className="w-4 h-4 text-white" />
             <span>Install App</span>
           </button>
         </div>
@@ -242,6 +232,158 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </section>
 
+      {/* FULL PLAYER ANIMATED BACKGROUND VISUALIZER SECTION */}
+      <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-5 shadow-md`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#c89b3c]/20 text-[#855f10] text-[10px] font-mono font-bold tracking-wider mb-1 border border-[#c89b3c]/30">
+              <Eye className="w-3 h-3 text-[#c89b3c]" />
+              <span>Immersive Player Canvas</span>
+            </div>
+            <h3 className="text-base font-bold text-zinc-900 flex items-center gap-2">
+              <Film className="w-4 h-4 text-[#c89b3c]" />
+              <span>Full Player Background Animation (3 Modes + Off)</span>
+            </h3>
+            <p className="text-xs text-zinc-700 font-medium mt-0.5">
+              Choose the ambient motion visualizer rendered behind the song artwork and music video in Full Player.
+            </p>
+          </div>
+          <span className="text-xs px-3 py-1.5 rounded-full font-mono font-bold bg-[#c89b3c] text-slate-950 self-start sm:self-auto shadow-md">
+            Active: {
+              settings.playerBackgroundAnimation === "off"
+                ? "Off (Static)"
+                : settings.playerBackgroundAnimation === "aurora-pulse"
+                ? "Aurora Pulse"
+                : settings.playerBackgroundAnimation === "orbital-flow"
+                ? "Orbital Flow"
+                : "Ambient Zoom & Drift"
+            }
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* 1. Ambient Zoom & Drift */}
+          <button
+            onClick={() => onUpdateSettings({ playerBackgroundAnimation: "ambient-drift" })}
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+              (settings.playerBackgroundAnimation || "ambient-drift") === "ambient-drift"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+            }`}
+          >
+            {(settings.playerBackgroundAnimation || "ambient-drift") === "ambient-drift" && (
+              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                <span>ACTIVE</span>
+              </div>
+            )}
+            <div>
+              <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-2.5 text-amber-700">
+                <Waves className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Ambient Zoom & Drift</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
+                Cinematic Ken Burns panning & slow breathing zoom that gently floats across the full screen.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-[#855f10] font-bold">
+              <span>24s Smooth Drift</span>
+              <span>Smooth</span>
+            </div>
+          </button>
+
+          {/* 2. Aurora Pulse */}
+          <button
+            onClick={() => onUpdateSettings({ playerBackgroundAnimation: "aurora-pulse" })}
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+              settings.playerBackgroundAnimation === "aurora-pulse"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+            }`}
+          >
+            {settings.playerBackgroundAnimation === "aurora-pulse" && (
+              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                <span>ACTIVE</span>
+              </div>
+            )}
+            <div>
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-2.5 text-emerald-700">
+                <Activity className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Aurora Pulse</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
+                Fluid chromatic aurora rhythm that breathes and pulsates color saturation with the audio.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-emerald-700 font-bold">
+              <span>12s Color Mesh</span>
+              <span>Dynamic</span>
+            </div>
+          </button>
+
+          {/* 3. Orbital Flow */}
+          <button
+            onClick={() => onUpdateSettings({ playerBackgroundAnimation: "orbital-flow" })}
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+              settings.playerBackgroundAnimation === "orbital-flow"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+            }`}
+          >
+            {settings.playerBackgroundAnimation === "orbital-flow" && (
+              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                <span>ACTIVE</span>
+              </div>
+            )}
+            <div>
+              <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center mb-2.5 text-violet-700">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Orbital Flow</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
+                Cosmic 360° slow swirl rotating dual blurred artwork aura rings across the background.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-violet-700 font-bold">
+              <span>32s Cosmic Loop</span>
+              <span>Ethereal</span>
+            </div>
+          </button>
+
+          {/* 4. Off (Static) */}
+          <button
+            onClick={() => onUpdateSettings({ playerBackgroundAnimation: "off" })}
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+              settings.playerBackgroundAnimation === "off"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+            }`}
+          >
+            {settings.playerBackgroundAnimation === "off" && (
+              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                <span>ACTIVE</span>
+              </div>
+            )}
+            <div>
+              <div className="w-8 h-8 rounded-xl bg-zinc-500/15 border border-zinc-500/30 flex items-center justify-center mb-2.5 text-zinc-700">
+                <CircleOff className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Off (Static Minimal)</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
+                Classic static dimmed studio background with zero animation for minimal CPU & battery usage.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-zinc-600 font-bold">
+              <span>Zero Motion</span>
+              <span>Power Saver</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
       {/* Player Engine Controls */}
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
         <div className="flex items-center gap-2 font-bold text-sm text-zinc-900">
@@ -325,59 +467,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               className="w-4 h-4 accent-[#c89b3c] cursor-pointer ml-2 shrink-0"
             />
           </label>
-        </div>
-      </section>
-
-      {/* Offline Storage Cache Controls */}
-      <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
-        <div className="flex items-center gap-2 font-bold text-sm text-zinc-900">
-          <HardDrive className="w-4 h-4 text-[#c89b3c]" />
-          <span>IndexedDB Offline Caching</span>
-        </div>
-
-        <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-200 shadow-sm">
-          <div>
-            <p className="text-xs font-mono uppercase text-zinc-600 font-bold">Current Storage Used</p>
-            <p className="text-xl font-bold font-mono text-zinc-900">{cacheMB} MB</p>
-          </div>
-
-          <button
-            onClick={handleClearCache}
-            className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs rounded-xl border border-red-200 flex items-center gap-1.5 transition-colors shadow-sm"
-          >
-            <Trash2 className="w-4 h-4 text-red-600" />
-            <span>{cleared ? "Cache Cleared!" : "Clear All Cache"}</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-200 cursor-pointer shadow-sm">
-            <span className="text-xs font-bold text-zinc-900">Auto-Download Liked Songs</span>
-            <input
-              type="checkbox"
-              checked={settings.autoDownloadFavorites}
-              onChange={(e) => onUpdateSettings({ autoDownloadFavorites: e.target.checked })}
-              className="w-4 h-4 accent-[#c89b3c] cursor-pointer"
-            />
-          </label>
-
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-bold uppercase text-zinc-900">
-                Max Cache Storage Limit
-              </label>
-              <span className="text-xs font-mono font-bold text-[#855f10]">{settings.maxCacheSizeMB} MB</span>
-            </div>
-            <input
-              type="range"
-              min={100}
-              max={2000}
-              step={100}
-              value={settings.maxCacheSizeMB}
-              onChange={(e) => onUpdateSettings({ maxCacheSizeMB: Number(e.target.value) })}
-              className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
-            />
-          </div>
         </div>
       </section>
     </div>

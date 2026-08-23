@@ -7,7 +7,6 @@ import {
   Play,
   Trash2,
   Edit,
-  HardDrive,
   ArrowUpDown,
   Music,
   EyeOff,
@@ -17,7 +16,6 @@ import {
   LogIn,
   CheckCircle2
 } from "lucide-react";
-import { getAllCachedTracks, getCacheSizeMB, removeCachedTrack } from "../utils/offlineCache";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { ManageVisibilityModal } from "./ManageVisibilityModal";
@@ -64,9 +62,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   user,
   onOpenAuthModal,
 }) => {
-  const [cachedTracks, setCachedTracks] = useState<Track[]>([]);
-  const [cacheSizeMB, setCacheSizeMB] = useState(0);
-  const [isOfflineCacheExpanded, setIsOfflineCacheExpanded] = useState(true);
   const [showHidden, setShowHidden] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [toastText, setToastText] = useState<string | null>(null);
@@ -118,16 +113,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     });
   };
 
-  useEffect(() => {
-    const loadCachedTracks = async () => {
-      const cached = await getAllCachedTracks();
-      setCachedTracks(cached);
-      const size = await getCacheSizeMB();
-      setCacheSizeMB(size);
-    };
-    loadCachedTracks();
-  }, []);
-
   // Filter and deduplicate playlists
   const cleanPlaylists = useMemo(() => {
     const seen = new Set<string>();
@@ -168,23 +153,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     });
   }, [cleanPlaylists, hiddenPlaylistIds, showHidden, sortOption]);
 
-  const cleanCachedTracks = useMemo(() => {
-    const seen = new Set<string>();
-    return (cachedTracks || []).filter((tr) => {
-      if (!tr) return false;
-      const id = tr.id || tr.youtubeVideoId;
-      if (!id || seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    });
-  }, [cachedTracks]);
-
-  const handleRemoveFromCache = async (trackId: string) => {
-    await removeCachedTrack(trackId);
-    const updated = cachedTracks.filter((t) => (t.id || t.youtubeVideoId) !== trackId);
-    setCachedTracks(updated);
-  };
-
   const hiddenCount = hiddenPlaylistIds.filter((id) => cleanPlaylists.some((pl) => pl.id === id)).length;
 
   return (
@@ -199,7 +167,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 Library Playlists
               </h2>
               <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
-                All your curated YouTube Music collections with live track counts and offline synchronization.
+                All your curated YouTube Music collections with live track counts and instant synchronization.
               </p>
             </div>
 
@@ -401,63 +369,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             </div>
           )}
         </div>
-
-        {/* Cached Offline Tracks Section */}
-        {cleanCachedTracks.length > 0 && (
-          <div className={`border-t ${designConfig.borderSubtle} pt-8 space-y-4`}>
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => setIsOfflineCacheExpanded(!isOfflineCacheExpanded)}
-            >
-              <div>
-                <h2 className={`text-lg font-bold ${designConfig.headingPrimary} flex items-center gap-2`}>
-                  <HardDrive className={`w-5 h-5 ${designConfig.accentText}`} />
-                  Offline Storage ({cacheSizeMB.toFixed(1)} MB)
-                </h2>
-                <p className={`text-xs ${designConfig.headingMuted} font-medium`}>
-                  {cleanCachedTracks.length} tracks cached locally for zero-latency playback.
-                </p>
-              </div>
-              <ArrowUpDown className={`w-4 h-4 ${designConfig.textMuted} transition-transform ${isOfflineCacheExpanded ? "rotate-180" : ""}`} />
-            </div>
-
-            {isOfflineCacheExpanded && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
-                {cleanCachedTracks.map((track, idx) => (
-                  <div
-                    key={track.id || `cache_${idx}`}
-                    className={`group flex items-center justify-between p-2.5 ${designConfig.cardBg} rounded-xl ${designConfig.cardHover} transition-colors border border-transparent hover:${designConfig.borderSubtle}`}
-                  >
-                    <div
-                      onClick={() => onPlayQueue(cleanCachedTracks, idx)}
-                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                    >
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0">
-                        <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <Play className="w-3.5 h-3.5 text-white fill-white" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-semibold ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText}`}>{track.title}</p>
-                        <p className={`text-[11px] ${designConfig.textMuted} truncate`}>{track.artist}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleRemoveFromCache(track.id)}
-                        className="p-1.5 hover:bg-rose-500/20 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
-                        title="Remove from offline cache"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Hide / Unhide Management Modal */}

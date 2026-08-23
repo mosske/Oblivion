@@ -57,11 +57,130 @@ html, body {
   }
 }
 
+/* 1. Ambient Zoom & Drift Animation */
+@keyframes bgDrift {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1.25) rotate(0deg);
+  }
+  30% {
+    transform: translate3d(4%, 2%, 0) scale(1.42) rotate(2deg);
+  }
+  65% {
+    transform: translate3d(-2%, 4%, 0) scale(1.32) rotate(-1.8deg);
+  }
+  100% {
+    transform: translate3d(-3%, -2%, 0) scale(1.25) rotate(0deg);
+  }
+}
+
+@keyframes bgDriftSecondary {
+  0% {
+    transform: translate3d(4%, 3%, 0) scale(1.35) rotate(-1.5deg);
+  }
+  40% {
+    transform: translate3d(-4%, -2%, 0) scale(1.22) rotate(1.5deg);
+  }
+  75% {
+    transform: translate3d(2%, -4%, 0) scale(1.45) rotate(-0.8deg);
+  }
+  100% {
+    transform: translate3d(4%, 3%, 0) scale(1.35) rotate(-1.5deg);
+  }
+}
+
+/* 2. Aurora Pulse Animation */
+@keyframes auroraPulse {
+  0%, 100% {
+    transform: scale(1.15) translate3d(0, 0, 0);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.45) translate3d(0, -3%, 0);
+    opacity: 0.95;
+  }
+}
+
+@keyframes auroraGlowSurge {
+  0%, 100% {
+    transform: scale(1.05) translate3d(-5%, 3%, 0) rotate(0deg);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.4) translate3d(5%, -3%, 0) rotate(8deg);
+    opacity: 0.95;
+  }
+}
+
+/* 3. Orbital Flow Animation */
+@keyframes orbitalClockwise {
+  0% {
+    transform: rotate(0deg) scale(1.25);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.5);
+  }
+  100% {
+    transform: rotate(360deg) scale(1.25);
+  }
+}
+
+@keyframes orbitalCounter {
+  0% {
+    transform: rotate(360deg) scale(1.4);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.18);
+  }
+  100% {
+    transform: rotate(0deg) scale(1.4);
+  }
+}
+
 .animate-ambient-pulse {
   animation: ambientPulse 10s ease-in-out infinite alternate;
 }
 
 .animate-ambient-orb {
   animation: ambientOrb 14s ease-in-out infinite alternate;
+}
+
+.animate-bg-drift {
+  animation: bgDrift 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-bg-drift-sec {
+  animation: bgDriftSecondary 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-aurora-pulse {
+  animation: auroraPulse 7s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-aurora-surge {
+  animation: auroraGlowSurge 9s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-orbital-flow {
+  animation: orbitalClockwise 18s linear infinite;
+  will-change: transform;
+}
+
+.animate-orbital-counter {
+  animation: orbitalCounter 24s linear infinite;
+  will-change: transform;
+}
+
+/* YouTube Video Stream Engine Wrapper & Embedded IFrame */
+#oblivion-yt-wrapper iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 1rem !important;
+  pointer-events: auto !important;
+  display: block !important;
 }
 

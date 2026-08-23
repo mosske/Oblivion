@@ -15,6 +15,7 @@ import {
   Disc3,
   Loader2,
   RefreshCw,
+  Video,
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -54,6 +55,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [newReleases, setNewReleases] = useState<Album[]>([]);
   const [charts, setCharts] = useState<ChartTrack[]>([]);
+  const [trendingVideos, setTrendingVideos] = useState<Track[]>([]);
   const [moods, setMoods] = useState<MoodItem[]>([]);
   const [genres, setGenres] = useState<MoodItem[]>([]);
 
@@ -73,11 +75,12 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         headers["Authorization"] = `Bearer ${activeToken}`;
       }
 
-      const res = await fetch("/api/youtube/explore", { headers });
+      const res = await fetch(`/api/youtube/explore?_t=${Date.now()}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setNewReleases(data.newReleases || []);
         setCharts(data.charts || []);
+        setTrendingVideos(data.trendingVideos || []);
         setMoods(data.moodsAndMoments || []);
         setGenres(data.genres || []);
       }
@@ -295,7 +298,78 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             </section>
           )}
 
-          {/* 3. Moods & Moments */}
+          {/* 3. Trending Music Videos */}
+          {trendingVideos.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Video className="w-5 h-5 text-red-500" />
+                  <div>
+                    <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                      Trending Music Videos
+                    </h2>
+                    <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>Top viral music videos from YouTube</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onPlayQueue(trendingVideos, 0)}
+                  className={`px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Play all</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+                {trendingVideos.map((video, idx) => {
+                  const vId = video.id || video.youtubeVideoId;
+                  const isCurrent = currentTrackId === vId;
+
+                  return (
+                    <div
+                      key={vId || idx}
+                      onClick={() => onPlayQueue(trendingVideos, idx)}
+                      className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${designConfig.cardBg} ${designConfig.cardHover} border border-transparent hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl`}
+                    >
+                      <div className="relative aspect-video rounded-xl overflow-hidden mb-2.5 bg-black/20 shadow-inner">
+                        <img
+                          src={video.coverUrl}
+                          alt={video.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.src =
+                              "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <div className="p-2.5 rounded-full bg-white text-black shadow-lg transform group-hover:scale-110 transition-transform">
+                            <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                          </div>
+                        </div>
+                        {video.duration ? (
+                          <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-mono">
+                            {formatDuration(video.duration)}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-bold text-xs ${isCurrent ? designConfig.accentText : designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
+                          {cleanTrackTitle(video.title)}
+                        </h3>
+                        <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
+                          {video.artist}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* 4. Moods & Moments */}
           {moods.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">

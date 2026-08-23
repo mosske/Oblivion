@@ -16,17 +16,14 @@ import {
   Sparkles,
   ListMusic,
   Radio,
-  DownloadCloud,
   Heart,
-  Check,
   Music2,
   Plus,
-  CheckCircle2,
-  Share2
+  Share2,
+  Video
 } from "lucide-react";
 import { LyricsView } from "./LyricsView";
 import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
-import { cacheTrackAudio, isTrackCached, getCachedTrackAudioUrl } from "../utils/offlineCache";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
@@ -110,10 +107,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
   switch (design.id) {
     case "designer":
       return {
-        bgCanvas: "bg-gradient-to-b from-[#081e17] via-[#0d2820] to-[#040f0b]",
-        orb1: "bg-[#c89b3c]/25",
-        orb2: "bg-emerald-600/20",
-        veil: "bg-gradient-to-b from-[#081e17]/90 via-[#081e17]/50 to-[#040f0b]/95",
+        bgCanvas: "bg-[#06120e]",
+        orb1: "bg-amber-400/55",
+        orb2: "bg-emerald-400/45",
+        veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#fbfaf7]/95 border-[#e6e2d8] text-[#181816] shadow-sm",
         minimizeBtn: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border-[#d8d2c4] shadow-sm",
         nowPlayingDot: "bg-[#c89b3c]",
@@ -121,7 +118,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         nowPlayingTitle: "text-[#181816]",
         tabActive: "bg-[#c89b3c] text-white border-[#c89b3c] shadow-md font-bold",
         tabInactive: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border-[#d8d2c4]",
-        artGlowRing: "from-[#c89b3c]/40 via-emerald-600/30 to-[#c89b3c]/40",
+        artGlowRing: "from-[#c89b3c]/50 via-emerald-500/40 to-[#c89b3c]/50",
         artBorder: "border-[#e6e2d8]/60 shadow-[0_25px_60px_rgba(0,0,0,0.6)]",
         stageTitle: "text-white drop-shadow-md",
         stageArtist: "text-[#c89b3c]",
@@ -140,10 +137,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
       };
     case "cyberpunk-neon":
       return {
-        bgCanvas: "bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950",
-        orb1: "bg-cyan-500/30",
-        orb2: "bg-fuchsia-600/25",
-        veil: "bg-gradient-to-b from-slate-950/90 via-slate-950/50 to-slate-950/95",
+        bgCanvas: "bg-[#070913]",
+        orb1: "bg-cyan-400/60",
+        orb2: "bg-fuchsia-500/50",
+        veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-slate-950/90 border-slate-800/80 text-white shadow-sm",
         minimizeBtn: "bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border-slate-700/80 shadow-sm",
         nowPlayingDot: "bg-cyan-400",
@@ -151,7 +148,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         nowPlayingTitle: "text-white",
         tabActive: "bg-cyan-400 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] font-bold",
         tabInactive: "bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700",
-        artGlowRing: "from-cyan-500/40 via-fuchsia-500/30 to-cyan-500/40",
+        artGlowRing: "from-cyan-500/50 via-fuchsia-500/40 to-cyan-500/50",
         artBorder: "border-cyan-500/40 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
         stageTitle: "text-white drop-shadow-md",
         stageArtist: "text-cyan-400",
@@ -170,10 +167,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
       };
     case "ytmusic-red":
       return {
-        bgCanvas: "bg-gradient-to-b from-[#0f0f0f] via-[#141414] to-[#0f0f0f]",
-        orb1: "bg-red-600/30",
-        orb2: "bg-rose-950/40",
-        veil: "bg-gradient-to-b from-[#0f0f0f]/90 via-[#0f0f0f]/50 to-[#0f0f0f]/95",
+        bgCanvas: "bg-[#0a0a0a]",
+        orb1: "bg-red-500/60",
+        orb2: "bg-rose-600/45",
+        veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#0f0f0f]/95 border-neutral-800 text-white shadow-sm",
         minimizeBtn: "bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border-neutral-700/80 shadow-sm",
         nowPlayingDot: "bg-red-600",
@@ -181,7 +178,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         nowPlayingTitle: "text-white",
         tabActive: "bg-red-600 text-white border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)] font-bold",
         tabInactive: "bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border-neutral-700",
-        artGlowRing: "from-red-600/40 via-rose-900/30 to-amber-600/20",
+        artGlowRing: "from-red-600/50 via-rose-900/40 to-amber-600/30",
         artBorder: "border-neutral-700/80 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
         stageTitle: "text-white drop-shadow-md",
         stageArtist: "text-red-500",
@@ -200,10 +197,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
       };
     case "dynamic-emerald":
       return {
-        bgCanvas: "bg-gradient-to-b from-black via-zinc-950 to-black",
-        orb1: "bg-emerald-500/30",
-        orb2: "bg-teal-600/20",
-        veil: "bg-gradient-to-b from-black/90 via-black/50 to-black/95",
+        bgCanvas: "bg-[#040d08]",
+        orb1: "bg-emerald-400/60",
+        orb2: "bg-teal-400/45",
+        veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-black/95 border-zinc-800/80 text-white shadow-sm",
         minimizeBtn: "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 shadow-sm",
         nowPlayingDot: "bg-emerald-500",
@@ -211,7 +208,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         nowPlayingTitle: "text-zinc-100",
         tabActive: "bg-emerald-500 text-slate-950 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)] font-bold",
         tabInactive: "bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800",
-        artGlowRing: "from-emerald-500/40 via-teal-500/30 to-emerald-500/40",
+        artGlowRing: "from-emerald-500/50 via-teal-500/40 to-emerald-500/50",
         artBorder: "border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
         stageTitle: "text-white drop-shadow-md",
         stageArtist: "text-emerald-400",
@@ -230,10 +227,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
       };
     case "audiophile-gold":
       return {
-        bgCanvas: "bg-gradient-to-b from-[#14100c] via-[#1c1612] to-[#14100c]",
-        orb1: "bg-amber-500/30",
-        orb2: "bg-yellow-600/20",
-        veil: "bg-gradient-to-b from-[#14100c]/90 via-[#14100c]/50 to-[#14100c]/95",
+        bgCanvas: "bg-[#0e0a07]",
+        orb1: "bg-amber-400/60",
+        orb2: "bg-yellow-500/45",
+        veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#14100c]/95 border-amber-900/40 text-amber-50 shadow-sm",
         minimizeBtn: "bg-[#221c17] hover:bg-[#2c241e] text-amber-100 border-amber-900/50 shadow-sm",
         nowPlayingDot: "bg-amber-500",
@@ -241,7 +238,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         nowPlayingTitle: "text-amber-100",
         tabActive: "bg-amber-500 text-stone-950 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)] font-bold",
         tabInactive: "bg-[#221c17] hover:bg-[#2c241e] text-amber-200 border-amber-900/50",
-        artGlowRing: "from-amber-500/40 via-yellow-600/30 to-amber-500/40",
+        artGlowRing: "from-amber-500/50 via-yellow-600/40 to-amber-500/50",
         artBorder: "border-amber-900/50 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
         stageTitle: "text-amber-50 drop-shadow-md",
         stageArtist: "text-amber-400",
@@ -261,10 +258,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
     case "twilight-vaporwave":
     default:
       return {
-        bgCanvas: "bg-gradient-to-b from-[#1e1035] via-[#160a29] to-[#0d051a]",
-        orb1: "bg-purple-600/30",
-        orb2: "bg-pink-600/25",
-        veil: "bg-gradient-to-b from-[#1e1035]/90 via-[#1e1035]/50 to-[#0d051a]/95",
+        bgCanvas: "bg-[#0e0618]",
+        orb1: "bg-purple-400/60",
+        orb2: "bg-pink-400/50",
+        veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#160a29]/95 border-purple-800/40 text-purple-50 shadow-sm",
         minimizeBtn: "bg-purple-950/80 hover:bg-purple-900 text-purple-200 border-purple-800/50 shadow-sm",
         nowPlayingDot: "bg-purple-500",
@@ -272,7 +269,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         nowPlayingTitle: "text-purple-100",
         tabActive: "bg-purple-600 text-white border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)] font-bold",
         tabInactive: "bg-purple-950/80 hover:bg-purple-900 text-purple-200 border-purple-800/50",
-        artGlowRing: "from-purple-500/40 via-pink-500/30 to-purple-500/40",
+        artGlowRing: "from-purple-500/50 via-pink-500/40 to-purple-500/50",
         artBorder: "border-purple-800/50 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
         stageTitle: "text-purple-50 drop-shadow-md",
         stageArtist: "text-purple-300",
@@ -319,10 +316,67 @@ export const Player: React.FC<PlayerProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
 
 
-  const [isCachedOffline, setIsCachedOffline] = useState(false);
-  const [isCaching, setIsCaching] = useState(false);
-  const [cacheProgress, setCacheProgress] = useState(0);
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
+  const [seekValue, setSeekValue] = useState<number>(0);
+
+  // Swipe-down gesture state for collapsing Full Player back to mini player
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartTime, setTouchStartTime] = useState<number>(0);
+  const [dragOffsetY, setDragOffsetY] = useState<number>(0);
+  const [isDraggingDown, setIsDraggingDown] = useState<boolean>(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setTouchStartY(touch.clientY);
+    setTouchStartX(touch.clientX);
+    setTouchStartTime(Date.now());
+    setIsDraggingDown(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY === null || touchStartX === null) return;
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - touchStartY;
+    const deltaX = touch.clientX - touchStartX;
+
+    // Only activate drag-down if pulling downwards and predominantly vertical
+    if (deltaY > 6 && deltaY > Math.abs(deltaX) * 1.1) {
+      const target = e.target as HTMLElement | null;
+      const scrollContainer = target?.closest(".overflow-y-auto, .custom-scrollbar") as HTMLElement | null;
+      if (scrollContainer && scrollContainer.scrollTop > 5) {
+        return;
+      }
+
+      setIsDraggingDown(true);
+      const dampedOffset = deltaY < 180 ? deltaY : 180 + (deltaY - 180) * 0.45;
+      setDragOffsetY(dampedOffset);
+    } else if (deltaY <= 0 && isDraggingDown) {
+      setDragOffsetY(0);
+      setIsDraggingDown(false);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - touchStartY;
+    const deltaX = touchStartX !== null ? touch.clientX - touchStartX : 0;
+    const duration = Math.max(1, Date.now() - touchStartTime);
+    const velocityY = deltaY / duration;
+
+    // Minimize if swiped down past 75px or quick flick down > 35px
+    if ((deltaY > 75 || (deltaY > 35 && velocityY > 0.35)) && deltaY > Math.abs(deltaX)) {
+      setPlayerState((prev) => ({ ...prev, isFullscreen: false }));
+    }
+
+    setTouchStartY(null);
+    setTouchStartX(null);
+    setDragOffsetY(0);
+    setIsDraggingDown(false);
+  };
 
   const {
     currentTrack,
@@ -463,14 +517,14 @@ export const Player: React.FC<PlayerProps> = ({
         if (!streamContainer) return;
 
         ytPlayerRef.current = new window.YT.Player("oblivion-yt-stream-engine", {
-          height: "200",
-          width: "200",
+          height: "100%",
+          width: "100%",
           videoId: vid,
           playerVars: {
             autoplay: isPlayingRef.current && !userManualPauseRef.current ? 1 : 0,
-            controls: 0,
-            disablekb: 1,
-            fs: 0,
+            controls: 1,
+            disablekb: 0,
+            fs: 1,
             modestbranding: 1,
             rel: 0,
             playsinline: 1,
@@ -548,24 +602,7 @@ export const Player: React.FC<PlayerProps> = ({
       }
     };
 
-    const cachedCheck = async () => {
-      const cached = await isTrackCached(currentTrack.id);
-      setIsCachedOffline(cached);
-      if (cached && audioRef.current) {
-        const cachedBlob = await getCachedTrackAudioUrl(currentTrack.id);
-        if (cachedBlob) {
-          audioRef.current.src = cachedBlob;
-          audioRef.current.loop = false;
-          if (isPlaying && !userManualPauseRef.current) {
-            audioRef.current.play().catch(() => {});
-          }
-          return;
-        }
-      }
-      resolveAndPlay();
-    };
-
-    cachedCheck();
+    resolveAndPlay();
   }, [currentTrack?.id, currentTrack?.youtubeVideoId]);
 
   // Sync isPlaying state to players and maintain background audio keepalive
@@ -582,21 +619,19 @@ export const Player: React.FC<PlayerProps> = ({
 
     if (audioRef.current) {
       if (isPlaying) {
-        if (!isCachedOffline) {
-          // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
-          const silentUrl = getSilentAudioUrl();
-          if (audioRef.current.src !== silentUrl) {
-            audioRef.current.src = silentUrl;
-            audioRef.current.loop = true;
-            audioRef.current.volume = 0.001;
-          }
+        // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
+        const silentUrl = getSilentAudioUrl();
+        if (audioRef.current.src !== silentUrl) {
+          audioRef.current.src = silentUrl;
+          audioRef.current.loop = true;
+          audioRef.current.volume = 0.001;
         }
         audioRef.current.play().catch(() => {});
       } else if (!isChangingTrackRef.current) {
         audioRef.current.pause();
       }
     }
-  }, [isPlaying, isCachedOffline]);
+  }, [isPlaying]);
 
   // Sync volume state to players
   useEffect(() => {
@@ -606,31 +641,29 @@ export const Player: React.FC<PlayerProps> = ({
         ytPlayerRef.current.setVolume?.(effectiveVolume * 100);
       } catch {}
     }
-    if (audioRef.current && isCachedOffline) {
-      audioRef.current.volume = effectiveVolume;
-    }
-  }, [volume, isMuted, isCachedOffline]);
+  }, [volume, isMuted]);
 
   // Timer loop for YouTube current timestamp & progress
   useEffect(() => {
     const interval = setInterval(() => {
-      if (isPlaying && isYtReadyRef.current && ytPlayerRef.current && !isCachedOffline) {
+      if (isPlaying && isYtReadyRef.current && ytPlayerRef.current) {
         try {
-          const curTime = ytPlayerRef.current.getCurrentTime?.() || 0;
-          const dur = ytPlayerRef.current.getDuration?.() || currentTrack?.duration || 0;
-          if (curTime > 0) {
+          const curTime = ytPlayerRef.current.getCurrentTime?.();
+          const ytDur = ytPlayerRef.current.getDuration?.();
+          const validDur = (ytDur && ytDur > 0) ? ytDur : (currentTrack?.duration || 0);
+          if (typeof curTime === "number" && !isNaN(curTime) && curTime >= 0) {
             setPlayerState((prev) => ({
               ...prev,
               currentTime: curTime,
-              duration: dur || prev.duration,
+              duration: validDur > 0 ? validDur : prev.duration,
             }));
           }
         } catch {}
       }
-    }, 500);
+    }, 250);
 
     return () => clearInterval(interval);
-  }, [isPlaying, isCachedOffline, currentTrack?.duration]);
+  }, [isPlaying, currentTrack?.id, currentTrack?.duration]);
 
   // User manual play/pause toggle handler
   const handleUserTogglePlay = (explicitPlay?: boolean) => {
@@ -692,7 +725,7 @@ export const Player: React.FC<PlayerProps> = ({
         window.removeEventListener("blur", handleVisibility);
       };
     }
-  }, [settings.backgroundPlay, isPlaying, isCachedOffline]);
+  }, [settings.backgroundPlay, isPlaying]);
 
   // MediaSession API Integration for background playback & Android pull-down notification controls
   useEffect(() => {
@@ -775,16 +808,30 @@ export const Player: React.FC<PlayerProps> = ({
 
   // Time update event handler for HTML5 audio
   const handleTimeUpdate = () => {
-    if (!audioRef.current || !isCachedOffline) return;
-    setPlayerState((prev) => ({
-      ...prev,
-      currentTime: audioRef.current?.currentTime || 0,
-      duration: audioRef.current?.duration || currentTrack?.duration || 0,
-    }));
+    if (!audioRef.current) return;
+    const src = audioRef.current.src || "";
+    // NEVER overwrite currentTime/duration if audio element is playing the silent keepalive WAV or data URL!
+    if (!src || src.startsWith("data:audio/wav") || src.startsWith("blob:") || (cachedSilentUrl && src === cachedSilentUrl)) {
+      return;
+    }
+    const audCur = audioRef.current.currentTime;
+    const audDur = audioRef.current.duration;
+    if (typeof audCur === "number" && !isNaN(audCur) && audCur >= 0) {
+      setPlayerState((prev) => ({
+        ...prev,
+        currentTime: audCur,
+        duration: (audDur && audDur > 0) ? audDur : (currentTrack?.duration || prev.duration),
+      }));
+    }
   };
 
   // Handle track end
   const handleEnded = () => {
+    // Ignore ended event from the silent keepalive loop
+    const src = audioRef.current?.src || "";
+    if (src.startsWith("data:audio/wav") || src.startsWith("blob:") || (cachedSilentUrl && src === cachedSilentUrl)) {
+      return;
+    }
     if (repeatMode === "one") {
       if (isYtReadyRef.current && ytPlayerRef.current) {
         ytPlayerRef.current.seekTo?.(0, true);
@@ -811,19 +858,6 @@ export const Player: React.FC<PlayerProps> = ({
     onSeek(time);
   };
 
-  // Cache Track Offline Action with live progress
-  const handleCacheOffline = async () => {
-    if (!currentTrack || isCaching || isCachedOffline) return;
-    setIsCaching(true);
-    setCacheProgress(0);
-
-    const success = await cacheTrackAudio(currentTrack, (pct) => setCacheProgress(pct));
-    setIsCaching(false);
-    if (success) {
-      setIsCachedOffline(true);
-    }
-  };
-
   // Cycle Repeat Mode
   const cycleRepeatMode = () => {
     setPlayerState((prev) => ({
@@ -837,13 +871,29 @@ export const Player: React.FC<PlayerProps> = ({
     }));
   };
 
+  const isVideoModeActive =
+    isFullscreen &&
+    playerState.mediaMode === "video" &&
+    !showLyrics &&
+    !showSimilar &&
+    !showAddToPlaylistModal;
+
   return (
     <>
-      {/* Background-persistent YouTube IFrame Streaming Engine */}
+      {/* Background-persistent YouTube IFrame Streaming Engine Wrapper */}
       <div
-        id="oblivion-yt-stream-engine"
-        className="fixed bottom-0 right-0 w-4 h-4 pointer-events-none opacity-[0.01] z-0 overflow-hidden"
-      />
+        id="oblivion-yt-wrapper"
+        className={`transition-all duration-300 ${
+          isVideoModeActive
+            ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-16 sm:-mt-14 w-[min(92vw,560px)] aspect-video rounded-2xl shadow-2xl z-[105] border border-white/20 overflow-hidden bg-black pointer-events-auto opacity-100 visible"
+            : "fixed bottom-0 right-0 w-2 h-2 pointer-events-none opacity-[0.001] z-[-10] overflow-hidden invisible"
+        }`}
+      >
+        <div
+          id="oblivion-yt-stream-engine"
+          className="w-full h-full"
+        />
+      </div>
 
       {/* Hidden Native Audio Element for Offline Cache & Mobile Background Audio Session */}
       <audio
@@ -906,64 +956,182 @@ export const Player: React.FC<PlayerProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Fullscreen Player Modal / Expansion - 100% Full-Screen Opaque Immersive Studio */}
+      )}      {/* Fullscreen Player Modal / Expansion - 100% Full-Screen Opaque Immersive Studio */}
       {isFullscreen && (
-        <div className={`fixed inset-0 z-[100] w-screen h-screen min-h-screen ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}>
-          {/* Animated Dynamic Ambient Background based on the HD Cover Art & Theme Orbs */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={() => {
+            setTouchStartY(null);
+            setTouchStartX(null);
+            setDragOffsetY(0);
+            setIsDraggingDown(false);
+          }}
+          style={{
+            transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
+            opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
+            transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
+          }}
+          className={`fixed inset-0 z-[100] w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}
+        >
+          {/* Animated Dynamic Ambient Background based on the HD Cover Art / Video Thumbnail & Active Theme */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-            {/* Layer 1: Ambient Pulsing Blurred Artwork */}
-            <img
-              src={getHdCoverUrl(currentTrack.coverUrl)}
-              alt=""
-              className="w-full h-full object-cover blur-[100px] opacity-40 scale-135 animate-ambient-pulse"
-              onError={(e) => {
-                // Fallback to standard cover if HD upscaled URL encounters 404
-                if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                  e.currentTarget.src = currentTrack.coverUrl;
-                }
-              }}
-            />
-            {/* Layer 2: Moving Ambient Color Orbs matching active theme */}
-            <div className={`absolute -top-32 left-1/4 w-[550px] h-[550px] rounded-full ${fpTheme.orb1} blur-[130px] animate-ambient-orb`} />
-            <div className={`absolute -bottom-32 right-1/4 w-[500px] h-[500px] rounded-full ${fpTheme.orb2} blur-[140px] animate-ambient-orb`} />
-            {/* Layer 3: Theme-Specific Gradient Veil */}
+            {settings.playerBackgroundAnimation === "ambient-drift" ? (
+              <>
+                {/* 1. Ambient Zoom & Drift - Dual Offset Parallax Motion */}
+                <div className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift">
+                  <img
+                    src={getHdCoverUrl(currentTrack.coverUrl)}
+                    alt=""
+                    className="w-full h-full object-cover blur-[55px] sm:blur-[75px] opacity-75"
+                    onError={(e) => {
+                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                        e.currentTarget.src = currentTrack.coverUrl;
+                      }
+                    }}
+                  />
+                </div>
+                <div className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift-sec">
+                  <img
+                    src={getHdCoverUrl(currentTrack.coverUrl)}
+                    alt=""
+                    className="w-full h-full object-cover blur-[85px] opacity-45 mix-blend-screen"
+                    onError={(e) => {
+                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                        e.currentTarget.src = currentTrack.coverUrl;
+                      }
+                    }}
+                  />
+                </div>
+                {/* Ambient Drifting Theme Orbs */}
+                <div className={`absolute -top-24 left-10 w-[550px] h-[550px] rounded-full ${fpTheme.orb1} blur-[120px] animate-ambient-orb`} />
+                <div className={`absolute -bottom-24 right-10 w-[500px] h-[500px] rounded-full ${fpTheme.orb2} blur-[130px] animate-ambient-orb`} />
+              </>
+            ) : settings.playerBackgroundAnimation === "aurora-pulse" ? (
+              <>
+                {/* 2. Aurora Pulse - Fluid Breathing & Sweeping Luminous Beams */}
+                <div className="absolute -inset-[15%] flex items-center justify-center pointer-events-none animate-aurora-pulse">
+                  <img
+                    src={getHdCoverUrl(currentTrack.coverUrl)}
+                    alt=""
+                    className="w-full h-full object-cover blur-[50px] sm:blur-[70px] opacity-80 saturate-[1.6]"
+                    onError={(e) => {
+                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                        e.currentTarget.src = currentTrack.coverUrl;
+                      }
+                    }}
+                  />
+                </div>
+                {/* Sweeping Aurora Light Beams */}
+                <div className="absolute -top-16 left-1/4 w-[600px] h-[500px] rounded-full bg-gradient-to-r from-emerald-400/35 via-teal-300/45 to-cyan-400/35 blur-[100px] animate-aurora-surge" />
+                <div className="absolute -bottom-16 right-1/4 w-[550px] h-[480px] rounded-full bg-gradient-to-r from-amber-400/35 via-rose-400/35 to-purple-500/35 blur-[110px] animate-aurora-surge" />
+                <div className={`absolute top-1/4 left-1/4 w-[520px] h-[520px] rounded-full ${fpTheme.orb1} blur-[120px] animate-aurora-pulse`} />
+                <div className={`absolute bottom-1/4 right-1/4 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[130px] animate-aurora-pulse`} />
+              </>
+            ) : settings.playerBackgroundAnimation === "orbital-flow" ? (
+              <>
+                {/* 3. Orbital Flow - Cosmic 360° Rotating Liquid Flow */}
+                <div className="absolute -inset-[25%] flex items-center justify-center pointer-events-none animate-orbital-flow">
+                  <img
+                    src={getHdCoverUrl(currentTrack.coverUrl)}
+                    alt=""
+                    className="w-full h-full object-cover blur-[60px] sm:blur-[80px] opacity-75"
+                    onError={(e) => {
+                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                        e.currentTarget.src = currentTrack.coverUrl;
+                      }
+                    }}
+                  />
+                </div>
+                {/* Counter-rotating Orbital Planetary System */}
+                <div className="absolute inset-0 flex items-center justify-center animate-orbital-counter">
+                  <div className={`absolute -top-24 left-16 w-[500px] h-[500px] rounded-full ${fpTheme.orb1} blur-[100px] opacity-80`} />
+                  <div className={`absolute -bottom-24 right-16 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[110px] opacity-80`} />
+                </div>
+              </>
+            ) : (
+              /* Static Backdrop when Animation is Switched Off */
+              <div className="absolute inset-0">
+                <img
+                  src={getHdCoverUrl(currentTrack.coverUrl)}
+                  alt=""
+                  className="w-full h-full object-cover blur-[75px] opacity-35"
+                  onError={(e) => {
+                    if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                      e.currentTarget.src = currentTrack.coverUrl;
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Layer 3: High-Legibility Contrast Readability Veil */}
             <div className={`absolute inset-0 ${fpTheme.veil}`} />
           </div>
 
-          {/* Top Bar Navigation */}
-          <div className={`relative z-20 flex items-center justify-between p-4 sm:p-6 border-b backdrop-blur-2xl ${fpTheme.topBar}`}>
-            {/* Left: Minimize Button */}
-            <button
-              onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: false }))}
-              className={`p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
-              title="Minimize Full Player"
-            >
-              <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-xs font-semibold hidden sm:inline">Minimize</span>
-            </button>
-
-            {/* Center: Now Playing Info Badge */}
-            <div className="text-center px-4 max-w-md truncate">
-              <div className="flex items-center justify-center gap-2 mb-0.5">
-                <span className={`w-2 h-2 rounded-full ${fpTheme.nowPlayingDot} animate-pulse`}></span>
-                <span className={`text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase ${fpTheme.nowPlayingLabel}`}>
-                  NOW PLAYING IN OBLIVION
-                </span>
-              </div>
-              <p className={`text-xs sm:text-sm font-semibold truncate ${fpTheme.nowPlayingTitle}`}>
-                {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-              </p>
+          {/* Top Bar Navigation with Swipe Handle */}
+          <div className={`relative z-20 shrink-0 flex flex-col px-3.5 pt-2 pb-2.5 sm:px-6 sm:py-3.5 border-b backdrop-blur-2xl ${fpTheme.topBar}`}>
+            {/* Gesture Pull-Down Pill Indicator (Mobile / Touch Friendly) */}
+            <div className="flex justify-center pb-1 -mt-0.5 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-white/40 active:bg-white/70" />
             </div>
 
-            {/* Right: Quick Toggles (Lyrics, Radio, Minimize) */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center justify-between w-full">
+              {/* Left: Minimize Button */}
+              <button
+                onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: false }))}
+                className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
+                title="Minimize Full Player (or swipe down)"
+              >
+                <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="text-xs font-semibold hidden sm:inline">Minimize</span>
+              </button>
+
+            {/* Center: YouTube Music Audio / Video Switcher */}
+            <div className="flex items-center p-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg">
+              <button
+                id="player-toggle-audio-mode"
+                onClick={() => setPlayerState((prev) => ({ ...prev, mediaMode: "song" }))}
+                className={`px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  (playerState.mediaMode || "song") === "song"
+                    ? "bg-white text-black shadow-md"
+                    : "text-white/70 hover:text-white"
+                }`}
+                title="Switch to Audio Mode"
+              >
+                <Music2 className="w-3.5 h-3.5" />
+                <span>Audio</span>
+              </button>
+              <button
+                id="player-toggle-video-mode"
+                onClick={() =>
+                  setPlayerState((prev) => ({
+                    ...prev,
+                    mediaMode: "video",
+                    showLyrics: false,
+                    showSimilar: false,
+                  }))
+                }
+                className={`px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  playerState.mediaMode === "video"
+                    ? "bg-white text-black shadow-md"
+                    : "text-white/70 hover:text-white"
+                }`}
+                title="Switch to Video Mode"
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Video</span>
+              </button>
+            </div>
+
+            {/* Right: Quick Toggles (Lyrics, Radio) */}
+            <div className="flex items-center gap-1.5 sm:gap-3">
               <button
                 onClick={() =>
                   setPlayerState((prev) => ({ ...prev, showLyrics: !prev.showLyrics, showSimilar: false }))
                 }
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                   showLyrics ? fpTheme.tabActive : fpTheme.tabInactive
                 }`}
               >
@@ -975,7 +1143,7 @@ export const Player: React.FC<PlayerProps> = ({
                 onClick={() =>
                   setPlayerState((prev) => ({ ...prev, showSimilar: !prev.showSimilar, showLyrics: false }))
                 }
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                   showSimilar ? fpTheme.tabActive : fpTheme.tabInactive
                 }`}
               >
@@ -984,9 +1152,10 @@ export const Player: React.FC<PlayerProps> = ({
               </button>
             </div>
           </div>
+        </div>
 
           {/* Main Fullscreen Center Body */}
-          <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center p-4 sm:p-6 md:p-8 gap-6 sm:gap-8 overflow-hidden min-h-0">
+          <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto sm:overflow-hidden">
             {/* Lyrics View overlay if active */}
             {showLyrics ? (
               <div className="w-full max-w-2xl h-full flex items-center justify-center">
@@ -1011,15 +1180,40 @@ export const Player: React.FC<PlayerProps> = ({
                   designConfig={designConfig}
                 />
               </div>
+            ) : playerState.mediaMode === "video" ? (
+              /* Music Video Mode on Center Stage */
+              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 max-w-xl w-full animate-fade-in my-auto">
+                {/* 16:9 Invisible Layout Spacer reserving stage dimensions without any redundant frame borders */}
+                <div className="w-[min(92vw,560px)] aspect-video pointer-events-none" />
+
+                {/* Song Title, Artist, & Master Video Tags */}
+                <div className="text-center space-y-1 sm:space-y-1.5 max-w-xs sm:max-w-md w-full px-2">
+                  <h2 className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle}`}>
+                    {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                  </h2>
+                  <p className={`text-xs sm:text-sm md:text-base font-semibold truncate ${fpTheme.stageArtist}`}>
+                    {currentTrack.artist}
+                  </p>
+                  <div className="flex items-center justify-center gap-2 pt-0.5">
+                    <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono flex items-center gap-1 ${fpTheme.stageTagNeutral}`}>
+                      <Video className="w-3 h-3 text-red-500" />
+                      <span>Official Music Video</span>
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagAccent}`}>
+                      HD 1080p
+                    </span>
+                  </div>
+                </div>
+              </div>
             ) : (
-              /* Central HD Album Artwork & Dynamic Stage */
-              <div className="flex flex-col items-center justify-center space-y-6 sm:space-y-7 max-w-md w-full animate-fade-in my-auto">
+              /* Audio / Song Mode: Central HD Album Artwork & Dynamic Stage */
+              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 max-w-md w-full animate-fade-in my-auto">
                 {/* HD Cover Art with Ambient Shadow and Glowing Ring */}
                 <div className="relative group">
                   {/* Subtle dynamic glow ring around the album artwork */}
                   <div className={`absolute -inset-2 rounded-3xl bg-gradient-to-tr ${fpTheme.artGlowRing} blur-xl opacity-75 group-hover:opacity-100 transition duration-500 pointer-events-none`} />
 
-                  <div className={`relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder}`}>
+                  <div className={`relative w-[min(58vw,230px)] h-[min(58vw,230px)] xs:w-[min(64vw,260px)] xs:h-[min(64vw,260px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[34vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} shadow-2xl`}>
                     <img
                       src={getHdCoverUrl(currentTrack.coverUrl)}
                       alt={currentTrack.title}
@@ -1037,18 +1231,18 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
 
                 {/* Song Title, Artist, & Master Quality Tag */}
-                <div className="text-center space-y-2 max-w-xs sm:max-w-md w-full px-2">
-                  <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle}`}>
+                <div className="text-center space-y-1 sm:space-y-1.5 max-w-xs sm:max-w-md w-full px-2">
+                  <h2 className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle}`}>
                     {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                   </h2>
-                  <p className={`text-sm sm:text-base font-semibold truncate ${fpTheme.stageArtist}`}>
+                  <p className={`text-xs sm:text-sm md:text-base font-semibold truncate ${fpTheme.stageArtist}`}>
                     {currentTrack.artist}
                   </p>
-                  <div className="flex items-center justify-center gap-2 pt-1">
-                    <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-mono ${fpTheme.stageTagNeutral}`}>
+                  <div className="flex items-center justify-center gap-2 pt-0.5">
+                    <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagNeutral}`}>
                       {currentTrack.album || "Oblivion HD"}
                     </span>
-                    <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-mono ${fpTheme.stageTagAccent}`}>
+                    <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagAccent}`}>
                       Lossless Audio
                     </span>
                   </div>
@@ -1057,50 +1251,67 @@ export const Player: React.FC<PlayerProps> = ({
             )}
           </div>
 
-          {/* Fullscreen Player Controls Bar */}
-          <div className={`relative z-20 p-5 sm:p-6 border-t backdrop-blur-2xl space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
+          {/* Fullscreen Player Controls Bar - Responsively anchored with safe bottom padding */}
+          <div className={`relative z-20 shrink-0 p-3.5 sm:p-5 pb-5 sm:pb-6 border-t backdrop-blur-2xl space-y-2.5 sm:space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
             {/* Seekbar Slider */}
-            <div className="space-y-1.5">
+            <div className="space-y-1 sm:space-y-1.5">
               <div className="relative flex items-center group cursor-pointer">
                 <input
                   type="range"
                   min={0}
-                  max={duration || 100}
-                  value={currentTime}
+                  max={duration > 0 ? duration : (currentTrack?.duration || 100)}
+                  step={0.1}
+                  value={isSeeking ? seekValue : currentTime}
+                  onMouseDown={() => {
+                    setIsSeeking(true);
+                    setSeekValue(currentTime);
+                  }}
+                  onTouchStart={() => {
+                    setIsSeeking(true);
+                    setSeekValue(currentTime);
+                  }}
                   onChange={(e) => {
-                    const time = Number(e.target.value);
-                    handleSeekInternal(time);
+                    setSeekValue(Number(e.target.value));
+                  }}
+                  onMouseUp={(e) => {
+                    setIsSeeking(false);
+                    const t = Number((e.target as HTMLInputElement).value);
+                    handleSeekInternal(t);
+                  }}
+                  onTouchEnd={() => {
+                    setIsSeeking(false);
+                    handleSeekInternal(seekValue);
                   }}
                   className={`w-full h-2 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.seekbarTrack} ${fpTheme.seekbarAccent}`}
                 />
               </div>
 
-              <div className={`flex items-center justify-between text-xs font-mono ${fpTheme.timeText}`}>
+              <div className={`flex items-center justify-between text-[11px] sm:text-xs font-mono ${fpTheme.timeText}`}>
                 <span>
-                  {Math.floor(currentTime / 60)}:
-                  {String(Math.floor(currentTime % 60)).padStart(2, "0")}
+                  {Math.floor((isSeeking ? seekValue : currentTime) / 60)}:
+                  {String(Math.floor((isSeeking ? seekValue : currentTime) % 60)).padStart(2, "0")}
                 </span>
                 <span>
-                  {Math.floor(duration / 60)}:
-                  {String(Math.floor(duration % 60)).padStart(2, "0")}
+                  {Math.floor((duration || currentTrack?.duration || 0) / 60)}:
+                  {String(Math.floor((duration || currentTrack?.duration || 0) % 60)).padStart(2, "0")}
                 </span>
               </div>
             </div>
 
             {/* Main Buttons Bar: Like, Add to Playlist, Download, Shuffle, Prev, Play/Pause, Next, Repeat, Volume */}
-            <div className="flex items-center justify-between gap-2">
-              {/* Left Group: Like, Add to Playlist, Download */}
-              <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+              {/* Left Group: Like, Add to Playlist */}
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
-                  className={`p-2.5 rounded-xl border transition-all active:scale-95 ${
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${
                     isLiked
                       ? "bg-rose-500/20 text-rose-500 border-rose-500/30"
                       : fpTheme.ctrlBtn
                   }`}
                   title="Like track"
                 >
-                  <Heart className={`w-5 h-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
                 </button>
 
                 {/* Add to Playlist Button */}
@@ -1113,85 +1324,64 @@ export const Player: React.FC<PlayerProps> = ({
                       setShowAddToPlaylistModal(true);
                     }
                   }}
-                  className={`p-2.5 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-semibold active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Add to Playlist"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="hidden md:inline">Add</span>
-                </button>
-
-                {/* Download Song Button with Progress */}
-                <button
-                  onClick={handleCacheOffline}
-                  disabled={isCaching || isCachedOffline}
-                  className={`p-2.5 rounded-xl text-xs flex items-center gap-1.5 border transition-all active:scale-95 ${
-                    isCachedOffline
-                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                      : fpTheme.ctrlBtn
-                  }`}
-                  title={isCachedOffline ? "Saved Locally" : isCaching ? `Downloading (${cacheProgress}%)` : "Download Song"}
-                >
-                  {isCachedOffline ? (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  ) : (
-                    <DownloadCloud className={`w-5 h-5 ${isCaching ? `animate-bounce ${fpTheme.activeText}` : ""}`} />
-                  )}
-                  <span className="hidden md:inline">
-                    {isCachedOffline ? "Saved" : isCaching ? `${cacheProgress}%` : "Download"}
-                  </span>
                 </button>
               </div>
 
               {/* Center Group: Shuffle, Previous, Play/Pause, Next, Repeat */}
-              <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-1.5 sm:gap-4">
                 <button
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                     isShuffle ? fpTheme.activeText : fpTheme.mutedText
                   }`}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
-                  <Shuffle className="w-5 h-5" />
+                  <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 <button
                   onClick={onPrevTrack}
-                  className={`p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`p-2 sm:p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Previous Song"
                 >
-                  <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <SkipBack className="w-4 h-4 sm:w-6 sm:h-6" />
                 </button>
 
                 <button
                   onClick={() => handleUserTogglePlay()}
-                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all active:scale-95 ${fpTheme.playBtn}`}
+                  className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all active:scale-95 ${fpTheme.playBtn}`}
                   title={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
-                    <Pause className={`w-6 h-6 sm:w-7 sm:h-7 ${fpTheme.playIconFill}`} />
+                    <Pause className={`w-5 h-5 sm:w-7 sm:h-7 ${fpTheme.playIconFill}`} />
                   ) : (
-                    <Play className={`w-6 h-6 sm:w-7 sm:h-7 ${fpTheme.playIconFill} ml-0.5`} />
+                    <Play className={`w-5 h-5 sm:w-7 sm:h-7 ${fpTheme.playIconFill} ml-0.5`} />
                   )}
                 </button>
 
                 <button
                   onClick={onNextTrack}
-                  className={`p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`p-2 sm:p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Next Song"
                 >
-                  <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <SkipForward className="w-4 h-4 sm:w-6 sm:h-6" />
                 </button>
 
                 <button
                   onClick={cycleRepeatMode}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                     repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText
                   }`}
                   title={`Repeat: ${repeatMode}`}
                 >
-                  {repeatMode === "one" ? <Repeat1 className="w-5 h-5" /> : <Repeat className="w-5 h-5" />}
+                  {repeatMode === "one" ? <Repeat1 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
               </div>
 
@@ -1292,22 +1482,6 @@ export const Player: React.FC<PlayerProps> = ({
                     title="Add to Playlist"
                   >
                     <Plus className="w-4 h-4" />
-                  </button>
-
-                  {/* Download button on Mini Player */}
-                  <button
-                    onClick={handleCacheOffline}
-                    disabled={isCaching || isCachedOffline}
-                    className={`p-1.5 transition-colors ${
-                      isCachedOffline ? "text-emerald-500" : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                    }`}
-                    title={isCachedOffline ? "Downloaded" : isCaching ? `Downloading (${cacheProgress}%)` : "Download song locally"}
-                  >
-                    {isCachedOffline ? (
-                      <Check className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <DownloadCloud className={`w-4 h-4 ${isCaching ? `animate-bounce ${designConfig.accentText}` : ""}`} />
-                    )}
                   </button>
 
                   <button
@@ -1454,21 +1628,6 @@ export const Player: React.FC<PlayerProps> = ({
                 title="Add to Playlist"
               >
                 <Plus className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={handleCacheOffline}
-                disabled={isCaching || isCachedOffline}
-                className={`p-1.5 transition-colors ${
-                  isCachedOffline ? "text-emerald-500" : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                }`}
-                title={isCachedOffline ? "Downloaded" : "Download"}
-              >
-                {isCachedOffline ? (
-                  <Check className="w-4 h-4 text-emerald-500" />
-                ) : (
-                  <DownloadCloud className={`w-4 h-4 ${isCaching ? `animate-bounce ${designConfig.accentText}` : ""}`} />
-                )}
               </button>
 
               <button

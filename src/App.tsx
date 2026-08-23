@@ -77,7 +77,9 @@ export default function App() {
       const saved = localStorage.getItem("oblivion_saved_playlists");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((p: any) => p && p.id && !p.id.startsWith("mix_"));
+        }
       }
     } catch {}
     return [];
@@ -192,6 +194,7 @@ export default function App() {
           themePreset: parsed.themePreset || "designer-ivory",
           miniPlayerLayout: parsed.miniPlayerLayout || "designer-waveform",
           fullAppDesign: parsed.fullAppDesign || "designer",
+          playerBackgroundAnimation: parsed.playerBackgroundAnimation || "ambient-drift",
           compactMode: parsed.compactMode ?? false,
           lyricsFontSize: parsed.lyricsFontSize || "md",
           lyricsAlignment: parsed.lyricsAlignment || "left",
@@ -211,6 +214,7 @@ export default function App() {
       themePreset: "designer-ivory",
       miniPlayerLayout: "designer-waveform",
       fullAppDesign: "designer",
+      playerBackgroundAnimation: "ambient-drift",
       compactMode: false,
       lyricsFontSize: "md",
       lyricsAlignment: "left",
@@ -287,6 +291,7 @@ export default function App() {
       showLyrics: false,
       showQueue: false,
       showSimilar: false,
+      mediaMode: "song",
       likedTrackIds: [],
     };
     try {
@@ -304,6 +309,7 @@ export default function App() {
             volume: parsed.volume ?? 0.8,
             repeatMode: parsed.repeatMode || "off",
             isShuffle: parsed.isShuffle || false,
+            mediaMode: parsed.mediaMode || "song",
             likedTrackIds: parsed.likedTrackIds || [],
             isPlaying: false,
           };
@@ -379,15 +385,17 @@ export default function App() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (data.isLoggedIn && data.user) {
           const fullUser = { ...data.user, isLoggedIn: true };
           setUser(fullUser);
           localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+          fetchPlaylists(true, fullUser.accessToken);
+        } else {
+          fetchPlaylists();
         }
-        fetchPlaylists();
       })
       .catch((err) => {
         console.error("Auth check error:", err);
@@ -396,36 +404,36 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user?.isLoggedIn) {
-      fetchPlaylists();
+    if (user?.isLoggedIn && user?.accessToken) {
+      fetchPlaylists(true, user.accessToken);
     }
-  }, [user?.isLoggedIn]);
+  }, [user?.isLoggedIn, user?.accessToken]);
 
   const handleLoginSuccess = (loggedUser: User) => {
     const fullUser = { ...loggedUser, isLoggedIn: true };
     setUser(fullUser);
     localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
-    fetchPlaylists();
+    fetchPlaylists(true, loggedUser.accessToken);
     showToast(`Signed in as ${loggedUser.name || loggedUser.email || "Google User"}`);
   };
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     } catch (err) {
       console.error("Logout error:", err);
     }
     setUser(null);
     localStorage.removeItem("oblivion_saved_user");
-    fetchPlaylists();
+    fetchPlaylists(true);
     showToast("Signed out successfully.");
   };
 
   // Fetch Playlists with immediate tracks count
-  const fetchPlaylists = async (forceRefresh: boolean = false) => {
+  const fetchPlaylists = async (forceRefresh: boolean = false, overrideToken?: string) => {
     setIsSyncingYouTube(true);
     try {
-      let activeToken = user?.accessToken;
+      let activeToken = overrideToken || user?.accessToken;
       if (!activeToken) {
         try {
           const saved = localStorage.getItem("oblivion_saved_user");
@@ -439,12 +447,26 @@ export default function App() {
       const headers: Record<string, string> = {};
       if (activeToken) {
         headers["Authorization"] = `Bearer ${activeToken}`;
+        headers["X-Access-Token"] = activeToken;
       }
 
-      const url = forceRefresh ? `/api/youtube/playlists?refresh=true&_t=${Date.now()}` : "/api/youtube/playlists";
-      const res = await fetch(url, { headers });
+      const tokenParam = activeToken ? `&access_token=${encodeURIComponent(activeToken)}` : "";
+      const url = forceRefresh ? `/api/youtube/playlists?refresh=true&_t=${Date.now()}${tokenParam}` : `/api/youtube/playlists?_t=${Date.now()}${tokenParam}`;
+      const res = await fetch(url, { headers, credentials: "include" });
       const data = await res.json();
-      if (data.playlists) {
+
+      if (data.newAccessToken) {
+        setUser((prev) => {
+          if (!prev) return prev;
+          const updated = { ...prev, accessToken: data.newAccessToken };
+          try {
+            localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+
+      if (data.playlists && Array.isArray(data.playlists)) {
         const seenPlIds = new Set<string>();
         const sanitizedPlaylists: Playlist[] = [];
         const customCoversMap = getStoredCustomCovers();
@@ -496,10 +518,28 @@ export default function App() {
           });
         }
 
-        setPlaylists(sanitizedPlaylists);
+        // Also merge any locally stored custom and cached playlists
         try {
-          localStorage.setItem("oblivion_saved_playlists", JSON.stringify(sanitizedPlaylists));
+          const locallyStored = localStorage.getItem("oblivion_saved_playlists");
+          if (locallyStored) {
+            const parsedLocal = JSON.parse(locallyStored);
+            if (Array.isArray(parsedLocal)) {
+              for (const locPl of parsedLocal) {
+                if (locPl && locPl.id && !seenPlIds.has(locPl.id)) {
+                  seenPlIds.add(locPl.id);
+                  sanitizedPlaylists.push(locPl);
+                }
+              }
+            }
+          }
         } catch {}
+
+        if (sanitizedPlaylists.length > 0 || !activeToken) {
+          setPlaylists(sanitizedPlaylists);
+          try {
+            localStorage.setItem("oblivion_saved_playlists", JSON.stringify(sanitizedPlaylists));
+          } catch {}
+        }
 
         // Sync currently viewed playlist if one is open
         setSelectedPlaylist((prev) => {
@@ -1336,7 +1376,7 @@ export default function App() {
           setIsPlaylistModalOpen(true);
         }}
         isSyncingYouTube={isSyncingYouTube}
-        onSyncYouTube={fetchPlaylists}
+        onSyncYouTube={() => fetchPlaylists(true, user?.accessToken)}
         activeTheme={settings.themePreset}
         designConfig={activeFullDesign}
         onInstallPwa={handleInstallPwa}
@@ -1634,7 +1674,7 @@ export default function App() {
                 onSyncPlaylistTracks={handleSyncPlaylistTracks}
                 designConfig={activeFullDesign}
                 isSyncingYouTube={isSyncingYouTube}
-                onSyncYouTube={fetchPlaylists}
+                onSyncYouTube={() => fetchPlaylists(true, user?.accessToken)}
                 user={user}
                 onOpenAuthModal={() => setIsAuthModalOpen(true)}
               />

@@ -90,6 +90,12 @@ export type AudioQuality = 'normal' | 'high' | 'lossless';
 export type LyricsFontSize = 'sm' | 'md' | 'lg';
 export type LyricsAlignment = 'left' | 'center';
 
+export type PlayerBackgroundAnimation = 
+  | 'ambient-drift'  // 1. Ambient Zoom & Drift (Cinematic slow Ken Burns zoom, pan & floating aura)
+  | 'aurora-pulse'   // 2. Aurora Pulse (Breathing fluid gradient chromatic pulsation)
+  | 'orbital-flow'   // 3. Orbital Flow (Rotating dynamic glowing orbital color rings & blurred canvas wave)
+  | 'off';           // 4. Off (Static clean backdrop without motion)
+
 export type MiniPlayerLayout = 
   | 'designer-waveform'  // Option 6: Designer Floating Ivory Dock with Golden Waveform
   | 'floating-dock'      // Option 1: Floating Glass Pill Deck (Default modern floating capsule)
@@ -115,6 +121,7 @@ export interface UserSettings {
   themePreset: ThemePreset;
   miniPlayerLayout: MiniPlayerLayout;
   fullAppDesign: FullAppDesignId;
+  playerBackgroundAnimation: PlayerBackgroundAnimation;
   compactMode: boolean;
   lyricsFontSize: LyricsFontSize;
   lyricsAlignment: LyricsAlignment;
@@ -137,6 +144,7 @@ export interface PlayerState {
   showLyrics: boolean;
   showQueue: boolean;
   showSimilar: boolean;
+  mediaMode?: 'song' | 'video'; // Audio (Song) vs Music Video Mode in Full Player
   likedTrackIds: string[];
 }
 
