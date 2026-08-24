@@ -145,32 +145,32 @@ html, body {
 }
 
 .animate-bg-drift {
-  animation: bgDrift 14s ease-in-out infinite;
+  animation: bgDrift 12s ease-in-out infinite;
   will-change: transform;
 }
 
 .animate-bg-drift-sec {
-  animation: bgDriftSecondary 18s ease-in-out infinite;
+  animation: bgDriftSecondary 15s ease-in-out infinite;
   will-change: transform;
 }
 
 .animate-aurora-pulse {
-  animation: auroraPulse 7s ease-in-out infinite;
+  animation: auroraPulse 8s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
 .animate-aurora-surge {
-  animation: auroraGlowSurge 9s ease-in-out infinite;
+  animation: auroraGlowSurge 9.5s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
 .animate-orbital-flow {
-  animation: orbitalClockwise 18s linear infinite;
+  animation: orbitalClockwise 12s linear infinite;
   will-change: transform;
 }
 
 .animate-orbital-counter {
-  animation: orbitalCounter 24s linear infinite;
+  animation: orbitalCounter 16s linear infinite;
   will-change: transform;
 }
 

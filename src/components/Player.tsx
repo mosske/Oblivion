@@ -980,7 +980,10 @@ export const Player: React.FC<PlayerProps> = ({
             {settings.playerBackgroundAnimation === "ambient-drift" ? (
               <>
                 {/* 1. Ambient Zoom & Drift - Dual Offset Parallax Motion */}
-                <div className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift">
+                <div
+                  className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift"
+                  style={{ animationDuration: `${settings.animationDriftSpeed || 12}s` }}
+                >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
                     alt=""
@@ -992,7 +995,10 @@ export const Player: React.FC<PlayerProps> = ({
                     }}
                   />
                 </div>
-                <div className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift-sec">
+                <div
+                  className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift-sec"
+                  style={{ animationDuration: `${(settings.animationDriftSpeed || 12) * 1.25}s` }}
+                >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
                     alt=""
@@ -1011,7 +1017,10 @@ export const Player: React.FC<PlayerProps> = ({
             ) : settings.playerBackgroundAnimation === "aurora-pulse" ? (
               <>
                 {/* 2. Aurora Pulse - Fluid Breathing & Sweeping Luminous Beams */}
-                <div className="absolute -inset-[15%] flex items-center justify-center pointer-events-none animate-aurora-pulse">
+                <div
+                  className="absolute -inset-[15%] flex items-center justify-center pointer-events-none animate-aurora-pulse"
+                  style={{ animationDuration: `${settings.animationAuroraSpeed || 8}s` }}
+                >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
                     alt=""
@@ -1024,15 +1033,30 @@ export const Player: React.FC<PlayerProps> = ({
                   />
                 </div>
                 {/* Sweeping Aurora Light Beams */}
-                <div className="absolute -top-16 left-1/4 w-[600px] h-[500px] rounded-full bg-gradient-to-r from-emerald-400/35 via-teal-300/45 to-cyan-400/35 blur-[100px] animate-aurora-surge" />
-                <div className="absolute -bottom-16 right-1/4 w-[550px] h-[480px] rounded-full bg-gradient-to-r from-amber-400/35 via-rose-400/35 to-purple-500/35 blur-[110px] animate-aurora-surge" />
-                <div className={`absolute top-1/4 left-1/4 w-[520px] h-[520px] rounded-full ${fpTheme.orb1} blur-[120px] animate-aurora-pulse`} />
-                <div className={`absolute bottom-1/4 right-1/4 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[130px] animate-aurora-pulse`} />
+                <div
+                  className="absolute -top-16 left-1/4 w-[600px] h-[500px] rounded-full bg-gradient-to-r from-emerald-400/35 via-teal-300/45 to-cyan-400/35 blur-[100px] animate-aurora-surge"
+                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 8) * 1.2}s` }}
+                />
+                <div
+                  className="absolute -bottom-16 right-1/4 w-[550px] h-[480px] rounded-full bg-gradient-to-r from-amber-400/35 via-rose-400/35 to-purple-500/35 blur-[110px] animate-aurora-surge"
+                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 8) * 1.2}s` }}
+                />
+                <div
+                  className={`absolute top-1/4 left-1/4 w-[520px] h-[520px] rounded-full ${fpTheme.orb1} blur-[120px] animate-aurora-pulse`}
+                  style={{ animationDuration: `${settings.animationAuroraSpeed || 8}s` }}
+                />
+                <div
+                  className={`absolute bottom-1/4 right-1/4 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[130px] animate-aurora-pulse`}
+                  style={{ animationDuration: `${settings.animationAuroraSpeed || 8}s` }}
+                />
               </>
             ) : settings.playerBackgroundAnimation === "orbital-flow" ? (
               <>
                 {/* 3. Orbital Flow - Cosmic 360° Rotating Liquid Flow */}
-                <div className="absolute -inset-[25%] flex items-center justify-center pointer-events-none animate-orbital-flow">
+                <div
+                  className="absolute -inset-[25%] flex items-center justify-center pointer-events-none animate-orbital-flow"
+                  style={{ animationDuration: `${settings.animationOrbitalSpeed || 12}s` }}
+                >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
                     alt=""
@@ -1045,7 +1069,10 @@ export const Player: React.FC<PlayerProps> = ({
                   />
                 </div>
                 {/* Counter-rotating Orbital Planetary System */}
-                <div className="absolute inset-0 flex items-center justify-center animate-orbital-counter">
+                <div
+                  className="absolute inset-0 flex items-center justify-center animate-orbital-counter"
+                  style={{ animationDuration: `${(settings.animationOrbitalSpeed || 12) * 1.35}s` }}
+                >
                   <div className={`absolute -top-24 left-16 w-[500px] h-[500px] rounded-full ${fpTheme.orb1} blur-[100px] opacity-80`} />
                   <div className={`absolute -bottom-24 right-16 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[110px] opacity-80`} />
                 </div>

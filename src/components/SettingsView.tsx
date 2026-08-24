@@ -13,7 +13,9 @@ import {
   Film,
   Activity,
   CircleOff,
-  Eye
+  Eye,
+  RotateCcw,
+  Timer
 } from "lucide-react";
 import { OblivionLogo } from "./OblivionLogo";
 
@@ -234,7 +236,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* FULL PLAYER ANIMATED BACKGROUND VISUALIZER SECTION */}
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-5 shadow-md`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#c89b3c]/20 text-[#855f10] text-[10px] font-mono font-bold tracking-wider mb-1 border border-[#c89b3c]/30">
               <Eye className="w-3 h-3 text-[#c89b3c]" />
@@ -242,32 +244,49 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
             <h3 className="text-base font-bold text-zinc-900 flex items-center gap-2">
               <Film className="w-4 h-4 text-[#c89b3c]" />
-              <span>Full Player Background Animation (3 Modes + Off)</span>
+              <span>Full Player Background Animation & Speed</span>
             </h3>
             <p className="text-xs text-zinc-700 font-medium mt-0.5">
-              Choose the ambient motion visualizer rendered behind the song artwork and music video in Full Player.
+              Select an ambient background animation style and adjust its cycle timing duration directly within each option.
             </p>
           </div>
-          <span className="text-xs px-3 py-1.5 rounded-full font-mono font-bold bg-[#c89b3c] text-slate-950 self-start sm:self-auto shadow-md">
-            Active: {
-              settings.playerBackgroundAnimation === "off"
-                ? "Off (Static)"
-                : settings.playerBackgroundAnimation === "aurora-pulse"
-                ? "Aurora Pulse"
-                : settings.playerBackgroundAnimation === "orbital-flow"
-                ? "Orbital Flow"
-                : "Ambient Zoom & Drift"
-            }
-          </span>
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <button
+              id="reset-animation-timings-btn"
+              onClick={() =>
+                onUpdateSettings({
+                  animationDriftSpeed: 12,
+                  animationAuroraSpeed: 8,
+                  animationOrbitalSpeed: 12,
+                })
+              }
+              className="px-3 py-1.5 rounded-xl bg-white border border-[#d8d2c4] hover:border-[#c89b3c] hover:bg-[#f4f1ea] text-zinc-800 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 shrink-0"
+              title="Reset all animation durations to default (12s, 8s, 12s)"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#c89b3c]" />
+              <span>Reset Defaults (12s, 8s, 12s)</span>
+            </button>
+            <span className="text-xs px-3 py-1.5 rounded-full font-mono font-bold bg-[#c89b3c] text-slate-950 shadow-md">
+              Active: {
+                settings.playerBackgroundAnimation === "off"
+                  ? "Off (Static)"
+                  : settings.playerBackgroundAnimation === "aurora-pulse"
+                  ? "Aurora Pulse"
+                  : settings.playerBackgroundAnimation === "orbital-flow"
+                  ? "Orbital Flow"
+                  : "Ambient Zoom & Drift"
+              }
+            </span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* 1. Ambient Zoom & Drift */}
-          <button
+          <div
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "ambient-drift" })}
-            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               (settings.playerBackgroundAnimation || "ambient-drift") === "ambient-drift"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
           >
@@ -281,23 +300,55 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-2.5 text-amber-700">
                 <Waves className="w-4 h-4" />
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Ambient Zoom & Drift</h4>
-              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
-                Cinematic Ken Burns panning & slow breathing zoom that gently floats across the full screen.
+              <h4 className="text-xs font-bold text-zinc-900 mb-1">1. Ambient Zoom & Drift</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium mb-3">
+                Cinematic Ken Burns panning & slow breathing zoom that gently floats across the screen.
               </p>
             </div>
-            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-[#855f10] font-bold">
-              <span>24s Smooth Drift</span>
-              <span>Smooth</span>
+
+            {/* Embedded Timing Control */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-amber-900">
+                  <Timer className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Cycle Duration</span>
+                </div>
+                <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-amber-800 border border-amber-300 shadow-sm">
+                  {settings.animationDriftSpeed ?? 12}s
+                </span>
+              </div>
+              <input
+                id="ambient-drift-speed-slider"
+                type="range"
+                min="4"
+                max="40"
+                step="1"
+                value={settings.animationDriftSpeed ?? 12}
+                onChange={(e) => {
+                  onUpdateSettings({
+                    animationDriftSpeed: Number(e.target.value),
+                    playerBackgroundAnimation: "ambient-drift",
+                  });
+                }}
+                className="w-full h-1.5 bg-amber-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
+              />
+              <div className="flex justify-between text-[9px] text-amber-800/80 font-mono font-medium">
+                <span>Fast (4s)</span>
+                <span className="font-bold text-amber-900">Default: 12s</span>
+                <span>Slow (40s)</span>
+              </div>
             </div>
-          </button>
+          </div>
 
           {/* 2. Aurora Pulse */}
-          <button
+          <div
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "aurora-pulse" })}
-            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               settings.playerBackgroundAnimation === "aurora-pulse"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
           >
@@ -311,23 +362,55 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-2.5 text-emerald-700">
                 <Activity className="w-4 h-4" />
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Aurora Pulse</h4>
-              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
+              <h4 className="text-xs font-bold text-zinc-900 mb-1">2. Aurora Pulse</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium mb-3">
                 Fluid chromatic aurora rhythm that breathes and pulsates color saturation with the audio.
               </p>
             </div>
-            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-emerald-700 font-bold">
-              <span>12s Color Mesh</span>
-              <span>Dynamic</span>
+
+            {/* Embedded Timing Control */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-900">
+                  <Timer className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Cycle Duration</span>
+                </div>
+                <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-emerald-800 border border-emerald-300 shadow-sm">
+                  {settings.animationAuroraSpeed ?? 8}s
+                </span>
+              </div>
+              <input
+                id="aurora-pulse-speed-slider"
+                type="range"
+                min="3"
+                max="30"
+                step="1"
+                value={settings.animationAuroraSpeed ?? 8}
+                onChange={(e) => {
+                  onUpdateSettings({
+                    animationAuroraSpeed: Number(e.target.value),
+                    playerBackgroundAnimation: "aurora-pulse",
+                  });
+                }}
+                className="w-full h-1.5 bg-emerald-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
+              />
+              <div className="flex justify-between text-[9px] text-emerald-800/80 font-mono font-medium">
+                <span>Fast (3s)</span>
+                <span className="font-bold text-emerald-900">Default: 8s</span>
+                <span>Slow (30s)</span>
+              </div>
             </div>
-          </button>
+          </div>
 
           {/* 3. Orbital Flow */}
-          <button
+          <div
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "orbital-flow" })}
-            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               settings.playerBackgroundAnimation === "orbital-flow"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
           >
@@ -341,23 +424,55 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center mb-2.5 text-violet-700">
                 <Sparkles className="w-4 h-4" />
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Orbital Flow</h4>
-              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
-                Cosmic 360° slow swirl rotating dual blurred artwork aura rings across the background.
+              <h4 className="text-xs font-bold text-zinc-900 mb-1">3. Orbital Flow</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium mb-3">
+                Cosmic 360° swirl rotating dual blurred artwork aura rings across the background.
               </p>
             </div>
-            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-violet-700 font-bold">
-              <span>32s Cosmic Loop</span>
-              <span>Ethereal</span>
+
+            {/* Embedded Timing Control */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-violet-900">
+                  <Timer className="w-3.5 h-3.5 text-violet-700" />
+                  <span>Cycle Duration</span>
+                </div>
+                <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-violet-800 border border-violet-300 shadow-sm">
+                  {settings.animationOrbitalSpeed ?? 12}s
+                </span>
+              </div>
+              <input
+                id="orbital-flow-speed-slider"
+                type="range"
+                min="4"
+                max="40"
+                step="1"
+                value={settings.animationOrbitalSpeed ?? 12}
+                onChange={(e) => {
+                  onUpdateSettings({
+                    animationOrbitalSpeed: Number(e.target.value),
+                    playerBackgroundAnimation: "orbital-flow",
+                  });
+                }}
+                className="w-full h-1.5 bg-violet-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
+              />
+              <div className="flex justify-between text-[9px] text-violet-800/80 font-mono font-medium">
+                <span>Fast (4s)</span>
+                <span className="font-bold text-violet-900">Default: 12s</span>
+                <span>Slow (40s)</span>
+              </div>
             </div>
-          </button>
+          </div>
 
           {/* 4. Off (Static) */}
-          <button
+          <div
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "off" })}
-            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               settings.playerBackgroundAnimation === "off"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md scale-[1.02]"
+                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
           >
@@ -371,16 +486,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="w-8 h-8 rounded-xl bg-zinc-500/15 border border-zinc-500/30 flex items-center justify-center mb-2.5 text-zinc-700">
                 <CircleOff className="w-4 h-4" />
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 mb-0.5">Off (Static Minimal)</h4>
-              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium">
+              <h4 className="text-xs font-bold text-zinc-900 mb-1">4. Off (Static Minimal)</h4>
+              <p className="text-[11px] text-zinc-600 leading-relaxed font-medium mb-3">
                 Classic static dimmed studio background with zero animation for minimal CPU & battery usage.
               </p>
             </div>
-            <div className="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-zinc-600 font-bold">
-              <span>Zero Motion</span>
-              <span>Power Saver</span>
+
+            {/* Embedded Info Box */}
+            <div className="mt-2 p-3 bg-zinc-100 border border-zinc-200 rounded-xl space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-bold text-zinc-800">
+                <span>Static Visuals</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-200 text-zinc-700 font-bold">
+                  Zero Motion
+                </span>
+              </div>
+              <p className="text-[10px] text-zinc-500 leading-tight">
+                No active animation loops running. Maximizes performance & power saving.
+              </p>
             </div>
-          </button>
+          </div>
         </div>
       </section>
 

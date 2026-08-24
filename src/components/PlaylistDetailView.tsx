@@ -273,53 +273,170 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     onPlayQueue(shuffled, 0);
   };
 
+  // Swipe-down gesture state for exiting Playlist/Album view back to previous screen
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartTime, setTouchStartTime] = useState<number>(0);
+  const [dragOffsetY, setDragOffsetY] = useState<number>(0);
+  const [isDraggingDown, setIsDraggingDown] = useState<boolean>(false);
+
+  // Prevent following through scroll onto the new screen when gesture completes
+  const lockScrollFollowThrough = (durationMs = 400) => {
+    const initialScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+    const cancelTouchMove = (e: TouchEvent) => {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    const maintainScroll = () => {
+      if (typeof window !== "undefined") {
+        window.scrollTo(0, initialScrollY);
+      }
+    };
+    const cancelWheel = (e: WheelEvent) => {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("touchmove", cancelTouchMove, { passive: false });
+    window.addEventListener("scroll", maintainScroll, { passive: true });
+    window.addEventListener("wheel", cancelWheel, { passive: false });
+
+    setTimeout(() => {
+      window.removeEventListener("touchmove", cancelTouchMove);
+      window.removeEventListener("scroll", maintainScroll);
+      window.removeEventListener("wheel", cancelWheel);
+    }, durationMs);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    // Only allow swipe down if we are at the top of the viewport
+    const currentScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+    if (currentScrollY > 10) return;
+
+    const touch = e.touches[0];
+    setTouchStartY(touch.clientY);
+    setTouchStartX(touch.clientX);
+    setTouchStartTime(Date.now());
+    setIsDraggingDown(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY === null || touchStartX === null) return;
+    const currentScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+    if (currentScrollY > 10 && !isDraggingDown) return;
+
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - touchStartY;
+    const deltaX = touch.clientX - touchStartX;
+
+    // Only activate drag-down if pulling downwards and predominantly vertical
+    if (deltaY > 6 && deltaY > Math.abs(deltaX) * 1.1) {
+      const target = e.target as HTMLElement | null;
+      const scrollContainer = target?.closest(".overflow-y-auto, .custom-scrollbar") as HTMLElement | null;
+      if (scrollContainer && scrollContainer.scrollTop > 5) {
+        return;
+      }
+
+      setIsDraggingDown(true);
+      const dampedOffset = deltaY < 180 ? deltaY : 180 + (deltaY - 180) * 0.45;
+      setDragOffsetY(dampedOffset);
+    } else if (deltaY <= 0 && isDraggingDown) {
+      setDragOffsetY(0);
+      setIsDraggingDown(false);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - touchStartY;
+    const deltaX = touchStartX !== null ? touch.clientX - touchStartX : 0;
+    const duration = Math.max(1, Date.now() - touchStartTime);
+    const velocityY = deltaY / duration;
+
+    // Exit view if swiped down past 75px or quick flick down > 35px
+    if ((deltaY > 75 || (deltaY > 35 && velocityY > 0.35)) && deltaY > Math.abs(deltaX)) {
+      lockScrollFollowThrough(400);
+      onBack();
+    }
+
+    setTouchStartY(null);
+    setTouchStartX(null);
+    setDragOffsetY(0);
+    setIsDraggingDown(false);
+  };
+
   return (
-    <div className="flex-1 flex flex-col select-none pb-40 md:pb-48">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={() => {
+        setTouchStartY(null);
+        setTouchStartX(null);
+        setDragOffsetY(0);
+        setIsDraggingDown(false);
+      }}
+      style={{
+        transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
+        opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
+        transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
+      }}
+      className="flex-1 flex flex-col select-none pb-40 md:pb-48 will-change-transform"
+    >
       {/* Top Sticky Header with Close (X) Button */}
-      <div className={`sticky top-14 sm:top-16 z-20 flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle} shadow-sm shrink-0`}>
-        <button
-          onClick={onBack}
-          aria-label="Close view"
-          className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm`}
-          title="Close and go back"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className={`sticky top-14 sm:top-16 z-20 flex flex-col px-4 sm:px-6 py-2 sm:py-2.5 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle} shadow-sm shrink-0`}>
+        {/* Subtle pull handle for mobile gesture indicator */}
+        <div className="w-8 h-1 rounded-full bg-zinc-400/40 mx-auto mb-1.5 sm:hidden" />
 
-        <div className="flex items-center gap-2">
-          {saveSuccessBanner && (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-semibold animate-fade-in">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Saved & Synced to YouTube Music!</span>
-            </div>
-          )}
-
-          {/* Live Sync Check Button */}
+        <div className="flex items-center justify-between">
           <button
-            onClick={executeSyncCheck}
-            disabled={isInternalSyncing || isSyncingLive}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95`}
-            title="Sync with YouTube Music to fetch latest songs"
+            onClick={onBack}
+            aria-label="Close view"
+            className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm`}
+            title="Close and go back (or swipe down)"
           >
-            <RefreshCw
-              className={`w-3.5 h-3.5 ${
-                isInternalSyncing || isSyncingLive ? "animate-spin text-[#c89b3c]" : "text-[#c89b3c]"
-              }`}
-            />
-            <span>{isInternalSyncing || isSyncingLive ? "Syncing..." : "Sync with YouTube"}</span>
+            <X className="w-5 h-5" />
           </button>
 
-          {!isAlbum && (
+          <div className="flex items-center gap-2">
+            {saveSuccessBanner && (
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-semibold animate-fade-in">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Saved & Synced to YouTube Music!</span>
+              </div>
+            )}
+
+            {/* Live Sync Check Button */}
             <button
-              onClick={handleSaveToYouTube}
-              disabled={isSaving}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-semibold shadow-md transition-all active:scale-95`}
-              title="Save and commit all changes to YouTube Music"
+              onClick={executeSyncCheck}
+              disabled={isInternalSyncing || isSyncingLive}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95`}
+              title="Sync with YouTube Music to fetch latest songs"
             >
-              <Save className={`w-3.5 h-3.5 ${isSaving ? "animate-spin" : ""}`} />
-              <span>{isSaving ? "Saving..." : "Save to YouTube"}</span>
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${
+                  isInternalSyncing || isSyncingLive ? "animate-spin text-[#c89b3c]" : "text-[#c89b3c]"
+                }`}
+              />
+              <span>{isInternalSyncing || isSyncingLive ? "Syncing..." : "Sync with YouTube"}</span>
             </button>
-          )}
+
+            {!isAlbum && (
+              <button
+                onClick={handleSaveToYouTube}
+                disabled={isSaving}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-semibold shadow-md transition-all active:scale-95`}
+                title="Save and commit all changes to YouTube Music"
+              >
+                <Save className={`w-3.5 h-3.5 ${isSaving ? "animate-spin" : ""}`} />
+                <span>{isSaving ? "Saving..." : "Save to YouTube"}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

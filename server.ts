@@ -272,9 +272,10 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
   }
 
   const allTracks: any[] = [];
+  let currentToken = accessToken;
 
   // 1. Authenticated YouTube Data API v3 playlistItems with pagination
-  if (accessToken) {
+  if (currentToken) {
     try {
       let pageToken: string | undefined = undefined;
       let pagesFetched = 0;
@@ -289,13 +290,55 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
           ...(pageToken ? { pageToken } : {}),
         });
 
-        const response = await fetch(`${url}?${params}`, {
+        let response = await fetch(`${url}?${params}`, {
           signal: AbortSignal.timeout(8000),
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${currentToken}`,
             "Cache-Control": "no-cache",
           }
         });
+
+        if (response.status === 401) {
+          // Token expired, attempt refresh
+          const allTokens = readStoredTokens();
+          const entries = Object.values(allTokens);
+          let refToken: string | undefined = undefined;
+          for (const ent of entries) {
+            if ((ent as any)?.refresh_token) {
+              refToken = (ent as any).refresh_token;
+              break;
+            }
+          }
+          if (refToken) {
+            const clientId = getOAuthClientId();
+            const clientSecret = getOAuthClientSecret();
+            if (clientId && clientSecret) {
+              const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                  client_id: clientId,
+                  client_secret: clientSecret,
+                  refresh_token: refToken,
+                  grant_type: "refresh_token",
+                }),
+              });
+              if (refreshRes.ok) {
+                const refData = await refreshRes.json();
+                if (refData.access_token) {
+                  currentToken = refData.access_token;
+                  response = await fetch(`${url}?${params}`, {
+                    signal: AbortSignal.timeout(8000),
+                    headers: {
+                      Authorization: `Bearer ${currentToken}`,
+                      "Cache-Control": "no-cache",
+                    }
+                  });
+                }
+              }
+            }
+          }
+        }
 
         if (!response.ok) {
           break;
@@ -340,7 +383,7 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
       } while (pageToken && pagesFetched < maxPages);
 
       if (allTracks.length > 0) {
-        const enriched = await enrichTracksWithDuration(allTracks, accessToken);
+        const enriched = await enrichTracksWithDuration(allTracks, currentToken);
         setInCache(cacheKey, enriched);
         return enriched;
       }
@@ -1934,8 +1977,9 @@ app.get("/api/youtube/playlists/:id/items", async (req, res) => {
     const accessToken = await getValidAccessToken(req);
     
     const cleanPlId = id.replace(/^VL/, "");
-    // Check session or local store
-    const allPlaylists = req.session.playlists || localPlaylistsStore || [];
+    // Check session or local store or disk store
+    const storedPlaylists = readStoredPlaylists();
+    const allPlaylists = [...(req.session.playlists || []), ...(localPlaylistsStore || []), ...storedPlaylists];
     const found = allPlaylists.find(p => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
 
     let customCover: string | null = null;
@@ -1976,7 +2020,7 @@ app.get("/api/youtube/playlists/:id/items", async (req, res) => {
       }
     }
 
-    // 2. Custom local playlist tracks
+    // 2. Custom local or stored playlist tracks
     if (found && found.tracks && found.tracks.length > 0) {
       return res.json({
         tracks: found.tracks,
@@ -2008,12 +2052,19 @@ app.get("/api/youtube/playlists/:id/items", async (req, res) => {
       }
     }
 
-    // 4. Official Studio Albums & Search-backed playlists
+    // 4. Official Studio Albums (ONLY when explicitly an album ID or requested as album type)
+    const isExplicitAlbum =
+      type === "album" ||
+      id.startsWith("album_") ||
+      id.startsWith("MPREb_") ||
+      id.startsWith("OLAK5uy_") ||
+      Boolean((found as any)?.isAlbum);
+
     const targetTitle = title || found?.title || "";
     const targetArtist = artist || found?.description || "";
     
-    if (targetTitle) {
-      const searchQuery = `${targetTitle} ${targetArtist} songs official audio`.trim();
+    if (isExplicitAlbum && targetTitle) {
+      const searchQuery = `${targetTitle} ${targetArtist} album songs official audio`.trim();
       const albumTracks = await searchYouTubeMusic(searchQuery, accessToken || undefined, "track");
       if (albumTracks && albumTracks.length > 0) {
         const enriched = await enrichTracksWithDuration(albumTracks.slice(0, 20), accessToken);
