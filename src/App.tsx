@@ -10,7 +10,6 @@ function AppContent() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playlistSongs, setPlaylistSongs] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<UserSettings>(() => {
     try {
@@ -25,7 +24,6 @@ function AppContent() {
     }
   });
 
-  // Player state with auto-play fix (#3)
   const [playerState, setPlayerState] = useState<PlayerState>(() => {
     try {
       const saved = localStorage.getItem("oblivion_player_state");
@@ -57,74 +55,44 @@ function AppContent() {
   }, []);
 
   const checkAuth = async () => {
-    console.log("[Oblivion] Checking auth...");
-    setError(null);
     try {
       const response = await fetch("/api/auth/me");
       const data = await response.json();
-      console.log("[Oblivion] Auth response:", data);
-      
       if (data.isLoggedIn && data.user) {
-        console.log("[Oblivion] User logged in:", data.user);
         setUser(data.user);
-        // Fetch playlists after user is set
-        await fetchPlaylists();
-      } else {
-        console.log("[Oblivion] User not logged in");
-        setLoading(false);
+        fetchPlaylists();
       }
     } catch (error) {
-      console.error("[Oblivion] Auth check failed:", error);
-      setError(`Auth check failed: ${error}`);
-      setLoading(false);
-    }
-  };
-
-  const fetchPlaylists = async () => {
-    console.log("[Oblivion] Fetching playlists...");
-    setError(null);
-    try {
-      const response = await fetch("/api/youtube/playlists");
-      console.log("[Oblivion] Playlists response status:", response.status);
-      
-      const data = await response.json();
-      console.log("[Oblivion] Playlists data:", data);
-      
-      if (data.success && data.playlists) {
-        console.log(`[Oblivion] Found ${data.playlists.length} playlists`);
-        setPlaylists(data.playlists);
-        localStorage.setItem("oblivion_saved_playlists", JSON.stringify(data.playlists));
-        localStorage.setItem("oblivion_playlist_sync_time", new Date().toISOString());
-      } else {
-        console.warn("[Oblivion] No success in response or empty playlists", data);
-        setError(data.error || "No playlists found");
-        setPlaylists([]);
-      }
-    } catch (error) {
-      console.error("[Oblivion] Failed to fetch playlists:", error);
-      setError(`Failed to fetch playlists: ${error}`);
-      
-      // Try loading from cache
-      try {
-        const cached = localStorage.getItem("oblivion_saved_playlists");
-        if (cached) {
-          console.log("[Oblivion] Loading from cache");
-          setPlaylists(JSON.parse(cached));
-          setError("Loaded from cache (API failed)");
-        }
-      } catch {}
+      console.error("Auth check failed:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchPlaylists = async () => {
+    try {
+      const response = await fetch("/api/youtube/playlists");
+      const data = await response.json();
+      if (data.success && data.playlists) {
+        setPlaylists(data.playlists);
+        localStorage.setItem("oblivion_saved_playlists", JSON.stringify(data.playlists));
+        localStorage.setItem("oblivion_playlist_sync_time", new Date().toISOString());
+      }
+    } catch (error) {
+      console.error("Failed to fetch playlists:", error);
+      try {
+        const cached = localStorage.getItem("oblivion_saved_playlists");
+        if (cached) {
+          setPlaylists(JSON.parse(cached));
+        }
+      } catch {}
+    }
+  };
+
   const fetchPlaylistSongs = async (playlistId: string) => {
-    console.log("[Oblivion] Fetching songs for playlist:", playlistId);
     try {
       const response = await fetch(`/api/youtube/playlists/${playlistId}/videos`);
       const data = await response.json();
-      console.log("[Oblivion] Playlist songs response:", data);
-      
       if (data.success && data.videos) {
         const songs = data.videos.map((video: any) => ({
           id: video.id,
@@ -136,20 +104,17 @@ function AppContent() {
         setPlaylistSongs(songs);
       }
     } catch (error) {
-      console.error("[Oblivion] Failed to fetch playlist songs:", error);
-      setError(`Failed to load songs: ${error}`);
+      console.error("Failed to fetch playlist songs:", error);
     }
   };
 
   const handleSignIn = async () => {
-    console.log("[Oblivion] Sign in clicked");
     try {
       const res = await fetch("/api/auth/google/config");
       const config = await res.json();
-      console.log("[Oblivion] OAuth config:", config);
 
       if (!config.configured) {
-        setError("OAuth not configured");
+        alert("OAuth not configured");
         return;
       }
 
@@ -166,24 +131,20 @@ function AppContent() {
       authUrl.searchParams.append("scope", scopes.join(" "));
       authUrl.searchParams.append("access_type", "offline");
 
-      console.log("[Oblivion] Redirecting to OAuth:", authUrl.toString());
       window.location.href = authUrl.toString();
     } catch (error) {
-      console.error("[Oblivion] Sign in error:", error);
-      setError(`Sign in error: ${error}`);
+      console.error("Sign in error:", error);
     }
   };
 
   const handleSignOut = async () => {
-    console.log("[Oblivion] Sign out clicked");
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
       setPlaylists([]);
       setSelectedPlaylistId(null);
-      setError(null);
     } catch (error) {
-      console.error("[Oblivion] Sign out error:", error);
+      console.error("Sign out error:", error);
     }
   };
 
@@ -293,12 +254,6 @@ function AppContent() {
       case "home":
         return (
           <div className="p-6">
-            {error && (
-              <div className="mb-6 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm">
-                ⚠️ {error}
-              </div>
-            )}
-            
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2">Good evening</h1>
               <p className="text-gray-400">Your YouTube Music library</p>
@@ -325,15 +280,11 @@ function AppContent() {
                   </button>
                 </div>
 
-                {loading ? (
-                  <div className="text-gray-400 text-center py-12">Loading playlists...</div>
-                ) : playlists.length === 0 ? (
-                  <div className="text-gray-400 text-center py-12">
-                    No playlists found. Try refreshing.
-                  </div>
+                {playlists.length === 0 ? (
+                  <div className="text-gray-400 text-center py-12">No playlists found</div>
                 ) : (
                   <div>
-                    <h2 className="text-2xl font-bold mb-6">Your Playlists ({playlists.length})</h2>
+                    <h2 className="text-2xl font-bold mb-6">Your Playlists</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {playlists.map((playlist) => (
                         <div
@@ -370,32 +321,16 @@ function AppContent() {
       case "library":
         return (
           <div className="p-6">
-            {error && (
-              <div className="mb-6 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm">
-                ⚠️ {error}
-              </div>
-            )}
-            
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-3xl font-bold">Your Library</h1>
-              <div className="flex gap-2">
-                {user && (
-                  <>
-                    <button
-                      onClick={() => fetchPlaylists()}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm"
-                    >
-                      🔄 Refresh
-                    </button>
-                    <button
-                      onClick={handleSignOut}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm"
-                    >
-                      Sign Out
-                    </button>
-                  </>
-                )}
-              </div>
+              {user && (
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+                >
+                  Sign Out
+                </button>
+              )}
             </div>
 
             {!user ? (
@@ -408,10 +343,8 @@ function AppContent() {
                   Sign In
                 </button>
               </div>
-            ) : loading ? (
-              <div className="text-gray-400 text-center py-12">Loading...</div>
             ) : playlists.length === 0 ? (
-              <div className="text-gray-400 text-center py-12">No playlists found</div>
+              <div className="text-gray-400 text-center py-12">No playlists</div>
             ) : (
               <div className="space-y-3">
                 {playlists.map((playlist) => (
