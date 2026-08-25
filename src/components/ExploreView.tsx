@@ -132,13 +132,14 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           </div>
 
           <button
+            id="explore-fresh-pull-btn"
             onClick={handleManualRefresh}
             disabled={isRefreshing || loading}
-            className={`px-4 py-2.5 rounded-xl ${designConfig.btnSecondary} text-zinc-900 font-bold text-xs flex items-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-all border border-zinc-300/80`}
+            className={`px-4 py-2.5 rounded-xl ${designConfig.btnSecondary} font-bold text-xs flex items-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-all border ${designConfig.borderSubtle}`}
             title="Refresh Explore Feed"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-zinc-900 ${isRefreshing || loading ? "animate-spin text-[#c89b3c]" : ""}`} />
-            <span className="text-zinc-900 font-bold">{isRefreshing ? "Refreshing..." : "Fresh Pull"}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${designConfig.accentText} ${isRefreshing || loading ? "animate-spin" : ""}`} />
+            <span className={`${designConfig.textPrimary} font-bold`}>{isRefreshing ? "Refreshing..." : "Fresh Pull"}</span>
           </button>
         </div>
       </div>

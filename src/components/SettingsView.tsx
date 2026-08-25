@@ -100,20 +100,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <OblivionLogo size={46} designId={designConfig.id} withAura className="shrink-0" />
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30 uppercase">
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} uppercase`}>
                   PWA Mobile App
                 </span>
                 {isInstalled && (
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-700" />
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-400" />
                     Installed
                   </span>
                 )}
               </div>
-              <h3 className="text-base font-bold text-zinc-900">
+              <h3 className={`text-base font-bold ${designConfig.textPrimary}`}>
                 Install Oblivion Music App
               </h3>
-              <p className="text-xs text-zinc-700 font-medium leading-relaxed max-w-xl mt-0.5">
+              <p className={`text-xs ${designConfig.textSecondary} font-medium leading-relaxed max-w-xl mt-0.5`}>
                 Install as a standalone progressive web app (PWA) on your Android, Apple Safari, or desktop browser for instant home-screen launching and background playback.
               </p>
             </div>
@@ -130,8 +130,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {installSuccessMsg && (
-          <div className="p-3.5 bg-[#ede8dc] border border-[#d8d2c4] rounded-2xl flex items-start gap-2.5 text-zinc-900 text-xs font-semibold animate-fade-in shadow-sm">
-            <Info className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+          <div className={`p-3.5 ${designConfig.isLight ? "bg-[#ede8dc] border-[#d8d2c4] text-zinc-900" : "bg-white/10 border-white/20 text-white"} border rounded-2xl flex items-start gap-2.5 text-xs font-semibold animate-fade-in shadow-sm`}>
+            <Info className={`w-4 h-4 ${designConfig.accentText} shrink-0 mt-0.5`} />
             <span className="leading-relaxed">{installSuccessMsg}</span>
           </div>
         )}
@@ -141,19 +141,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#c89b3c]/20 text-[#855f10] text-[10px] font-mono font-bold tracking-wider mb-1 border border-[#c89b3c]/30">
-              <Sparkles className="w-3 h-3 text-[#c89b3c]" />
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} text-[10px] font-mono font-bold tracking-wider mb-1`}>
+              <Sparkles className={`w-3 h-3 ${designConfig.accentText}`} />
               <span>Full-App Archetypes</span>
             </div>
-            <h3 className="text-base font-bold text-zinc-900 flex items-center gap-2">
-              <Layout className="w-4 h-4 text-[#c89b3c]" />
+            <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
+              <Layout className={`w-4 h-4 ${designConfig.accentText}`} />
               <span>Full App Layout & Design Archetypes (6 Options)</span>
             </h3>
-            <p className="text-xs text-zinc-700 font-medium mt-0.5">
+            <p className={`text-xs ${designConfig.textSecondary} font-medium mt-0.5`}>
               Select your preferred overall design. This transforms the entire application: background canvas, headers, navigation, cards, typography, and bottom player dock.
             </p>
           </div>
-          <span className="text-xs px-3 py-1.5 rounded-full font-mono font-bold bg-[#c89b3c] text-slate-950 self-start sm:self-auto shadow-md">
+          <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} text-slate-950 self-start sm:self-auto shadow-md`}>
             Active: {FULL_APP_DESIGNS[settings.fullAppDesign || "designer"]?.name || "Designer"}
           </span>
         </div>
@@ -238,15 +238,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-5 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#c89b3c]/20 text-[#855f10] text-[10px] font-mono font-bold tracking-wider mb-1 border border-[#c89b3c]/30">
-              <Eye className="w-3 h-3 text-[#c89b3c]" />
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} text-[10px] font-mono font-bold tracking-wider mb-1`}>
+              <Eye className={`w-3 h-3 ${designConfig.accentText}`} />
               <span>Immersive Player Canvas</span>
             </div>
-            <h3 className="text-base font-bold text-zinc-900 flex items-center gap-2">
-              <Film className="w-4 h-4 text-[#c89b3c]" />
+            <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
+              <Film className={`w-4 h-4 ${designConfig.accentText}`} />
               <span>Full Player Background Animation & Speed</span>
             </h3>
-            <p className="text-xs text-zinc-700 font-medium mt-0.5">
+            <p className={`text-xs ${designConfig.textSecondary} font-medium mt-0.5`}>
               Select an ambient background animation style and adjust its cycle timing duration directly within each option.
             </p>
           </div>
@@ -260,13 +260,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   animationOrbitalSpeed: 6,
                 })
               }
-              className="px-3 py-1.5 rounded-xl bg-white border border-[#d8d2c4] hover:border-[#c89b3c] hover:bg-[#f4f1ea] text-zinc-800 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 shrink-0"
+              className={`px-3 py-1.5 rounded-xl ${designConfig.isLight ? "bg-white border-[#d8d2c4] hover:border-[#c89b3c] hover:bg-[#f4f1ea] text-zinc-800" : "bg-white/10 border-white/20 hover:border-white/40 hover:bg-white/15 text-white"} text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 shrink-0`}
               title="Reset all animation durations to default (6s)"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-[#c89b3c]" />
+              <RotateCcw className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
               <span>Reset Defaults (6s)</span>
             </button>
-            <span className="text-xs px-3 py-1.5 rounded-full font-mono font-bold bg-[#c89b3c] text-slate-950 shadow-md">
+            <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} text-slate-950 shadow-md`}>
               Active: {
                 settings.playerBackgroundAnimation === "off"
                   ? "Off (Static)"
@@ -510,35 +510,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Player Engine Controls */}
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
-        <div className="flex items-center gap-2 font-bold text-sm text-zinc-900">
-          <Sliders className="w-4 h-4 text-[#c89b3c]" />
+        <div className={`flex items-center gap-2 font-bold text-sm ${designConfig.textPrimary}`}>
+          <Sliders className={`w-4 h-4 ${designConfig.accentText}`} />
           <span>Player Audio Engine</span>
         </div>
 
         {/* Audio Quality */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase text-zinc-900 mb-2">
+            <label className={`block text-xs font-bold uppercase ${designConfig.textPrimary} mb-2`}>
               Streaming Audio Quality
             </label>
             <select
               value={settings.audioQuality}
               onChange={(e) => onUpdateSettings({ audioQuality: e.target.value as AudioQuality })}
-              className="w-full px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm font-semibold text-zinc-900 focus:outline-none focus:border-[#c89b3c] shadow-sm"
+              className={`w-full px-4 py-2.5 ${designConfig.isLight ? "bg-white border-zinc-300 text-zinc-900" : "bg-slate-900/90 border-slate-700 text-white"} rounded-xl text-sm font-semibold focus:outline-none focus:border-[#c89b3c] shadow-sm`}
             >
-              <option value="normal">Normal (160 kbps AAC)</option>
-              <option value="high">High Quality (320 kbps MP3)</option>
-              <option value="lossless">Lossless (24-bit / 96kHz FLAC)</option>
+              <option value="normal" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>Normal (160 kbps AAC)</option>
+              <option value="high" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>High Quality (320 kbps MP3)</option>
+              <option value="lossless" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>Lossless (24-bit / 96kHz FLAC)</option>
             </select>
           </div>
 
           {/* Crossfade Duration */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold uppercase text-zinc-900">
+              <label className={`text-xs font-bold uppercase ${designConfig.textPrimary}`}>
                 Crossfade Tracks
               </label>
-              <span className="text-xs font-mono font-bold text-[#855f10]">{settings.crossfadeDuration}s</span>
+              <span className={`text-xs font-mono font-bold ${designConfig.accentText}`}>{settings.crossfadeDuration}s</span>
             </div>
             <input
               type="range"
@@ -546,17 +546,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               max={10}
               value={settings.crossfadeDuration}
               onChange={(e) => onUpdateSettings({ crossfadeDuration: Number(e.target.value) })}
-              className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
+              className={`w-full h-2 ${designConfig.isLight ? "bg-zinc-200" : "bg-slate-700/60"} rounded-lg appearance-none cursor-pointer accent-[#c89b3c]`}
             />
           </div>
         </div>
 
         {/* Toggles */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-zinc-200">
-          <label className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-200 cursor-pointer shadow-sm">
+        <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t ${designConfig.isLight ? "border-zinc-200" : "border-white/10"}`}>
+          <label className={`flex items-center justify-between p-3 ${designConfig.isLight ? "bg-zinc-50 border-zinc-200" : "bg-white/5 border-white/10 hover:bg-white/10"} rounded-xl border cursor-pointer shadow-sm transition-colors`}>
             <div>
-              <span className="text-xs font-bold text-zinc-900 block">Background Play</span>
-              <span className="text-[10px] text-zinc-600 font-medium">Play in bg tab / screen locked</span>
+              <span className={`text-xs font-bold ${designConfig.textPrimary} block`}>Background Play</span>
+              <span className={`text-[10px] ${designConfig.textMuted} font-medium`}>Play in bg tab / screen locked</span>
             </div>
             <input
               type="checkbox"
@@ -566,10 +566,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </label>
 
-          <label className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-200 cursor-pointer shadow-sm">
+          <label className={`flex items-center justify-between p-3 ${designConfig.isLight ? "bg-zinc-50 border-zinc-200" : "bg-white/5 border-white/10 hover:bg-white/10"} rounded-xl border cursor-pointer shadow-sm transition-colors`}>
             <div>
-              <span className="text-xs font-bold text-zinc-900 block">Volume Normalization</span>
-              <span className="text-[10px] text-zinc-600 font-medium">Even volume loudness</span>
+              <span className={`text-xs font-bold ${designConfig.textPrimary} block`}>Volume Normalization</span>
+              <span className={`text-[10px] ${designConfig.textMuted} font-medium`}>Even volume loudness</span>
             </div>
             <input
               type="checkbox"
@@ -579,10 +579,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </label>
 
-          <label className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-200 cursor-pointer shadow-sm">
+          <label className={`flex items-center justify-between p-3 ${designConfig.isLight ? "bg-zinc-50 border-zinc-200" : "bg-white/5 border-white/10 hover:bg-white/10"} rounded-xl border cursor-pointer shadow-sm transition-colors`}>
             <div>
-              <span className="text-xs font-bold text-zinc-900 block">Autoplay Similar Radio</span>
-              <span className="text-[10px] text-zinc-600 font-medium">Continuous queue stream</span>
+              <span className={`text-xs font-bold ${designConfig.textPrimary} block`}>Autoplay Similar Radio</span>
+              <span className={`text-[10px] ${designConfig.textMuted} font-medium`}>Continuous queue stream</span>
             </div>
             <input
               type="checkbox"
@@ -598,9 +598,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="flex flex-col items-center justify-center pt-3 pb-2 space-y-1 select-none">
         <div
           id="shadowflash-design-badge"
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-[#c89b3c]/20 to-amber-500/10 border border-[#c89b3c]/30 text-[#855f10] shadow-sm"
+          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full ${designConfig.isLight ? "bg-gradient-to-r from-amber-500/10 via-[#c89b3c]/20 to-amber-500/10 border-[#c89b3c]/30 text-[#855f10]" : "bg-white/10 border-white/20 text-white"} border shadow-sm`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-[#c89b3c]" />
+          <Sparkles className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
           <span className="text-xs font-mono font-bold tracking-wider uppercase">
             Shadowflash Design
           </span>

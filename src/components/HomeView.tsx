@@ -148,13 +148,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         <button
+          id="home-fresh-pull-btn"
           onClick={handleManualRefresh}
           disabled={isRefreshing || loading}
-          className={`self-start sm:self-auto px-3.5 py-2 rounded-xl ${designConfig.btnSecondary} text-zinc-900 font-bold text-xs flex items-center gap-2 shadow-sm hover:scale-105 active:scale-95 transition-all border border-zinc-300/80`}
+          className={`self-start sm:self-auto px-3.5 py-2 rounded-xl ${designConfig.btnSecondary} font-bold text-xs flex items-center gap-2 shadow-sm hover:scale-105 active:scale-95 transition-all border ${designConfig.borderSubtle}`}
           title="Fresh pull from YouTube Music"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-zinc-900 ${isRefreshing || loading ? "animate-spin text-[#c89b3c]" : ""}`} />
-          <span className="text-zinc-900 font-bold">{isRefreshing ? "Refreshing..." : "Fresh Pull"}</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${designConfig.accentText} ${isRefreshing || loading ? "animate-spin" : ""}`} />
+          <span className={`${designConfig.textPrimary} font-bold`}>{isRefreshing ? "Refreshing..." : "Fresh Pull"}</span>
         </button>
       </div>
 
