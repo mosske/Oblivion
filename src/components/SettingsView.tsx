@@ -97,7 +97,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-4 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <OblivionLogo size={46} withAura className="shrink-0" />
+            <OblivionLogo size={46} designId={designConfig.id} withAura className="shrink-0" />
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30 uppercase">

@@ -105,7 +105,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       <div className={`w-full max-w-md ${designConfig.modalBg} border ${designConfig.borderSubtle} rounded-3xl shadow-2xl overflow-hidden ${designConfig.textSecondary}`}>
         <div className={`flex items-center justify-between p-5 border-b ${designConfig.borderSubtle}`}>
           <div className="flex items-center gap-2.5">
-            <OblivionLogo size={20} />
+            <OblivionLogo size={22} designId={designConfig.id} />
             <h3 className={`text-base font-bold ${designConfig.textPrimary}`}>Connect YouTube Music</h3>
           </div>
           <button
@@ -117,7 +117,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         <div className="p-6 space-y-5 text-center">
-          <OblivionLogo size={68} withAura className="mx-auto" />
+          <OblivionLogo size={76} designId={designConfig.id} withAura className="mx-auto" />
 
           <div className="space-y-1.5">
             <h4 className={`text-base font-bold ${designConfig.textPrimary}`}>Sign in with Google</h4>

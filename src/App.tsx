@@ -1426,8 +1426,11 @@ export default function App() {
               setActiveTab("home");
             }}
           >
-            <OblivionLogo size={34} withAura animated />
-            <span className={`text-sm font-bold tracking-wider ${activeFullDesign.textPrimary} font-mono`}>OBLIVION</span>
+            <OblivionLogo size={34} designId={activeFullDesign.id} withAura animated />
+            <div className="flex items-baseline gap-1">
+              <span className={`text-sm font-extrabold tracking-widest ${activeFullDesign.textPrimary}`}>OBLIVION</span>
+              <span className={`text-[9px] font-bold tracking-[0.18em] ${activeFullDesign.accentText} hidden sm:inline`}>MUSIC</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">

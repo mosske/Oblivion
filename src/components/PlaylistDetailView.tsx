@@ -21,7 +21,10 @@ import {
   Share2,
   Loader2,
   RefreshCw,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronUp,
+  ChevronDown,
+  Check
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -227,6 +230,31 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       onReorderTracks(newTracks);
     }
     handleDragEnd();
+  };
+
+  // Quick arrow shift handlers for touch & click
+  const handleMoveUp = (index: number) => {
+    if (index <= 0) return;
+    const newTracks = [...tracks];
+    const temp = newTracks[index];
+    newTracks[index] = newTracks[index - 1];
+    newTracks[index - 1] = temp;
+    setTracks(newTracks);
+    if (!isAlbum && onReorderTracks) {
+      onReorderTracks(newTracks);
+    }
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index >= tracks.length - 1) return;
+    const newTracks = [...tracks];
+    const temp = newTracks[index];
+    newTracks[index] = newTracks[index + 1];
+    newTracks[index + 1] = temp;
+    setTracks(newTracks);
+    if (!isAlbum && onReorderTracks) {
+      onReorderTracks(newTracks);
+    }
   };
 
   // Remove track
@@ -436,6 +464,36 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 <span>{isSaving ? "Saving..." : "Save to YouTube"}</span>
               </button>
             )}
+
+            {!isAlbum && (
+              <button
+                onClick={handleToggleReorderMode}
+                disabled={isSaving}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all active:scale-95 shadow-sm ${
+                  isReorderMode
+                    ? "bg-[#c89b3c] text-white border-[#c89b3c] shadow-lg ring-2 ring-[#c89b3c]/40 font-bold"
+                    : `${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle}`
+                }`}
+                title={isReorderMode ? "Finish reordering and save to YouTube" : "Reorder songs in this playlist"}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Syncing...</span>
+                  </>
+                ) : isReorderMode ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Done Reordering</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowUpDown className="w-3.5 h-3.5" />
+                    <span>Reorder Songs</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -549,39 +607,16 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             )}
           </div>
 
-          {/* Right Action Buttons: Reorder, Edit */}
+          {/* Right Action Buttons: Edit details */}
           <div className="flex flex-wrap items-center gap-2">
-            {!isAlbum && (
-              <button
-                onClick={handleToggleReorderMode}
-                disabled={isSaving}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
-                  isReorderMode
-                    ? "bg-[#c89b3c] text-white border-[#c89b3c] shadow-lg ring-2 ring-[#c89b3c]/40 animate-pulse"
-                    : `${designConfig.btnSecondary} ${designConfig.textSecondary}`
-                }`}
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Syncing to YouTube...</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowUpDown className="w-3.5 h-3.5" />
-                    <span>{isReorderMode ? "Done Reordering" : "Reorder Songs"}</span>
-                  </>
-                )}
-              </button>
-            )}
-
             {!isAlbum && onEditPlaylist && (
               <button
                 onClick={() => onEditPlaylist(item as Playlist)}
-                className={`p-2.5 ${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl border border-transparent transition-colors`}
+                className={`flex items-center gap-1.5 px-3 py-2 ${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} rounded-xl border border-transparent transition-colors text-xs font-semibold`}
                 title="Edit Playlist Details"
               >
-                <Edit className="w-4 h-4" />
+                <Edit className="w-3.5 h-3.5" />
+                <span>Edit Details</span>
               </button>
             )}
           </div>
@@ -594,8 +629,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               Tracks ({tracks.length})
             </h3>
             {isReorderMode && (
-              <span className="text-[11px] text-[#c89b3c] font-medium">
-                Use arrows to reposition songs
+              <span className="text-[11px] text-[#c89b3c] font-medium animate-pulse">
+                Drag handle or tap arrows to reposition songs, then click "Done Reordering"
               </span>
             )}
           </div>
@@ -632,7 +667,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                     onDrop={(e) => isReorderMode && handleDrop(e, idx)}
                     onDragEnd={handleDragEnd}
                     className={`group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all ${
-                      isReorderMode ? "cursor-grab active:cursor-grabbing" : ""
+                      isReorderMode ? "cursor-grab active:cursor-grabbing border border-[#c89b3c]/30" : ""
                     } ${
                       isBeingDragged
                         ? "opacity-40 scale-[0.98] border-2 border-dashed border-[#c89b3c]"
@@ -698,7 +733,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Right Controls: Duration, Drag Handle, Remove */}
+                    {/* Right Controls: Duration, Move Arrows, Drag Handle, Add/Remove */}
                     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                       <span className={`text-[11px] sm:text-xs font-mono ${designConfig.textMuted}`}>
                         {track.duration && track.duration > 0
@@ -706,14 +741,38 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                           : "--:--"}
                       </span>
 
-                      {/* Drag Handle in Reorder Mode */}
+                      {/* Move Up / Down and Drag Handles in Reorder Mode */}
                       {isReorderMode && (
-                        <div
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-[#c89b3c]/15 border border-[#c89b3c]/40 text-[#c89b3c] rounded-xl cursor-grab active:cursor-grabbing hover:bg-[#c89b3c]/25 transition-all shadow-sm select-none"
-                          title="Drag up or down to reorder"
-                        >
-                          <GripVertical className="w-4 h-4 shrink-0" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Drag</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMoveUp(idx);
+                            }}
+                            disabled={idx === 0}
+                            className="p-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 transition-colors"
+                            title="Move Up"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMoveDown(idx);
+                            }}
+                            disabled={idx === tracks.length - 1}
+                            className="p-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 transition-colors"
+                            title="Move Down"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                          <div
+                            className="flex items-center gap-1 px-2 py-1 bg-[#c89b3c]/20 border border-[#c89b3c]/40 text-[#c89b3c] rounded-lg cursor-grab active:cursor-grabbing hover:bg-[#c89b3c]/30 transition-all shadow-sm select-none"
+                            title="Drag to reorder"
+                          >
+                            <GripVertical className="w-3.5 h-3.5 shrink-0" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Drag</span>
+                          </div>
                         </div>
                       )}
 

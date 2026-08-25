@@ -154,7 +154,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                     {/* Simulated Header */}
                     <div className="flex items-center justify-between pb-2 border-b border-white/10">
                       <div className="flex items-center gap-1.5">
-                        <OblivionLogo size={14} />
+                        <OblivionLogo size={14} designId={design.id} />
                         <div className="h-2.5 w-16 rounded bg-white/40 font-mono text-[8px] flex items-center px-1 text-white">
                           OBLIVION
                         </div>

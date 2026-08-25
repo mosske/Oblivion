@@ -83,15 +83,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => setActiveTab("home")}
           className="flex items-center gap-3 cursor-pointer group"
         >
-          <OblivionLogo size={42} animated withAura />
+          <OblivionLogo size={42} designId={designConfig.id} animated withAura />
           <div>
-            <h1 className={`text-xl font-bold tracking-wider ${designConfig.textPrimary} font-mono flex items-center gap-1.5`}>
+            <h1 className={`text-lg font-extrabold tracking-widest ${designConfig.textPrimary} flex items-center gap-1.5`}>
               OBLIVION
-              <span className={`text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded ${designConfig.isLight ? "bg-[#ede8dc] text-[#c89b3c] border border-[#d8d2c4]" : "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"}`}>
+              <span className={`text-[10px] uppercase font-bold tracking-[0.2em] px-1.5 py-0.5 rounded ${designConfig.isLight ? "bg-[#ede8dc] text-[#c89b3c] border border-[#d8d2c4]" : "bg-white/10 text-white/90 border border-white/20"}`}>
                 MUSIC
               </span>
             </h1>
-            <p className={`text-[11px] ${designConfig.textSecondary}`}>Seamless Audio Engine</p>
+            <p className={`text-[11px] ${designConfig.textSecondary} tracking-tight`}>Seamless Audio Engine</p>
           </div>
         </div>
       </div>
