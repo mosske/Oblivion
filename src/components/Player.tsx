@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PlayerState, Track, UserSettings, Playlist } from "../types";
 import {
   Play,
@@ -110,6 +110,11 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         bgCanvas: "bg-[#06120e]",
         orb1: "bg-amber-400/55",
         orb2: "bg-emerald-400/45",
+        auroraBeam1: "bg-gradient-to-r from-[#c89b3c]/45 via-amber-300/40 to-emerald-400/40",
+        auroraBeam2: "bg-gradient-to-r from-emerald-400/40 via-teal-300/35 to-[#c89b3c]/45",
+        orbitalGlow1: "bg-gradient-to-tr from-[#c89b3c]/65 via-amber-400/50 to-emerald-400/55",
+        orbitalGlow2: "bg-gradient-to-bl from-emerald-500/55 via-teal-400/45 to-[#c89b3c]/50",
+        driftAuraGlow: "bg-gradient-to-br from-amber-500/20 via-emerald-500/15 to-transparent",
         veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#fbfaf7]/95 border-[#e6e2d8] text-[#181816] shadow-sm",
         minimizeBtn: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border-[#d8d2c4] shadow-sm",
@@ -126,6 +131,9 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         stageTagNeutral: "bg-white/10 border-white/20 text-white",
         bottomDeck: "bg-[#fbfaf7]/98 border-[#e6e2d8] text-[#181816] shadow-2xl ring-1 ring-[#c89b3c]/20",
         seekbarTrack: "bg-[#e2ddd1]",
+        seekbarFill: "bg-gradient-to-r from-[#b88928] via-[#e5b85c] to-[#f5d78e]",
+        seekbarThumb: "bg-amber-100 border-2 border-[#c89b3c] shadow-[0_0_14px_rgba(200,155,60,0.6)]",
+        seekbarGlow: "shadow-[#c89b3c]/40",
         seekbarAccent: "accent-[#c89b3c]",
         timeText: "text-[#6b675e]",
         playBtn: "bg-[#c89b3c] hover:bg-[#d8a846] text-white shadow-[0_0_25px_rgba(200,155,60,0.45)] ring-4 ring-[#c89b3c]/25",
@@ -140,6 +148,11 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         bgCanvas: "bg-[#070913]",
         orb1: "bg-cyan-400/60",
         orb2: "bg-fuchsia-500/50",
+        auroraBeam1: "bg-gradient-to-r from-cyan-400/50 via-teal-300/45 to-fuchsia-500/45",
+        auroraBeam2: "bg-gradient-to-r from-fuchsia-500/45 via-purple-500/40 to-cyan-400/45",
+        orbitalGlow1: "bg-gradient-to-tr from-cyan-400/65 via-teal-400/50 to-fuchsia-500/65",
+        orbitalGlow2: "bg-gradient-to-bl from-fuchsia-500/60 via-indigo-500/50 to-cyan-400/60",
+        driftAuraGlow: "bg-gradient-to-br from-cyan-500/25 via-fuchsia-500/20 to-transparent",
         veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-slate-950/90 border-slate-800/80 text-white shadow-sm",
         minimizeBtn: "bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border-slate-700/80 shadow-sm",
@@ -155,7 +168,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         stageTagAccent: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300",
         stageTagNeutral: "bg-slate-800/80 border-slate-700 text-slate-300",
         bottomDeck: "bg-slate-950/95 border-slate-800/90 text-slate-100 shadow-2xl ring-1 ring-cyan-500/20",
-        seekbarTrack: "bg-slate-800",
+        seekbarTrack: "bg-slate-800/90",
+        seekbarFill: "bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-pink-500",
+        seekbarThumb: "bg-cyan-300 border-2 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.8)]",
+        seekbarGlow: "shadow-cyan-500/50",
         seekbarAccent: "accent-cyan-400",
         timeText: "text-slate-400",
         playBtn: "bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/30",
@@ -170,6 +186,11 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         bgCanvas: "bg-[#0a0a0a]",
         orb1: "bg-red-500/60",
         orb2: "bg-rose-600/45",
+        auroraBeam1: "bg-gradient-to-r from-red-600/50 via-rose-500/45 to-amber-500/40",
+        auroraBeam2: "bg-gradient-to-r from-rose-600/45 via-red-500/50 to-red-900/45",
+        orbitalGlow1: "bg-gradient-to-tr from-red-600/70 via-rose-600/55 to-amber-600/45",
+        orbitalGlow2: "bg-gradient-to-bl from-rose-500/55 via-red-700/65 to-red-950/50",
+        driftAuraGlow: "bg-gradient-to-br from-red-600/25 via-rose-600/20 to-transparent",
         veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#0f0f0f]/95 border-neutral-800 text-white shadow-sm",
         minimizeBtn: "bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border-neutral-700/80 shadow-sm",
@@ -186,6 +207,9 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         stageTagNeutral: "bg-neutral-800 border-neutral-700 text-neutral-300",
         bottomDeck: "bg-[#141414]/95 border-neutral-800 text-neutral-100 shadow-2xl ring-1 ring-red-600/20",
         seekbarTrack: "bg-neutral-800",
+        seekbarFill: "bg-gradient-to-r from-red-600 via-rose-500 to-amber-500",
+        seekbarThumb: "bg-white border-2 border-red-500 shadow-[0_0_14px_rgba(220,38,38,0.7)]",
+        seekbarGlow: "shadow-red-600/40",
         seekbarAccent: "accent-red-600",
         timeText: "text-neutral-400",
         playBtn: "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_30px_rgba(220,38,38,0.5)] ring-4 ring-red-600/30",
@@ -200,6 +224,11 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         bgCanvas: "bg-[#040d08]",
         orb1: "bg-emerald-400/60",
         orb2: "bg-teal-400/45",
+        auroraBeam1: "bg-gradient-to-r from-emerald-400/50 via-teal-300/45 to-emerald-500/45",
+        auroraBeam2: "bg-gradient-to-r from-teal-400/45 via-emerald-400/50 to-cyan-400/40",
+        orbitalGlow1: "bg-gradient-to-tr from-emerald-400/65 via-teal-400/55 to-emerald-600/65",
+        orbitalGlow2: "bg-gradient-to-bl from-teal-300/50 via-emerald-500/55 to-teal-600/50",
+        driftAuraGlow: "bg-gradient-to-br from-emerald-500/25 via-teal-500/20 to-transparent",
         veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-black/95 border-zinc-800/80 text-white shadow-sm",
         minimizeBtn: "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 shadow-sm",
@@ -216,6 +245,9 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         stageTagNeutral: "bg-zinc-900 border-zinc-800 text-zinc-300",
         bottomDeck: "bg-zinc-950/95 border-zinc-800 text-zinc-100 shadow-2xl ring-1 ring-emerald-500/20",
         seekbarTrack: "bg-zinc-800",
+        seekbarFill: "bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-300",
+        seekbarThumb: "bg-emerald-200 border-2 border-emerald-400 shadow-[0_0_14px_rgba(16,185,129,0.75)]",
+        seekbarGlow: "shadow-emerald-500/40",
         seekbarAccent: "accent-emerald-500",
         timeText: "text-zinc-400",
         playBtn: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.5)] ring-4 ring-emerald-500/30",
@@ -230,6 +262,11 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         bgCanvas: "bg-[#0e0a07]",
         orb1: "bg-amber-400/60",
         orb2: "bg-yellow-500/45",
+        auroraBeam1: "bg-gradient-to-r from-amber-500/50 via-yellow-400/45 to-amber-600/45",
+        auroraBeam2: "bg-gradient-to-r from-yellow-500/45 via-amber-600/50 to-stone-700/40",
+        orbitalGlow1: "bg-gradient-to-tr from-amber-400/65 via-yellow-500/55 to-amber-600/65",
+        orbitalGlow2: "bg-gradient-to-bl from-yellow-400/55 via-amber-500/55 to-yellow-600/50",
+        driftAuraGlow: "bg-gradient-to-br from-amber-500/25 via-yellow-600/20 to-transparent",
         veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#14100c]/95 border-amber-900/40 text-amber-50 shadow-sm",
         minimizeBtn: "bg-[#221c17] hover:bg-[#2c241e] text-amber-100 border-amber-900/50 shadow-sm",
@@ -246,6 +283,9 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         stageTagNeutral: "bg-[#221c17] border-amber-900/50 text-amber-200",
         bottomDeck: "bg-[#18130e]/95 border-amber-900/50 text-amber-50 shadow-2xl ring-1 ring-amber-500/20",
         seekbarTrack: "bg-stone-800",
+        seekbarFill: "bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-200",
+        seekbarThumb: "bg-amber-200 border-2 border-amber-500 shadow-[0_0_14px_rgba(245,158,11,0.75)]",
+        seekbarGlow: "shadow-amber-500/40",
         seekbarAccent: "accent-amber-500",
         timeText: "text-amber-300/60",
         playBtn: "bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-[0_0_30px_rgba(245,158,11,0.5)] ring-4 ring-amber-500/30",
@@ -261,6 +301,11 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         bgCanvas: "bg-[#0e0618]",
         orb1: "bg-purple-400/60",
         orb2: "bg-pink-400/50",
+        auroraBeam1: "bg-gradient-to-r from-purple-500/50 via-fuchsia-400/45 to-pink-500/45",
+        auroraBeam2: "bg-gradient-to-r from-pink-500/45 via-purple-600/50 to-indigo-500/45",
+        orbitalGlow1: "bg-gradient-to-tr from-purple-500/65 via-fuchsia-500/55 to-pink-500/65",
+        orbitalGlow2: "bg-gradient-to-bl from-pink-400/55 via-purple-600/55 to-violet-400/50",
+        driftAuraGlow: "bg-gradient-to-br from-purple-500/25 via-pink-500/20 to-transparent",
         veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
         topBar: "bg-[#160a29]/95 border-purple-800/40 text-purple-50 shadow-sm",
         minimizeBtn: "bg-purple-950/80 hover:bg-purple-900 text-purple-200 border-purple-800/50 shadow-sm",
@@ -276,7 +321,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         stageTagAccent: "bg-purple-600/20 border-purple-500/40 text-purple-300",
         stageTagNeutral: "bg-purple-950/80 border-purple-800 text-purple-200",
         bottomDeck: "bg-[#180b2a]/95 border-purple-800/50 text-purple-50 shadow-2xl ring-1 ring-purple-500/20",
-        seekbarTrack: "bg-purple-950/80",
+        seekbarTrack: "bg-purple-950/80 border border-purple-800/40",
+        seekbarFill: "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-400",
+        seekbarThumb: "bg-pink-200 border-2 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.8)]",
+        seekbarGlow: "shadow-purple-500/50",
         seekbarAccent: "accent-purple-500",
         timeText: "text-purple-300/60",
         playBtn: "bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.5)] ring-4 ring-purple-500/30",
@@ -315,6 +363,9 @@ export const Player: React.FC<PlayerProps> = ({
   const userManualPauseRef = useRef<boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  // Video placeholder ref and dynamic screen bounds to prevent any overlap across PC, tablet, and mobile
+  const videoPlaceholderRef = useRef<HTMLDivElement | null>(null);
+  const [videoRect, setVideoRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -878,21 +929,119 @@ export const Player: React.FC<PlayerProps> = ({
     !showSimilar &&
     !showAddToPlaylistModal;
 
+  // Real-time synchronization of the video player screen with the stage placeholder on PC, tablet, and mobile
+  useLayoutEffect(() => {
+    if (!isVideoModeActive) {
+      setVideoRect(null);
+      return;
+    }
+
+    const updateRect = () => {
+      if (videoPlaceholderRef.current) {
+        const rect = videoPlaceholderRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setVideoRect({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          });
+        }
+      }
+    };
+
+    updateRect();
+    const rafId = requestAnimationFrame(updateRect);
+    const t1 = setTimeout(updateRect, 60);
+    const t2 = setTimeout(updateRect, 250);
+
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+
+    let ro: ResizeObserver | null = null;
+    if (videoPlaceholderRef.current && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(updateRect);
+      ro.observe(videoPlaceholderRef.current);
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+      if (ro) ro.disconnect();
+    };
+  }, [
+    isVideoModeActive,
+    isFullscreen,
+    playerState.mediaMode,
+    showLyrics,
+    showSimilar,
+    showAddToPlaylistModal,
+    currentTrack?.id
+  ]);
+
   return (
     <>
       {/* Background-persistent YouTube IFrame Streaming Engine Wrapper */}
       <div
         id="oblivion-yt-wrapper"
-        className={`transition-all duration-300 ${
+        style={
+          isVideoModeActive && videoRect
+            ? {
+                position: "fixed",
+                top: `${videoRect.top}px`,
+                left: `${videoRect.left}px`,
+                width: `${videoRect.width}px`,
+                height: `${videoRect.height}px`,
+                zIndex: 105,
+              }
+            : isVideoModeActive
+            ? {
+                position: "fixed",
+                top: "42%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "min(92vw, 560px)",
+                aspectRatio: "16/9",
+                maxHeight: "44vh",
+                zIndex: 105,
+              }
+            : {
+                position: "fixed",
+                bottom: 0,
+                right: 0,
+                width: "2px",
+                height: "2px",
+                opacity: 0.001,
+                zIndex: -10,
+                pointerEvents: "none",
+                visibility: "hidden",
+              }
+        }
+        className={`transition-[opacity,border-color] duration-300 ${
           isVideoModeActive
-            ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-16 sm:-mt-14 w-[min(92vw,560px)] aspect-video rounded-2xl shadow-2xl z-[105] border border-white/20 overflow-hidden bg-black pointer-events-auto opacity-100 visible"
-            : "fixed bottom-0 right-0 w-2 h-2 pointer-events-none opacity-[0.001] z-[-10] overflow-hidden invisible"
+            ? "pointer-events-auto opacity-100 visible"
+            : "pointer-events-none opacity-0 invisible"
         }`}
       >
-        <div
-          id="oblivion-yt-stream-engine"
-          className="w-full h-full"
-        />
+        {/* Prominent 3D Multi-Layer Ambient Depth Shadow & Dynamic Glow for Video */}
+        {isVideoModeActive && (
+          <>
+            {/* Dynamic themed colored backlight glow */}
+            <div className={`absolute -inset-3 sm:-inset-4 rounded-[2rem] bg-gradient-to-tr ${fpTheme.artGlowRing} blur-2xl opacity-80 pointer-events-none`} />
+            {/* Deep 3D atmospheric floor drop shadow */}
+            <div className="absolute -inset-1 rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.95),0_15px_40px_rgba(0,0,0,0.85),0_0_2px_1px_rgba(255,255,255,0.15)] pointer-events-none" />
+          </>
+        )}
+
+        <div className="relative w-full h-full rounded-2xl sm:rounded-3xl border-2 border-white/25 overflow-hidden bg-black shadow-2xl">
+          <div
+            id="oblivion-yt-stream-engine"
+            className="w-full h-full"
+          />
+        </div>
       </div>
 
       {/* Hidden Native Audio Element for Offline Cache & Mobile Background Audio Session */}
@@ -979,10 +1128,10 @@ export const Player: React.FC<PlayerProps> = ({
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
             {settings.playerBackgroundAnimation === "ambient-drift" ? (
               <>
-                {/* 1. Ambient Zoom & Drift - Dual Offset Parallax Motion */}
+                {/* 1. Ambient Zoom & Drift - Dual Offset Parallax Motion with Theme Color Sets */}
                 <div
                   className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift"
-                  style={{ animationDuration: `${settings.animationDriftSpeed || 12}s` }}
+                  style={{ animationDuration: `${settings.animationDriftSpeed || 6}s` }}
                 >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
@@ -997,7 +1146,7 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
                 <div
                   className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift-sec"
-                  style={{ animationDuration: `${(settings.animationDriftSpeed || 12) * 1.25}s` }}
+                  style={{ animationDuration: `${(settings.animationDriftSpeed || 6) * 1.25}s` }}
                 >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
@@ -1010,16 +1159,18 @@ export const Player: React.FC<PlayerProps> = ({
                     }}
                   />
                 </div>
+                {/* Dynamic App Design Drift Aura Mesh */}
+                <div className={`absolute inset-0 ${fpTheme.driftAuraGlow} blur-[90px] pointer-events-none`} />
                 {/* Ambient Drifting Theme Orbs */}
                 <div className={`absolute -top-24 left-10 w-[550px] h-[550px] rounded-full ${fpTheme.orb1} blur-[120px] animate-ambient-orb`} />
                 <div className={`absolute -bottom-24 right-10 w-[500px] h-[500px] rounded-full ${fpTheme.orb2} blur-[130px] animate-ambient-orb`} />
               </>
             ) : settings.playerBackgroundAnimation === "aurora-pulse" ? (
               <>
-                {/* 2. Aurora Pulse - Fluid Breathing & Sweeping Luminous Beams */}
+                {/* 2. Aurora Pulse - Fluid Breathing & Sweeping Luminous Beams matching App Design */}
                 <div
                   className="absolute -inset-[15%] flex items-center justify-center pointer-events-none animate-aurora-pulse"
-                  style={{ animationDuration: `${settings.animationAuroraSpeed || 8}s` }}
+                  style={{ animationDuration: `${settings.animationAuroraSpeed || 6}s` }}
                 >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
@@ -1032,30 +1183,30 @@ export const Player: React.FC<PlayerProps> = ({
                     }}
                   />
                 </div>
-                {/* Sweeping Aurora Light Beams */}
+                {/* Sweeping Aurora Light Beams dynamically styled with App Design Color Sets */}
                 <div
-                  className="absolute -top-16 left-1/4 w-[600px] h-[500px] rounded-full bg-gradient-to-r from-emerald-400/35 via-teal-300/45 to-cyan-400/35 blur-[100px] animate-aurora-surge"
-                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 8) * 1.2}s` }}
+                  className={`absolute -top-16 left-1/4 w-[600px] h-[500px] rounded-full ${fpTheme.auroraBeam1} blur-[100px] animate-aurora-surge`}
+                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s` }}
                 />
                 <div
-                  className="absolute -bottom-16 right-1/4 w-[550px] h-[480px] rounded-full bg-gradient-to-r from-amber-400/35 via-rose-400/35 to-purple-500/35 blur-[110px] animate-aurora-surge"
-                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 8) * 1.2}s` }}
+                  className={`absolute -bottom-16 right-1/4 w-[550px] h-[480px] rounded-full ${fpTheme.auroraBeam2} blur-[110px] animate-aurora-surge`}
+                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s` }}
                 />
                 <div
                   className={`absolute top-1/4 left-1/4 w-[520px] h-[520px] rounded-full ${fpTheme.orb1} blur-[120px] animate-aurora-pulse`}
-                  style={{ animationDuration: `${settings.animationAuroraSpeed || 8}s` }}
+                  style={{ animationDuration: `${settings.animationAuroraSpeed || 6}s` }}
                 />
                 <div
                   className={`absolute bottom-1/4 right-1/4 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[130px] animate-aurora-pulse`}
-                  style={{ animationDuration: `${settings.animationAuroraSpeed || 8}s` }}
+                  style={{ animationDuration: `${settings.animationAuroraSpeed || 6}s` }}
                 />
               </>
             ) : settings.playerBackgroundAnimation === "orbital-flow" ? (
               <>
-                {/* 3. Orbital Flow - Cosmic 360° Rotating Liquid Flow */}
+                {/* 3. Orbital Flow - Cosmic 360° Rotating Liquid Flow matching App Design */}
                 <div
                   className="absolute -inset-[25%] flex items-center justify-center pointer-events-none animate-orbital-flow"
-                  style={{ animationDuration: `${settings.animationOrbitalSpeed || 12}s` }}
+                  style={{ animationDuration: `${settings.animationOrbitalSpeed || 6}s` }}
                 >
                   <img
                     src={getHdCoverUrl(currentTrack.coverUrl)}
@@ -1068,13 +1219,13 @@ export const Player: React.FC<PlayerProps> = ({
                     }}
                   />
                 </div>
-                {/* Counter-rotating Orbital Planetary System */}
+                {/* Counter-rotating Orbital Planetary System with App Design Aura Rings */}
                 <div
                   className="absolute inset-0 flex items-center justify-center animate-orbital-counter"
-                  style={{ animationDuration: `${(settings.animationOrbitalSpeed || 12) * 1.35}s` }}
+                  style={{ animationDuration: `${(settings.animationOrbitalSpeed || 6) * 1.35}s` }}
                 >
-                  <div className={`absolute -top-24 left-16 w-[500px] h-[500px] rounded-full ${fpTheme.orb1} blur-[100px] opacity-80`} />
-                  <div className={`absolute -bottom-24 right-16 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[110px] opacity-80`} />
+                  <div className={`absolute -top-24 left-16 w-[520px] h-[520px] rounded-full ${fpTheme.orbitalGlow1} blur-[105px] opacity-85`} />
+                  <div className={`absolute -bottom-24 right-16 w-[500px] h-[500px] rounded-full ${fpTheme.orbitalGlow2} blur-[115px] opacity-85`} />
                 </div>
               </>
             ) : (
@@ -1090,6 +1241,8 @@ export const Player: React.FC<PlayerProps> = ({
                     }
                   }}
                 />
+                <div className={`absolute -top-20 left-10 w-[400px] h-[400px] rounded-full ${fpTheme.orb1} blur-[140px] opacity-40`} />
+                <div className={`absolute -bottom-20 right-10 w-[380px] h-[380px] rounded-full ${fpTheme.orb2} blur-[140px] opacity-40`} />
               </div>
             )}
 
@@ -1209,11 +1362,14 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             ) : playerState.mediaMode === "video" ? (
               /* Music Video Mode on Center Stage */
-              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 max-w-xl w-full animate-fade-in my-auto">
-                {/* 16:9 Invisible Layout Spacer reserving stage dimensions without any redundant frame borders */}
-                <div className="w-[min(92vw,560px)] aspect-video pointer-events-none" />
+              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 max-w-2xl w-full animate-fade-in my-auto py-1">
+                {/* 16:9 Video Placeholder - exact bounding frame synchronized with YouTube wrapper */}
+                <div
+                  ref={videoPlaceholderRef}
+                  className="w-[min(90vw,520px)] aspect-video max-h-[38vh] sm:max-h-[44vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none"
+                />
 
-                {/* Song Title, Artist, & Master Video Tags */}
+                {/* Song Title, Artist, & Master Video Tags - always rendered with clean margin below the video screen */}
                 <div className="text-center space-y-1 sm:space-y-1.5 max-w-xs sm:max-w-md w-full px-2">
                   <h2 className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle}`}>
                     {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
@@ -1235,12 +1391,15 @@ export const Player: React.FC<PlayerProps> = ({
             ) : (
               /* Audio / Song Mode: Central HD Album Artwork & Dynamic Stage */
               <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 max-w-md w-full animate-fade-in my-auto">
-                {/* HD Cover Art with Ambient Shadow and Glowing Ring */}
-                <div className="relative group">
-                  {/* Subtle dynamic glow ring around the album artwork */}
-                  <div className={`absolute -inset-2 rounded-3xl bg-gradient-to-tr ${fpTheme.artGlowRing} blur-xl opacity-75 group-hover:opacity-100 transition duration-500 pointer-events-none`} />
+                {/* HD Cover Art with Prominent 3D Ambient Shadow and Glowing Dynamic Aura */}
+                <div className="relative group flex items-center justify-center">
+                  {/* Dynamic themed colored backlight aura */}
+                  <div className={`absolute -inset-3 sm:-inset-4 rounded-[2.5rem] bg-gradient-to-tr ${fpTheme.artGlowRing} blur-2xl opacity-80 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
 
-                  <div className={`relative w-[min(58vw,230px)] h-[min(58vw,230px)] xs:w-[min(64vw,260px)] xs:h-[min(64vw,260px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[34vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} shadow-2xl`}>
+                  {/* Deep 3D atmospheric floor drop shadow */}
+                  <div className="absolute -inset-1 rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.95),0_15px_40px_rgba(0,0,0,0.85),0_0_2px_1px_rgba(255,255,255,0.15)] pointer-events-none" />
+
+                  <div className={`relative w-[min(58vw,230px)] h-[min(58vw,230px)] xs:w-[min(64vw,260px)] xs:h-[min(64vw,260px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[34vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} shadow-[0_25px_70px_rgba(0,0,0,0.9),0_10px_25px_rgba(0,0,0,0.7)]`}>
                     <img
                       src={getHdCoverUrl(currentTrack.coverUrl)}
                       alt={currentTrack.title}
@@ -1280,9 +1439,29 @@ export const Player: React.FC<PlayerProps> = ({
 
           {/* Fullscreen Player Controls Bar - Responsively anchored with safe bottom padding */}
           <div className={`relative z-20 shrink-0 p-3.5 sm:p-5 pb-5 sm:pb-6 border-t backdrop-blur-2xl space-y-2.5 sm:space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
-            {/* Seekbar Slider */}
-            <div className="space-y-1 sm:space-y-1.5">
-              <div className="relative flex items-center group cursor-pointer">
+            {/* Seekbar Slider - Designer Dual-Track with Scrubber Handle */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <div className="relative flex items-center group cursor-pointer py-1.5">
+                {/* Background Track */}
+                <div className={`w-full h-2 group-hover:h-2.5 rounded-full overflow-hidden transition-all relative ${fpTheme.seekbarTrack}`}>
+                  {/* Active Progress Fill */}
+                  <div
+                    className={`absolute top-0 left-0 h-full rounded-full transition-all duration-75 ${fpTheme.seekbarFill} ${isPlaying ? "animate-gradient-shift" : ""}`}
+                    style={{
+                      width: `${duration > 0 ? ((isSeeking ? seekValue : currentTime) / duration) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+
+                {/* Scrubber Thumb Handle */}
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full ${fpTheme.seekbarThumb} shadow-lg transition-transform group-hover:scale-125 pointer-events-none`}
+                  style={{
+                    left: `${duration > 0 ? Math.min(100, Math.max(0, ((isSeeking ? seekValue : currentTime) / duration) * 100)) : 0}%`,
+                  }}
+                />
+
+                {/* Interactive Drag & Tap Surface */}
                 <input
                   type="range"
                   min={0}
@@ -1309,11 +1488,11 @@ export const Player: React.FC<PlayerProps> = ({
                     setIsSeeking(false);
                     handleSeekInternal(seekValue);
                   }}
-                  className={`w-full h-2 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.seekbarTrack} ${fpTheme.seekbarAccent}`}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
               </div>
 
-              <div className={`flex items-center justify-between text-[11px] sm:text-xs font-mono ${fpTheme.timeText}`}>
+              <div className={`flex items-center justify-between text-[11px] sm:text-xs font-mono select-none ${fpTheme.timeText}`}>
                 <span>
                   {Math.floor((isSeeking ? seekValue : currentTime) / 60)}:
                   {String(Math.floor((isSeeking ? seekValue : currentTime) % 60)).padStart(2, "0")}
@@ -1441,274 +1620,181 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
       )}
 
-      {/* Dynamic Multi-Layout Mini Player Deck - Hidden when full player modal is expanded */}
+      {/* Dynamic Multi-Layout Mini Player Deck - Unified Designer Floating Dock with Waveform across all 6 App Designs */}
       {!isFullscreen && (() => {
-        const layout = settings.miniPlayerLayout || "designer-waveform";
         const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+        const waveformBars = [
+          18, 28, 42, 65, 80, 50, 35, 75, 95, 85, 45, 60, 90, 100, 70, 40,
+          85, 92, 60, 30, 45, 78, 95, 88, 55, 38, 70, 92, 80, 45, 60, 85,
+          75, 50, 35, 65, 80, 60, 40, 25, 18, 12
+        ];
 
-        // Layout 0: Designer Studio Floating Dock with Waveform
-        if (layout === "designer-waveform") {
-          const waveformBars = [
-            18, 28, 42, 65, 80, 50, 35, 75, 95, 85, 45, 60, 90, 100, 70, 40,
-            85, 92, 60, 30, 45, 78, 95, 88, 55, 38, 70, 92, 80, 45, 60, 85,
-            75, 50, 35, 65, 80, 60, 40, 25, 18, 12
-          ];
-
-          return (
-            <div className={`fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder} transition-all`}>
-              {/* Top Row: Track & Primary Controls */}
-              <div className="flex items-center justify-between gap-3">
-                {/* Left Play/Pause and Track Info */}
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <button
-                    onClick={() => handleUserTogglePlay()}
-                    className={`w-10 h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
-                    title={isPlaying ? "Pause" : "Play"}
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-4 h-4 fill-white" />
-                    ) : (
-                      <Play className="w-4 h-4 fill-white ml-0.5" />
-                    )}
-                  </button>
-
-                  <div 
-                    onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                    className="min-w-0 flex-1 cursor-pointer group pr-1"
-                  >
-                    <h4 className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                      {cleanTrackTitle(currentTrack.title)}
-                    </h4>
-                    <p className={`text-[11px] ${designConfig.textMuted} truncate`}>
-                      {currentTrack.artist} • <span className={`${designConfig.accentText} font-medium font-mono text-[10px]`}>HD Studio</span>
-                    </p>
+        return (
+          <div
+            id="app-mini-player-floating-dock"
+            className={`fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder} transition-all`}
+          >
+            {/* Top Row: Track Artwork, Play/Pause, Metadata & Controls */}
+            <div className="flex items-center justify-between gap-3">
+              {/* Left Play/Pause and Track Info */}
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                {/* Artwork Thumbnail with quick full player expand */}
+                <div
+                  onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
+                  className={`relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} cursor-pointer group shadow-sm`}
+                  title="Click to open Full Player"
+                >
+                  <img
+                    src={currentTrack.coverUrl}
+                    alt={currentTrack.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Maximize2 className="w-3.5 h-3.5 text-white" />
                   </div>
                 </div>
 
-                {/* Right Meta Controls: Like, Add to Playlist, Download, Repeat, Prev, Next, Expand */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => onToggleLike(currentTrack.id)}
-                    className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
-                    title="Favorite"
-                  >
-                    <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
-                  </button>
-
-                  {/* Add to Playlist button on Mini Player */}
-                  <button
-                    id="player-mini-add-playlist-btn"
-                    onClick={() => {
-                      if (onOpenAddToPlaylistModal && currentTrack) {
-                        onOpenAddToPlaylistModal(currentTrack);
-                      } else {
-                        setShowAddToPlaylistModal(true);
-                      }
-                    }}
-                    className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] transition-colors`}
-                    title="Add to Playlist"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
-                    }
-                    className={`p-1.5 transition-colors ${
-                      isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                    }`}
-                    title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
-                  >
-                    <Shuffle className="w-3.5 h-3.5" />
-                  </button>
-
-                  <button
-                    onClick={onPrevTrack}
-                    className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                    title="Previous"
-                  >
-                    <SkipBack className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={onNextTrack}
-                    className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                    title="Next"
-                  >
-                    <SkipForward className="w-4 h-4" />
-                  </button>
-
-                  {/* Repeat button on Mini Player */}
-                  <button
-                    onClick={cycleRepeatMode}
-                    className={`p-1.5 transition-colors ${
-                      repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                    }`}
-                    title={`Repeat: ${repeatMode}`}
-                  >
-                    {repeatMode === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
-                  </button>
-
-                  <button
-                    onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                    className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                    title="Full View"
-                  >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Bottom Row: Waveform Scrubber & Timestamps */}
-              <div className="flex items-center gap-3 pt-0.5">
-                <div 
-                  className={`flex-1 h-8 flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer relative py-1 px-1 rounded-xl ${designConfig.inputBg} border ${designConfig.borderSubtle} hover:${designConfig.accentBorder} transition-colors`}
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    const newTime = pos * duration;
-                    handleSeekInternal(newTime);
-                  }}
-                  title="Click anywhere on waveform to seek"
+                <button
+                  onClick={() => handleUserTogglePlay()}
+                  className={`w-10 h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                  title={isPlaying ? "Pause" : "Play"}
                 >
-                  {waveformBars.map((heightPct, idx) => {
-                    const barPosPct = (idx / (waveformBars.length - 1)) * 100;
-                    const isPassed = barPosPct <= progressPercent;
-                    
-                    return (
-                      <div
-                        key={idx}
-                        className="flex-1 flex items-center justify-center h-full min-w-[2px]"
-                      >
-                        <span
-                          className={`w-full rounded-full transition-all duration-150 ${
-                            isPassed
-                              ? designConfig.accentBg
-                              : `${designConfig.borderSubtle} dark:bg-slate-700 hover:opacity-80`
-                          } ${isPlaying && isPassed ? "animate-pulse" : ""}`}
-                          style={{
-                            height: `${Math.max(15, isPlaying ? (heightPct * (0.7 + (Math.sin(idx + currentTime * 3) * 0.3))) : heightPct)}%`,
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 fill-white" />
+                  ) : (
+                    <Play className="w-4 h-4 fill-white ml-0.5" />
+                  )}
+                </button>
 
-                <div className={`text-[11px] font-mono font-medium ${designConfig.textMuted} shrink-0 whitespace-nowrap`}>
-                  <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
-                  <span className="mx-1">/</span>
-                  <span>{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, "0")}</span>
+                <div 
+                  onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
+                  className="min-w-0 flex-1 cursor-pointer group pr-1"
+                >
+                  <h4 className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
+                    {cleanTrackTitle(currentTrack.title)}
+                  </h4>
+                  <p className={`text-[11px] ${designConfig.textMuted} truncate`}>
+                    {currentTrack.artist} • <span className={`${designConfig.accentText} font-medium font-mono text-[10px]`}>HD Studio</span>
+                  </p>
                 </div>
               </div>
-            </div>
-          );
-        }
 
-        // Layout 1: Floating Dock Pill (Modern Theme Responsive)
-        return (
-          <div className={`fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] md:w-[600px] max-w-xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-2.5 px-3.5 flex items-center justify-between z-40 select-none shadow-2xl`}>
-            {/* Left Track Info */}
-            <div 
-              onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-              className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group pr-2"
-            >
-              <div className={`relative w-11 h-11 rounded-xl overflow-hidden shrink-0 border ${designConfig.accentBorder}`}>
-                <img
-                  src={currentTrack.coverUrl}
-                  alt={currentTrack.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <Maximize2 className="w-3.5 h-3.5 text-white" />
-                </div>
-              </div>
-              <div className="min-w-0">
-                <h4 className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                  {cleanTrackTitle(currentTrack.title)}
-                </h4>
-                <p className={`text-[11px] ${designConfig.textMuted} truncate`}>{currentTrack.artist}</p>
-              </div>
-            </div>
+              {/* Right Meta Controls: Like, Add to Playlist, Shuffle, Prev, Next, Repeat, Expand */}
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => onToggleLike(currentTrack.id)}
+                  className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
+                  title="Favorite"
+                >
+                  <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                </button>
 
-            {/* Right Controls */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                onClick={() => onToggleLike(currentTrack.id)}
-                className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
-                title="Like"
-              >
-                <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
-              </button>
+                {/* Add to Playlist button on Mini Player */}
+                <button
+                  id="player-mini-add-playlist-btn"
+                  onClick={() => {
+                    if (onOpenAddToPlaylistModal && currentTrack) {
+                      onOpenAddToPlaylistModal(currentTrack);
+                    } else {
+                      setShowAddToPlaylistModal(true);
+                    }
+                  }}
+                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors`}
+                  title="Add to Playlist"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
 
-              <button
-                id="player-bottom-add-playlist-btn"
-                onClick={() => {
-                  if (onOpenAddToPlaylistModal && currentTrack) {
-                    onOpenAddToPlaylistModal(currentTrack);
-                  } else {
-                    setShowAddToPlaylistModal(true);
+                <button
+                  onClick={() =>
+                    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
+                  className={`p-1.5 transition-colors ${
+                    isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                  }`}
+                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
+                >
+                  <Shuffle className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  onClick={onPrevTrack}
+                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
+                  title="Previous"
+                >
+                  <SkipBack className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={onNextTrack}
+                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
+                  title="Next"
+                >
+                  <SkipForward className="w-4 h-4" />
+                </button>
+
+                {/* Repeat button on Mini Player */}
+                <button
+                  onClick={cycleRepeatMode}
+                  className={`p-1.5 transition-colors ${
+                    repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                  }`}
+                  title={`Repeat: ${repeatMode}`}
+                >
+                  {repeatMode === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
+                </button>
+
+                <button
+                  onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
+                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
+                  title="Full View"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Row: Waveform Scrubber & Timestamps */}
+            <div className="flex items-center gap-3 pt-0.5">
+              <div 
+                className={`flex-1 h-8 flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer relative py-1 px-1.5 rounded-xl ${designConfig.inputBg} border ${designConfig.borderSubtle} hover:${designConfig.accentBorder} transition-colors`}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const newTime = pos * duration;
+                  handleSeekInternal(newTime);
                 }}
-                className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] transition-colors`}
-                title="Add to Playlist"
+                title="Click anywhere on waveform to seek"
               >
-                <Plus className="w-4 h-4" />
-              </button>
+                {waveformBars.map((heightPct, idx) => {
+                  const barPosPct = (idx / (waveformBars.length - 1)) * 100;
+                  const isPassed = barPosPct <= progressPercent;
+                  
+                  return (
+                    <div
+                      key={idx}
+                      className="flex-1 flex items-center justify-center h-full min-w-[2px]"
+                    >
+                      <span
+                        className={`w-full rounded-full transition-all duration-150 ${
+                          isPassed
+                            ? `${designConfig.waveformGradient || designConfig.progressGradient || designConfig.accentBg} ${isPlaying ? "animate-gradient-flow animate-waveform-shimmer" : ""}`
+                            : `${designConfig.borderSubtle} dark:bg-slate-700 hover:opacity-80`
+                        } ${isPlaying && isPassed ? "animate-pulse" : ""}`}
+                        style={{
+                          height: `${Math.max(15, isPlaying ? (heightPct * (0.7 + (Math.sin(idx + currentTime * 3) * 0.3))) : heightPct)}%`,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
 
-              <button
-                onClick={() =>
-                  setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
-                }
-                className={`p-1.5 transition-colors ${
-                  isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                }`}
-                title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
-              >
-                <Shuffle className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                onClick={onPrevTrack}
-                className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                title="Previous"
-              >
-                <SkipBack className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={() => handleUserTogglePlay()}
-                className={`w-9 h-9 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-lg transition-transform active:scale-95`}
-              >
-                {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
-              </button>
-
-              <button
-                onClick={onNextTrack}
-                className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                title="Next"
-              >
-                <SkipForward className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={cycleRepeatMode}
-                className={`p-1.5 transition-colors ${
-                  repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                }`}
-                title={`Repeat: ${repeatMode}`}
-              >
-                {repeatMode === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
-              </button>
-
-              <button
-                onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                title="Expand"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
+              <div className={`text-[11px] font-mono font-medium ${designConfig.textMuted} shrink-0 whitespace-nowrap`}>
+                <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
+                <span className="mx-1">/</span>
+                <span>{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, "0")}</span>
+              </div>
             </div>
           </div>
         );

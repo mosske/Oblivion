@@ -21,6 +21,9 @@ export interface FullAppDesignConfig {
   accentText: string;
   accentBorder: string;
   glowRing: string;
+  progressGradient: string;
+  waveformGradient: string;
+  waveformGlow: string;
   bgCanvas: string;
   bgAtmosphere: string;
   headerBg: string;
@@ -71,6 +74,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     accentText: "text-[#c89b3c]",
     accentBorder: "border-[#c89b3c]/50",
     glowRing: "ring-[#c89b3c]/40 shadow-[#c89b3c]/20",
+    progressGradient: "bg-gradient-to-r from-[#b88928] via-[#e5b85c] to-[#f5d78e]",
+    waveformGradient: "bg-gradient-to-t from-[#b88928] via-[#e5b85c] to-[#fef08a]",
+    waveformGlow: "shadow-[0_0_12px_rgba(200,155,60,0.45)]",
     bgCanvas: "from-[#081e17] via-[#0e2c22] to-[#05130f] text-slate-100",
     bgAtmosphere: "bg-[radial-gradient(ellipse_95%_95%_at_50%_-10%,rgba(16,185,129,0.22),rgba(5,150,105,0.12),rgba(6,22,17,0.96))]",
     headerBg: "bg-[#fbfaf7]/95 border-[#e6e2d8] backdrop-blur-xl text-[#181816]",
@@ -125,6 +131,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     accentText: "text-cyan-400",
     accentBorder: "border-cyan-500/40",
     glowRing: "ring-cyan-500/30 shadow-cyan-500/20",
+    progressGradient: "bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-pink-500",
+    waveformGradient: "bg-gradient-to-t from-cyan-500 via-fuchsia-500 to-pink-400",
+    waveformGlow: "shadow-[0_0_15px_rgba(6,182,212,0.6)]",
     bgCanvas: "from-slate-950 via-slate-900 to-slate-950 text-slate-100",
     bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(6,182,212,0.15),rgba(255,255,255,0))]",
     headerBg: "bg-slate-950/90 border-slate-800/80 backdrop-blur-xl text-white",
@@ -179,6 +188,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     accentText: "text-red-500",
     accentBorder: "border-red-500/40",
     glowRing: "ring-red-500/30 shadow-red-600/20",
+    progressGradient: "bg-gradient-to-r from-red-600 via-rose-500 to-amber-500",
+    waveformGradient: "bg-gradient-to-t from-red-700 via-rose-500 to-amber-400",
+    waveformGlow: "shadow-[0_0_14px_rgba(220,38,38,0.55)]",
     bgCanvas: "from-[#0f0f0f] via-[#141414] to-[#0f0f0f] text-neutral-100",
     bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(220,38,38,0.12),rgba(255,255,255,0))]",
     headerBg: "bg-[#0f0f0f]/95 border-neutral-800 backdrop-blur-xl text-white",
@@ -233,6 +245,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     accentText: "text-emerald-400",
     accentBorder: "border-emerald-500/40",
     glowRing: "ring-emerald-500/30 shadow-emerald-500/20",
+    progressGradient: "bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-300",
+    waveformGradient: "bg-gradient-to-t from-emerald-600 via-teal-400 to-cyan-300",
+    waveformGlow: "shadow-[0_0_14px_rgba(16,185,129,0.55)]",
     bgCanvas: "from-black via-zinc-950 to-black text-zinc-100",
     bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.12),rgba(255,255,255,0))]",
     headerBg: "bg-black/90 border-zinc-800/80 backdrop-blur-xl text-white",
@@ -287,6 +302,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     accentText: "text-amber-400",
     accentBorder: "border-amber-500/40",
     glowRing: "ring-amber-500/30 shadow-amber-500/20",
+    progressGradient: "bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-200",
+    waveformGradient: "bg-gradient-to-t from-amber-700 via-amber-400 to-yellow-200",
+    waveformGlow: "shadow-[0_0_14px_rgba(245,158,11,0.55)]",
     bgCanvas: "from-[#14100c] via-[#1c1612] to-[#14100c] text-amber-50",
     bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,158,11,0.12),rgba(255,255,255,0))]",
     headerBg: "bg-[#14100c]/95 border-amber-900/40 backdrop-blur-xl text-amber-50",
@@ -341,6 +359,9 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     accentText: "text-purple-300",
     accentBorder: "border-purple-500/40",
     glowRing: "ring-purple-500/30 shadow-purple-500/20",
+    progressGradient: "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-400",
+    waveformGradient: "bg-gradient-to-t from-purple-600 via-fuchsia-500 to-pink-400",
+    waveformGlow: "shadow-[0_0_15px_rgba(168,85,247,0.55)]",
     bgCanvas: "from-[#1e1035] via-[#160a29] to-[#0d051a] text-purple-100",
     bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(168,85,247,0.15),rgba(236,72,153,0.08))]",
     headerBg: "bg-[#160a29]/90 border-purple-800/40 backdrop-blur-xl text-purple-50",
@@ -376,7 +397,7 @@ export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
     mockup: {
       heroTitle: "Sunset Dreams & Chill Beats",
       heroSubtitle: "Immersive spatial acoustics and ambient mood mixes",
-      chipLabels: ["🟣 Sunset Purple", "🎚️ Split Gestures", "✨ Rose Glow"],
+      chipLabels: ["🟣 Sunset Purple", "🎛️ Split Gestures", "✨ Rose Glow"],
       bannerGradient: "from-fuchsia-950 via-purple-950 to-slate-950 border-purple-500/30",
       dockStyle: "Split-Slider Gesture Deck"
     }

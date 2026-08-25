@@ -122,9 +122,9 @@ export interface UserSettings {
   miniPlayerLayout: MiniPlayerLayout;
   fullAppDesign: FullAppDesignId;
   playerBackgroundAnimation: PlayerBackgroundAnimation;
-  animationDriftSpeed?: number;   // 1. Ambient Zoom & Drift duration in seconds (default: 12s)
-  animationAuroraSpeed?: number;  // 2. Aurora Pulse duration in seconds (default: 8s)
-  animationOrbitalSpeed?: number; // 3. Orbital Flow duration in seconds (default: 12s)
+  animationDriftSpeed?: number;   // 1. Ambient Zoom & Drift duration in seconds (default: 6s)
+  animationAuroraSpeed?: number;  // 2. Aurora Pulse duration in seconds (default: 6s)
+  animationOrbitalSpeed?: number; // 3. Orbital Flow duration in seconds (default: 6s)
   compactMode: boolean;
   lyricsFontSize: LyricsFontSize;
   lyricsAlignment: LyricsAlignment;

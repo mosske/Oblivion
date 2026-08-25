@@ -255,16 +255,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               id="reset-animation-timings-btn"
               onClick={() =>
                 onUpdateSettings({
-                  animationDriftSpeed: 12,
-                  animationAuroraSpeed: 8,
-                  animationOrbitalSpeed: 12,
+                  animationDriftSpeed: 6,
+                  animationAuroraSpeed: 6,
+                  animationOrbitalSpeed: 6,
                 })
               }
               className="px-3 py-1.5 rounded-xl bg-white border border-[#d8d2c4] hover:border-[#c89b3c] hover:bg-[#f4f1ea] text-zinc-800 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 shrink-0"
-              title="Reset all animation durations to default (12s, 8s, 12s)"
+              title="Reset all animation durations to default (6s)"
             >
               <RotateCcw className="w-3.5 h-3.5 text-[#c89b3c]" />
-              <span>Reset Defaults (12s, 8s, 12s)</span>
+              <span>Reset Defaults (6s)</span>
             </button>
             <span className="text-xs px-3 py-1.5 rounded-full font-mono font-bold bg-[#c89b3c] text-slate-950 shadow-md">
               Active: {
@@ -317,16 +317,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <span>Cycle Duration</span>
                 </div>
                 <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-amber-800 border border-amber-300 shadow-sm">
-                  {settings.animationDriftSpeed ?? 12}s
+                  {settings.animationDriftSpeed ?? 6}s
                 </span>
               </div>
               <input
                 id="ambient-drift-speed-slider"
                 type="range"
-                min="4"
-                max="40"
+                min="3"
+                max="20"
                 step="1"
-                value={settings.animationDriftSpeed ?? 12}
+                value={settings.animationDriftSpeed ?? 6}
                 onChange={(e) => {
                   onUpdateSettings({
                     animationDriftSpeed: Number(e.target.value),
@@ -336,9 +336,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className="w-full h-1.5 bg-amber-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
               />
               <div className="flex justify-between text-[9px] text-amber-800/80 font-mono font-medium">
-                <span>Fast (4s)</span>
-                <span className="font-bold text-amber-900">Default: 12s</span>
-                <span>Slow (40s)</span>
+                <span>Fast (3s)</span>
+                <span className="font-bold text-amber-900">Default: 6s</span>
+                <span>Slow (20s)</span>
               </div>
             </div>
           </div>
@@ -379,16 +379,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <span>Cycle Duration</span>
                 </div>
                 <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-emerald-800 border border-emerald-300 shadow-sm">
-                  {settings.animationAuroraSpeed ?? 8}s
+                  {settings.animationAuroraSpeed ?? 6}s
                 </span>
               </div>
               <input
                 id="aurora-pulse-speed-slider"
                 type="range"
                 min="3"
-                max="30"
+                max="20"
                 step="1"
-                value={settings.animationAuroraSpeed ?? 8}
+                value={settings.animationAuroraSpeed ?? 6}
                 onChange={(e) => {
                   onUpdateSettings({
                     animationAuroraSpeed: Number(e.target.value),
@@ -399,8 +399,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               />
               <div className="flex justify-between text-[9px] text-emerald-800/80 font-mono font-medium">
                 <span>Fast (3s)</span>
-                <span className="font-bold text-emerald-900">Default: 8s</span>
-                <span>Slow (30s)</span>
+                <span className="font-bold text-emerald-900">Default: 6s</span>
+                <span>Slow (20s)</span>
               </div>
             </div>
           </div>
@@ -441,16 +441,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <span>Cycle Duration</span>
                 </div>
                 <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-violet-800 border border-violet-300 shadow-sm">
-                  {settings.animationOrbitalSpeed ?? 12}s
+                  {settings.animationOrbitalSpeed ?? 6}s
                 </span>
               </div>
               <input
                 id="orbital-flow-speed-slider"
                 type="range"
-                min="4"
-                max="40"
+                min="3"
+                max="20"
                 step="1"
-                value={settings.animationOrbitalSpeed ?? 12}
+                value={settings.animationOrbitalSpeed ?? 6}
                 onChange={(e) => {
                   onUpdateSettings({
                     animationOrbitalSpeed: Number(e.target.value),
@@ -460,9 +460,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className="w-full h-1.5 bg-violet-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
               />
               <div className="flex justify-between text-[9px] text-violet-800/80 font-mono font-medium">
-                <span>Fast (4s)</span>
-                <span className="font-bold text-violet-900">Default: 12s</span>
-                <span>Slow (40s)</span>
+                <span>Fast (3s)</span>
+                <span className="font-bold text-violet-900">Default: 6s</span>
+                <span>Slow (20s)</span>
               </div>
             </div>
           </div>
