@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from "./types";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Player } from "./components/Player";
+import { Sidebar } from "./components/Sidebar";
+import { BottomNav } from "./components/BottomNav";
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
@@ -10,6 +12,15 @@ function AppContent() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playlistSongs, setPlaylistSongs] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSyncingYouTube, setIsSyncingYouTube] = useState(false);
+  const [hiddenPlaylists, setHiddenPlaylists] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("oblivion_hidden_playlists");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const [settings, setSettings] = useState<UserSettings>(() => {
     try {
@@ -192,6 +203,8 @@ function AppContent() {
     }
   };
 
+  const visiblePlaylists = playlists.filter((p) => !hiddenPlaylists.includes(p.id));
+
   const renderPlaylistDetail = () => {
     const playlist = playlists.find((p) => p.id === selectedPlaylistId);
     if (!playlist) return null;
@@ -280,13 +293,13 @@ function AppContent() {
                   </button>
                 </div>
 
-                {playlists.length === 0 ? (
+                {visiblePlaylists.length === 0 ? (
                   <div className="text-gray-400 text-center py-12">No playlists found</div>
                 ) : (
                   <div>
                     <h2 className="text-2xl font-bold mb-6">Your Playlists</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {playlists.map((playlist) => (
+                      {visiblePlaylists.map((playlist) => (
                         <div
                           key={playlist.id}
                           onClick={() => {
@@ -323,14 +336,16 @@ function AppContent() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-3xl font-bold">Your Library</h1>
-              {user && (
-                <button
-                  onClick={handleSignOut}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
-                >
-                  Sign Out
-                </button>
-              )}
+              <div className="flex gap-2">
+                {user && (
+                  <button
+                    onClick={handleSignOut}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+                  >
+                    Sign Out
+                  </button>
+                )}
+              </div>
             </div>
 
             {!user ? (
@@ -343,11 +358,11 @@ function AppContent() {
                   Sign In
                 </button>
               </div>
-            ) : playlists.length === 0 ? (
+            ) : visiblePlaylists.length === 0 ? (
               <div className="text-gray-400 text-center py-12">No playlists</div>
             ) : (
               <div className="space-y-3">
-                {playlists.map((playlist) => (
+                {visiblePlaylists.map((playlist) => (
                   <div
                     key={playlist.id}
                     onClick={() => {
