@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PlayerState, Track, UserSettings, Playlist } from "../types";
 import {
   Play,
@@ -450,6 +450,65 @@ export const Player: React.FC<PlayerProps> = ({
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
+  const repeatModeRef = useRef<"off" | "one" | "all">(repeatMode);
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+
+  const onNextTrackRef = useRef(onNextTrack);
+  useEffect(() => {
+    onNextTrackRef.current = onNextTrack;
+  }, [onNextTrack]);
+
+  const onPrevTrackRef = useRef(onPrevTrack);
+  useEffect(() => {
+    onPrevTrackRef.current = onPrevTrack;
+  }, [onPrevTrack]);
+
+  const onTogglePlayRef = useRef(onTogglePlay);
+  useEffect(() => {
+    onTogglePlayRef.current = onTogglePlay;
+  }, [onTogglePlay]);
+
+  const handleEndedRef = useRef<() => void>(() => {});
+
+  // Master handler for track end (works for both YouTube and HTML5 audio)
+  const handleEnded = useCallback(() => {
+    if (isChangingTrackRef.current) return;
+
+    const curRepeat = repeatModeRef.current;
+    if (curRepeat === "one") {
+      // Repeat current track from start
+      if (isYtReadyRef.current && ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.seekTo?.(0, true);
+          ytPlayerRef.current.playVideo?.();
+        } catch {}
+      }
+      if (audioRef.current) {
+        try {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+        } catch {}
+      }
+      setPlayerState((prev) => ({ ...prev, currentTime: 0, isPlaying: true }));
+      return;
+    }
+
+    // Advance to next song in the Playlist, Album, or Search results
+    isChangingTrackRef.current = true;
+    if (isChangingTrackTimeoutRef.current) clearTimeout(isChangingTrackTimeoutRef.current);
+    isChangingTrackTimeoutRef.current = setTimeout(() => {
+      isChangingTrackRef.current = false;
+    }, 2500);
+
+    onNextTrackRef.current();
+  }, [setPlayerState]);
+
+  useEffect(() => {
+    handleEndedRef.current = handleEnded;
+  }, [handleEnded]);
+
   // Load YouTube IFrame API script once
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -607,8 +666,18 @@ export const Player: React.FC<PlayerProps> = ({
                   duration: dur > 0 ? dur : prev.duration,
                 }));
               } else if (event.data === 2) {
-                // If YouTube emits pause during track transitions or background without manual user pause:
-                if (isChangingTrackRef.current || (!userManualPauseRef.current && isPlayingRef.current)) {
+                // If YouTube emits pause during track transitions, ignore
+                if (isChangingTrackRef.current) {
+                  return;
+                }
+                const curTime = event.target.getCurrentTime?.() || 0;
+                const dur = event.target.getDuration?.() || 0;
+                // If video reached near the end and paused, trigger track completion
+                if (dur > 0 && curTime >= dur - 1) {
+                  handleEndedRef.current?.();
+                  return;
+                }
+                if (!userManualPauseRef.current && isPlayingRef.current) {
                   try {
                     event.target.playVideo();
                   } catch {}
@@ -626,7 +695,7 @@ export const Player: React.FC<PlayerProps> = ({
                   } catch {}
                 }
               } else if (event.data === 0) {
-                handleEnded();
+                handleEndedRef.current?.();
               }
             },
             onError: (err: any) => {
@@ -708,6 +777,11 @@ export const Player: React.FC<PlayerProps> = ({
               currentTime: curTime,
               duration: validDur > 0 ? validDur : prev.duration,
             }));
+
+            // Fallback safety: If track reaches duration and YouTube did not fire state 0
+            if (validDur > 3 && curTime >= validDur - 0.25 && !isChangingTrackRef.current) {
+              handleEndedRef.current?.();
+            }
           }
         } catch {}
       }
@@ -876,24 +950,14 @@ export const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  // Handle track end
-  const handleEnded = () => {
+  // Handle track end for HTML5 native audio element
+  const handleAudioEnded = () => {
     // Ignore ended event from the silent keepalive loop
     const src = audioRef.current?.src || "";
     if (src.startsWith("data:audio/wav") || src.startsWith("blob:") || (cachedSilentUrl && src === cachedSilentUrl)) {
       return;
     }
-    if (repeatMode === "one") {
-      if (isYtReadyRef.current && ytPlayerRef.current) {
-        ytPlayerRef.current.seekTo?.(0, true);
-        ytPlayerRef.current.playVideo?.();
-      } else if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      }
-    } else {
-      onNextTrack();
-    }
+    handleEndedRef.current?.();
   };
 
   // Custom seek forward/back
@@ -1050,7 +1114,7 @@ export const Player: React.FC<PlayerProps> = ({
         playsInline
         autoPlay
         onTimeUpdate={handleTimeUpdate}
-        onEnded={handleEnded}
+        onEnded={handleAudioEnded}
         onError={() => console.warn("Audio element fallback")}
         preload="auto"
       />

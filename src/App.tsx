@@ -764,24 +764,37 @@ export default function App() {
   // Next Track with immediate auto-play and full Shuffle support
   const handleNextTrack = () => {
     setPlayerState((prev) => {
-      if (prev.queue.length === 0) return prev;
+      if (!prev.queue || prev.queue.length === 0) return prev;
+      let currentIndex = prev.queueIndex;
+      if (currentIndex < 0 || currentIndex >= prev.queue.length) {
+        if (prev.currentTrack) {
+          const cId = prev.currentTrack.id || prev.currentTrack.youtubeVideoId;
+          const foundIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
+          currentIndex = foundIdx >= 0 ? foundIdx : 0;
+        } else {
+          currentIndex = 0;
+        }
+      }
+
       let nextIndex: number;
       if (prev.isShuffle && prev.queue.length > 1) {
         let rand = Math.floor(Math.random() * prev.queue.length);
-        if (rand === prev.queueIndex) {
+        if (rand === currentIndex) {
           rand = (rand + 1) % prev.queue.length;
         }
         nextIndex = rand;
       } else {
-        nextIndex = prev.queueIndex + 1;
+        nextIndex = currentIndex + 1;
         if (nextIndex >= prev.queue.length) {
           nextIndex = 0;
         }
       }
+
+      const nextTrack = prev.queue[nextIndex];
       return {
         ...prev,
         queueIndex: nextIndex,
-        currentTrack: prev.queue[nextIndex],
+        currentTrack: nextTrack,
         currentTime: 0,
         isPlaying: true,
       };
@@ -791,24 +804,37 @@ export default function App() {
   // Previous Track with immediate auto-play and full Shuffle support
   const handlePrevTrack = () => {
     setPlayerState((prev) => {
-      if (prev.queue.length === 0) return prev;
+      if (!prev.queue || prev.queue.length === 0) return prev;
+      let currentIndex = prev.queueIndex;
+      if (currentIndex < 0 || currentIndex >= prev.queue.length) {
+        if (prev.currentTrack) {
+          const cId = prev.currentTrack.id || prev.currentTrack.youtubeVideoId;
+          const foundIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
+          currentIndex = foundIdx >= 0 ? foundIdx : 0;
+        } else {
+          currentIndex = 0;
+        }
+      }
+
       let prevIndex: number;
       if (prev.isShuffle && prev.queue.length > 1) {
         let rand = Math.floor(Math.random() * prev.queue.length);
-        if (rand === prev.queueIndex) {
+        if (rand === currentIndex) {
           rand = (rand - 1 + prev.queue.length) % prev.queue.length;
         }
         prevIndex = rand;
       } else {
-        prevIndex = prev.queueIndex - 1;
+        prevIndex = currentIndex - 1;
         if (prevIndex < 0) {
           prevIndex = prev.queue.length - 1;
         }
       }
+
+      const prevTrack = prev.queue[prevIndex];
       return {
         ...prev,
         queueIndex: prevIndex,
-        currentTrack: prev.queue[prevIndex],
+        currentTrack: prevTrack,
         currentTime: 0,
         isPlaying: true,
       };
