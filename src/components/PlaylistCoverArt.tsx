@@ -49,35 +49,110 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     setLocalCustomCover(null);
   }, [playlistId, playlist.customCoverUrl, playlist.coverUrl]);
 
-  // Build candidate URL hierarchy:
+  // Build candidate URL hierarchy with proper priority:
   // 1. Explicit user custom cover (local or remote)
-  // 2. maxres.url -> standard.url -> high.url -> medium.url -> default.url
-  // 3. playlist.coverUrl & YouTube fallback resolution strings
+  // 2. Custom YouTube Music image artwork variants (googleusercontent, ggpht, yt3, /pl/, /s_p/)
+  // 3. Playlist coverUrl & YouTube fallback resolution strings
+  // 4. YouTube Data API standard thumbnails (maxres -> standard -> high -> medium -> default)
   const candidates: string[] = useMemo(() => {
     const list: string[] = [];
 
-    if (localCustomCover) list.push(localCustomCover);
-    if (playlist.customCoverUrl && playlist.customCoverUrl !== playlist.coverUrl) {
-      list.push(playlist.customCoverUrl);
+    const addGoogleUserContentVariants = (url: string) => {
+      if (!url) return;
+      let clean = url.startsWith("//") ? `https:${url}` : url;
+      clean = clean.replace(/&amp;/g, "&");
+
+      if (
+        clean.includes("studio_square_thumbnail") ||
+        clean.includes("/pl_c/")
+      ) {
+        list.push(clean);
+        return;
+      }
+
+      if (
+        clean.includes("googleusercontent.com") ||
+        clean.includes("ggpht.com") ||
+        clean.includes("yt3.ggpht.com")
+      ) {
+        if (clean.match(/=w\d+-h\d+/)) {
+          list.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w1200-h1200-l90-rj"));
+          list.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w800-h800-l90-rj"));
+          list.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w544-h544-l90-rj"));
+          list.push(clean);
+        } else if (clean.match(/=s\d+/)) {
+          list.push(clean.replace(/=s\d+[^?&]*/, "=s1200"));
+          list.push(clean.replace(/=s\d+[^?&]*/, "=s800"));
+          list.push(clean.replace(/=s\d+[^?&]*/, "=s544"));
+          list.push(clean);
+        } else {
+          list.push(`${clean}=w1200-h1200-l90-rj`);
+          list.push(`${clean}=w544-h544-l90-rj`);
+          list.push(clean);
+        }
+      } else {
+        list.push(clean);
+      }
+    };
+
+    // 1. Local custom cover takes highest priority
+    if (localCustomCover) {
+      addGoogleUserContentVariants(localCustomCover);
     }
 
+    // 2. Explicit customCoverUrl from YouTube Music / Server
+    if (playlist.customCoverUrl) {
+      addGoogleUserContentVariants(playlist.customCoverUrl);
+    }
+
+    // 3. If playlist.coverUrl is custom or has high-res Google User Content / studio thumbnail
+    if (playlist.coverUrl) {
+      const isCustomUrl =
+        playlist.coverUrl.includes("studio_square_thumbnail") ||
+        playlist.coverUrl.includes("/pl_c/") ||
+        playlist.coverUrl.includes("googleusercontent.com") ||
+        playlist.coverUrl.includes("ggpht.com") ||
+        playlist.coverUrl.includes("yt3.ggpht.com") ||
+        playlist.coverUrl.includes("/pl/") ||
+        playlist.coverUrl.includes("/s_p/") ||
+        playlist.coverUrl.startsWith("data:") ||
+        Boolean(playlist.isCustomCover);
+
+      if (isCustomUrl) {
+        addGoogleUserContentVariants(playlist.coverUrl);
+      }
+    }
+
+    // 4. YouTube Thumbnails from snippet (checking for custom URLs first)
     const thumbs = (playlist as any).thumbnails as YouTubeThumbnails | undefined;
     if (thumbs) {
-      if (thumbs.maxres?.url) list.push(thumbs.maxres.url);
-      if (thumbs.standard?.url) list.push(thumbs.standard.url);
-      if (thumbs.high?.url) list.push(thumbs.high.url);
-      if (thumbs.medium?.url) list.push(thumbs.medium.url);
-      if (thumbs.default?.url) list.push(thumbs.default.url);
+      const thumbUrls = [
+        thumbs.maxres?.url,
+        thumbs.standard?.url,
+        thumbs.high?.url,
+        thumbs.medium?.url,
+        thumbs.default?.url,
+      ].filter(Boolean) as string[];
+
+      for (const u of thumbUrls) {
+        if (
+          u.includes("studio_square_thumbnail") ||
+          u.includes("/pl_c/") ||
+          u.includes("googleusercontent.com") ||
+          u.includes("ggpht.com") ||
+          u.includes("yt3.ggpht.com") ||
+          u.includes("/pl/") ||
+          u.includes("/s_p/")
+        ) {
+          addGoogleUserContentVariants(u);
+        }
+      }
     }
 
+    // 5. Standard playlist.coverUrl if not already added
     if (playlist.coverUrl) {
       list.push(playlist.coverUrl);
-      // If it's a YouTube cover image URL, generate prioritized resolution fallbacks
-      if (
-        playlist.coverUrl.includes("i.ytimg.com") ||
-        playlist.coverUrl.includes("googleusercontent.com") ||
-        playlist.coverUrl.includes("ggpht.com")
-      ) {
+      if (playlist.coverUrl.includes("i.ytimg.com")) {
         if (playlist.coverUrl.includes("maxresdefault.jpg")) {
           list.push(playlist.coverUrl.replace("maxresdefault.jpg", "sddefault.jpg"));
           list.push(playlist.coverUrl.replace("maxresdefault.jpg", "hqdefault.jpg"));
@@ -88,13 +163,23 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
           list.push(playlist.coverUrl.replace("sddefault.jpg", "mqdefault.jpg"));
           list.push(playlist.coverUrl.replace("sddefault.jpg", "default.jpg"));
         } else if (playlist.coverUrl.includes("hqdefault.jpg")) {
+          list.push(playlist.coverUrl.replace("hqdefault.jpg", "maxresdefault.jpg"));
           list.push(playlist.coverUrl.replace("hqdefault.jpg", "mqdefault.jpg"));
           list.push(playlist.coverUrl.replace("hqdefault.jpg", "default.jpg"));
         }
       }
     }
 
-    // Deduplicate
+    // 6. Generic YouTube Data API video thumbnails
+    if (thumbs) {
+      if (thumbs.maxres?.url) list.push(thumbs.maxres.url);
+      if (thumbs.standard?.url) list.push(thumbs.standard.url);
+      if (thumbs.high?.url) list.push(thumbs.high.url);
+      if (thumbs.medium?.url) list.push(thumbs.medium.url);
+      if (thumbs.default?.url) list.push(thumbs.default.url);
+    }
+
+    // Deduplicate while preserving order
     const unique: string[] = [];
     for (const url of list) {
       if (url && !unique.includes(url)) {
@@ -106,6 +191,7 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     localCustomCover,
     playlist.customCoverUrl,
     playlist.coverUrl,
+    playlist.isCustomCover,
     (playlist as any).thumbnails,
   ]);
 

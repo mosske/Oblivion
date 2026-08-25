@@ -71,9 +71,14 @@ export default function App() {
     return null;
   });
 
-  // Persistent playlists state
+  // Persistent playlists state - only loaded for signed in users
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
     try {
+      const savedUser = localStorage.getItem("oblivion_saved_user");
+      if (!savedUser) return [];
+      const parsedUser = JSON.parse(savedUser);
+      if (!parsedUser?.isLoggedIn) return [];
+
       const saved = localStorage.getItem("oblivion_saved_playlists");
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -431,13 +436,16 @@ export default function App() {
     }
     setUser(null);
     localStorage.removeItem("oblivion_saved_user");
-    fetchPlaylists(true);
+    localStorage.removeItem("oblivion_saved_playlists");
+    localStorage.removeItem("oblivion_selected_playlist");
+    setPlaylists([]);
+    setSelectedPlaylist(null);
+    setIsSyncingYouTube(false);
     showToast("Signed out successfully.");
   };
 
   // Fetch Playlists with immediate tracks count
   const fetchPlaylists = async (forceRefresh: boolean = false, overrideToken?: string) => {
-    setIsSyncingYouTube(true);
     try {
       let activeToken = overrideToken || user?.accessToken;
       if (!activeToken) {
@@ -445,10 +453,24 @@ export default function App() {
           const saved = localStorage.getItem("oblivion_saved_user");
           if (saved) {
             const parsed = JSON.parse(saved);
-            activeToken = parsed?.accessToken;
+            if (parsed?.isLoggedIn) {
+              activeToken = parsed?.accessToken;
+            }
           }
         } catch {}
       }
+
+      // If user is not logged in / no activeToken, ensure playlists state is cleared
+      if (!activeToken) {
+        setPlaylists([]);
+        try {
+          localStorage.removeItem("oblivion_saved_playlists");
+        } catch {}
+        setIsSyncingYouTube(false);
+        return;
+      }
+
+      setIsSyncingYouTube(true);
 
       const headers: Record<string, string> = {};
       if (activeToken) {
@@ -494,8 +516,38 @@ export default function App() {
             sanitizedTracks.push({ ...t, id: trId });
           }
 
-          const userStoredCover = customCoversMap[plId];
+          const userStoredCover = customCoversMap[plId] || customCoversMap[plId.replace(/^VL/, "")];
           const hasUserCustom = Boolean(userStoredCover?.customCoverUrl);
+
+          const isAuthenticCustom =
+            hasUserCustom ||
+            Boolean(pl.isCustomCover) ||
+            Boolean(
+              pl.customCoverUrl &&
+              (
+                pl.customCoverUrl.includes("studio_square_thumbnail") ||
+                pl.customCoverUrl.includes("/pl_c/") ||
+                pl.customCoverUrl.includes("googleusercontent.com") ||
+                pl.customCoverUrl.includes("ggpht.com") ||
+                pl.customCoverUrl.includes("yt3.ggpht.com") ||
+                pl.customCoverUrl.includes("/pl/") ||
+                pl.customCoverUrl.includes("/s_p/") ||
+                pl.customCoverUrl.startsWith("data:")
+              )
+            ) ||
+            Boolean(
+              pl.coverUrl &&
+              (
+                pl.coverUrl.includes("studio_square_thumbnail") ||
+                pl.coverUrl.includes("/pl_c/") ||
+                pl.coverUrl.includes("googleusercontent.com") ||
+                pl.coverUrl.includes("ggpht.com") ||
+                pl.coverUrl.includes("yt3.ggpht.com") ||
+                pl.coverUrl.includes("/pl/") ||
+                pl.coverUrl.includes("/s_p/") ||
+                pl.coverUrl.startsWith("data:")
+              )
+            );
 
           const thumbs = pl.thumbnails;
           const bestThumb =
@@ -505,9 +557,12 @@ export default function App() {
             thumbs?.medium?.url ||
             thumbs?.default?.url;
 
-          const primaryCover =
+          const customResolved =
             userStoredCover?.customCoverUrl ||
-            pl.customCoverUrl ||
+            (isAuthenticCustom ? (pl.customCoverUrl || pl.coverUrl) : undefined);
+
+          const primaryCover =
+            customResolved ||
             bestThumb ||
             pl.coverUrl ||
             "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80";
@@ -516,35 +571,21 @@ export default function App() {
             ...pl,
             id: plId,
             coverUrl: primaryCover,
-            customCoverUrl: userStoredCover?.customCoverUrl || pl.customCoverUrl || bestThumb || primaryCover,
-            isCustomCover: hasUserCustom || Boolean(pl.isCustomCover || pl.customCoverUrl),
+            customCoverUrl: customResolved,
+            isCustomCover: isAuthenticCustom,
             tracks: sanitizedTracks,
             tracksCount: pl.tracksCount || sanitizedTracks.length || 0,
             thumbnails: pl.thumbnails,
           });
         }
 
-        // Also merge any locally stored custom and cached playlists
-        try {
-          const locallyStored = localStorage.getItem("oblivion_saved_playlists");
-          if (locallyStored) {
-            const parsedLocal = JSON.parse(locallyStored);
-            if (Array.isArray(parsedLocal)) {
-              for (const locPl of parsedLocal) {
-                if (locPl && locPl.id && !seenPlIds.has(locPl.id)) {
-                  seenPlIds.add(locPl.id);
-                  sanitizedPlaylists.push(locPl);
-                }
-              }
-            }
-          }
-        } catch {}
-
-        if (sanitizedPlaylists.length > 0 || !activeToken) {
+        if (sanitizedPlaylists.length > 0 && activeToken) {
           setPlaylists(sanitizedPlaylists);
           try {
             localStorage.setItem("oblivion_saved_playlists", JSON.stringify(sanitizedPlaylists));
           } catch {}
+        } else if (!activeToken) {
+          setPlaylists([]);
         }
 
         // Sync currently viewed playlist if one is open
@@ -620,8 +661,20 @@ export default function App() {
         const customCoversMap = getStoredCustomCovers();
         const userStoredCover = customCoversMap[playlistId] || customCoversMap[cleanId];
 
-        const customCover = userStoredCover?.customCoverUrl || data.customCoverUrl || data.coverUrl;
-        const isCustom = Boolean(userStoredCover?.isCustomCover || data.isCustomCover || data.customCoverUrl || customCover);
+        const isAuthenticCustom = Boolean(
+          userStoredCover?.customCoverUrl ||
+          data.isCustomCover ||
+          (data.customCoverUrl && (
+            data.customCoverUrl.includes("googleusercontent.com") ||
+            data.customCoverUrl.includes("ggpht.com") ||
+            data.customCoverUrl.includes("yt3.ggpht.com") ||
+            data.customCoverUrl.includes("/pl/") ||
+            data.customCoverUrl.includes("/s_p/") ||
+            data.customCoverUrl.startsWith("data:")
+          ))
+        );
+
+        const customCover = userStoredCover?.customCoverUrl || (isAuthenticCustom ? (data.customCoverUrl || data.coverUrl) : undefined);
 
         setPlaylists((prev) => {
           const updated = prev.map((p) => {
@@ -637,13 +690,16 @@ export default function App() {
               });
               const mergedTracks = [...uniqueTracks, ...localUnsynced];
 
+              const finalCover = userStoredCover?.customCoverUrl || customCover || p.customCoverUrl || p.coverUrl;
+              const hasCustom = isAuthenticCustom || Boolean(p.isCustomCover || userStoredCover?.customCoverUrl);
+
               return {
                 ...p,
                 tracks: mergedTracks,
                 tracksCount: mergedTracks.length,
-                coverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
-                customCoverUrl: userStoredCover?.customCoverUrl || p.customCoverUrl || customCover || p.coverUrl,
-                isCustomCover: isCustom || p.isCustomCover,
+                coverUrl: finalCover,
+                customCoverUrl: hasCustom ? finalCover : undefined,
+                isCustomCover: hasCustom,
               };
             }
             return p;
@@ -667,13 +723,16 @@ export default function App() {
             });
             const mergedTracks = [...uniqueTracks, ...localUnsynced];
 
+            const finalCover = userStoredCover?.customCoverUrl || customCover || (prev as any).customCoverUrl || prev.coverUrl;
+            const hasCustom = isAuthenticCustom || Boolean((prev as any).isCustomCover || userStoredCover?.customCoverUrl);
+
             return {
               ...prev,
               tracks: mergedTracks,
               tracksCount: mergedTracks.length,
-              coverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
-              customCoverUrl: userStoredCover?.customCoverUrl || (prev as any).customCoverUrl || customCover || prev.coverUrl,
-              isCustomCover: isCustom || (prev as any).isCustomCover,
+              coverUrl: finalCover,
+              customCoverUrl: hasCustom ? finalCover : undefined,
+              isCustomCover: hasCustom,
             };
           }
           return prev;

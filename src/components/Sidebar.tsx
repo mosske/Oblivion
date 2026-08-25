@@ -52,6 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isInstalled,
 }) => {
   const cleanPlaylists = React.useMemo(() => {
+    if (!user?.isLoggedIn) return [];
+
     let hiddenIds: string[] = [];
     try {
       const stored = localStorage.getItem("oblivion_hidden_playlists");
@@ -69,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       seen.add(id);
       return true;
     });
-  }, [playlists]);
+  }, [playlists, user?.isLoggedIn]);
 
 
   return (
@@ -208,47 +210,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Playlists Quick List Section */}
-      <div className="px-3 space-y-1 my-1">
-        <div className={`flex items-center justify-between px-3 py-2 text-xs font-semibold ${designConfig.textSecondary} uppercase tracking-wider`}>
-          <span className="flex items-center gap-1.5">
-            <ListMusic className="w-3.5 h-3.5" />
-            Playlists
-          </span>
-          <button
-            onClick={onCreatePlaylist}
-            className={`p-1 ${designConfig.btnSecondary} rounded-md transition-colors`}
-            title="Create Playlist"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
+      {/* Playlists Quick List Section - only when signed in */}
+      {user?.isLoggedIn && (
+        <div className="px-3 space-y-1 my-1">
+          <div className={`flex items-center justify-between px-3 py-2 text-xs font-semibold ${designConfig.textSecondary} uppercase tracking-wider`}>
+            <span className="flex items-center gap-1.5">
+              <ListMusic className="w-3.5 h-3.5" />
+              Playlists
+            </span>
+            <button
+              onClick={onCreatePlaylist}
+              className={`p-1 ${designConfig.btnSecondary} rounded-md transition-colors`}
+              title="Create Playlist"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
 
-        {cleanPlaylists.map((pl) => (
-          <button
-            key={pl.id}
-            onClick={() => {
-              setActiveTab("library");
-              onSelectPlaylist(pl);
-            }}
-            className={`w-full group flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium ${designConfig.textSecondary} hover:${designConfig.textPrimary} ${designConfig.isLight ? "hover:bg-[#f4f1ea]" : "hover:bg-slate-900/80"} transition-all text-left`}
-          >
-            <div className="w-7 h-7 rounded-md overflow-hidden shrink-0">
-              <PlaylistCoverArt
-                playlist={pl}
-                className={`w-full h-full object-cover border ${designConfig.borderSubtle}`}
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className={`truncate font-medium group-hover:${designConfig.accentText}`}>{pl.title}</p>
-              <p className={`text-[10px] ${designConfig.textMuted} flex items-center gap-1`}>
-                {pl.isYouTubeSynced && <Sparkles className="w-2.5 h-2.5 text-amber-500 shrink-0" />}
-                <span>{pl.tracksCount || 0} tracks</span>
-              </p>
-            </div>
-          </button>
-        ))}
-      </div>
+          {cleanPlaylists.map((pl) => (
+            <button
+              key={pl.id}
+              onClick={() => {
+                setActiveTab("library");
+                onSelectPlaylist(pl);
+              }}
+              className={`w-full group flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium ${designConfig.textSecondary} hover:${designConfig.textPrimary} ${designConfig.isLight ? "hover:bg-[#f4f1ea]" : "hover:bg-slate-900/80"} transition-all text-left`}
+            >
+              <div className="w-7 h-7 rounded-md overflow-hidden shrink-0">
+                <PlaylistCoverArt
+                  playlist={pl}
+                  className={`w-full h-full object-cover border ${designConfig.borderSubtle}`}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`truncate font-medium group-hover:${designConfig.accentText}`}>{pl.title}</p>
+                <p className={`text-[10px] ${designConfig.textMuted} flex items-center gap-1`}>
+                  {pl.isYouTubeSynced && <Sparkles className="w-2.5 h-2.5 text-amber-500 shrink-0" />}
+                  <span>{pl.tracksCount || 0} tracks</span>
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Offline Caching Quick Info */}
       <div className={`p-3 border-t ${designConfig.borderSubtle} text-[11px] ${designConfig.textSecondary} flex items-center justify-between shrink-0 mt-auto`}>

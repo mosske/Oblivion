@@ -28,6 +28,7 @@ interface SettingsViewProps {
   designConfig?: FullAppDesignConfig;
   deferredPrompt?: any;
   onInstallPwa?: () => void;
+  onOpenResetModal?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -36,6 +37,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   designConfig = FULL_APP_DESIGNS["designer"],
   deferredPrompt,
   onInstallPwa,
+  onOpenResetModal,
 }) => {
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   const [installSuccessMsg, setInstallSuccessMsg] = useState<string>("");
