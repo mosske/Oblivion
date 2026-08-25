@@ -593,6 +593,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </label>
         </div>
       </section>
+
+      {/* Shadowflash Design Badge */}
+      <div className="flex flex-col items-center justify-center pt-3 pb-2 space-y-1 select-none">
+        <div
+          id="shadowflash-design-badge"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-[#c89b3c]/20 to-amber-500/10 border border-[#c89b3c]/30 text-[#855f10] shadow-sm"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#c89b3c]" />
+          <span className="text-xs font-mono font-bold tracking-wider uppercase">
+            Shadowflash Design
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
