@@ -73,7 +73,15 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
       if (
         clean.includes("googleusercontent.com") ||
         clean.includes("ggpht.com") ||
-        clean.includes("yt3.ggpht.com")
+        clean.includes("yt3.ggpht.com") ||
+        clean.includes("yt4.ggpht.com") ||
+        clean.includes("yt3.googleusercontent.com") ||
+        clean.includes("lh3.googleusercontent.com") ||
+        clean.includes("play-lh.googleusercontent.com") ||
+        clean.includes("photos.googleusercontent.com") ||
+        clean.includes("ytimg.com/pl/") ||
+        clean.includes("/pl/") ||
+        clean.includes("/s_p/")
       ) {
         if (clean.match(/=w\d+-h\d+/)) {
           list.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w1200-h1200-l90-rj"));
@@ -84,6 +92,9 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
           list.push(clean.replace(/=s\d+[^?&]*/, "=s1200"));
           list.push(clean.replace(/=s\d+[^?&]*/, "=s800"));
           list.push(clean.replace(/=s\d+[^?&]*/, "=s544"));
+          list.push(clean);
+        } else if (clean.match(/=w\d+/)) {
+          list.push(clean.replace(/=w\d+[^?&]*/, "=w1200-h1200-l90-rj"));
           list.push(clean);
         } else {
           list.push(`${clean}=w1200-h1200-l90-rj`);
@@ -113,8 +124,16 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
         playlist.coverUrl.includes("googleusercontent.com") ||
         playlist.coverUrl.includes("ggpht.com") ||
         playlist.coverUrl.includes("yt3.ggpht.com") ||
+        playlist.coverUrl.includes("yt4.ggpht.com") ||
+        playlist.coverUrl.includes("yt3.googleusercontent.com") ||
+        playlist.coverUrl.includes("lh3.googleusercontent.com") ||
+        playlist.coverUrl.includes("play-lh.googleusercontent.com") ||
+        playlist.coverUrl.includes("photos.googleusercontent.com") ||
+        playlist.coverUrl.includes("ytimg.com/pl/") ||
         playlist.coverUrl.includes("/pl/") ||
         playlist.coverUrl.includes("/s_p/") ||
+        playlist.coverUrl.includes("ytimg.com/an_webp/") ||
+        playlist.coverUrl.includes("ytimg.com/v2/") ||
         playlist.coverUrl.startsWith("data:") ||
         Boolean(playlist.isCustomCover);
 
@@ -141,6 +160,8 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
           u.includes("googleusercontent.com") ||
           u.includes("ggpht.com") ||
           u.includes("yt3.ggpht.com") ||
+          u.includes("yt4.ggpht.com") ||
+          u.includes("ytimg.com/pl/") ||
           u.includes("/pl/") ||
           u.includes("/s_p/")
         ) {
@@ -177,6 +198,12 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
       if (thumbs.high?.url) list.push(thumbs.high.url);
       if (thumbs.medium?.url) list.push(thumbs.medium.url);
       if (thumbs.default?.url) list.push(thumbs.default.url);
+    }
+
+    // 7. Fallback to first track's thumbnail if available
+    const firstTrackCover = playlist.tracks?.[0]?.coverUrl;
+    if (firstTrackCover) {
+      list.push(firstTrackCover);
     }
 
     // Deduplicate while preserving order

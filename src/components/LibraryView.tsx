@@ -153,10 +153,22 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     });
   }, [cleanPlaylists, hiddenPlaylistIds, showHidden, sortOption]);
 
+  const isUserAuthenticated = Boolean(
+    user?.isLoggedIn ||
+    (typeof window !== "undefined" && localStorage.getItem("oblivion_saved_user"))
+  );
+
+  // Auto-trigger sync check on mount if list is currently empty and user is authenticated
+  useEffect(() => {
+    if (cleanPlaylists.length === 0 && onSyncYouTube && isUserAuthenticated) {
+      onSyncYouTube();
+    }
+  }, []);
+
   const hiddenCount = hiddenPlaylistIds.filter((id) => cleanPlaylists.some((pl) => pl.id === id)).length;
 
-  // If user is not signed in, remove playlists from Library view and show Sign-In prompt
-  if (!user?.isLoggedIn) {
+  // If user is completely unauthenticated and has no stored playlists, show Sign-In prompt
+  if (!isUserAuthenticated && cleanPlaylists.length === 0) {
     return (
       <div className="flex flex-col select-none">
         <div className="flex-1 p-6 md:p-10 pb-40 md:pb-48 max-w-4xl mx-auto w-full">

@@ -71,14 +71,9 @@ export default function App() {
     return null;
   });
 
-  // Persistent playlists state - only loaded for signed in users
+  // Persistent playlists state - loaded immediately from local persistence
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
     try {
-      const savedUser = localStorage.getItem("oblivion_saved_user");
-      if (!savedUser) return [];
-      const parsedUser = JSON.parse(savedUser);
-      if (!parsedUser?.isLoggedIn) return [];
-
       const saved = localStorage.getItem("oblivion_saved_playlists");
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -396,35 +391,61 @@ export default function App() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    fetch("/api/auth/me", { credentials: "include" })
+    const headers: Record<string, string> = {};
+    let localToken: string | undefined = undefined;
+    try {
+      const savedUser = localStorage.getItem("oblivion_saved_user");
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed?.accessToken) localToken = parsed.accessToken;
+      }
+    } catch {}
+
+    if (localToken) {
+      headers["Authorization"] = `Bearer ${localToken}`;
+      headers["X-Access-Token"] = localToken;
+    }
+
+    fetch("/api/auth/me", { headers, credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (data.isLoggedIn && data.user) {
           const fullUser = { ...data.user, isLoggedIn: true };
           setUser(fullUser);
           localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
-          fetchPlaylists(true, fullUser.accessToken);
-        } else {
-          fetchPlaylists();
+          fetchPlaylists(false, fullUser.accessToken, false);
+        } else if (localToken) {
+          fetchPlaylists(false, localToken, false);
         }
       })
       .catch((err) => {
         console.error("Auth check error:", err);
-        fetchPlaylists();
+        if (localToken) {
+          fetchPlaylists(false, localToken, false);
+        }
       });
   }, []);
 
+  // Automatic live sync whenever the user navigates to Library (just like Home and Explore feeds)
   useEffect(() => {
-    if (user?.isLoggedIn && user?.accessToken) {
-      fetchPlaylists(true, user.accessToken);
+    if (activeTab === "library") {
+      let activeToken = user?.accessToken;
+      if (!activeToken) {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) activeToken = JSON.parse(saved)?.accessToken;
+        } catch {}
+      }
+      // Trigger a live background verification & sync with YouTube Music
+      fetchPlaylists(false, activeToken, false);
     }
-  }, [user?.isLoggedIn, user?.accessToken]);
+  }, [activeTab]);
 
   const handleLoginSuccess = (loggedUser: User) => {
     const fullUser = { ...loggedUser, isLoggedIn: true };
     setUser(fullUser);
     localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
-    fetchPlaylists(true, loggedUser.accessToken);
+    fetchPlaylists(true, loggedUser.accessToken, true);
     showToast(`Signed in as ${loggedUser.name || loggedUser.email || "Google User"}`);
   };
 
@@ -437,6 +458,7 @@ export default function App() {
     setUser(null);
     localStorage.removeItem("oblivion_saved_user");
     localStorage.removeItem("oblivion_saved_playlists");
+    localStorage.removeItem("oblivion_playlist_sync_time");
     localStorage.removeItem("oblivion_selected_playlist");
     setPlaylists([]);
     setSelectedPlaylist(null);
@@ -444,8 +466,66 @@ export default function App() {
     showToast("Signed out successfully.");
   };
 
-  // Fetch Playlists with immediate tracks count
-  const fetchPlaylists = async (forceRefresh: boolean = false, overrideToken?: string) => {
+  // Helper to append cache-busting timestamp to custom artwork CDN URLs
+  const applyArtworkCacheBuster = (url: string | undefined | null, ts: number): string | undefined => {
+    if (!url) return undefined;
+    if (
+      url.includes("googleusercontent.com") ||
+      url.includes("ggpht.com") ||
+      url.includes("yt3.ggpht.com") ||
+      url.includes("yt4.ggpht.com") ||
+      url.includes("ytimg.com/pl/")
+    ) {
+      const sep = url.includes("?") ? "&" : "?";
+      return `${url}${sep}v=${ts}`;
+    }
+    return url;
+  };
+
+  // Auto-sync engine: checks with YouTube in background
+  const checkAndAutoSyncPlaylists = (token?: string) => {
+    const activeToken = token || user?.accessToken;
+    if (!activeToken) return;
+    fetchPlaylists(false, activeToken, false);
+  };
+
+  // Manual Sync handler: bypasses cooldown and forces cache-busting on artwork
+  const handleManualSyncYouTube = async () => {
+    let activeToken = user?.accessToken;
+    if (!activeToken) {
+      try {
+        const saved = localStorage.getItem("oblivion_saved_user");
+        if (saved) activeToken = JSON.parse(saved)?.accessToken;
+      } catch {}
+    }
+    if (!activeToken) {
+      showToast("Please sign in to sync your YouTube Music library.");
+      setIsAuthModalOpen(true);
+      return;
+    }
+    showToast("Syncing YouTube Music playlists & artwork...");
+    localStorage.setItem("oblivion_playlist_sync_time", String(Date.now()));
+    const result = await fetchPlaylists(true, activeToken, true);
+    if (result?.authExpired) {
+      showToast("Google session expired. Please sign in again.");
+      setIsAuthModalOpen(true);
+    } else if (result?.success) {
+      if (result.count > 0) {
+        showToast(`YouTube Music library synchronized (${result.count} playlists).`);
+      } else {
+        showToast("Synchronized with YouTube Music (0 playlists found).");
+      }
+    } else {
+      showToast("Library synchronized.");
+    }
+  };
+
+  // Fetch Playlists with immediate tracks count & custom artwork resolution
+  const fetchPlaylists = async (
+    forceRefresh: boolean = false,
+    overrideToken?: string,
+    isManualSync: boolean = false
+  ): Promise<{ success: boolean; count: number; authExpired?: boolean }> => {
     try {
       let activeToken = overrideToken || user?.accessToken;
       if (!activeToken) {
@@ -453,24 +533,21 @@ export default function App() {
           const saved = localStorage.getItem("oblivion_saved_user");
           if (saved) {
             const parsed = JSON.parse(saved);
-            if (parsed?.isLoggedIn) {
+            if (parsed?.isLoggedIn || parsed?.accessToken) {
               activeToken = parsed?.accessToken;
             }
           }
         } catch {}
       }
 
-      // If user is not logged in / no activeToken, ensure playlists state is cleared
-      if (!activeToken) {
-        setPlaylists([]);
-        try {
-          localStorage.removeItem("oblivion_saved_playlists");
-        } catch {}
-        setIsSyncingYouTube(false);
-        return;
+      // If user has never logged in and no token exists, return cleanly without clearing existing playlists
+      if (!activeToken && !user?.isLoggedIn) {
+        return { success: false, count: playlists.length };
       }
 
-      setIsSyncingYouTube(true);
+      if (isManualSync || playlists.length === 0) {
+        setIsSyncingYouTube(true);
+      }
 
       const headers: Record<string, string> = {};
       if (activeToken) {
@@ -481,7 +558,20 @@ export default function App() {
       const tokenParam = activeToken ? `&access_token=${encodeURIComponent(activeToken)}` : "";
       const url = forceRefresh ? `/api/youtube/playlists?refresh=true&_t=${Date.now()}${tokenParam}` : `/api/youtube/playlists?_t=${Date.now()}${tokenParam}`;
       const res = await fetch(url, { headers, credentials: "include" });
-      const data = await res.json();
+
+      if (res.status === 401) {
+        console.warn("YouTube API returned 401 Unauthorized.");
+        setIsSyncingYouTube(false);
+        return { success: false, count: 0, authExpired: true };
+      }
+
+      const data = await res.json().catch(() => ({ playlists: [] }));
+
+      if (data.authExpired || data.error === "AUTH_EXPIRED") {
+        console.warn("YouTube API returned AUTH_EXPIRED");
+        setIsSyncingYouTube(false);
+        return { success: false, count: 0, authExpired: true };
+      }
 
       if (data.newAccessToken) {
         setUser((prev) => {
@@ -494,10 +584,11 @@ export default function App() {
         });
       }
 
-      if (data.playlists && Array.isArray(data.playlists)) {
+      if (data.playlists && Array.isArray(data.playlists) && data.playlists.length > 0) {
         const seenPlIds = new Set<string>();
         const sanitizedPlaylists: Playlist[] = [];
         const customCoversMap = getStoredCustomCovers();
+        const syncTimestamp = Date.now();
 
         for (const pl of data.playlists) {
           if (!pl) continue;
@@ -530,8 +621,16 @@ export default function App() {
                 pl.customCoverUrl.includes("googleusercontent.com") ||
                 pl.customCoverUrl.includes("ggpht.com") ||
                 pl.customCoverUrl.includes("yt3.ggpht.com") ||
+                pl.customCoverUrl.includes("yt4.ggpht.com") ||
+                pl.customCoverUrl.includes("yt3.googleusercontent.com") ||
+                pl.customCoverUrl.includes("lh3.googleusercontent.com") ||
+                pl.customCoverUrl.includes("play-lh.googleusercontent.com") ||
+                pl.customCoverUrl.includes("photos.googleusercontent.com") ||
+                pl.customCoverUrl.includes("ytimg.com/pl/") ||
                 pl.customCoverUrl.includes("/pl/") ||
                 pl.customCoverUrl.includes("/s_p/") ||
+                pl.customCoverUrl.includes("ytimg.com/an_webp/") ||
+                pl.customCoverUrl.includes("ytimg.com/v2/") ||
                 pl.customCoverUrl.startsWith("data:")
               )
             ) ||
@@ -543,8 +642,16 @@ export default function App() {
                 pl.coverUrl.includes("googleusercontent.com") ||
                 pl.coverUrl.includes("ggpht.com") ||
                 pl.coverUrl.includes("yt3.ggpht.com") ||
+                pl.coverUrl.includes("yt4.ggpht.com") ||
+                pl.coverUrl.includes("yt3.googleusercontent.com") ||
+                pl.coverUrl.includes("lh3.googleusercontent.com") ||
+                pl.coverUrl.includes("play-lh.googleusercontent.com") ||
+                pl.coverUrl.includes("photos.googleusercontent.com") ||
+                pl.coverUrl.includes("ytimg.com/pl/") ||
                 pl.coverUrl.includes("/pl/") ||
                 pl.coverUrl.includes("/s_p/") ||
+                pl.coverUrl.includes("ytimg.com/an_webp/") ||
+                pl.coverUrl.includes("ytimg.com/v2/") ||
                 pl.coverUrl.startsWith("data:")
               )
             );
@@ -557,21 +664,29 @@ export default function App() {
             thumbs?.medium?.url ||
             thumbs?.default?.url;
 
-          const customResolved =
+          let customResolved =
             userStoredCover?.customCoverUrl ||
-            (isAuthenticCustom ? (pl.customCoverUrl || pl.coverUrl) : undefined);
+            (isAuthenticCustom ? (pl.customCoverUrl || pl.coverUrl) : pl.customCoverUrl);
 
-          const primaryCover =
+          let primaryCover =
             customResolved ||
-            bestThumb ||
+            pl.customCoverUrl ||
+            (isAuthenticCustom ? pl.coverUrl : null) ||
             pl.coverUrl ||
+            bestThumb ||
             "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80";
+
+          // If manual sync, apply cache buster to force fresh CDN fetch
+          if (isManualSync) {
+            if (customResolved) customResolved = applyArtworkCacheBuster(customResolved, syncTimestamp);
+            if (primaryCover) primaryCover = applyArtworkCacheBuster(primaryCover, syncTimestamp) || primaryCover;
+          }
 
           sanitizedPlaylists.push({
             ...pl,
             id: plId,
             coverUrl: primaryCover,
-            customCoverUrl: customResolved,
+            customCoverUrl: customResolved || (isAuthenticCustom ? primaryCover : undefined),
             isCustomCover: isAuthenticCustom,
             tracks: sanitizedTracks,
             tracksCount: pl.tracksCount || sanitizedTracks.length || 0,
@@ -579,14 +694,31 @@ export default function App() {
           });
         }
 
-        if (sanitizedPlaylists.length > 0 && activeToken) {
-          setPlaylists(sanitizedPlaylists);
-          try {
-            localStorage.setItem("oblivion_saved_playlists", JSON.stringify(sanitizedPlaylists));
-          } catch {}
-        } else if (!activeToken) {
-          setPlaylists([]);
-        }
+        // Compare and update if playlists have changed
+        setPlaylists((prevPlaylists) => {
+          const isDifferent =
+            prevPlaylists.length !== sanitizedPlaylists.length ||
+            sanitizedPlaylists.some((newP, idx) => {
+              const oldP = prevPlaylists[idx];
+              if (!oldP) return true;
+              return (
+                oldP.id !== newP.id ||
+                oldP.title !== newP.title ||
+                (oldP.tracksCount || 0) !== (newP.tracksCount || 0) ||
+                oldP.coverUrl !== newP.coverUrl ||
+                oldP.customCoverUrl !== newP.customCoverUrl
+              );
+            });
+
+          if (isDifferent || prevPlaylists.length === 0) {
+            try {
+              localStorage.setItem("oblivion_saved_playlists", JSON.stringify(sanitizedPlaylists));
+              localStorage.setItem("oblivion_playlist_sync_time", String(Date.now()));
+            } catch {}
+            return sanitizedPlaylists;
+          }
+          return prevPlaylists;
+        });
 
         // Sync currently viewed playlist if one is open
         setSelectedPlaylist((prev) => {
@@ -605,9 +737,13 @@ export default function App() {
             queueIndex: 0,
           }));
         }
+
+        return { success: true, count: sanitizedPlaylists.length };
       }
+      return { success: true, count: 0 };
     } catch (err) {
       console.error("Fetch playlists error:", err);
+      return { success: false, count: 0 };
     } finally {
       setIsSyncingYouTube(false);
     }
@@ -665,16 +801,44 @@ export default function App() {
           userStoredCover?.customCoverUrl ||
           data.isCustomCover ||
           (data.customCoverUrl && (
+            data.customCoverUrl.includes("studio_square_thumbnail") ||
+            data.customCoverUrl.includes("/pl_c/") ||
             data.customCoverUrl.includes("googleusercontent.com") ||
             data.customCoverUrl.includes("ggpht.com") ||
             data.customCoverUrl.includes("yt3.ggpht.com") ||
+            data.customCoverUrl.includes("yt4.ggpht.com") ||
+            data.customCoverUrl.includes("yt3.googleusercontent.com") ||
+            data.customCoverUrl.includes("lh3.googleusercontent.com") ||
+            data.customCoverUrl.includes("play-lh.googleusercontent.com") ||
+            data.customCoverUrl.includes("photos.googleusercontent.com") ||
+            data.customCoverUrl.includes("ytimg.com/pl/") ||
             data.customCoverUrl.includes("/pl/") ||
             data.customCoverUrl.includes("/s_p/") ||
+            data.customCoverUrl.includes("ytimg.com/an_webp/") ||
+            data.customCoverUrl.includes("ytimg.com/v2/") ||
             data.customCoverUrl.startsWith("data:")
+          )) ||
+          (data.coverUrl && (
+            data.coverUrl.includes("studio_square_thumbnail") ||
+            data.coverUrl.includes("/pl_c/") ||
+            data.coverUrl.includes("googleusercontent.com") ||
+            data.coverUrl.includes("ggpht.com") ||
+            data.coverUrl.includes("yt3.ggpht.com") ||
+            data.coverUrl.includes("yt4.ggpht.com") ||
+            data.coverUrl.includes("yt3.googleusercontent.com") ||
+            data.coverUrl.includes("lh3.googleusercontent.com") ||
+            data.coverUrl.includes("play-lh.googleusercontent.com") ||
+            data.coverUrl.includes("photos.googleusercontent.com") ||
+            data.coverUrl.includes("ytimg.com/pl/") ||
+            data.coverUrl.includes("/pl/") ||
+            data.coverUrl.includes("/s_p/") ||
+            data.coverUrl.includes("ytimg.com/an_webp/") ||
+            data.coverUrl.includes("ytimg.com/v2/") ||
+            data.coverUrl.startsWith("data:")
           ))
         );
 
-        const customCover = userStoredCover?.customCoverUrl || (isAuthenticCustom ? (data.customCoverUrl || data.coverUrl) : undefined);
+        const customCover = userStoredCover?.customCoverUrl || data.customCoverUrl || (isAuthenticCustom ? data.coverUrl : undefined);
 
         setPlaylists((prev) => {
           const updated = prev.map((p) => {
@@ -1768,7 +1932,7 @@ export default function App() {
                 onSyncPlaylistTracks={handleSyncPlaylistTracks}
                 designConfig={activeFullDesign}
                 isSyncingYouTube={isSyncingYouTube}
-                onSyncYouTube={() => fetchPlaylists(true, user?.accessToken)}
+                onSyncYouTube={handleManualSyncYouTube}
                 user={user}
                 onOpenAuthModal={() => setIsAuthModalOpen(true)}
               />
