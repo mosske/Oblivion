@@ -1,21 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from "./types";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { Player } from "./components/Player";
-import { Sidebar } from "./components/Sidebar";
-import { BottomNav } from "./components/BottomNav";
+import React, { useEffect, useState } from 'react';
+import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from './types';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Player } from './components/Player';
+import { Home as HomeIcon, Search, Music, Settings, LogOut, RefreshCw } from 'lucide-react';
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [currentView, setCurrentView] = useState<NavTab>("home");
+  const [currentView, setCurrentView] = useState<NavTab>('home');
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playlistSongs, setPlaylistSongs] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSyncingYouTube, setIsSyncingYouTube] = useState(false);
   const [hiddenPlaylists, setHiddenPlaylists] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem("oblivion_hidden_playlists");
+      const saved = localStorage.getItem('oblivion_hidden_playlists');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -24,20 +23,20 @@ function AppContent() {
 
   const [settings, setSettings] = useState<UserSettings>(() => {
     try {
-      const saved = localStorage.getItem("oblivion_user_settings");
+      const saved = localStorage.getItem('oblivion_user_settings');
       return saved ? JSON.parse(saved) : {
-        theme: "default",
-        audioQuality: "high",
+        theme: 'default',
+        audioQuality: 'high',
         autoDownload: false,
       };
     } catch {
-      return { theme: "default", audioQuality: "high", autoDownload: false };
+      return { theme: 'default', audioQuality: 'high', autoDownload: false };
     }
   });
 
   const [playerState, setPlayerState] = useState<PlayerState>(() => {
     try {
-      const saved = localStorage.getItem("oblivion_player_state");
+      const saved = localStorage.getItem('oblivion_player_state');
       if (saved) {
         const parsed = JSON.parse(saved);
         return {
@@ -46,7 +45,7 @@ function AppContent() {
         };
       }
     } catch (error) {
-      console.error("Failed to load player state:", error);
+      console.error('Failed to load player state:', error);
     }
     return {
       currentTrack: null,
@@ -56,7 +55,7 @@ function AppContent() {
       currentTime: 0,
       duration: 0,
       volume: 1,
-      repeatMode: "off",
+      repeatMode: 'off',
       shuffle: false,
     };
   });
@@ -67,14 +66,14 @@ function AppContent() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/auth/me");
+      const response = await fetch('/api/auth/me');
       const data = await response.json();
       if (data.isLoggedIn && data.user) {
         setUser(data.user);
-        fetchPlaylists();
+        await fetchPlaylists();
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      console.error('Auth check failed:', error);
     } finally {
       setLoading(false);
     }
@@ -82,17 +81,17 @@ function AppContent() {
 
   const fetchPlaylists = async () => {
     try {
-      const response = await fetch("/api/youtube/playlists");
+      const response = await fetch('/api/youtube/playlists');
       const data = await response.json();
       if (data.success && data.playlists) {
         setPlaylists(data.playlists);
-        localStorage.setItem("oblivion_saved_playlists", JSON.stringify(data.playlists));
-        localStorage.setItem("oblivion_playlist_sync_time", new Date().toISOString());
+        localStorage.setItem('oblivion_saved_playlists', JSON.stringify(data.playlists));
+        localStorage.setItem('oblivion_playlist_sync_time', new Date().toISOString());
       }
     } catch (error) {
-      console.error("Failed to fetch playlists:", error);
+      console.error('Failed to fetch playlists:', error);
       try {
-        const cached = localStorage.getItem("oblivion_saved_playlists");
+        const cached = localStorage.getItem('oblivion_saved_playlists');
         if (cached) {
           setPlaylists(JSON.parse(cached));
         }
@@ -115,47 +114,47 @@ function AppContent() {
         setPlaylistSongs(songs);
       }
     } catch (error) {
-      console.error("Failed to fetch playlist songs:", error);
+      console.error('Failed to fetch playlist songs:', error);
     }
   };
 
   const handleSignIn = async () => {
     try {
-      const res = await fetch("/api/auth/google/config");
+      const res = await fetch('/api/auth/google/config');
       const config = await res.json();
 
       if (!config.configured) {
-        alert("OAuth not configured");
+        alert('OAuth not configured');
         return;
       }
 
       const scopes = [
-        "https://www.googleapis.com/auth/youtube.readonly",
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/userinfo.profile",
+        'https://www.googleapis.com/auth/youtube.readonly',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
       ];
 
-      const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-      authUrl.searchParams.append("client_id", config.clientId);
-      authUrl.searchParams.append("redirect_uri", config.redirectUri);
-      authUrl.searchParams.append("response_type", "code");
-      authUrl.searchParams.append("scope", scopes.join(" "));
-      authUrl.searchParams.append("access_type", "offline");
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.append('client_id', config.clientId);
+      authUrl.searchParams.append('redirect_uri', config.redirectUri);
+      authUrl.searchParams.append('response_type', 'code');
+      authUrl.searchParams.append('scope', scopes.join(' '));
+      authUrl.searchParams.append('access_type', 'offline');
 
       window.location.href = authUrl.toString();
     } catch (error) {
-      console.error("Sign in error:", error);
+      console.error('Sign in error:', error);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
       setPlaylists([]);
       setSelectedPlaylistId(null);
     } catch (error) {
-      console.error("Sign out error:", error);
+      console.error('Sign out error:', error);
     }
   };
 
@@ -168,13 +167,13 @@ function AppContent() {
       isPlaying: true,
     };
     setPlayerState(newState);
-    localStorage.setItem("oblivion_player_state", JSON.stringify(newState));
+    localStorage.setItem('oblivion_player_state', JSON.stringify(newState));
   };
 
   const handlePlayPause = () => {
     const newState = { ...playerState, isPlaying: !playerState.isPlaying };
     setPlayerState(newState);
-    localStorage.setItem("oblivion_player_state", JSON.stringify(newState));
+    localStorage.setItem('oblivion_player_state', JSON.stringify(newState));
   };
 
   const handleNext = () => {
@@ -186,7 +185,7 @@ function AppContent() {
         currentIndex: nextIndex,
       };
       setPlayerState(newState);
-      localStorage.setItem("oblivion_player_state", JSON.stringify(newState));
+      localStorage.setItem('oblivion_player_state', JSON.stringify(newState));
     }
   };
 
@@ -199,7 +198,7 @@ function AppContent() {
         currentIndex: prevIndex,
       };
       setPlayerState(newState);
-      localStorage.setItem("oblivion_player_state", JSON.stringify(newState));
+      localStorage.setItem('oblivion_player_state', JSON.stringify(newState));
     }
   };
 
@@ -215,7 +214,7 @@ function AppContent() {
           onClick={() => setSelectedPlaylistId(null)}
           className="mb-6 text-cyan-400 hover:text-cyan-300 transition"
         >
-          ← Back to Library
+          ← Back
         </button>
         <div className="mb-6">
           {playlist.coverUrl && (
@@ -226,11 +225,11 @@ function AppContent() {
             />
           )}
           <h1 className="text-4xl font-bold mb-2">{playlist.title}</h1>
-          <p className="text-gray-400">Playlist • {playlistSongs.length} songs</p>
+          <p className="text-gray-400">{playlistSongs.length} songs</p>
         </div>
 
         {playlistSongs.length === 0 ? (
-          <div className="text-gray-400 text-center py-12">No songs in this playlist</div>
+          <div className="text-gray-400 text-center py-12">No songs</div>
         ) : (
           <div className="space-y-2">
             {playlistSongs.map((song, index) => (
@@ -247,8 +246,8 @@ function AppContent() {
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate text-white">{song.title}</h3>
-                  <p className="text-sm text-gray-400 truncate">{song.artist}</p>
+                  <h3 className="font-semibold truncate text-white text-sm">{song.title}</h3>
+                  <p className="text-xs text-gray-400 truncate">{song.artist}</p>
                 </div>
               </div>
             ))}
@@ -264,17 +263,15 @@ function AppContent() {
     }
 
     switch (currentView) {
-      case "home":
+      case 'home':
         return (
           <div className="p-6">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2">Good evening</h1>
-              <p className="text-gray-400">Your YouTube Music library</p>
-            </div>
+            <h1 className="text-4xl font-bold mb-2">Good evening</h1>
+            <p className="text-gray-400 mb-8">Your YouTube Music library</p>
 
             {!user ? (
               <div className="text-center py-12">
-                <p className="text-gray-400 mb-6">Sign in to see your playlists</p>
+                <p className="text-gray-400 mb-6">Sign in to access your library</p>
                 <button
                   onClick={handleSignIn}
                   className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
@@ -287,9 +284,9 @@ function AppContent() {
                 <div className="mb-8">
                   <button
                     onClick={() => fetchPlaylists()}
-                    className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full font-medium transition"
+                    className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full font-medium transition inline-flex items-center gap-2"
                   >
-                    🔄 Refresh Playlists
+                    <RefreshCw className="w-4 h-4" /> Refresh
                   </button>
                 </div>
 
@@ -309,13 +306,11 @@ function AppContent() {
                           className="bg-white/5 hover:bg-white/10 rounded-lg overflow-hidden cursor-pointer transition transform hover:scale-105 group"
                         >
                           {playlist.coverUrl && (
-                            <div className="relative aspect-square overflow-hidden">
-                              <img
-                                src={playlist.coverUrl}
-                                alt={playlist.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition"
-                              />
-                            </div>
+                            <img
+                              src={playlist.coverUrl}
+                              alt={playlist.title}
+                              className="w-full aspect-square object-cover group-hover:scale-110 transition"
+                            />
                           )}
                           <div className="p-4">
                             <h3 className="font-semibold truncate text-white">{playlist.title}</h3>
@@ -331,26 +326,24 @@ function AppContent() {
           </div>
         );
 
-      case "library":
+      case 'library':
         return (
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold">Your Library</h1>
-              <div className="flex gap-2">
-                {user && (
-                  <button
-                    onClick={handleSignOut}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
-                  >
-                    Sign Out
-                  </button>
-                )}
-              </div>
+              <h1 className="text-3xl font-bold">Library</h1>
+              {user && (
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              )}
             </div>
 
             {!user ? (
               <div className="text-center py-12">
-                <p className="text-gray-400 mb-6">Sign in to access your library</p>
+                <p className="text-gray-400 mb-6">Sign in to view your library</p>
                 <button
                   onClick={handleSignIn}
                   className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-full font-semibold transition"
@@ -361,7 +354,7 @@ function AppContent() {
             ) : visiblePlaylists.length === 0 ? (
               <div className="text-gray-400 text-center py-12">No playlists</div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {visiblePlaylists.map((playlist) => (
                   <div
                     key={playlist.id}
@@ -389,7 +382,7 @@ function AppContent() {
           </div>
         );
 
-      case "explore":
+      case 'explore':
         return (
           <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Explore</h1>
@@ -397,7 +390,7 @@ function AppContent() {
           </div>
         );
 
-      case "search":
+      case 'search':
         return (
           <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Search</h1>
@@ -405,7 +398,7 @@ function AppContent() {
           </div>
         );
 
-      case "settings":
+      case 'settings':
         return (
           <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Settings</h1>
@@ -423,7 +416,7 @@ function AppContent() {
       <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-3xl font-bold mb-4">Oblivion</div>
-          <div className="text-gray-400">Starting...</div>
+          <div className="text-gray-400">Loading...</div>
         </div>
       </div>
     );
@@ -431,34 +424,34 @@ function AppContent() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
-      {/* Main content */}
       <div className="flex-1 overflow-auto pb-24">{renderContent()}</div>
 
-      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 border-t border-slate-700 backdrop-blur-sm z-10">
-        <div className="flex items-center justify-around h-20 max-w-screen">
+        <div className="flex items-center justify-around h-20">
           {[
-            { id: "home", label: "Home", icon: "🏠" },
-            { id: "explore", label: "Explore", icon: "🔍" },
-            { id: "library", label: "Library", icon: "♪" },
-            { id: "search", label: "Search", icon: "🔎" },
-            { id: "settings", label: "Settings", icon: "⚙️" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setCurrentView(tab.id as NavTab)}
-              className={`flex flex-col items-center gap-1 py-2 px-4 transition ${
-                currentView === tab.id ? "text-cyan-400" : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <span className="text-xl">{tab.icon}</span>
-              <span className="text-xs font-medium">{tab.label}</span>
-            </button>
-          ))}
+            { id: 'home', label: 'Home', icon: HomeIcon },
+            { id: 'explore', label: 'Explore', icon: Search },
+            { id: 'library', label: 'Library', icon: Music },
+            { id: 'search', label: 'Search', icon: Search },
+            { id: 'settings', label: 'Settings', icon: Settings },
+          ].map((tab) => {
+            const TabIcon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setCurrentView(tab.id as NavTab)}
+                className={`flex flex-col items-center gap-1 py-2 px-4 transition ${
+                  currentView === tab.id ? 'text-cyan-400' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <TabIcon className="w-6 h-6" />
+                <span className="text-xs font-medium">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Player */}
       {playerState.currentTrack && (
         <Player
           currentTrack={playerState.currentTrack}
@@ -472,7 +465,7 @@ function AppContent() {
           onVolumeChange={(volume) => {
             const newState = { ...playerState, volume };
             setPlayerState(newState);
-            localStorage.setItem("oblivion_player_state", JSON.stringify(newState));
+            localStorage.setItem('oblivion_player_state', JSON.stringify(newState));
           }}
         />
       )}
