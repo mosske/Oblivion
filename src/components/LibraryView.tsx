@@ -241,11 +241,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} flex items-center gap-2.5 tracking-tight`}>
+              <h2 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} flex items-center gap-2.5 tracking-tight drop-shadow-xs`}>
                 <Library className={`w-7 h-7 ${designConfig.accentText}`} />
-                Library Playlists
+                <span>Library Playlists</span>
               </h2>
-              <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
+              <p className={`text-xs ${designConfig.headingSecondary || "text-slate-300"} mt-1 font-medium`}>
                 All your curated YouTube Music collections with live track counts and instant synchronization.
               </p>
             </div>

@@ -445,91 +445,179 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
     }
   }
 
-  // 2. Authenticated InnerTube YouTube Music / YouTube Web Browse for user & private playlists
+  // 2. Authenticated InnerTube (TVHTML5 and Web Remix) Browse for user & private playlists
   if (accessToken) {
+    const clients = [
+      {
+        url: "https://www.youtube.com/youtubei/v1/browse",
+        clientName: "TVHTML5",
+        clientVersion: "7.20240501.01.00",
+        headers: {
+          "X-YouTube-Client-Name": "7",
+          "X-YouTube-Client-Version": "7.20240501.01.00",
+          Origin: "https://www.youtube.com",
+          Referer: "https://www.youtube.com/tv",
+        },
+      },
+      {
+        url: "https://music.youtube.com/youtubei/v1/browse",
+        clientName: "WEB_REMIX",
+        clientVersion: "1.20240101.01.00",
+        headers: {
+          "X-Origin": "https://music.youtube.com",
+        },
+      },
+    ];
+
     const browseIds = [`VL${cleanPlId}`, cleanPlId];
-    for (const bId of browseIds) {
-      try {
-        const ytmRes = await fetch("https://music.youtube.com/youtubei/v1/browse", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            "X-Origin": "https://music.youtube.com",
-            Authorization: `Bearer ${accessToken}`,
-            "Cache-Control": "no-cache",
-          },
-          body: JSON.stringify({
-            context: {
-              client: {
-                clientName: "WEB_REMIX",
-                clientVersion: "1.20240101.01.00",
-                hl: "en",
-                gl: "US",
-              },
+
+    for (const c of clients) {
+      for (const bId of browseIds) {
+        try {
+          const ytmRes = await fetch(c.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+              Authorization: `Bearer ${accessToken}`,
+              "Cache-Control": "no-cache",
+              ...(c.headers || {}),
             },
-            browseId: bId,
-          }),
-          signal: AbortSignal.timeout(6000),
-        });
+            body: JSON.stringify({
+              context: {
+                client: {
+                  clientName: c.clientName,
+                  clientVersion: c.clientVersion,
+                  hl: "en",
+                  gl: "US",
+                },
+              },
+              browseId: bId,
+            }),
+            signal: AbortSignal.timeout(8000),
+          });
 
-        if (ytmRes.ok) {
-          const data = await ytmRes.json();
-          const innerTracks: any[] = [];
-          
-          // Parse contents tabs
-          const tabs = data.contents?.singleColumnBrowseResultsRenderer?.tabs || data.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
-          for (const tab of tabs) {
-            const sectionContents = tab.tabRenderer?.content?.sectionListRenderer?.contents || [];
-            for (const sec of sectionContents) {
-              const items = sec.musicPlaylistShelfRenderer?.contents || sec.musicShelfRenderer?.contents || sec.itemSectionRenderer?.contents || [];
-              for (const item of items) {
-                const renderer = item.musicResponsiveListItemRenderer;
-                if (renderer) {
-                  const flexCols = renderer.flexColumns || [];
-                  const title = flexCols[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text;
-                  const artist = flexCols[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || "YouTube Artist";
-                  const vidId =
-                    renderer.playlistItemData?.videoId ||
-                    renderer.doubleTapCommand?.watchEndpoint?.videoId ||
-                    flexCols[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId;
-                  const thumbs = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails;
-                  const cover = thumbs?.slice(-1)?.[0]?.url || (vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : "");
+          if (ytmRes.ok) {
+            const data = await ytmRes.json();
+            const innerTracks: any[] = [];
+            const seenVidIds = new Set<string>();
 
-                  const durStr =
-                    renderer.fixedColumns?.[0]?.musicResponsiveListItemFixedColumnRenderer?.text?.runs?.[0]?.text ||
-                    renderer.lengthText?.runs?.[0]?.text ||
-                    renderer.lengthText?.simpleText;
-                  const durationSecs = parseDurationText(durStr);
+            // Universal recursive collector for track renderers
+            const collectVideos = (obj: any, d = 0) => {
+              if (!obj || typeof obj !== "object" || d > 25) return;
 
-                  if (vidId && title && title !== "Private video" && title !== "Deleted video") {
-                    const uniqueId = renderer.playlistItemData?.playlistSetVideoId || `${vidId}_${innerTracks.length}`;
-                    innerTracks.push({
-                      id: uniqueId,
-                      youtubeVideoId: vidId,
-                      title,
-                      artist,
-                      album: "",
-                      duration: durationSecs,
-                      coverUrl: formatHighResCover(cover) || cover,
-                      audioUrl: `/api/youtube/stream/${vidId}`,
-                      genre: "Music",
-                      playsCount: 0,
-                    });
+              if (obj.playlistVideoRenderer) {
+                const pv = obj.playlistVideoRenderer;
+                const vidId = pv.videoId;
+                const title = pv.title?.runs?.[0]?.text || pv.title?.simpleText;
+                const artist = pv.shortBylineText?.runs?.[0]?.text || pv.ownerText?.runs?.[0]?.text || "YouTube Artist";
+                const thumbs = pv.thumbnail?.thumbnails;
+                const cover = thumbs?.slice(-1)?.[0]?.url || (vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : "");
+                const durStr = pv.lengthText?.runs?.[0]?.text || pv.lengthText?.simpleText;
+                if (vidId && title && !seenVidIds.has(vidId) && title !== "Private video" && title !== "Deleted video") {
+                  seenVidIds.add(vidId);
+                  innerTracks.push({
+                    id: `${vidId}_${innerTracks.length}`,
+                    youtubeVideoId: vidId,
+                    title,
+                    artist,
+                    album: "",
+                    duration: parseDurationText(durStr),
+                    coverUrl: formatHighResCover(cover) || cover,
+                    audioUrl: `/api/youtube/stream/${vidId}`,
+                    genre: "Music",
+                    playsCount: 0,
+                  });
+                }
+              } else if (obj.tileRenderer && (obj.tileRenderer.contentType === "TILE_CONTENT_TYPE_VIDEO" || obj.tileRenderer.contentId)) {
+                const tr = obj.tileRenderer;
+                const vidId = tr.contentId || tr.onSelectCommand?.watchEndpoint?.videoId;
+                const title =
+                  tr.metadata?.tileMetadataRenderer?.title?.simpleText ||
+                  tr.metadata?.tileMetadataRenderer?.title?.runs?.map((s: any) => s.text).join("") ||
+                  tr.title?.runs?.[0]?.text ||
+                  tr.title?.simpleText;
+                const artist =
+                  tr.metadata?.tileMetadataRenderer?.lines?.[0]?.lineRenderer?.items?.[0]?.lineItemRenderer?.text?.simpleText ||
+                  tr.metadata?.tileMetadataRenderer?.lines?.[0]?.lineRenderer?.items?.[0]?.lineItemRenderer?.text?.runs?.map((s: any) => s.text).join("") ||
+                  "YouTube Artist";
+                const thumbs = tr.header?.tileHeaderRenderer?.thumbnail?.thumbnails || tr.thumbnail?.thumbnails;
+                const cover = thumbs?.slice(-1)?.[0]?.url || (vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : "");
+                const ovText =
+                  tr.header?.tileHeaderRenderer?.thumbnailOverlays?.[0]?.thumbnailOverlayTimeStatusRenderer?.text?.runs?.[0]?.text ||
+                  tr.header?.tileHeaderRenderer?.thumbnailOverlays?.[0]?.thumbnailOverlayTimeStatusRenderer?.text?.simpleText;
+
+                if (vidId && title && !seenVidIds.has(vidId) && title !== "Private video" && title !== "Deleted video") {
+                  seenVidIds.add(vidId);
+                  innerTracks.push({
+                    id: `${vidId}_${innerTracks.length}`,
+                    youtubeVideoId: vidId,
+                    title,
+                    artist,
+                    album: "",
+                    duration: parseDurationText(ovText),
+                    coverUrl: formatHighResCover(cover) || cover,
+                    audioUrl: `/api/youtube/stream/${vidId}`,
+                    genre: "Music",
+                    playsCount: 0,
+                  });
+                }
+              } else if (obj.musicResponsiveListItemRenderer) {
+                const renderer = obj.musicResponsiveListItemRenderer;
+                const flexCols = renderer.flexColumns || [];
+                const title = flexCols[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text;
+                const artist = flexCols[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || "YouTube Artist";
+                const vidId =
+                  renderer.playlistItemData?.videoId ||
+                  renderer.doubleTapCommand?.watchEndpoint?.videoId ||
+                  flexCols[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId;
+                const thumbs = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails;
+                const cover = thumbs?.slice(-1)?.[0]?.url || (vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : "");
+                const durStr =
+                  renderer.fixedColumns?.[0]?.musicResponsiveListItemFixedColumnRenderer?.text?.runs?.[0]?.text ||
+                  renderer.lengthText?.runs?.[0]?.text ||
+                  renderer.lengthText?.simpleText;
+
+                if (vidId && title && !seenVidIds.has(vidId) && title !== "Private video" && title !== "Deleted video") {
+                  seenVidIds.add(vidId);
+                  const uniqueId = renderer.playlistItemData?.playlistSetVideoId || `${vidId}_${innerTracks.length}`;
+                  innerTracks.push({
+                    id: uniqueId,
+                    youtubeVideoId: vidId,
+                    title,
+                    artist,
+                    album: "",
+                    duration: parseDurationText(durStr),
+                    coverUrl: formatHighResCover(cover) || cover,
+                    audioUrl: `/api/youtube/stream/${vidId}`,
+                    genre: "Music",
+                    playsCount: 0,
+                  });
+                }
+              }
+
+              if (Array.isArray(obj)) {
+                for (const elem of obj) collectVideos(elem, d + 1);
+              } else {
+                for (const key of Object.keys(obj)) {
+                  if (typeof obj[key] === "object" && obj[key] !== null) {
+                    collectVideos(obj[key], d + 1);
                   }
                 }
               }
+            };
+
+            collectVideos(data);
+
+            if (innerTracks.length > 0) {
+              const enriched = await enrichTracksWithDuration(innerTracks, accessToken);
+              setInCache(cacheKey, enriched);
+              return enriched;
             }
           }
-
-          if (innerTracks.length > 0) {
-            const enriched = await enrichTracksWithDuration(innerTracks, accessToken);
-            setInCache(cacheKey, enriched);
-            return enriched;
-          }
+        } catch (_innerErr) {
+          // Continue to next client/browseId
         }
-      } catch (_innerErr) {
-        // Continue to public extractor
       }
     }
   }
@@ -659,8 +747,26 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
     const seenIds = new Set<string>();
     const results: any[] = [];
 
-    // Hardcode YouTube Music client context with both ANDROID_MUSIC and WEB_REMIX to fetch 100% of user library playlists
+    // YouTube client contexts to fetch 100% of user library playlists
     const queries = [
+      {
+        url: "https://www.youtube.com/youtubei/v1/browse",
+        clientName: "TVHTML5",
+        clientVersion: "7.20240501.01.00",
+        origin: "https://www.youtube.com",
+        headers: {
+          "X-YouTube-Client-Name": "7",
+          "X-YouTube-Client-Version": "7.20240501.01.00",
+          Origin: "https://www.youtube.com",
+          Referer: "https://www.youtube.com/tv",
+        },
+        browseIds: [
+          "FEplaylist_aggregation",
+          "FElibrary",
+          "FEmusic_liked_playlists",
+          "FEsubscriptions",
+        ],
+      },
       {
         url: "https://music.youtube.com/youtubei/v1/browse",
         clientName: "ANDROID_MUSIC",
@@ -758,6 +864,7 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
             const collectItems = (obj: any, depth = 0) => {
               if (!obj || typeof obj !== "object" || depth > 25) return;
 
+              if (obj.tileRenderer) candidateItems.push({ type: "tile", data: obj.tileRenderer });
               if (obj.musicTwoRowItemRenderer) candidateItems.push({ type: "twoRow", data: obj.musicTwoRowItemRenderer });
               if (obj.musicResponsiveListItemRenderer) candidateItems.push({ type: "responsive", data: obj.musicResponsiveListItemRenderer });
               if (obj.lockupViewModel) candidateItems.push({ type: "lockup", data: obj.lockupViewModel });
@@ -786,8 +893,43 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
               let title = "YouTube Playlist";
               let subtitle = "";
               let coverUrl = "";
+              let overlayCount = 0;
 
-              if (item.type === "twoRow") {
+              if (item.type === "tile") {
+                const r = item.data;
+                const rawId =
+                  r.contentId ||
+                  r.onSelectCommand?.browseEndpoint?.browseId ||
+                  r.onSelectCommand?.watchEndpoint?.playlistId ||
+                  r.onLongPressCommand?.showMenuCommand?.contentId ||
+                  r.onLongPressCommand?.showMenuCommand?.menu?.menuRenderer?.items?.[0]?.menuNavigationItemRenderer?.navigationEndpoint?.watchEndpoint?.playlistId ||
+                  "";
+                playlistId = rawId.replace(/^VL/, "");
+                title =
+                  r.metadata?.tileMetadataRenderer?.title?.simpleText ||
+                  r.metadata?.tileMetadataRenderer?.title?.runs?.map((s: any) => s.text).join("") ||
+                  r.header?.tileHeaderRenderer?.title?.simpleText ||
+                  r.header?.tileHeaderRenderer?.title?.runs?.map((s: any) => s.text).join("") ||
+                  r.title?.simpleText ||
+                  r.title?.runs?.map((s: any) => s.text).join("") ||
+                  "YouTube Playlist";
+
+                const lineItems = r.metadata?.tileMetadataRenderer?.lines?.[0]?.lineRenderer?.items || [];
+                subtitle = lineItems.map((li: any) => li.lineItemRenderer?.text?.simpleText || "").filter(Boolean).join(" • ");
+
+                const thumbs = r.header?.tileHeaderRenderer?.thumbnail?.thumbnails || r.thumbnail?.thumbnails || [];
+                coverUrl = thumbs.slice(-1)?.[0]?.url || thumbs[0]?.url || "";
+
+                const overlays = r.header?.tileHeaderRenderer?.thumbnailOverlays || [];
+                for (const ov of overlays) {
+                  const ovTxt = ov.thumbnailOverlayTimeStatusRenderer?.text?.runs?.map((s: any) => s.text).join("") || ov.thumbnailOverlayTimeStatusRenderer?.text?.simpleText || "";
+                  const m = ovTxt.match(/(\d+)/);
+                  if (m) {
+                    overlayCount = parseInt(m[1], 10);
+                    break;
+                  }
+                }
+              } else if (item.type === "twoRow") {
                 const r = item.data;
                 const rawId =
                   r.playlistId ||
@@ -850,9 +992,12 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
               }
 
               const rawCount = subtitle.match(/(\d+)\s*(songs|tracks|items|videos)/i)?.[1] || subtitle.replace(/\D/g, "");
+              const finalTracksCount = overlayCount > 0 ? overlayCount : (parseInt(rawCount || "0", 10) || 0);
 
               const isCustom = Boolean(
                 (coverUrl && (
+                  coverUrl.includes("studio_square_thumbnail") ||
+                  coverUrl.includes("pl_c") ||
                   coverUrl.includes("googleusercontent.com") ||
                   coverUrl.includes("ggpht.com") ||
                   coverUrl.includes("yt3.ggpht.com") ||
@@ -870,7 +1015,7 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
                 customCoverUrl: formatted || coverUrl || null,
                 isCustomCover: isCustom,
                 isYouTubeSynced: true,
-                tracksCount: parseInt(rawCount || "0", 10) || 0,
+                tracksCount: finalTracksCount,
                 tracks: [],
               });
             }
