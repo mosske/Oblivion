@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Playlist } from "../types";
-import { X, Upload, Sparkles, Image as ImageIcon, Youtube, Check } from "lucide-react";
+import { X, Upload, Sparkles, Image as ImageIcon, Youtube, Check, Globe, Link2, Lock, Loader2 } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
 interface PlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (title: string, description: string, coverUrl: string) => void;
+  onSave: (title: string, description: string, coverUrl: string, visibility?: "PUBLIC" | "UNLISTED" | "PRIVATE") => Promise<void> | void;
   initialPlaylist?: Playlist | null;
   isYouTubeSynced?: boolean;
   designConfig?: FullAppDesignConfig;
@@ -61,10 +61,12 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
     initialPlaylist?.coverUrl ||
       "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80"
   );
+  const [visibility, setVisibility] = useState<"PUBLIC" | "UNLISTED" | "PRIVATE">("PUBLIC");
   const [ytVideoInput, setYtVideoInput] = useState("");
   const [customUrlInput, setCustomUrlInput] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [activeCoverTab, setActiveCoverTab] = useState<"preset" | "youtube" | "url" | "upload">("preset");
+  const [activeCoverTab, setActiveCoverTab] = useState<"preset" | "youtube" | "url" | "upload">("upload");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Keep state synchronized when modal opens
   React.useEffect(() => {
@@ -75,8 +77,14 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
         initialPlaylist?.coverUrl ||
           "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80"
       );
+      const rawPriv = (initialPlaylist?.privacy || initialPlaylist?.privacyStatus || "PUBLIC").toUpperCase();
+      if (rawPriv === "PRIVATE") setVisibility("PRIVATE");
+      else if (rawPriv === "UNLISTED") setVisibility("UNLISTED");
+      else setVisibility("PUBLIC");
+
       setYtVideoInput("");
       setCustomUrlInput("");
+      setIsSubmitting(false);
     }
   }, [isOpen, initialPlaylist]);
 
@@ -87,7 +95,42 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result) {
-        setCoverUrl(e.target.result as string);
+        const rawDataUrl = e.target.result as string;
+        // Optimize and resize image client-side to prevent multi-megabyte payloads from hanging network/storage
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxDim = 800;
+            let width = img.width;
+            let height = img.height;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressed = canvas.toDataURL("image/jpeg", 0.85);
+              setCoverUrl(compressed);
+            } else {
+              setCoverUrl(rawDataUrl);
+            }
+          } catch {
+            setCoverUrl(rawDataUrl);
+          }
+        };
+        img.onerror = () => {
+          setCoverUrl(rawDataUrl);
+        };
+        img.src = rawDataUrl;
       }
     };
     reader.readAsDataURL(file);
@@ -105,7 +148,6 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
   const handleApplyYouTubeThumbnail = () => {
     if (!ytVideoInput.trim()) return;
     let videoId = ytVideoInput.trim();
-    // Check if it's a URL
     if (videoId.includes("youtube.com/watch")) {
       const match = videoId.match(/v=([a-zA-Z0-9_-]{11})/);
       if (match) videoId = match[1];
@@ -120,12 +162,46 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onSave(title, description, coverUrl);
-    onClose();
+    if (!title.trim() || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      // Race against a safety timeout (8s) so the UI can never hang perpetually
+      const saveAction = async () => {
+        await onSave(title, description, coverUrl, visibility);
+      };
+      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 8000));
+      await Promise.race([saveAction(), timeoutPromise]);
+      onClose();
+    } catch (err) {
+      console.error("Failed to save playlist changes:", err);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const VISIBILITY_OPTIONS = [
+    {
+      id: "PUBLIC" as const,
+      label: "Public",
+      description: "Anyone can search for and view",
+      icon: Globe,
+    },
+    {
+      id: "UNLISTED" as const,
+      label: "Unlisted",
+      description: "Anyone with the link can view",
+      icon: Link2,
+    },
+    {
+      id: "PRIVATE" as const,
+      label: "Private",
+      description: "Only you can view",
+      icon: Lock,
+    },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
@@ -140,6 +216,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            disabled={isSubmitting}
             className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl ${designConfig.isLight ? "hover:bg-[#ede8dc]" : "hover:bg-slate-800"} transition-colors`}
           >
             <X className="w-5 h-5" />
@@ -349,20 +426,77 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
             />
           </div>
 
+          {/* Set Visibility Section (Public / Unlisted / Private matching Screenshot 3) */}
+          <div className="space-y-2 pt-1">
+            <label className={`block text-xs font-bold ${designConfig.textMuted} uppercase tracking-wider`}>
+              Set Visibility
+            </label>
+
+            <div className="space-y-2">
+              {VISIBILITY_OPTIONS.map((opt) => {
+                const isSelected = visibility === opt.id;
+                const IconComponent = opt.icon;
+
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => setVisibility(opt.id)}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer select-none ${
+                      isSelected
+                        ? `border-[#c89b3c] ${designConfig.isLight ? "bg-[#c89b3c]/10" : "bg-[#c89b3c]/15"} shadow-sm`
+                        : `${designConfig.borderSubtle} ${designConfig.isLight ? "bg-[#f5f2eb]/60 hover:bg-[#f5f2eb]" : "bg-black/20 hover:bg-black/40"}`
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      <div className={`p-2 rounded-xl shrink-0 ${isSelected ? "bg-[#c89b3c] text-white shadow-sm" : `${designConfig.inputBg} ${designConfig.textMuted}`}`}>
+                        <IconComponent className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className={`text-sm font-bold ${isSelected ? designConfig.textPrimary : designConfig.textPrimary}`}>
+                            {opt.label}
+                          </h4>
+                        </div>
+                        <p className={`text-xs ${designConfig.textMuted} truncate`}>
+                          {opt.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="w-6 h-6 rounded-full bg-[#c89b3c] text-white flex items-center justify-center shrink-0 ml-2 shadow-sm">
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
             <button
               type="button"
               onClick={onClose}
+              disabled={isSubmitting}
               className={`px-5 py-2.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-xs font-semibold transition-colors`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className={`px-6 py-2.5 rounded-xl ${designConfig.btnPrimary} text-xs font-bold shadow-lg transition-all active:scale-95`}
+              disabled={isSubmitting}
+              className={`px-6 py-2.5 rounded-xl ${designConfig.btnPrimary} text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2`}
             >
-              {initialPlaylist ? "Save Changes" : "Create Playlist"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>{initialPlaylist ? "Save Changes" : "Create Playlist"}</span>
+              )}
             </button>
           </div>
         </form>

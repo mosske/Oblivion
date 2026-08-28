@@ -184,9 +184,9 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
           list.push(playlist.coverUrl.replace("sddefault.jpg", "mqdefault.jpg"));
           list.push(playlist.coverUrl.replace("sddefault.jpg", "default.jpg"));
         } else if (playlist.coverUrl.includes("hqdefault.jpg")) {
-          list.push(playlist.coverUrl.replace("hqdefault.jpg", "maxresdefault.jpg"));
           list.push(playlist.coverUrl.replace("hqdefault.jpg", "mqdefault.jpg"));
           list.push(playlist.coverUrl.replace("hqdefault.jpg", "default.jpg"));
+          list.push(playlist.coverUrl.replace("hqdefault.jpg", "sddefault.jpg"));
         }
       }
     }

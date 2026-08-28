@@ -153,22 +153,19 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     });
   }, [cleanPlaylists, hiddenPlaylistIds, showHidden, sortOption]);
 
-  const isUserAuthenticated = Boolean(
-    user?.isLoggedIn ||
-    (typeof window !== "undefined" && localStorage.getItem("oblivion_saved_user"))
-  );
+  const isUserAuthenticated = Boolean(user && user.isLoggedIn);
 
   // Auto-trigger sync check on mount if list is currently empty and user is authenticated
   useEffect(() => {
     if (cleanPlaylists.length === 0 && onSyncYouTube && isUserAuthenticated) {
       onSyncYouTube();
     }
-  }, []);
+  }, [isUserAuthenticated]);
 
   const hiddenCount = hiddenPlaylistIds.filter((id) => cleanPlaylists.some((pl) => pl.id === id)).length;
 
-  // If user is completely unauthenticated and has no stored playlists, show Sign-In prompt
-  if (!isUserAuthenticated && cleanPlaylists.length === 0) {
+  // When signed out, never show any playlists; show the Sign-In prompt
+  if (!isUserAuthenticated) {
     return (
       <div className="flex flex-col select-none">
         <div className="flex-1 p-6 md:p-10 pb-40 md:pb-48 max-w-4xl mx-auto w-full">
@@ -178,41 +175,41 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             </div>
 
             <div className="space-y-2 max-w-md">
-              <h2 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight`}>
+              <h2 className="text-2xl sm:text-3xl font-black text-stone-950 tracking-tight">
                 Sign In to View Your Library
               </h2>
-              <p className={`text-xs sm:text-sm ${designConfig.headingMuted} font-medium leading-relaxed`}>
+              <p className="text-xs sm:text-sm text-neutral-800 font-semibold leading-relaxed">
                 Connect your Google Account to access and synchronize your personal YouTube Music playlists, custom cover artwork, and saved collections.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg text-left pt-2">
               <div className={`p-3.5 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} border ${designConfig.borderSubtle} space-y-1`}>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#c89b3c]">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#b8860b]">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Personal Playlists</span>
+                  <span className="text-stone-950 font-bold">Personal Playlists</span>
                 </div>
-                <p className={`text-[11px] ${designConfig.textSecondary}`}>
+                <p className="text-[11px] text-neutral-800 font-medium leading-normal">
                   Stream, organize, and sync your YouTube collections in real-time.
                 </p>
               </div>
 
               <div className={`p-3.5 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} border ${designConfig.borderSubtle} space-y-1`}>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#c89b3c]">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#b8860b]">
                   <Music className="w-3.5 h-3.5" />
-                  <span>Custom Artwork</span>
+                  <span className="text-stone-950 font-bold">Custom Artwork</span>
                 </div>
-                <p className={`text-[11px] ${designConfig.textSecondary}`}>
+                <p className="text-[11px] text-neutral-800 font-medium leading-normal">
                   Full support for HD square custom covers with instant sync.
                 </p>
               </div>
 
               <div className={`p-3.5 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} border ${designConfig.borderSubtle} space-y-1`}>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#c89b3c]">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#b8860b]">
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Live Sync</span>
+                  <span className="text-stone-950 font-bold">Live Sync</span>
                 </div>
-                <p className={`text-[11px] ${designConfig.textSecondary}`}>
+                <p className="text-[11px] text-neutral-800 font-medium leading-normal">
                   Changes you make here immediately sync back to YouTube Music.
                 </p>
               </div>
@@ -385,32 +382,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
 
-                      {/* Custom Image Badge if custom */}
-                      {(pl.isCustomCover || pl.customCoverUrl) && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[9px] font-mono text-white flex items-center gap-1 shadow-lg z-10">
-                          <Sparkles className="w-2.5 h-2.5 text-[#c89b3c]" />
-                          <span>Custom</span>
-                        </div>
-                      )}
-
                       {/* Play overlay button */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                         <div className="w-11 h-11 rounded-full bg-[#c89b3c] text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
                           <Play className="w-5 h-5 fill-white ml-0.5" />
                         </div>
                       </div>
-
-                      {/* Quick Edit Cover Pencil */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditPlaylist(pl);
-                        }}
-                        className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white opacity-0 group-hover:opacity-100 hover:bg-[#c89b3c] hover:text-white transition-all z-10"
-                        title="Edit Playlist & Cover"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
 
                       {/* Hide/Unhide Quick Button */}
                       <button

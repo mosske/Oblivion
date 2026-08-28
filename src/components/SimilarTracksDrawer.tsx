@@ -106,11 +106,26 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
                 className={`group flex items-center justify-between p-2.5 rounded-2xl ${designConfig.cardBg} ${designConfig.cardHover} border ${designConfig.borderSubtle} transition-all`}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="relative w-10 h-10 shrink-0">
+                  <div className="relative w-10 h-10 shrink-0 bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center">
                     <img
-                      src={track.coverUrl}
+                      src={track.coverUrl || (track.youtubeVideoId || track.id ? `https://i.ytimg.com/vi/${track.youtubeVideoId || track.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
                       alt={track.title}
                       className="w-10 h-10 rounded-xl object-cover"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      onError={(e) => {
+                        const currentSrc = e.currentTarget.src || "";
+                        const vId = track.youtubeVideoId || track.id;
+                        if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
+                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                        } else if (vId && currentSrc.includes("hqdefault.jpg")) {
+                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                        } else if (vId && currentSrc.includes("mqdefault.jpg")) {
+                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
+                        } else {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                        }
+                      }}
                     />
                     <button
                       onClick={() => onPlayTrack(track)}

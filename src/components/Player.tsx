@@ -1705,13 +1705,28 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* Artwork Thumbnail with quick full player expand */}
                 <div
                   onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                  className={`relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} cursor-pointer group shadow-sm`}
+                  className={`relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} cursor-pointer group shadow-sm bg-slate-800 flex items-center justify-center`}
                   title="Click to open Full Player"
                 >
                   <img
-                    src={currentTrack.coverUrl}
+                    src={currentTrack.coverUrl || (currentTrack.youtubeVideoId || currentTrack.id ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId || currentTrack.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
                     alt={currentTrack.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    onError={(e) => {
+                      const currentSrc = e.currentTarget.src || "";
+                      const vId = currentTrack.youtubeVideoId || currentTrack.id;
+                      if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
+                        e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                      } else if (vId && currentSrc.includes("hqdefault.jpg")) {
+                        e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                      } else if (vId && currentSrc.includes("mqdefault.jpg")) {
+                        e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
+                      } else {
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                      }
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                     <Maximize2 className="w-3.5 h-3.5 text-white" />

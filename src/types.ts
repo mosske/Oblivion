@@ -41,6 +41,8 @@ export interface Playlist {
   artist?: string;
   isAlbum?: boolean;
   thumbnails?: YouTubeThumbnails;
+  privacy?: "PUBLIC" | "UNLISTED" | "PRIVATE" | string;
+  privacyStatus?: string;
 }
 
 export interface Album {

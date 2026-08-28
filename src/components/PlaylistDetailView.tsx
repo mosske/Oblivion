@@ -24,7 +24,10 @@ import {
   Image as ImageIcon,
   ChevronUp,
   ChevronDown,
-  Check
+  Check,
+  Globe,
+  Lock,
+  Link2
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -504,37 +507,12 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           <div className="absolute top-0 right-0 w-96 h-96 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[#c89b3c]/40 via-cyan-500/20 to-transparent blur-3xl"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
-            {/* Playlist Cover Art with YouTube Floating Edit Button */}
+            {/* Playlist Cover Art */}
             <div className="relative group shrink-0">
-              <div className="relative">
-                <PlaylistCoverArt
-                  playlist={item as Playlist}
-                  className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
-                />
-
-                {/* Custom Image Badge if custom */}
-                {((item as Playlist).isCustomCover || (item as Playlist).customCoverUrl) && (
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[10px] font-mono text-white flex items-center gap-1 shadow-lg">
-                    <Sparkles className="w-3 h-3 text-[#c89b3c]" />
-                    <span>Custom Cover</span>
-                  </div>
-                )}
-
-                {/* YouTube Floating Circular Pencil Edit Button (Matching Screenshot) */}
-                {!isAlbum && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsCustomCoverModalOpen(true);
-                    }}
-                    className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-[#18181b] hover:bg-[#27272a] text-white border-2 border-white/20 shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-20 group/btn"
-                    title="Change playlist custom image"
-                  >
-                    <Edit className="w-4 h-4 text-white group-hover/btn:text-[#c89b3c]" />
-                  </button>
-                )}
-              </div>
+              <PlaylistCoverArt
+                playlist={item as Playlist}
+                className={`w-44 h-44 sm:w-52 sm:h-52 rounded-2xl object-cover shadow-2xl border-2 ${designConfig.accentBorder} transition-transform duration-300 group-hover:scale-[1.02]`}
+              />
             </div>
 
             {/* Playlist Information */}
@@ -544,6 +522,28 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                   {isAlbum ? <Layers className="w-3.5 h-3.5" /> : <Sparkles className={`w-3.5 h-3.5 ${designConfig.accentText}`} />}
                   {isAlbum ? "Official Album" : "YouTube Music Playlist"}
                 </span>
+
+                {/* Playlist Visibility Badge */}
+                {!isAlbum && ((item as Playlist).privacy || (item as Playlist).privacyStatus) && (
+                  <span className={`px-3 py-1 rounded-full ${designConfig.pillBg} text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm`}>
+                    {((item as Playlist).privacy?.toUpperCase() === "PRIVATE" || (item as Playlist).privacyStatus?.toUpperCase() === "PRIVATE") ? (
+                      <>
+                        <Lock className="w-3.5 h-3.5 text-red-500" />
+                        <span>Private</span>
+                      </>
+                    ) : ((item as Playlist).privacy?.toUpperCase() === "UNLISTED" || (item as Playlist).privacyStatus?.toUpperCase() === "UNLISTED") ? (
+                      <>
+                        <Link2 className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Unlisted</span>
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-3.5 h-3.5 text-[#c89b3c]" />
+                        <span>Public</span>
+                      </>
+                    )}
+                  </span>
+                )}
               </div>
 
               <h1 className={`text-2xl sm:text-4xl font-extrabold ${designConfig.textPrimary} tracking-tight leading-tight line-clamp-2`}>
@@ -703,13 +703,25 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                       </div>
 
                       {/* Thumbnail Cover */}
-                      <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-black/10">
+                      <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-black/10 bg-slate-800 flex items-center justify-center">
                         <img
-                          src={track.coverUrl}
+                          src={track.coverUrl || (track.youtubeVideoId || track.id ? `https://i.ytimg.com/vi/${track.youtubeVideoId || track.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
                           alt={track.title}
                           className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
                           onError={(e) => {
-                            e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                            const currentSrc = e.currentTarget.src || "";
+                            const vId = track.youtubeVideoId || track.id;
+                            if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
+                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                            } else if (vId && currentSrc.includes("hqdefault.jpg")) {
+                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                            } else if (vId && currentSrc.includes("mqdefault.jpg")) {
+                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
+                            } else {
+                              e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                            }
                           }}
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">

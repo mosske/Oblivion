@@ -245,12 +245,27 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <div
                     onClick={handleItemClick}
-                    className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${isCurrent ? "border-[#c89b3c]" : designConfig.borderSubtle} cursor-pointer shadow-sm`}
+                    className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${isCurrent ? "border-[#c89b3c]" : designConfig.borderSubtle} cursor-pointer shadow-sm bg-slate-800 flex items-center justify-center`}
                   >
                     <img
-                      src={item.coverUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80"}
+                      src={item.coverUrl || (item.youtubeVideoId || item.id ? `https://i.ytimg.com/vi/${item.youtubeVideoId || item.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
                       alt={item.title}
                       className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      onError={(e) => {
+                        const currentSrc = e.currentTarget.src || "";
+                        const vId = item.youtubeVideoId || item.id;
+                        if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
+                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                        } else if (vId && currentSrc.includes("hqdefault.jpg")) {
+                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                        } else if (vId && currentSrc.includes("mqdefault.jpg")) {
+                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
+                        } else {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                        }
+                      }}
                     />
 
                     {/* Playing Equalizer Animation Overlay if Active Song */}

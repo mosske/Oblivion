@@ -262,14 +262,26 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                         </div>
 
                         {/* Thumbnail */}
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm bg-slate-800 flex items-center justify-center">
                           <img
-                            src={track.coverUrl}
+                            src={track.coverUrl || (track.youtubeVideoId || track.id ? `https://i.ytimg.com/vi/${track.youtubeVideoId || track.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
                             alt={track.title}
                             className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
                             onError={(e) => {
-                              e.currentTarget.src =
-                                "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                              const currentSrc = e.currentTarget.src || "";
+                              const vId = track.youtubeVideoId || track.id;
+                              if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
+                                e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                              } else if (vId && currentSrc.includes("hqdefault.jpg")) {
+                                e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                              } else if (vId && currentSrc.includes("mqdefault.jpg")) {
+                                e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
+                              } else {
+                                e.currentTarget.src =
+                                  "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                              }
                             }}
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
