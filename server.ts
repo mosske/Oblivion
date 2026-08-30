@@ -4552,34 +4552,94 @@ app.get("/api/youtube/search", async (req, res) => {
 app.get("/api/youtube/lyrics", async (req, res) => {
   const title = (req.query.title as string) || "Song";
   const artist = (req.query.artist as string) || "Artist";
+  const duration = req.query.duration ? parseInt(req.query.duration as string, 10) : undefined;
 
-  // Use Gemini client if available for AI synchronized lyrics generation or fallback
+  const cacheKey = `lyrics:${title}:${artist}`;
+  const cached = getFromCache<any>(cacheKey);
+  if (cached) {
+    return res.json(cached);
+  }
+
+  // 1. Fetch from LRCLIB public REST API
+  try {
+    const cleanTitle = title
+      .replace(/\s*[\(\[]\s*(official\s*(music\s*)?(video|audio|lyric\s*video|hd|4k|stream)?|hd|4k|remastered|lyric\s*video|audio|visualizer)\s*[\)\]]/gi, "")
+      .trim();
+    const cleanArtist = artist.replace(/\s*-\s*Topic$/i, "").trim();
+
+    const params = new URLSearchParams({
+      track_name: cleanTitle,
+      artist_name: cleanArtist,
+    });
+    if (duration && duration > 10) {
+      params.append("duration", Math.round(duration).toString());
+    }
+
+    const lrcRes = await fetch(`https://lrclib.net/api/get?${params.toString()}`, {
+      headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
+      signal: AbortSignal.timeout(4000),
+    });
+
+    if (lrcRes.ok) {
+      const data = await lrcRes.json();
+      if (data.syncedLyrics || data.plainLyrics) {
+        const payload = {
+          syncedLyrics: data.syncedLyrics,
+          plainLyrics: data.plainLyrics,
+          lyricsRaw: data.syncedLyrics || data.plainLyrics,
+          isSynced: Boolean(data.syncedLyrics),
+          source: "lrclib",
+        };
+        setInCache(cacheKey, payload);
+        return res.json(payload);
+      }
+    }
+
+    // Fallback search on LRCLIB
+    const searchRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanArtist} ${cleanTitle}`)}`, {
+      headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (searchRes.ok) {
+      const list = await searchRes.json();
+      if (Array.isArray(list) && list.length > 0) {
+        const match = list.find((it) => it.syncedLyrics) || list.find((it) => it.plainLyrics);
+        if (match) {
+          const payload = {
+            syncedLyrics: match.syncedLyrics,
+            plainLyrics: match.plainLyrics,
+            lyricsRaw: match.syncedLyrics || match.plainLyrics,
+            isSynced: Boolean(match.syncedLyrics),
+            source: "lrclib",
+          };
+          setInCache(cacheKey, payload);
+          return res.json(payload);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("LRCLIB server fetch error:", err);
+  }
+
+  // 2. Fallback to Gemini AI if available
   const ai = getGeminiClient();
   if (ai) {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: `Generate timed LRC format lyrics for the song "${title}" by "${artist}". Output ONLY valid LRC formatted lines with [mm:ss.xx] timestamps and lyric text.`
+        contents: `Generate real timed LRC format lyrics for the song "${title}" by "${artist}". Output ONLY valid LRC formatted lines with [mm:ss.xx] timestamps and lyric text.`
       });
       if (response.text) {
-        return res.json({ lyricsRaw: response.text });
+        const payload = { lyricsRaw: response.text, syncedLyrics: response.text, isSynced: true, source: "gemini" };
+        setInCache(cacheKey, payload);
+        return res.json(payload);
       }
     } catch (e) {
       console.warn("Gemini lyrics generation fallback:", e);
     }
   }
 
-  // Fallback LRC lyrics
-  const fallbackLrc = `[00:05.00] ${title} - ${artist}
-[00:12.00] Driving through the neon lights of the night
-[00:20.00] Waves of sound vibrating deep inside
-[00:28.00] Feel the rhythm take control of your soul
-[00:36.00] Lost in the Oblivion soundscape
-[00:45.00] Music plays on endlessly forever
-[00:55.00] Echoes of the melody softly fading
-[01:05.00] Oblivion YouTube Music Experience`;
-
-  res.json({ lyricsRaw: fallbackLrc });
+  return res.json({ lyricsRaw: "", isSynced: false, source: "none" });
 });
 
 app.get("/api/youtube/similar", async (req, res) => {

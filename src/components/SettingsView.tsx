@@ -15,7 +15,10 @@ import {
   CircleOff,
   Eye,
   RotateCcw,
-  Timer
+  Timer,
+  Mic2,
+  AlignLeft,
+  AlignCenter
 } from "lucide-react";
 import { OblivionLogo } from "./OblivionLogo";
 
@@ -505,6 +508,87 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <p className="text-[10px] text-zinc-500 leading-tight">
                 No active animation loops running. Maximizes performance & power saving.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SYNCHRONIZED REAL-TIME LYRICS PREFERENCES */}
+      <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-5 shadow-md`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} text-[10px] font-mono font-bold tracking-wider mb-1`}>
+              <Mic2 className={`w-3 h-3 ${designConfig.accentText}`} />
+              <span>LRCLIB Real-Time Lyrics</span>
+            </div>
+            <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
+              <Mic2 className={`w-4 h-4 ${designConfig.accentText}`} />
+              <span>Synchronized Lyrics Styling</span>
+            </h3>
+            <p className={`text-xs ${designConfig.textMuted}`}>
+              Configure font sizing and text alignment for real-time synchronized playback lyrics.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          {/* Lyrics Font Size */}
+          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 space-y-3">
+            <label className={`block text-xs font-bold uppercase ${designConfig.textPrimary}`}>
+              Lyrics Font Size
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["sm", "md", "lg"] as const).map((size) => {
+                const isSelected = (settings.lyricsFontSize || "md") === size;
+                const label = size === "sm" ? "Compact" : size === "lg" ? "Expanded" : "Standard";
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => onUpdateSettings({ lyricsFontSize: size })}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                      isSelected
+                        ? `${designConfig.btnPrimary} shadow-sm border-transparent`
+                        : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Lyrics Alignment */}
+          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 space-y-3">
+            <label className={`block text-xs font-bold uppercase ${designConfig.textPrimary}`}>
+              Text Alignment
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onUpdateSettings({ lyricsAlignment: "left" })}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                  (settings.lyricsAlignment || "left") === "left"
+                    ? `${designConfig.btnPrimary} shadow-sm border-transparent`
+                    : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
+                }`}
+              >
+                <AlignLeft className="w-3.5 h-3.5" />
+                <span>Left Aligned</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onUpdateSettings({ lyricsAlignment: "center" })}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                  settings.lyricsAlignment === "center"
+                    ? `${designConfig.btnPrimary} shadow-sm border-transparent`
+                    : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
+                }`}
+              >
+                <AlignCenter className="w-3.5 h-3.5" />
+                <span>Centered</span>
+              </button>
             </div>
           </div>
         </div>
