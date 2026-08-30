@@ -209,6 +209,27 @@ html, body {
   animation: waveformShimmer 2s ease-in-out infinite;
 }
 
+/* Continuous Marquee Text Scrolling Animation */
+@keyframes marqueeContinuous {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee-continuous {
+  display: flex;
+  width: max-content;
+  animation: marqueeContinuous var(--marquee-duration, 12s) linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-continuous:hover {
+  animation-play-state: paused;
+}
+
 /* YouTube Video Stream Engine Wrapper & Embedded IFrame */
 #oblivion-yt-wrapper iframe {
   width: 100% !important;

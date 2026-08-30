@@ -20,6 +20,7 @@ import { Track } from "../types";
 import { GripVertical, Play, Trash2, Music2 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { MarqueeText } from "./MarqueeText";
 
 interface SortableTrackItemProps {
   key?: string;
@@ -113,16 +114,21 @@ function SortableTrackItem({
 
         {/* Track Title & Artist */}
         <div className="min-w-0 flex-1">
-          <p
-            onClick={() => onPlay(track, index)}
-            className={`text-sm font-semibold truncate cursor-pointer hover:underline ${
+          <MarqueeText
+            text={cleanTrackTitle(track.title, track.artist)}
+            className={`text-sm font-semibold cursor-pointer hover:underline ${
               isPlayingCurrent ? designConfig.accentText : designConfig.textPrimary
             }`}
-            title={track.title}
-          >
-            {cleanTrackTitle(track.title, track.artist)}
-          </p>
-          <p className={`text-xs ${designConfig.textMuted} truncate`}>{track.artist}</p>
+            containerClassName="w-full"
+            onClick={() => onPlay(track, index)}
+            speed={30}
+          />
+          <MarqueeText
+            text={track.artist}
+            className={`text-xs ${designConfig.textMuted}`}
+            containerClassName="w-full"
+            speed={26}
+          />
         </div>
       </div>
 

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { LyricsView } from "./LyricsView";
 import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
+import { MarqueeText } from "./MarqueeText";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
@@ -1787,86 +1788,95 @@ export const Player: React.FC<PlayerProps> = ({
               onClick={handleCloseMiniPlayer}
             />
 
-            {/* Top Row: Track Info (Left), Center Playback (Back, Play/Pause, Next), Remaining Controls (Right) */}
+            {/* Top Row: Left Artwork, Center (Song Title & Details directly above Play/Pause & Back/Next), Right (Controls) */}
             <div className="flex items-center justify-between gap-2 sm:gap-3">
-              {/* Left: Track Artwork and Info */}
+              {/* Left: Track Artwork Thumbnail */}
               <div 
                 onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group"
+                className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} shadow-sm bg-slate-800 flex items-center justify-center cursor-pointer group`}
                 title="Click to open Full Player"
               >
-                {/* Artwork Thumbnail */}
-                <div
-                  className={`relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} shadow-sm bg-slate-800 flex items-center justify-center`}
-                >
-                  <img
-                    src={currentTrack.coverUrl || (currentTrack.youtubeVideoId || currentTrack.id ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId || currentTrack.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
-                    alt={currentTrack.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    onError={(e) => {
-                      const currentSrc = e.currentTarget.src || "";
-                      const vId = currentTrack.youtubeVideoId || currentTrack.id;
-                      if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
-                        e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
-                      } else if (vId && currentSrc.includes("hqdefault.jpg")) {
-                        e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
-                      } else if (vId && currentSrc.includes("mqdefault.jpg")) {
-                        e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
-                      } else {
-                        e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
-                      }
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <Maximize2 className="w-3.5 h-3.5 text-white" />
-                  </div>
-                </div>
-
-                <div className="min-w-0 flex-1 pr-1">
-                  <h4 className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                    {cleanTrackTitle(currentTrack.title)}
-                  </h4>
-                  <p className={`text-[11px] ${designConfig.textMuted} truncate`}>
-                    {currentTrack.artist} • <span className={`${designConfig.accentText} font-medium font-mono text-[10px]`}>HD Studio</span>
-                  </p>
+                <img
+                  src={currentTrack.coverUrl || (currentTrack.youtubeVideoId || currentTrack.id ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId || currentTrack.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
+                  alt={currentTrack.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                  onError={(e) => {
+                    const currentSrc = e.currentTarget.src || "";
+                    const vId = currentTrack.youtubeVideoId || currentTrack.id;
+                    if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
+                      e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                    } else if (vId && currentSrc.includes("hqdefault.jpg")) {
+                      e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                    } else if (vId && currentSrc.includes("mqdefault.jpg")) {
+                      e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
+                    } else {
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                    }
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <Maximize2 className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
 
-              {/* Center: Back Navigation Button, Play/Pause in Center, Forward/Next Navigation Button */}
-              <div className="flex items-center justify-center gap-1 sm:gap-2 shrink-0">
-                <button
-                  onClick={onPrevTrack}
-                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
-                  title="Previous"
+              {/* Center Column: Song Title and Details located JUST ABOVE the Play/Pause button */}
+              <div className="flex-1 flex flex-col items-center justify-center min-w-0 max-w-sm sm:max-w-md mx-auto px-1">
+                {/* Song Title and Song Details just above the Play/Pause button with Marquee scrolling */}
+                <div 
+                  onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
+                  className="w-full text-center flex flex-col items-center justify-center mb-1.5 cursor-pointer group max-w-full"
+                  title="Click to open Full Player"
                 >
-                  <SkipBack className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-                </button>
+                  <MarqueeText
+                    text={cleanTrackTitle(currentTrack.title)}
+                    className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors text-center`}
+                    containerClassName="w-full max-w-[200px] xs:max-w-[250px] sm:max-w-[320px] mx-auto text-center"
+                    speed={28}
+                  />
+                  <MarqueeText
+                    text={`${currentTrack.artist} • HD Studio`}
+                    className={`text-[10px] sm:text-[11px] ${designConfig.textMuted} text-center`}
+                    containerClassName="w-full max-w-[180px] xs:max-w-[220px] sm:max-w-[280px] mx-auto text-center"
+                    speed={24}
+                  />
+                </div>
 
-                <button
-                  onClick={() => handleUserTogglePlay()}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
-                  title={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? (
-                    <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white" />
-                  ) : (
-                    <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white ml-0.5" />
-                  )}
-                </button>
+                {/* Center Playback Controls: Back Navigation Button, Play/Pause in Center, Forward/Next Navigation Button */}
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 shrink-0">
+                  <button
+                    onClick={onPrevTrack}
+                    className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                    title="Previous"
+                  >
+                    <SkipBack className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                  </button>
 
-                <button
-                  onClick={onNextTrack}
-                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
-                  title="Next"
-                >
-                  <SkipForward className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-                </button>
+                  <button
+                    onClick={() => handleUserTogglePlay()}
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                    title={isPlaying ? "Pause" : "Play"}
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white" />
+                    ) : (
+                      <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white ml-0.5" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={onNextTrack}
+                    className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                    title="Next"
+                  >
+                    <SkipForward className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                  </button>
+                </div>
               </div>
 
               {/* Right: Remaining buttons sitting after Forward/Next button (Shuffle, Repeat, Like, Add, Expand) */}
-              <div className="flex-1 flex items-center justify-end gap-0.5 sm:gap-1 shrink-0">
+              <div className="flex items-center justify-end gap-0.5 sm:gap-1 shrink-0">
                 <button
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))

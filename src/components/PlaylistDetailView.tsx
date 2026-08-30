@@ -33,6 +33,7 @@ import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCustomCoverModal } from "./PlaylistCustomCoverModal";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
+import { MarqueeText } from "./MarqueeText";
 
 interface PlaylistDetailViewProps {
   item: Playlist | Album;
@@ -742,17 +743,20 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
                       {/* Title & Artist */}
                       <div className="flex-1 min-w-0">
-                        <h4
-                          className={`text-xs sm:text-sm font-semibold truncate ${
+                        <MarqueeText
+                          text={cleanTrackTitle(track.title)}
+                          className={`text-xs sm:text-sm font-semibold ${
                             isCurrent ? designConfig.accentText : designConfig.textPrimary
                           } group-hover:${designConfig.accentText} transition-colors`}
-                          title={track.title}
-                        >
-                          {cleanTrackTitle(track.title)}
-                        </h4>
-                        <p className={`text-[11px] sm:text-xs ${designConfig.textMuted} truncate`}>
-                          {track.artist}
-                        </p>
+                          containerClassName="w-full"
+                          speed={30}
+                        />
+                        <MarqueeText
+                          text={track.artist || (isAlbum ? (item as Album).artist : "Unknown Artist")}
+                          className={`text-[11px] sm:text-xs ${designConfig.textMuted}`}
+                          containerClassName="w-full"
+                          speed={26}
+                        />
                       </div>
                     </div>
 
