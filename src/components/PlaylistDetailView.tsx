@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Playlist, Track, Album } from "../types";
 import {
   X,
@@ -110,6 +110,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const [isCustomCoverModalOpen, setIsCustomCoverModalOpen] = useState<boolean>(false);
   const [isLoadingTracks, setIsLoadingTracks] = useState<boolean>(!item.tracks || item.tracks.length === 0);
 
+  // Always reset scroll position to the very top when opening or switching playlists/albums
+  useLayoutEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+    const mainEl = document.querySelector("main");
+    if (mainEl) mainEl.scrollTop = 0;
+    const rootEl = document.documentElement || document.body;
+    if (rootEl) rootEl.scrollTop = 0;
+  }, [item?.id]);
+
   // Sync state if props item changes
   useEffect(() => {
     if (item.tracks && item.tracks.length > 0) {
@@ -146,8 +157,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`,
         { headers }
       );
-      const data = await res.json();
-      if (data.tracks && Array.isArray(data.tracks)) {
+      const data = await res.json().catch(() => ({ tracks: [] }));
+      if (data?.tracks && Array.isArray(data.tracks)) {
         const clean: Track[] = data.tracks
           .filter(Boolean)
           .map((t: any, idx: number) => {

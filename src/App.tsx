@@ -16,25 +16,63 @@ import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
-// Helpers to read and write user-customized covers persistently
-const getStoredCustomCovers = (): Record<string, { customCoverUrl: string; isCustomCover: boolean }> => {
-  try {
-    const raw = localStorage.getItem("oblivion_playlist_custom_covers");
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
+export function isValidPlaylistId(id: string | undefined | null): boolean {
+  if (!id || typeof id !== "string") return false;
+  const clean = id.trim().replace(/^VL/, "");
+  if (!clean || clean.length < 3) return false;
+  if (clean.length === 11 && !clean.startsWith("PL")) return false;
+  if (clean === "LL" || clean === "LM" || clean === "WL" || clean === "HL") return false;
+  if (clean.startsWith("FE")) return false;
+  if (clean.startsWith("UC") && clean.length === 24) return false;
+  if (
+    clean.startsWith("PL") ||
+    clean.startsWith("PLS") ||
+    clean.startsWith("OLAK5uy_") ||
+    clean.startsWith("RD") ||
+    clean.startsWith("MPREb_") ||
+    clean.startsWith("FL") ||
+    clean.startsWith("UU") ||
+    clean.startsWith("pl_custom_")
+  ) {
+    return true;
   }
-};
+  if (clean.length >= 12 && /^[a-zA-Z0-9_-]+$/.test(clean)) {
+    return true;
+  }
+  return false;
+}
 
-const saveCustomCoverToStorage = (playlistId: string, customCoverUrl: string, isCustom: boolean) => {
-  try {
-    const existing = getStoredCustomCovers();
-    existing[playlistId] = { customCoverUrl, isCustomCover: isCustom };
-    localStorage.setItem("oblivion_playlist_custom_covers", JSON.stringify(existing));
-  } catch {}
-};
+// Resilient client fetch helper with automatic retry
+async function safeClientFetch(
+  url: string,
+  options: RequestInit = {},
+  retries = 2,
+  backoffMs = 800
+): Promise<Response | null> {
+  let lastError: any = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      return res;
+    } catch (err: any) {
+      lastError = err;
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, backoffMs * (attempt + 1)));
+      }
+    }
+  }
+  console.warn(`[Network Notice] Fetch to ${url.split("?")[0]} deferred:`, lastError?.message || lastError);
+  return null;
+}
 
 export default function App() {
+  // Purge any stale legacy local cover cache on mount
+  useEffect(() => {
+    try {
+      localStorage.removeItem("oblivion_playlist_custom_covers");
+    } catch {}
+  }, []);
+
   // Persistent activeTab state
   const [activeTab, setActiveTab] = useState<NavTab>(() => {
     try {
@@ -84,14 +122,28 @@ export default function App() {
     return headers;
   };
 
-  // Persistent playlists state - loaded immediately from local persistence
+  // Persistent playlists state - loaded immediately from local persistence and filtered
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
     try {
       const saved = localStorage.getItem("oblivion_saved_playlists");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter((p: any) => p && p.id && !p.id.startsWith("mix_"));
+          return parsed
+            .filter((p: any) => p && p.id && isValidPlaylistId(p.id) && !p.id.startsWith("mix_"))
+            .map((p: any) => {
+              // Strip local data URLs from YouTube playlists
+              if (p.id && !p.id.startsWith("pl_custom_")) {
+                const cleanCover = (p.coverUrl && p.coverUrl.startsWith("data:")) ? undefined : p.coverUrl;
+                const cleanCustom = (p.customCoverUrl && p.customCoverUrl.startsWith("data:")) ? undefined : p.customCoverUrl;
+                return {
+                  ...p,
+                  coverUrl: cleanCover || `https://i.ytimg.com/vi/${p.id.replace(/^VL/, '')}/hqdefault.jpg`,
+                  customCoverUrl: cleanCustom,
+                };
+              }
+              return p;
+            });
         }
       }
     } catch {}
@@ -419,10 +471,10 @@ export default function App() {
       headers["X-Access-Token"] = localToken;
     }
 
-    fetch("/api/auth/me", { headers, credentials: "include" })
-      .then((res) => res.json())
+    safeClientFetch("/api/auth/me", { headers, credentials: "include" }, 1, 500)
+      .then((res) => (res ? res.json() : null))
       .then((data) => {
-        if (data.isLoggedIn && data.user) {
+        if (data && data.isLoggedIn && data.user) {
           const fullUser = { ...data.user, isLoggedIn: true };
           setUser(fullUser);
           localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
@@ -432,7 +484,7 @@ export default function App() {
         }
       })
       .catch((err) => {
-        console.error("Auth check error:", err);
+        console.warn("Auth check notice:", err?.message || err);
         if (localToken) {
           fetchPlaylists(false, localToken, false);
         }
@@ -570,7 +622,22 @@ export default function App() {
 
       const tokenParam = activeToken ? `&access_token=${encodeURIComponent(activeToken)}` : "";
       const url = forceRefresh ? `/api/youtube/playlists?refresh=true&_t=${Date.now()}${tokenParam}` : `/api/youtube/playlists?_t=${Date.now()}${tokenParam}`;
-      const res = await fetch(url, { headers, credentials: "include" });
+      const res = await safeClientFetch(url, { headers, credentials: "include" }, 2, 800);
+
+      if (!res) {
+        // Safe fallback to local saved playlists
+        try {
+          const saved = localStorage.getItem("oblivion_saved_playlists");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setPlaylists(parsed);
+              return { success: true, count: parsed.length };
+            }
+          }
+        } catch {}
+        return { success: false, count: playlists.length };
+      }
 
       if (res.status === 401) {
         console.warn("YouTube API returned 401 Unauthorized.");
@@ -600,13 +667,14 @@ export default function App() {
       if (data.playlists && Array.isArray(data.playlists) && data.playlists.length > 0) {
         const seenPlIds = new Set<string>();
         const sanitizedPlaylists: Playlist[] = [];
-        const customCoversMap = getStoredCustomCovers();
         const syncTimestamp = Date.now();
 
         for (const pl of data.playlists) {
           if (!pl) continue;
           const plId = pl.id || pl.playlistId;
-          if (!plId || seenPlIds.has(plId)) continue;
+          if (!plId || !isValidPlaylistId(plId) || seenPlIds.has(plId)) continue;
+          const plTitle = (pl.title || "").toLowerCase();
+          if (plTitle === "liked music & videos" || plTitle === "liked videos" || plTitle === "liked music" || plTitle === "watch later" || plTitle === "history" || plTitle === "watch history") continue;
           seenPlIds.add(plId);
 
           const seenTrackIds = new Set<string>();
@@ -620,14 +688,11 @@ export default function App() {
             sanitizedTracks.push({ ...t, id: trId });
           }
 
-          const userStoredCover = customCoversMap[plId] || customCoversMap[plId.replace(/^VL/, "")];
-          const hasUserCustom = Boolean(userStoredCover?.customCoverUrl);
-
           const isAuthenticCustom =
-            hasUserCustom ||
             Boolean(pl.isCustomCover) ||
             Boolean(
               pl.customCoverUrl &&
+              !pl.customCoverUrl.startsWith("data:") &&
               (
                 pl.customCoverUrl.includes("studio_square_thumbnail") ||
                 pl.customCoverUrl.includes("/pl_c/") ||
@@ -643,12 +708,12 @@ export default function App() {
                 pl.customCoverUrl.includes("/pl/") ||
                 pl.customCoverUrl.includes("/s_p/") ||
                 pl.customCoverUrl.includes("ytimg.com/an_webp/") ||
-                pl.customCoverUrl.includes("ytimg.com/v2/") ||
-                pl.customCoverUrl.startsWith("data:")
+                pl.customCoverUrl.includes("ytimg.com/v2/")
               )
             ) ||
             Boolean(
               pl.coverUrl &&
+              !pl.coverUrl.startsWith("data:") &&
               (
                 pl.coverUrl.includes("studio_square_thumbnail") ||
                 pl.coverUrl.includes("/pl_c/") ||
@@ -664,8 +729,7 @@ export default function App() {
                 pl.coverUrl.includes("/pl/") ||
                 pl.coverUrl.includes("/s_p/") ||
                 pl.coverUrl.includes("ytimg.com/an_webp/") ||
-                pl.coverUrl.includes("ytimg.com/v2/") ||
-                pl.coverUrl.startsWith("data:")
+                pl.coverUrl.includes("ytimg.com/v2/")
               )
             );
 
@@ -677,17 +741,18 @@ export default function App() {
             thumbs?.medium?.url ||
             thumbs?.default?.url;
 
-          let customResolved =
-            userStoredCover?.customCoverUrl ||
-            (isAuthenticCustom ? (pl.customCoverUrl || pl.coverUrl) : pl.customCoverUrl);
+          // Strip data URLs from YouTube synced playlists
+          const rawCustom = (pl.customCoverUrl && pl.customCoverUrl.startsWith("data:") && !plId.startsWith("pl_custom_")) ? undefined : pl.customCoverUrl;
+          const rawCover = (pl.coverUrl && pl.coverUrl.startsWith("data:") && !plId.startsWith("pl_custom_")) ? undefined : pl.coverUrl;
+
+          let customResolved = rawCustom || (isAuthenticCustom ? (rawCover || rawCustom) : undefined);
 
           let primaryCover =
             customResolved ||
-            pl.customCoverUrl ||
-            (isAuthenticCustom ? pl.coverUrl : null) ||
-            pl.coverUrl ||
+            rawCustom ||
+            rawCover ||
             bestThumb ||
-            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80";
+            `https://i.ytimg.com/vi/${plId.replace(/^VL/, '')}/hqdefault.jpg`;
 
           // If manual sync, apply cache buster to force fresh CDN fetch
           if (isManualSync) {
@@ -760,9 +825,19 @@ export default function App() {
         return { success: true, count: sanitizedPlaylists.length };
       }
       return { success: true, count: 0 };
-    } catch (err) {
-      console.error("Fetch playlists error:", err);
-      return { success: false, count: 0 };
+    } catch (err: any) {
+      console.warn("Fetch playlists notice (recovering from local store):", err?.message || err);
+      try {
+        const saved = localStorage.getItem("oblivion_saved_playlists");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPlaylists(parsed);
+            return { success: true, count: parsed.length };
+          }
+        }
+      } catch {}
+      return { success: false, count: playlists.length };
     } finally {
       setIsSyncingYouTube(false);
     }
@@ -796,11 +871,17 @@ export default function App() {
       const qType = isAlb ? "album" : "playlist";
       const refreshParam = forceRefresh ? "&refresh=true" : "";
 
-      const res = await fetch(
+      const res = await safeClientFetch(
         `/api/youtube/playlists/${playlistId}/items?title=${qTitle}&artist=${qArtist}&type=${qType}${refreshParam}&_t=${Date.now()}`,
-        { headers }
+        { headers },
+        2,
+        800
       );
-      const data = await res.json();
+      if (!res) {
+        setIsSyncingPlaylist(false);
+        return;
+      }
+      const data = await res.json().catch(() => ({ tracks: [] }));
       if (data.tracks && Array.isArray(data.tracks)) {
         const uniqueTracks: Track[] = data.tracks
           .filter(Boolean)
@@ -813,11 +894,7 @@ export default function App() {
             };
           });
 
-        const customCoversMap = getStoredCustomCovers();
-        const userStoredCover = customCoversMap[playlistId] || customCoversMap[cleanId];
-
         const isAuthenticCustom = Boolean(
-          userStoredCover?.customCoverUrl ||
           data.isCustomCover ||
           (data.customCoverUrl && (
             data.customCoverUrl.includes("studio_square_thumbnail") ||
@@ -857,7 +934,7 @@ export default function App() {
           ))
         );
 
-        const customCover = userStoredCover?.customCoverUrl || data.customCoverUrl || (isAuthenticCustom ? data.coverUrl : undefined);
+        const customCover = data.customCoverUrl || (isAuthenticCustom ? data.coverUrl : undefined);
 
         setPlaylists((prev) => {
           const updated = prev.map((p) => {
@@ -873,8 +950,8 @@ export default function App() {
               });
               const mergedTracks = [...uniqueTracks, ...localUnsynced];
 
-              const finalCover = userStoredCover?.customCoverUrl || customCover || p.customCoverUrl || p.coverUrl;
-              const hasCustom = isAuthenticCustom || Boolean(p.isCustomCover || userStoredCover?.customCoverUrl);
+              const finalCover = customCover || p.customCoverUrl || p.coverUrl;
+              const hasCustom = isAuthenticCustom || Boolean(p.isCustomCover);
 
               return {
                 ...p,
@@ -906,8 +983,8 @@ export default function App() {
             });
             const mergedTracks = [...uniqueTracks, ...localUnsynced];
 
-            const finalCover = userStoredCover?.customCoverUrl || customCover || (prev as any).customCoverUrl || prev.coverUrl;
-            const hasCustom = isAuthenticCustom || Boolean((prev as any).isCustomCover || userStoredCover?.customCoverUrl);
+            const finalCover = customCover || (prev as any).customCoverUrl || prev.coverUrl;
+            const hasCustom = isAuthenticCustom || Boolean((prev as any).isCustomCover);
 
             return {
               ...prev,
@@ -1104,12 +1181,6 @@ export default function App() {
     const authHeaders = getAuthHeaders();
 
     if (editingPlaylist) {
-      if (coverUrl) {
-        saveCustomCoverToStorage(editingPlaylist.id, coverUrl, true);
-        const cleanId = editingPlaylist.id.replace(/^VL/, "");
-        saveCustomCoverToStorage(cleanId, coverUrl, true);
-      }
-
       const updatedPlaylist: Playlist = {
         ...editingPlaylist,
         title,
@@ -1187,11 +1258,8 @@ export default function App() {
             visibility,
           }),
         });
-        const data = await res.json();
-        if (data.playlist) {
-          if (coverUrl) {
-            saveCustomCoverToStorage(data.playlist.id, coverUrl, true);
-          }
+        const data = await res.json().catch(() => ({}));
+        if (data && data.playlist) {
           setPlaylists((prev) => [
             {
               ...data.playlist,
@@ -1232,8 +1300,8 @@ export default function App() {
         headers,
         body: JSON.stringify({ title, description: "Created with Oblivion Music" }),
       });
-      const data = await res.json();
-      if (data.playlist) {
+      const data = await res.json().catch(() => ({}));
+      if (data && data.playlist) {
         setPlaylists((prev) => [data.playlist, ...prev]);
         try {
           localStorage.setItem("oblivion_saved_playlists", JSON.stringify([data.playlist, ...playlists]));
@@ -1283,8 +1351,8 @@ export default function App() {
           track: cleanTrack,
         }),
       });
-      const data = await res.json();
-      if (data.playlist) {
+      const data = await res.json().catch(() => ({}));
+      if (data && data.playlist) {
         const createdPl: Playlist = {
           ...data.playlist,
           tracks: data.playlist.tracks?.length ? data.playlist.tracks : [cleanTrack],
@@ -1293,10 +1361,6 @@ export default function App() {
           customCoverUrl: coverUrl || data.playlist.customCoverUrl,
           isCustomCover: Boolean(coverUrl),
         };
-
-        if (coverUrl) {
-          saveCustomCoverToStorage(createdPl.id, coverUrl, true);
-        }
 
         setPlaylists((prev) => [createdPl, ...prev]);
         try {
@@ -1357,9 +1421,7 @@ export default function App() {
 
   // Update Custom Playlist Cover
   const handleUpdatePlaylistCover = async (playlistId: string, newCoverUrl: string, isCustom: boolean) => {
-    saveCustomCoverToStorage(playlistId, newCoverUrl, isCustom);
     const cleanId = playlistId.replace(/^VL/, "");
-    saveCustomCoverToStorage(cleanId, newCoverUrl, isCustom);
 
     setPlaylists((prev) => {
       const updated = prev.map((p) =>
@@ -1509,8 +1571,8 @@ export default function App() {
         method: "DELETE",
         headers,
       });
-      const data = await res.json();
-      if (data.syncedToYouTube) {
+      const data = await res.json().catch(() => ({}));
+      if (data?.syncedToYouTube) {
         showToast("Removed from playlist & synced with YouTube Music");
       } else {
         showToast("Removed from playlist");
@@ -1677,8 +1739,8 @@ export default function App() {
         headers,
         body: JSON.stringify({ tracks: updatedTracks }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => ({}));
+      if (data?.success) {
         setPlaylists((prev) => {
           const updated = prev.map((p) => {
             const pId = p.id || (p as any).playlistId;
@@ -1716,6 +1778,19 @@ export default function App() {
       throw err;
     }
   };
+
+  // Scroll to top whenever a playlist or album is selected
+  useEffect(() => {
+    if (selectedPlaylist) {
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+      const mainEl = document.querySelector("main");
+      if (mainEl) mainEl.scrollTop = 0;
+      const rootEl = document.documentElement || document.body;
+      if (rootEl) rootEl.scrollTop = 0;
+    }
+  }, [selectedPlaylist?.id]);
 
   return (
     <div className={`flex min-h-screen w-full bg-gradient-to-b ${activeFullDesign.bgCanvas} text-slate-100 font-sans select-none`}>

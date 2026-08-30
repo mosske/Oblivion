@@ -34,8 +34,8 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
             track.artist
           )}&duration=${track.duration}`
         );
-        const data = await res.json();
-        if (isMounted && data.lyricsRaw) {
+        const data = await res.json().catch(() => ({}));
+        if (isMounted && data?.lyricsRaw) {
           const parsed = parseLRC(data.lyricsRaw);
           setLyrics(parsed);
         }

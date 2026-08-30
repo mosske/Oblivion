@@ -378,6 +378,87 @@ export const Player: React.FC<PlayerProps> = ({
   const [dragOffsetY, setDragOffsetY] = useState<number>(0);
   const [isDraggingDown, setIsDraggingDown] = useState<boolean>(false);
 
+  // Swipe-down gesture state for closing mini player
+  const [miniTouchStartY, setMiniTouchStartY] = useState<number | null>(null);
+  const [miniTouchStartX, setMiniTouchStartX] = useState<number | null>(null);
+  const [miniTouchStartTime, setMiniTouchStartTime] = useState<number>(0);
+  const [miniDragOffsetY, setMiniDragOffsetY] = useState<number>(0);
+  const [isMiniDraggingDown, setIsMiniDraggingDown] = useState<boolean>(false);
+  const [isMiniClosing, setIsMiniClosing] = useState<boolean>(false);
+
+  const handleCloseMiniPlayer = () => {
+    setIsMiniClosing(true);
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = "";
+      }
+      if (ytPlayerRef.current && ytPlayerRef.current.pauseVideo) {
+        try {
+          ytPlayerRef.current.pauseVideo();
+          ytPlayerRef.current.stopVideo?.();
+        } catch {}
+      }
+      setPlayerState((prev) => ({
+        ...prev,
+        isPlaying: false,
+        currentTrack: null,
+        isFullscreen: false,
+        currentTime: 0,
+      }));
+      setIsMiniClosing(false);
+      setMiniDragOffsetY(0);
+      setIsMiniDraggingDown(false);
+    }, 180);
+  };
+
+  const handleMiniTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setMiniTouchStartY(touch.clientY);
+    setMiniTouchStartX(touch.clientX);
+    setMiniTouchStartTime(Date.now());
+    setIsMiniDraggingDown(false);
+  };
+
+  const handleMiniTouchMove = (e: React.TouchEvent) => {
+    if (miniTouchStartY === null || miniTouchStartX === null) return;
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - miniTouchStartY;
+    const deltaX = touch.clientX - miniTouchStartX;
+
+    // If pulling downwards
+    if (deltaY > 5 && deltaY > Math.abs(deltaX) * 0.7) {
+      setIsMiniDraggingDown(true);
+      const dampedOffset = deltaY < 120 ? deltaY : 120 + (deltaY - 120) * 0.4;
+      setMiniDragOffsetY(dampedOffset);
+    } else if (deltaY <= 0 && isMiniDraggingDown) {
+      setMiniDragOffsetY(0);
+      setIsMiniDraggingDown(false);
+    }
+  };
+
+  const handleMiniTouchEnd = (e: React.TouchEvent) => {
+    if (miniTouchStartY === null) return;
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - miniTouchStartY;
+    const deltaX = miniTouchStartX !== null ? touch.clientX - miniTouchStartX : 0;
+    const duration = Math.max(1, Date.now() - miniTouchStartTime);
+    const velocityY = deltaY / duration;
+
+    // Close mini player if swiped down past 50px or flicked down > 25px
+    if ((deltaY > 50 || (deltaY > 25 && velocityY > 0.3)) && deltaY > Math.abs(deltaX) * 0.7) {
+      handleCloseMiniPlayer();
+    } else {
+      setMiniDragOffsetY(0);
+      setIsMiniDraggingDown(false);
+    }
+
+    setMiniTouchStartY(null);
+    setMiniTouchStartX(null);
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
@@ -590,8 +671,8 @@ export const Player: React.FC<PlayerProps> = ({
           const q = `${cleanTrackTitle(currentTrack.title, currentTrack.artist)} ${currentTrack.artist || ""}`.trim();
           const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(q)}&type=track`);
           if (res.ok) {
-            const data = await res.json();
-            const first = data.results?.[0];
+            const data = await res.json().catch(() => ({}));
+            const first = data?.results?.[0];
             if (first && isDirect11CharId(first.id || first.youtubeVideoId)) {
               videoId = first.id || first.youtubeVideoId;
               setPlayerState((prev) => ({
@@ -1435,10 +1516,10 @@ export const Player: React.FC<PlayerProps> = ({
 
                 {/* Song Title, Artist, & Master Video Tags - always rendered with clean margin below the video screen */}
                 <div className="text-center space-y-1 sm:space-y-1.5 max-w-xs sm:max-w-md w-full px-2">
-                  <h2 className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle}`}>
+                  <h2 className={`text-base sm:text-2xl md:text-3xl font-semibold tracking-normal truncate ${fpTheme.stageTitle} text-white/95 drop-shadow-sm`}>
                     {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                   </h2>
-                  <p className={`text-xs sm:text-sm md:text-base font-semibold truncate ${fpTheme.stageArtist}`}>
+                  <p className={`text-xs sm:text-sm md:text-base font-normal tracking-wide truncate ${fpTheme.stageArtist}`}>
                     {currentTrack.artist}
                   </p>
                   <div className="flex items-center justify-center gap-2 pt-0.5">
@@ -1696,8 +1777,28 @@ export const Player: React.FC<PlayerProps> = ({
         return (
           <div
             id="app-mini-player-floating-dock"
-            className={`fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder} transition-all`}
+            onTouchStart={handleMiniTouchStart}
+            onTouchMove={handleMiniTouchMove}
+            onTouchEnd={handleMiniTouchEnd}
+            style={{
+              transform: isMiniClosing
+                ? "translate(-50%, 140px) scale(0.95)"
+                : isMiniDraggingDown
+                ? `translate(-50%, ${miniDragOffsetY}px)`
+                : "translate(-50%, 0px)",
+              opacity: isMiniClosing ? 0 : isMiniDraggingDown ? Math.max(0.2, 1 - miniDragOffsetY / 140) : 1,
+              transition: isMiniDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease-out",
+              touchAction: "pan-x",
+            }}
+            className={`fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
           >
+            {/* Top Drag-Down Bar Handle */}
+            <div
+              className="w-12 h-1 rounded-full bg-white/20 hover:bg-white/40 mx-auto -mt-1 mb-0.5 cursor-grab active:cursor-grabbing transition-colors"
+              title="Swipe or drag down to close mini player"
+              onClick={handleCloseMiniPlayer}
+            />
+
             {/* Top Row: Track Artwork, Play/Pause, Metadata & Controls */}
             <div className="flex items-center justify-between gap-3">
               {/* Left Play/Pause and Track Info */}

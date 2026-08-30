@@ -89,8 +89,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
           signal: controller.signal
         });
         if (res.ok) {
-          const data = await res.json();
-          if (data.results) {
+          const data = await res.json().catch(() => ({ results: [] }));
+          if (data?.results) {
             setResults(data.results);
           }
         }

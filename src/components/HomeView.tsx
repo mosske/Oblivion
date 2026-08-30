@@ -93,8 +93,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       const res = await fetch(`/api/youtube/home?mood=${encodeURIComponent(mood)}&_t=${Date.now()}`, { headers });
       if (res.ok) {
-        const data = await res.json();
-        setQuickPicks(data.quickPicks || []);
+        const data = await res.json().catch(() => ({}));
+        setQuickPicks(data?.quickPicks || []);
         setListenAgain(data.listenAgain || []);
         setSimilarTo(data.similarTo || null);
         setTrendingHits(data.trendingHits || []);

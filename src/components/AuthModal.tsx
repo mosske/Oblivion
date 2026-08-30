@@ -18,19 +18,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const startGooglePopup = async () => {
     setLoading(true);
+    setErrorMessage(null);
 
     try {
       const res = await fetch("/api/auth/google/url");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       let targetUrl = data.url;
       if (!res.ok || !targetUrl) {
-        throw new Error(data.error || "Failed to generate Google Sign-In URL.");
+        const errorMsg = typeof data.error === "string" 
+          ? data.error 
+          : (data.error?.message || "Failed to generate Google Sign-In URL.");
+        throw new Error(errorMsg);
       }
 
       const width = 500;
@@ -67,7 +72,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         } else if (event.data && event.data.type === "OAUTH_ERROR") {
           window.removeEventListener("message", handleMessage);
           setLoading(false);
-          alert("Google Sign-In Error: " + (event.data.error || "Failed to authenticate"));
+          const rawErr = event.data.error;
+          const parsedErr = typeof rawErr === "string" 
+            ? rawErr 
+            : (rawErr?.message || JSON.stringify(rawErr) || "Failed to authenticate");
+          setErrorMessage(parsedErr);
         }
       };
 
@@ -95,7 +104,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }, 1000);
     } catch (err: any) {
       console.error("Auth error:", err);
-      alert(err.message || "Failed to initiate Google login.");
+      setErrorMessage(err.message || "Failed to initiate Google login.");
       setLoading(false);
     }
   };
@@ -125,6 +134,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               Connect your account to sync your authentic YouTube Music playlists, favorite artists, and liked tracks.
             </p>
           </div>
+
+          {errorMessage && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs text-left leading-relaxed">
+              {errorMessage}
+            </div>
+          )}
 
           <div className="pt-2">
             <button

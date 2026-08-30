@@ -77,8 +77,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
       const res = await fetch(`/api/youtube/explore?_t=${Date.now()}`, { headers });
       if (res.ok) {
-        const data = await res.json();
-        setNewReleases(data.newReleases || []);
+        const data = await res.json().catch(() => ({}));
+        setNewReleases(data?.newReleases || []);
         setCharts(data.charts || []);
         setTrendingVideos(data.trendingVideos || []);
         setMoods(data.moodsAndMoments || []);

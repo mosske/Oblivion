@@ -27,30 +27,17 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
 }) => {
   const [candidateIndex, setCandidateIndex] = useState(0);
   const [allFailed, setAllFailed] = useState(false);
-  const [localCustomCover, setLocalCustomCover] = useState<string | null>(null);
 
   const playlistId = playlist.id || (playlist as any).playlistId;
 
-  // Retrieve any user-customized artwork from persistent local storage
+  // Reset error state when playlist or coverUrl changes
   useEffect(() => {
-    if (!playlistId) return;
-    try {
-      const stored = localStorage.getItem("oblivion_playlist_custom_covers");
-      if (stored) {
-        const map = JSON.parse(stored);
-        if (map && map[playlistId]?.customCoverUrl) {
-          setLocalCustomCover(map[playlistId].customCoverUrl);
-          setAllFailed(false);
-          setCandidateIndex(0);
-          return;
-        }
-      }
-    } catch {}
-    setLocalCustomCover(null);
+    setAllFailed(false);
+    setCandidateIndex(0);
   }, [playlistId, playlist.customCoverUrl, playlist.coverUrl]);
 
-  // Build candidate URL hierarchy with proper priority:
-  // 1. Explicit user custom cover (local or remote)
+  // Build candidate URL hierarchy directly from YouTube source of truth:
+  // 1. Explicit customCoverUrl from YouTube Music / Server
   // 2. Custom YouTube Music image artwork variants (googleusercontent, ggpht, yt3, /pl/, /s_p/)
   // 3. Playlist coverUrl & YouTube fallback resolution strings
   // 4. YouTube Data API standard thumbnails (maxres -> standard -> high -> medium -> default)
@@ -106,12 +93,7 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
       }
     };
 
-    // 1. Local custom cover takes highest priority
-    if (localCustomCover) {
-      addGoogleUserContentVariants(localCustomCover);
-    }
-
-    // 2. Explicit customCoverUrl from YouTube Music / Server
+    // 1. Explicit customCoverUrl from YouTube Music / Server
     if (playlist.customCoverUrl) {
       addGoogleUserContentVariants(playlist.customCoverUrl);
     }
@@ -215,7 +197,6 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     }
     return unique;
   }, [
-    localCustomCover,
     playlist.customCoverUrl,
     playlist.coverUrl,
     playlist.isCustomCover,
@@ -226,10 +207,10 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   useEffect(() => {
     setCandidateIndex(0);
     setAllFailed(false);
-  }, [playlistId, playlist.coverUrl, playlist.customCoverUrl, localCustomCover]);
+  }, [playlistId, playlist.coverUrl, playlist.customCoverUrl]);
 
   const isExplicitCustom = Boolean(
-    playlist.isCustomCover || playlist.customCoverUrl || localCustomCover
+    playlist.isCustomCover || playlist.customCoverUrl
   );
 
   const currentSrc = candidates[candidateIndex] || null;

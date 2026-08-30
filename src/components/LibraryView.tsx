@@ -120,6 +120,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       if (!pl) return false;
       const id = pl.id || pl.playlistId;
       if (!id || seen.has(id)) return false;
+      const cleanId = String(id).replace(/^VL/, "");
+      if (cleanId === "LL" || cleanId === "LM" || cleanId === "WL" || cleanId === "HL") return false;
+      if (cleanId.length === 11 && !cleanId.startsWith("PL")) return false; // single video ID
+      if (cleanId.startsWith("FE")) return false;
+      if (cleanId.startsWith("UC") && cleanId.length === 24) return false;
+      if (pl.title && (pl.title.toLowerCase() === "liked music & videos" || pl.title.toLowerCase() === "liked videos" || pl.title.toLowerCase() === "liked music" || pl.title.toLowerCase() === "watch later" || pl.title.toLowerCase() === "history" || pl.title.toLowerCase() === "watch history")) return false;
       seen.add(id);
       return true;
     });
@@ -170,46 +176,46 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       <div className="flex flex-col select-none">
         <div className="flex-1 p-6 md:p-10 pb-40 md:pb-48 max-w-4xl mx-auto w-full">
           <div className={`p-8 sm:p-12 text-center ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} shadow-xl flex flex-col items-center justify-center space-y-6 mt-4`}>
-            <div className="w-16 h-16 rounded-2xl bg-[#c89b3c]/15 text-[#c89b3c] flex items-center justify-center shadow-inner">
+            <div className={`w-16 h-16 rounded-2xl ${designConfig.isLight ? "bg-[#c89b3c]/15 text-[#b8860b]" : "bg-[#c89b3c]/20 text-[#c89b3c]"} flex items-center justify-center shadow-inner`}>
               <Library className="w-8 h-8" />
             </div>
 
             <div className="space-y-2 max-w-md">
-              <h2 className="text-2xl sm:text-3xl font-black text-stone-950 tracking-tight">
+              <h2 className={`text-2xl sm:text-3xl font-black ${designConfig.textPrimary} tracking-tight`}>
                 Sign In to View Your Library
               </h2>
-              <p className="text-xs sm:text-sm text-neutral-800 font-semibold leading-relaxed">
+              <p className={`text-xs sm:text-sm ${designConfig.textSecondary} font-medium leading-relaxed`}>
                 Connect your Google Account to access and synchronize your personal YouTube Music playlists, custom cover artwork, and saved collections.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg text-left pt-2">
               <div className={`p-3.5 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} border ${designConfig.borderSubtle} space-y-1`}>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#b8860b]">
+                <div className={`flex items-center gap-2 text-xs font-bold ${designConfig.accentText}`}>
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span className="text-stone-950 font-bold">Personal Playlists</span>
+                  <span className={`${designConfig.textPrimary} font-bold`}>Personal Playlists</span>
                 </div>
-                <p className="text-[11px] text-neutral-800 font-medium leading-normal">
+                <p className={`text-[11px] ${designConfig.textMuted} font-medium leading-normal`}>
                   Stream, organize, and sync your YouTube collections in real-time.
                 </p>
               </div>
 
               <div className={`p-3.5 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} border ${designConfig.borderSubtle} space-y-1`}>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#b8860b]">
+                <div className={`flex items-center gap-2 text-xs font-bold ${designConfig.accentText}`}>
                   <Music className="w-3.5 h-3.5" />
-                  <span className="text-stone-950 font-bold">Custom Artwork</span>
+                  <span className={`${designConfig.textPrimary} font-bold`}>Custom Artwork</span>
                 </div>
-                <p className="text-[11px] text-neutral-800 font-medium leading-normal">
+                <p className={`text-[11px] ${designConfig.textMuted} font-medium leading-normal`}>
                   Full support for HD square custom covers with instant sync.
                 </p>
               </div>
 
               <div className={`p-3.5 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} border ${designConfig.borderSubtle} space-y-1`}>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#b8860b]">
+                <div className={`flex items-center gap-2 text-xs font-bold ${designConfig.accentText}`}>
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span className="text-stone-950 font-bold">Live Sync</span>
+                  <span className={`${designConfig.textPrimary} font-bold`}>Live Sync</span>
                 </div>
-                <p className="text-[11px] text-neutral-800 font-medium leading-normal">
+                <p className={`text-[11px] ${designConfig.textMuted} font-medium leading-normal`}>
                   Changes you make here immediately sync back to YouTube Music.
                 </p>
               </div>

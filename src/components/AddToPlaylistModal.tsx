@@ -115,7 +115,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
 
           const res = await fetch(`/api/youtube/playlists?refresh=true&_t=${Date.now()}`, { headers });
           if (res.ok) {
-            const data = await res.json();
+            const data = await res.json().catch(() => ({ playlists: [] }));
             if (Array.isArray(data.playlists) && data.playlists.length > 0) {
               setLivePlaylists((prev) => {
                 const combinedMap = new Map<string, Playlist>();

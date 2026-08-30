@@ -87,10 +87,44 @@ function writeStoredTokens(tokens: Record<string, any>) {
   } catch {}
 }
 
+export function isValidPlaylistId(id: string | undefined | null): boolean {
+  if (!id || typeof id !== "string") return false;
+  const clean = id.trim().replace(/^VL/, "");
+  if (!clean || clean.length < 3) return false;
+  // Exclude standard 11-character YouTube video / short IDs
+  if (clean.length === 11 && !clean.startsWith("PL")) return false;
+  // Exclude system collections
+  if (clean === "LL" || clean === "LM" || clean === "WL" || clean === "HL") return false;
+  // Exclude browse tabs / channels
+  if (clean.startsWith("FE")) return false;
+  if (clean.startsWith("UC") && clean.length === 24) return false;
+  // Authentic playlist prefixes
+  if (
+    clean.startsWith("PL") ||
+    clean.startsWith("PLS") ||
+    clean.startsWith("OLAK5uy_") ||
+    clean.startsWith("RD") ||
+    clean.startsWith("MPREb_") ||
+    clean.startsWith("FL") ||
+    clean.startsWith("UU") ||
+    clean.startsWith("pl_custom_")
+  ) {
+    return true;
+  }
+  // Generic playlist ID format (>= 12 characters and matching playlist character set)
+  if (clean.length >= 12 && /^[a-zA-Z0-9_-]+$/.test(clean)) {
+    return true;
+  }
+  return false;
+}
+
 function readStoredPlaylists(): any[] {
   try {
     if (fs.existsSync(PLAYLISTS_FILE)) {
-      return JSON.parse(fs.readFileSync(PLAYLISTS_FILE, "utf-8"));
+      const list = JSON.parse(fs.readFileSync(PLAYLISTS_FILE, "utf-8"));
+      if (Array.isArray(list)) {
+        return list.filter((p: any) => p && p.id && isValidPlaylistId(p.id));
+      }
     }
   } catch {}
   return [];
@@ -98,14 +132,32 @@ function readStoredPlaylists(): any[] {
 
 function writeStoredPlaylists(pls: any[]) {
   try {
-    fs.writeFileSync(PLAYLISTS_FILE, JSON.stringify(pls, null, 2), "utf-8");
+    const valid = (pls || [])
+      .filter((p: any) => p && p.id && isValidPlaylistId(p.id))
+      .map((p: any) => {
+        // Strip any residual unsynced local data: image custom covers for YouTube playlists
+        if (p.id && !String(p.id).startsWith("pl_custom_")) {
+          if (p.customCoverUrl && String(p.customCoverUrl).startsWith("data:")) {
+            p.customCoverUrl = undefined;
+            p.isCustomCover = false;
+          }
+          if (p.coverUrl && String(p.coverUrl).startsWith("data:")) {
+            const thumbs = p.thumbnails;
+            p.coverUrl = thumbs?.maxres?.url || thumbs?.standard?.url || thumbs?.high?.url || thumbs?.medium?.url || thumbs?.default?.url || p.tracks?.[0]?.coverUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
+            p.isCustomCover = false;
+          }
+        }
+        return p;
+      });
+    fs.writeFileSync(PLAYLISTS_FILE, JSON.stringify(valid, null, 2), "utf-8");
   } catch {}
 }
 
 function readStoredCustomCovers(): Record<string, string> {
   try {
     if (fs.existsSync(CUSTOM_COVERS_FILE)) {
-      return JSON.parse(fs.readFileSync(CUSTOM_COVERS_FILE, "utf-8"));
+      const data = fs.readFileSync(CUSTOM_COVERS_FILE, "utf-8");
+      return JSON.parse(data);
     }
   } catch {}
   return {};
@@ -113,7 +165,8 @@ function readStoredCustomCovers(): Record<string, string> {
 
 function writeStoredCustomCovers(map: Record<string, string>) {
   try {
-    fs.writeFileSync(CUSTOM_COVERS_FILE, JSON.stringify(map || {}, null, 2), "utf-8");
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(CUSTOM_COVERS_FILE, JSON.stringify(map, null, 2), "utf-8");
   } catch {}
 }
 
@@ -453,7 +506,7 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
   }
 
   // 2. Authenticated InnerTube (TVHTML5 and Web Remix) Browse for user & private playlists
-  if (accessToken) {
+  if (currentToken) {
     const clients = [
       {
         url: "https://www.youtube.com/youtubei/v1/browse",
@@ -486,7 +539,7 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
             headers: {
               "Content-Type": "application/json",
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${currentToken}`,
               "Cache-Control": "no-cache",
               ...(c.headers || {}),
             },
@@ -748,30 +801,27 @@ function extractBestArtworkUrl(
   return { bestUrl: null, isCustom: false };
 }
 
-// Fetch authentic YouTube Music Library playlists & custom covers directly from InnerTube
+// Fetch authentic YouTube Music Library playlists directly from InnerTube
 async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<any[]> {
   try {
     const seenIds = new Set<string>();
     const results: any[] = [];
 
-    // YouTube client contexts to fetch 100% of user library playlists
+    // Query authentic YouTube Music library playlists endpoints and YouTube aggregation
     const queries = [
       {
-        url: "https://www.youtube.com/youtubei/v1/browse",
-        clientName: "TVHTML5",
-        clientVersion: "7.20240501.01.00",
-        origin: "https://www.youtube.com",
+        url: "https://music.youtube.com/youtubei/v1/browse",
+        clientName: "WEB_REMIX",
+        clientVersion: "1.20240501.01.00",
+        origin: "https://music.youtube.com",
         headers: {
-          "X-YouTube-Client-Name": "7",
-          "X-YouTube-Client-Version": "7.20240501.01.00",
-          Origin: "https://www.youtube.com",
-          Referer: "https://www.youtube.com/tv",
+          "X-YouTube-Client-Name": "67",
+          "X-YouTube-Client-Version": "1.20240501.01.00",
         },
         browseIds: [
-          "FEplaylist_aggregation",
-          "FElibrary",
+          "FEmusic_library_playlists",
+          "FEmusic_library_corpus_playlists",
           "FEmusic_liked_playlists",
-          "FEsubscriptions",
         ],
       },
       {
@@ -786,47 +836,24 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
         },
         browseIds: [
           "FEmusic_library_playlists",
-          "FEmusic_liked_playlists",
-          "FEmusic_library_corpus_playlists",
-          "FEmusic_library_landing",
-          "FEmusic_library_albums",
-          "FEmusic_library_songs",
-          "FEmusic_liked_videos",
-          "FEplaylist_aggregation",
-          "FElibrary",
-        ],
-      },
-      {
-        url: "https://music.youtube.com/youtubei/v1/browse",
-        clientName: "WEB_REMIX",
-        clientVersion: "1.20240501.01.00",
-        origin: "https://music.youtube.com",
-        headers: {
-          "X-YouTube-Client-Name": "67",
-          "X-YouTube-Client-Version": "1.20240501.01.00",
-        },
-        browseIds: [
-          "FEmusic_library_playlists",
           "FEmusic_library_corpus_playlists",
           "FEmusic_liked_playlists",
-          "FEmusic_library_landing",
-          "FEmusic_library_albums",
-          "FEmusic_library_songs",
         ],
       },
       {
         url: "https://www.youtube.com/youtubei/v1/browse",
-        clientName: "WEB_REMIX",
-        clientVersion: "1.20240501.01.00",
-        origin: "https://music.youtube.com",
+        clientName: "TVHTML5",
+        clientVersion: "7.20240501.01.00",
+        origin: "https://www.youtube.com",
         headers: {
-          "X-YouTube-Client-Name": "67",
-          "X-YouTube-Client-Version": "1.20240501.01.00",
+          "X-YouTube-Client-Name": "7",
+          "X-YouTube-Client-Version": "7.20240501.01.00",
+          Origin: "https://www.youtube.com",
+          Referer: "https://www.youtube.com/tv",
         },
         browseIds: [
           "FEplaylist_aggregation",
           "FElibrary",
-          "FEsubscriptions",
         ],
       },
     ];
@@ -867,20 +894,17 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
             const data = await res.json();
             const candidateItems: any[] = [];
 
-            // Universal recursive collector for ALL YouTube & YouTube Music UI renderers
+            // Collect playlist renderers including TVHTML5 tileRenderers
             const collectItems = (obj: any, depth = 0) => {
               if (!obj || typeof obj !== "object" || depth > 25) return;
 
-              if (obj.tileRenderer) candidateItems.push({ type: "tile", data: obj.tileRenderer });
               if (obj.musicTwoRowItemRenderer) candidateItems.push({ type: "twoRow", data: obj.musicTwoRowItemRenderer });
               if (obj.musicResponsiveListItemRenderer) candidateItems.push({ type: "responsive", data: obj.musicResponsiveListItemRenderer });
-              if (obj.lockupViewModel) candidateItems.push({ type: "lockup", data: obj.lockupViewModel });
               if (obj.gridPlaylistRenderer) candidateItems.push({ type: "twoRow", data: obj.gridPlaylistRenderer });
               if (obj.playlistRenderer) candidateItems.push({ type: "twoRow", data: obj.playlistRenderer });
               if (obj.compactPlaylistRenderer) candidateItems.push({ type: "twoRow", data: obj.compactPlaylistRenderer });
-              if (obj.gridVideoRenderer) candidateItems.push({ type: "twoRow", data: obj.gridVideoRenderer });
-              if (obj.gridShowRenderer) candidateItems.push({ type: "twoRow", data: obj.gridShowRenderer });
               if (obj.musicCardShelfRenderer) candidateItems.push({ type: "twoRow", data: obj.musicCardShelfRenderer });
+              if (obj.tileRenderer) candidateItems.push({ type: "tile", data: obj.tileRenderer });
 
               if (Array.isArray(obj)) {
                 for (const elem of obj) collectItems(elem, depth + 1);
@@ -900,53 +924,15 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
               let title = "YouTube Playlist";
               let subtitle = "";
               let coverUrl = "";
-              let overlayCount = 0;
 
-              if (item.type === "tile") {
+              if (item.type === "twoRow") {
                 const r = item.data;
                 const rawId =
-                  r.contentId ||
-                  r.onSelectCommand?.browseEndpoint?.browseId ||
-                  r.onSelectCommand?.watchEndpoint?.playlistId ||
-                  r.onLongPressCommand?.showMenuCommand?.contentId ||
-                  r.onLongPressCommand?.showMenuCommand?.menu?.menuRenderer?.items?.[0]?.menuNavigationItemRenderer?.navigationEndpoint?.watchEndpoint?.playlistId ||
-                  "";
-                playlistId = rawId.replace(/^VL/, "");
-                title =
-                  r.metadata?.tileMetadataRenderer?.title?.simpleText ||
-                  r.metadata?.tileMetadataRenderer?.title?.runs?.map((s: any) => s.text).join("") ||
-                  r.header?.tileHeaderRenderer?.title?.simpleText ||
-                  r.header?.tileHeaderRenderer?.title?.runs?.map((s: any) => s.text).join("") ||
-                  r.title?.simpleText ||
-                  r.title?.runs?.map((s: any) => s.text).join("") ||
-                  "YouTube Playlist";
-
-                const lineItems = r.metadata?.tileMetadataRenderer?.lines?.[0]?.lineRenderer?.items || [];
-                subtitle = lineItems.map((li: any) => li.lineItemRenderer?.text?.simpleText || "").filter(Boolean).join(" • ");
-
-                const thumbs = r.header?.tileHeaderRenderer?.thumbnail?.thumbnails || r.thumbnail?.thumbnails || [];
-                coverUrl = thumbs.slice(-1)?.[0]?.url || thumbs[0]?.url || "";
-
-                const overlays = r.header?.tileHeaderRenderer?.thumbnailOverlays || [];
-                for (const ov of overlays) {
-                  const ovTxt = ov.thumbnailOverlayTimeStatusRenderer?.text?.runs?.map((s: any) => s.text).join("") || ov.thumbnailOverlayTimeStatusRenderer?.text?.simpleText || "";
-                  const m = ovTxt.match(/(\d+)/);
-                  if (m) {
-                    overlayCount = parseInt(m[1], 10);
-                    break;
-                  }
-                }
-              } else if (item.type === "twoRow") {
-                const r = item.data;
-                const rawId =
+                  r.navigationEndpoint?.browseEndpoint?.browseId ||
                   r.playlistId ||
                   r.navigationEndpoint?.watchPlaylistEndpoint?.playlistId ||
-                  r.navigationEndpoint?.watchEndpoint?.playlistId ||
-                  r.doubleTapCommand?.watchEndpoint?.playlistId ||
                   r.thumbnailOverlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.playlistId ||
-                  r.navigationEndpoint?.browseEndpoint?.browseId ||
                   r.title?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseId ||
-                  r.thumbnailRenderer?.musicThumbnailRenderer?.navigationEndpoint?.browseEndpoint?.browseId ||
                   "";
                 playlistId = rawId.replace(/^VL/, "");
                 title = r.title?.runs?.map((s: any) => s.text).join("") || r.title?.simpleText || "YouTube Playlist";
@@ -960,11 +946,9 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
               } else if (item.type === "responsive") {
                 const r = item.data;
                 const rawId =
+                  r.navigationEndpoint?.browseEndpoint?.browseId ||
                   r.playlistId ||
                   r.navigationEndpoint?.watchPlaylistEndpoint?.playlistId ||
-                  r.navigationEndpoint?.watchEndpoint?.playlistId ||
-                  r.doubleTapCommand?.watchEndpoint?.playlistId ||
-                  r.navigationEndpoint?.browseEndpoint?.browseId ||
                   r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseId ||
                   "";
                 playlistId = rawId.replace(/^VL/, "");
@@ -972,37 +956,43 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
                 subtitle = r.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.map((s: any) => s.text).join("") || "";
                 const thumbs = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || r.thumbnail?.thumbnails;
                 coverUrl = thumbs?.slice(-1)?.[0]?.url || thumbs?.[0]?.url || "";
-              } else if (item.type === "lockup") {
+              } else if (item.type === "tile") {
                 const r = item.data;
                 const rawId =
                   r.contentId ||
-                  r.rendererContext?.commandContext?.onTap?.innertubeCommand?.watchEndpoint?.playlistId ||
-                  r.rendererContext?.commandContext?.onTap?.innertubeCommand?.browseEndpoint?.browseId ||
-                  r.onTap?.innertubeCommand?.browseEndpoint?.browseId ||
+                  r.onSelectCommand?.browseEndpoint?.browseId ||
+                  r.onSelectCommand?.watchEndpoint?.playlistId ||
+                  r.onLongPressCommand?.showMenuCommand?.contentId ||
                   "";
                 playlistId = rawId.replace(/^VL/, "");
-                title = r.metadata?.lockupMetadataViewModel?.title?.content || "YouTube Playlist";
-                subtitle = r.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows?.[0]?.elements?.map((el: any) => el?.text?.content).join(" • ") || "";
-                coverUrl = r.contentImage?.collectionThumbnailViewModel?.primaryThumbnail?.thumbnailViewModel?.image?.sources?.slice(-1)?.[0]?.url || r.contentImage?.sources?.[0]?.url || "";
+                title =
+                  r.metadata?.tileMetadataRenderer?.title?.simpleText ||
+                  r.header?.tileHeaderRenderer?.title?.simpleText ||
+                  r.title?.simpleText ||
+                  "YouTube Playlist";
+                subtitle =
+                  r.metadata?.tileMetadataRenderer?.lines?.[0]?.lineRenderer?.items?.[0]?.lineItemRenderer?.text?.runs?.map((s: any) => s.text).join("") ||
+                  r.subtitle?.simpleText ||
+                  "";
+                const thumbs =
+                  r.header?.tileHeaderRenderer?.thumbnail?.thumbnails ||
+                  r.thumbnail?.thumbnails ||
+                  [];
+                coverUrl = thumbs?.slice(-1)?.[0]?.url || thumbs?.[0]?.url || "";
               }
 
-              if (!playlistId || seenIds.has(playlistId) || playlistId.length < 2) continue;
-              // Skip non-playlist IDs like generic browse tabs or channels
-              if (playlistId.startsWith("FE")) continue;
-              if (playlistId.startsWith("UC") && playlistId.length === 24) continue; // standard channel ID
+              if (!playlistId || !isValidPlaylistId(playlistId) || seenIds.has(playlistId)) continue;
+              const titleLower = title.toLowerCase();
+              if (titleLower === "liked music & videos" || titleLower === "liked videos" || titleLower === "liked music" || titleLower === "watch later" || titleLower === "history" || titleLower === "watch history") continue;
 
               seenIds.add(playlistId);
 
               const formatted = formatHighResCover(coverUrl);
-              if (formatted) {
-                setInCache(`yt_pl_custom_img:${playlistId}`, formatted);
-              }
-
               const rawCount = subtitle.match(/(\d+)\s*(songs|tracks|items|videos)/i)?.[1] || subtitle.replace(/\D/g, "");
-              const finalTracksCount = overlayCount > 0 ? overlayCount : (parseInt(rawCount || "0", 10) || 0);
+              const finalTracksCount = parseInt(rawCount || "0", 10) || 0;
 
               const isCustom = Boolean(
-                (coverUrl && (
+                coverUrl && (
                   coverUrl.includes("studio_square_thumbnail") ||
                   coverUrl.includes("pl_c") ||
                   coverUrl.includes("googleusercontent.com") ||
@@ -1010,8 +1000,12 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
                   coverUrl.includes("yt3.ggpht.com") ||
                   coverUrl.includes("/pl/") ||
                   coverUrl.includes("/s_p/")
-                )) || formatted
+                )
               );
+
+              if (isCustom && (formatted || coverUrl)) {
+                writeStoredCustomCover(playlistId, formatted || coverUrl);
+              }
 
               results.push({
                 id: playlistId,
@@ -1019,7 +1013,7 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
                 title: title.trim() || "YouTube Playlist",
                 description: subtitle || "Synced from YouTube Music Library",
                 coverUrl: formatted || coverUrl || `https://i.ytimg.com/vi/${playlistId}/hqdefault.jpg`,
-                customCoverUrl: formatted || coverUrl || null,
+                customCoverUrl: isCustom ? (formatted || coverUrl) : undefined,
                 isCustomCover: isCustom,
                 isYouTubeSynced: true,
                 tracksCount: finalTracksCount,
@@ -1033,7 +1027,7 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
       }
     }
 
-    console.log(`[YouTube InnerTube] Successfully discovered ${results.length} authentic library playlists.`);
+    console.log(`[YouTube InnerTube] Discovered ${results.length} genuine library playlists.`);
     return results;
   } catch (err) {
     console.warn("YouTube Music library InnerTube fetch notice:", err);
@@ -1042,28 +1036,30 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
 }
 
 // High-resolution YouTube Playlist Custom Artwork Fetcher
-// Extracts authentic custom artwork (YouTube Studio square thumbnails, Google User Content covers, and user-customized covers)
+// Extracts authentic custom artwork (YouTube Studio square thumbnails, Google User Content covers)
 async function fetchYouTubePlaylistCustomImage(
   playlistId: string,
   accessToken?: string | null,
   fallbackThumbnails?: any
 ): Promise<string | null> {
-  if (!playlistId || playlistId.startsWith("pl_custom_")) return null;
+  if (!playlistId || playlistId.startsWith("pl_custom_") || !isValidPlaylistId(playlistId)) return null;
   const cleanPlId = playlistId.replace(/^VL/, "");
-
-  // 1. Check persistent disk custom covers store first
-  const storedCustom = readStoredCustomCovers();
-  if (storedCustom[cleanPlId] || storedCustom[playlistId] || storedCustom[`VL${cleanPlId}`]) {
-    const customUrl = storedCustom[cleanPlId] || storedCustom[playlistId] || storedCustom[`VL${cleanPlId}`];
-    return formatHighResCover(customUrl) || customUrl;
-  }
 
   const cacheKey = `yt_pl_custom_img:${cleanPlId}`;
   const cached = getFromCache<string>(cacheKey);
   if (cached) return cached;
 
+  // Check stored custom covers file cache
+  const storedCustom = readStoredCustomCovers();
+  if (storedCustom[cleanPlId] || storedCustom[playlistId]) {
+    const hit = storedCustom[cleanPlId] || storedCustom[playlistId];
+    setInCache(cacheKey, hit);
+    return hit;
+  }
+
   const isAuthenticCustomUrl = (u: string) => {
     if (!u || typeof u !== "string") return false;
+    if (u.startsWith("data:")) return false; // Reject local data URLs
     return (
       u.includes("studio_square_thumbnail") ||
       u.includes("/pl_c/") ||
@@ -1079,12 +1075,11 @@ async function fetchYouTubePlaylistCustomImage(
       u.includes("/pl/") ||
       u.includes("/s_p/") ||
       u.includes("ytimg.com/an_webp/") ||
-      u.includes("ytimg.com/v2/") ||
-      u.startsWith("data:image")
+      u.includes("ytimg.com/v2/")
     );
   };
 
-  // 2. Direct Inspection of fallbackThumbnails (from playlist snippet)
+  // 1. Direct Inspection of fallbackThumbnails (from playlist snippet)
   if (fallbackThumbnails) {
     const extracted = extractBestArtworkUrl(fallbackThumbnails);
     if (extracted.bestUrl && extracted.isCustom) {
@@ -1094,7 +1089,7 @@ async function fetchYouTubePlaylistCustomImage(
     }
   }
 
-  // 3. Fast & Comprehensive InnerTube API browse across clients (WEB_REMIX, ANDROID_MUSIC, WEB)
+  // 3. Fast & Comprehensive InnerTube API browse across clients (WEB_REMIX, ANDROID_MUSIC, TVHTML5, WEB)
   const innertubeClients = [
     {
       url: "https://music.youtube.com/youtubei/v1/browse",
@@ -1115,6 +1110,18 @@ async function fetchYouTubePlaylistCustomImage(
         "User-Agent": "com.google.android.apps.youtube.music/6.42.52 (Linux; U; Android 14; en_US)",
         "X-YouTube-Client-Name": "62",
         "X-YouTube-Client-Version": "6.42.52",
+      },
+    },
+    {
+      url: "https://www.youtube.com/youtubei/v1/browse",
+      clientName: "TVHTML5",
+      clientVersion: "7.20240501.01.00",
+      origin: "https://www.youtube.com",
+      headers: {
+        "X-YouTube-Client-Name": "7",
+        "X-YouTube-Client-Version": "7.20240501.01.00",
+        Origin: "https://www.youtube.com",
+        Referer: "https://www.youtube.com/tv",
       },
     },
     {
@@ -1863,7 +1870,14 @@ async function refreshAccessTokenDirectly(tokenHint?: string): Promise<string | 
   if (tokenHint) {
     for (const k of Object.keys(allTokens)) {
       const entry = allTokens[k];
-      if (entry.access_token === tokenHint || k === tokenHint || entry.user?.email === tokenHint || entry.refresh_token === tokenHint) {
+      if (
+        entry.access_token === tokenHint ||
+        k === tokenHint ||
+        entry.user?.email === tokenHint ||
+        entry.user?.id === tokenHint ||
+        entry.refresh_token === tokenHint ||
+        (Array.isArray(entry.previous_tokens) && entry.previous_tokens.includes(tokenHint))
+      ) {
         if (entry.refresh_token) {
           refreshToken = entry.refresh_token;
           matchedKey = k;
@@ -1905,11 +1919,17 @@ async function refreshAccessTokenDirectly(tokenHint?: string): Promise<string | 
     const data = await res.json();
     if (data.access_token) {
       const keyToUpdate = matchedKey || "default_user";
+      const existing = allTokens[keyToUpdate] || {};
+      const prevTokens = Array.isArray(existing.previous_tokens) ? existing.previous_tokens : [];
+      if (existing.access_token && !prevTokens.includes(existing.access_token)) {
+        prevTokens.push(existing.access_token);
+      }
       allTokens[keyToUpdate] = {
-        ...(allTokens[keyToUpdate] || {}),
+        ...existing,
         access_token: data.access_token,
         refresh_token: data.refresh_token || refreshToken,
         expires_at: Date.now() + (data.expires_in || 3600) * 1000,
+        previous_tokens: prevTokens.slice(-10),
         updated_at: Date.now(),
       };
       writeStoredTokens(allTokens);
@@ -1956,7 +1976,11 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
   const entries = Object.values(allTokens) as any[];
 
   if (token) {
-    const match = entries.find((entry: any) => entry.access_token === token || entry.refresh_token === token);
+    const match = entries.find((entry: any) => 
+      entry.access_token === token || 
+      entry.refresh_token === token ||
+      (Array.isArray(entry.previous_tokens) && entry.previous_tokens.includes(token))
+    );
     if (match) {
       if (!req.session?.tokens) {
         req.session.tokens = {
@@ -1967,17 +1991,18 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
       }
       if (match.user && !req.session.user) req.session.user = match.user;
 
-      if (match.expires_at && Date.now() > match.expires_at - 60000) {
+      // If token is expiring within 10 minutes or expired, proactively refresh
+      if (!match.expires_at || Date.now() > match.expires_at - 10 * 60 * 1000) {
         const refreshed = await refreshAccessToken(req, token);
         if (refreshed) return refreshed;
       }
       return match.access_token || token;
     }
 
-    // Fallback: If token not directly found, check if disk has a fresh token or refresh token
+    // Fallback: If token not directly found, check if disk store has a token/refresh token
     if (entries.length > 0) {
       const latest = entries[entries.length - 1];
-      if (latest?.refresh_token && latest?.expires_at && Date.now() > latest.expires_at - 60000) {
+      if (latest?.refresh_token && (!latest?.expires_at || Date.now() > latest.expires_at - 10 * 60 * 1000)) {
         const refreshed = await refreshAccessToken(req, latest.access_token);
         if (refreshed) return refreshed;
       } else if (latest?.access_token) {
@@ -1989,7 +2014,7 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
 
   if (req.session?.tokens?.access_token) {
     const { access_token, expires_at } = req.session.tokens;
-    if (expires_at && Date.now() < expires_at - 60000) {
+    if (expires_at && Date.now() < expires_at - 10 * 60 * 1000) {
       return access_token;
     }
     const refreshed = await refreshAccessToken(req, access_token);
@@ -2240,18 +2265,18 @@ app.get("/api/youtube/playlists", async (req, res) => {
           console.warn("[YouTube API] InnerTube library playlists notice:", ytmErr);
         }
 
+        const storedCustom = readStoredCustomCovers();
         if (allItems.length > 0) {
-          const diskCustomCovers = readStoredCustomCovers();
-          // Fetch custom covers for any playlists not already resolved from YouTube Music Library
+          // Fetch authentic custom covers directly from YouTube Music / YouTube
           const customCovers = await Promise.allSettled(
             allItems.map((item: any) => {
               const cleanId = item.id.replace(/^VL/, "");
-              if (diskCustomCovers[cleanId] || diskCustomCovers[item.id]) {
-                return Promise.resolve(diskCustomCovers[cleanId] || diskCustomCovers[item.id]);
-              }
               const ytmMatch = ytmLibraryMap.get(cleanId) || ytmLibraryMap.get(item.id);
               if (ytmMatch?.isCustomCover && ytmMatch?.customCoverUrl) {
                 return Promise.resolve(ytmMatch.customCoverUrl);
+              }
+              if (storedCustom[cleanId] || storedCustom[item.id]) {
+                return Promise.resolve(storedCustom[cleanId] || storedCustom[item.id]);
               }
               return fetchYouTubePlaylistCustomImage(item.id, accessToken, item.snippet?.thumbnails);
             })
@@ -2274,8 +2299,12 @@ app.get("/api/youtube/playlists", async (req, res) => {
               thumbs?.medium?.url ||
               thumbs?.default?.url;
 
-            const cachedCustom = getFromCache<string>(`yt_pl_custom_img:${cleanId}`) || getFromCache<string>(`yt_pl_custom_img:${item.id}`);
-            const resolvedCustom = diskCustomCovers[cleanId] || diskCustomCovers[item.id] || ytmMatch?.customCoverUrl || customResult || cachedCustom || null;
+            const resolvedCustom =
+              ytmMatch?.customCoverUrl ||
+              customResult ||
+              storedCustom[cleanId] ||
+              storedCustom[item.id] ||
+              null;
 
             const primaryCover =
               resolvedCustom ||
@@ -2284,6 +2313,10 @@ app.get("/api/youtube/playlists", async (req, res) => {
               "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
 
             const isCustom = Boolean(resolvedCustom || ytmMatch?.isCustomCover);
+            if (isCustom && resolvedCustom) {
+              writeStoredCustomCover(cleanId, resolvedCustom);
+            }
+
             const rawStatus = (item.status?.privacyStatus || item.snippet?.privacyStatus || ytmMatch?.privacy || ytmMatch?.privacyStatus || "PUBLIC").toUpperCase();
             const normalizedPrivacy = rawStatus === "PRIVATE" ? "PRIVATE" : rawStatus === "UNLISTED" ? "UNLISTED" : "PUBLIC";
 
@@ -2323,111 +2356,18 @@ app.get("/api/youtube/playlists", async (req, res) => {
           }
         }
 
-        // 4. Fetch Liked tracks collection (LM, LL, and myRating=like videos)
-        try {
-          // A. Try myRating=like
-          const likedVideosRes = await fetchWithRetry(
-            `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&myRating=like&maxResults=50`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            },
-            1,
-            8000
-          );
-          if (likedVideosRes.ok) {
-            const likedData = await likedVideosRes.json();
-            if (likedData?.items && Array.isArray(likedData.items) && likedData.items.length > 0) {
-              const likedTracks = likedData.items
-                .map((item: any) => {
-                  const vidId = item.id;
-                  if (!vidId) return null;
-                  return {
-                    id: vidId,
-                    youtubeVideoId: vidId,
-                    title: item.snippet?.title || "Liked Song",
-                    artist: item.snippet?.videoOwnerChannelTitle || item.snippet?.channelTitle || "YouTube Artist",
-                    coverUrl:
-                      item.snippet?.thumbnails?.high?.url ||
-                      item.snippet?.thumbnails?.medium?.url ||
-                      `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg`,
-                    audioUrl: `/api/youtube/stream/${vidId}`,
-                    type: "track",
-                  };
-                })
-                .filter(Boolean);
+        // Filter strictly user playlists (exclude non-playlists, videos, system/liked/watch later lists)
+        const filterGenuinePlaylists = (list: any[]) => {
+          return (list || []).filter((pl) => {
+            if (!pl || !pl.id) return false;
+            if (!isValidPlaylistId(pl.id)) return false;
+            const t = (pl.title || "").toLowerCase();
+            if (t === "liked music & videos" || t === "liked videos" || t === "liked music" || t === "watch later" || t === "history" || t === "watch history") return false;
+            return true;
+          });
+        };
 
-              if (likedTracks.length > 0 && !seenItemIds.has("LL")) {
-                seenItemIds.add("LL");
-                ytPlaylists.unshift({
-                  id: "LL",
-                  playlistId: "LL",
-                  title: "Liked Music & Videos",
-                  description: "Your official YouTube liked tracks collection",
-                  coverUrl: likedTracks[0]?.coverUrl || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=80",
-                  isYouTubeSynced: true,
-                  tracksCount: likedTracks.length,
-                  tracks: likedTracks,
-                });
-              }
-            }
-          }
-
-          // B. Try playlistItems for LL and LM
-          if (!seenItemIds.has("LL")) {
-            for (const plId of ["LM", "LL"]) {
-              if (seenItemIds.has("LL")) break;
-              try {
-                const likedRes = await fetchWithRetry(
-                  `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${plId}&maxResults=50`,
-                  {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-                  },
-                  1,
-                  8000
-                );
-                if (likedRes.ok) {
-                  const likedData = await likedRes.json();
-                  if (likedData?.items && Array.isArray(likedData.items) && likedData.items.length > 0) {
-                    const likedTracks = likedData.items
-                      .map((item: any) => {
-                        const vidId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId;
-                        if (!vidId) return null;
-                        return {
-                          id: vidId,
-                          youtubeVideoId: vidId,
-                          title: item.snippet?.title || "Liked Song",
-                          artist: item.snippet?.videoOwnerChannelTitle || item.snippet?.channelTitle || "YouTube Artist",
-                          coverUrl:
-                            item.snippet?.thumbnails?.high?.url ||
-                            item.snippet?.thumbnails?.medium?.url ||
-                            `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg`,
-                          audioUrl: `/api/youtube/stream/${vidId}`,
-                          type: "track",
-                        };
-                      })
-                      .filter(Boolean);
-
-                    if (likedTracks.length > 0) {
-                      seenItemIds.add("LL");
-                      ytPlaylists.unshift({
-                        id: "LL",
-                        playlistId: "LL",
-                        title: "Liked Music & Videos",
-                        description: "Your official YouTube liked tracks collection",
-                        coverUrl: likedTracks[0]?.coverUrl || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=80",
-                        isYouTubeSynced: true,
-                        tracksCount: likedTracks.length,
-                        tracks: likedTracks,
-                      });
-                    }
-                  }
-                }
-              } catch (_plItemErr) {}
-            }
-          }
-        } catch (likedErr) {
-          console.warn("[YouTube API] Liked songs query notice:", likedErr);
-        }
+        ytPlaylists = filterGenuinePlaylists(ytPlaylists);
       } catch (e) {
         console.warn("[YouTube API] Authenticated playlists pull notice:", e);
       }
@@ -2450,12 +2390,22 @@ app.get("/api/youtube/playlists", async (req, res) => {
 
     let combined: any[] = [];
 
+    const filterGenuinePlaylists = (list: any[]) => {
+      return (list || []).filter((pl) => {
+        if (!pl || !pl.id) return false;
+        if (!isValidPlaylistId(pl.id)) return false;
+        const t = (pl.title || "").toLowerCase();
+        if (t === "liked music & videos" || t === "liked videos" || t === "liked music" || t === "watch later" || t === "history" || t === "watch history") return false;
+        return true;
+      });
+    };
+
     if (accessToken) {
       // Authenticated user: return authentic YouTube playlists merged with any custom local playlists
-      combined = [...ytPlaylists, ...customLocalPlaylists];
+      combined = filterGenuinePlaylists([...ytPlaylists, ...customLocalPlaylists]);
       // If authentic fetch returned empty but we have previously saved disk playlists, use disk playlists as resilient fallback
       if (combined.length === 0 && diskPlaylists.length > 0 && !authExpired) {
-        combined = [...diskPlaylists];
+        combined = filterGenuinePlaylists([...diskPlaylists]);
       }
     } else {
       // Unauthenticated user: when signed out, do not leak or return private playlists
@@ -2769,6 +2719,12 @@ app.post("/api/youtube/playlists", async (req, res) => {
     writeStoredCustomCover(targetId, finalCover);
     setInCache(`yt_pl_custom_img:${cleanId}`, finalCover);
     setInCache(`yt_pl_custom_img:${targetId}`, finalCover);
+
+    if (activeToken && ytCreatedId && finalCover.length > 50) {
+      uploadPlaylistImageToYouTube(activeToken, ytCreatedId, finalCover).catch((e) => {
+        console.warn("[YouTube API] Notice uploading playlist cover during creation:", e);
+      });
+    }
   }
 
   const newPlaylist = {
@@ -2815,12 +2771,12 @@ async function uploadPlaylistImageToYouTube(accessToken: string, playlistId: str
     if (imageInput.startsWith("data:")) {
       const match = imageInput.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
-        mimeType = match[1];
+        mimeType = match[1] || "image/jpeg";
         imgBuffer = Buffer.from(match[2], "base64");
       }
     } else if (imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
       try {
-        const imgRes = await fetch(imageInput, { signal: AbortSignal.timeout(3000) });
+        const imgRes = await fetch(imageInput, { signal: AbortSignal.timeout(5000) });
         if (imgRes.ok) {
           const ct = imgRes.headers.get("content-type");
           if (ct) mimeType = ct.split(";")[0].trim();
@@ -2834,7 +2790,7 @@ async function uploadPlaylistImageToYouTube(accessToken: string, playlistId: str
 
     const cleanPlId = playlistId.replace(/^VL/, "");
 
-    // 1. Check if the imageInput is or references a specific YouTube video thumbnail
+    // 1. Check if the imageInput references a specific YouTube video thumbnail
     let referencedVideoId = "";
     if (imageInput.includes("i.ytimg.com/vi/")) {
       const vMatch = imageInput.match(/\/vi\/([a-zA-Z0-9_-]{11})\//);
@@ -2849,7 +2805,7 @@ async function uploadPlaylistImageToYouTube(accessToken: string, playlistId: str
 
     if (referencedVideoId) {
       try {
-        console.log(`[YouTube API] Attempting to set playlist thumbnail for "${cleanPlId}" to video ${referencedVideoId}...`);
+        console.log(`[YouTube API] Setting playlist thumbnail for "${cleanPlId}" to video ${referencedVideoId}...`);
         const itThumbRes = await fetch("https://music.youtube.com/youtubei/v1/browse/edit_playlist", {
           method: "POST",
           headers: {
@@ -2865,7 +2821,7 @@ async function uploadPlaylistImageToYouTube(accessToken: string, playlistId: str
             playlistId: cleanPlId,
             actions: [{ action: "ACTION_SET_PLAYLIST_THUMBNAIL", setPlaylistThumbnailAction: { videoId: referencedVideoId } }],
           }),
-          signal: AbortSignal.timeout(3000),
+          signal: AbortSignal.timeout(4000),
         });
         if (itThumbRes.ok) {
           console.log(`[YouTube Music InnerTube] Successfully updated playlist thumbnail to video ${referencedVideoId}`);
@@ -2878,44 +2834,122 @@ async function uploadPlaylistImageToYouTube(accessToken: string, playlistId: str
 
     if (!imgBuffer || imgBuffer.length === 0) return false;
 
-    // 2. Try InnerTube encoded image push if under 400KB
+    const b64 = imgBuffer.toString("base64");
+
+    // 2. Strategy A: Push custom image binary directly to YouTube Data API thumbnails set endpoint
     try {
-      const b64 = imgBuffer.toString("base64");
-      if (b64.length < 450000) {
-        const itRes = await fetch("https://music.youtube.com/youtubei/v1/browse/edit_playlist", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-YouTube-Client-Name": "67",
-            "X-YouTube-Client-Version": "1.20260220.01.00",
+      console.log(`[YouTube API] Attempting Data API v3 thumbnail upload for playlist "${cleanPlId}" (bytes: ${imgBuffer.length})...`);
+      const directUploadRes = await fetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?playlistId=${cleanPlId}&uploadType=media`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": mimeType,
+          "Content-Length": imgBuffer.length.toString(),
+        },
+        body: imgBuffer,
+        signal: AbortSignal.timeout(6000),
+      });
+
+      if (directUploadRes.ok) {
+        console.log(`[YouTube API] Data API v3 set thumbnail successfully for playlist "${cleanPlId}"`);
+        return true;
+      } else {
+        const directErr = await directUploadRes.text().catch(() => "");
+        console.log(`[YouTube API] Data API v3 thumbnail set response (HTTP ${directUploadRes.status}): ${directErr.substring(0, 100)}`);
+      }
+    } catch (uploadApiErr: any) {
+      if (uploadApiErr?.name !== "TimeoutError" && !uploadApiErr?.message?.includes("aborted")) {
+        console.warn("[YouTube API] Data API thumbnail endpoint note:", uploadApiErr?.message || uploadApiErr);
+      }
+    }
+
+    // 3. Strategy B: Push to YouTube Music InnerTube edit_playlist with ACTION_SET_PLAYLIST_THUMBNAIL
+    try {
+      const itRes = await fetch("https://music.youtube.com/youtubei/v1/browse/edit_playlist", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "X-YouTube-Client-Name": "67",
+          "X-YouTube-Client-Version": "1.20260220.01.00",
+        },
+        body: JSON.stringify({
+          context: {
+            client: { clientName: "WEB_REMIX", clientVersion: "1.20260220.01.00", hl: "en", gl: "US" },
           },
-          body: JSON.stringify({
-            context: {
-              client: { clientName: "WEB_REMIX", clientVersion: "1.20260220.01.00", hl: "en", gl: "US" },
-            },
-            playlistId: cleanPlId,
-            actions: [
-              {
-                action: "ACTION_SET_PLAYLIST_THUMBNAIL",
-                setPlaylistThumbnailAction: {
-                  encodedImage: b64,
-                },
+          playlistId: cleanPlId,
+          actions: [
+            {
+              action: "ACTION_SET_PLAYLIST_THUMBNAIL",
+              setPlaylistThumbnailAction: {
+                encodedImage: b64,
+                rawImage: b64,
+                imageData: b64,
               },
-            ],
-          }),
-          signal: AbortSignal.timeout(3000),
-        });
-        if (itRes.ok) {
-          console.log(`[YouTube Music InnerTube] Set playlist thumbnail for "${cleanPlId}" via InnerTube action`);
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(6000),
+      });
+
+      if (itRes.ok) {
+        const itData = await itRes.json().catch(() => ({}));
+        if (itData?.status === "STATUS_SUCCEEDED" || itData?.actions || !itData?.error) {
+          console.log(`[YouTube Music InnerTube] Successfully set playlist thumbnail for "${cleanPlId}" via YTM InnerTube`);
           return true;
         }
       }
-    } catch (itImgErr) {
-      console.warn("[YouTube API] Notice on InnerTube thumbnail push:", itImgErr);
+    } catch (itImgErr: any) {
+      if (itImgErr?.name !== "TimeoutError" && !itImgErr?.message?.includes("aborted")) {
+        console.warn("[YouTube API] Notice on YTM InnerTube thumbnail push:", itImgErr?.message || itImgErr);
+      }
+    }
+
+    // 4. Strategy C: Fallback to YouTube Web InnerTube playlist edit endpoint
+    try {
+      const itWebRes = await fetch("https://www.youtube.com/youtubei/v1/playlist/edit", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "X-YouTube-Client-Name": "1",
+          "X-YouTube-Client-Version": "2.20260220.00.00",
+        },
+        body: JSON.stringify({
+          context: {
+            client: {
+              clientName: "WEB",
+              clientVersion: "2.20260220.00.00",
+              hl: "en",
+              gl: "US",
+            },
+          },
+          playlistId: cleanPlId,
+          actions: [
+            {
+              action: "ACTION_SET_PLAYLIST_THUMBNAIL",
+              setPlaylistThumbnailAction: {
+                encodedImage: b64,
+              },
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(6000),
+      });
+
+      if (itWebRes.ok) {
+        console.log(`[YouTube Web InnerTube] Successfully set playlist thumbnail for "${cleanPlId}" via YouTube Web`);
+        return true;
+      }
+    } catch (webItErr: any) {
+      if (webItErr?.name !== "TimeoutError" && !webItErr?.message?.includes("aborted")) {
+        console.warn("[YouTube API] Notice on YouTube Web InnerTube thumbnail push:", webItErr?.message || webItErr);
+      }
     }
   } catch (err: any) {
-    console.warn(`[YouTube API] Notice during playlist image upload for "${playlistId}":`, err?.message || err);
+    if (err?.name !== "TimeoutError" && !err?.message?.includes("aborted")) {
+      console.warn(`[YouTube API] Notice during playlist image upload for "${playlistId}":`, err?.message || err);
+    }
   }
   return false;
 }
@@ -4702,48 +4736,60 @@ app.get("/api/auth/google/callback", async (req, res) => {
 });
 
 app.get("/api/auth/me", async (req, res) => {
-  if (req.session?.user) {
-    return res.json({
-      isLoggedIn: true,
-      user: req.session.user,
-    });
-  }
-
   try {
     const validToken = await getValidAccessToken(req);
     const allTokens = readStoredTokens();
     const entries = Object.values(allTokens) as any[];
 
     if (validToken) {
-      const match = entries.find((e: any) => e.access_token === validToken || e.refresh_token === validToken);
-      if (match?.user) {
+      const match = entries.find(
+        (e: any) =>
+          e.access_token === validToken ||
+          e.refresh_token === validToken ||
+          (Array.isArray(e.previous_tokens) && e.previous_tokens.includes(validToken)) ||
+          (req.session?.user?.id && e.user?.id === req.session.user.id) ||
+          (req.session?.user?.email && e.user?.email === req.session.user.email)
+      );
+      const userObj = match?.user || req.session?.user || (entries.length > 0 ? entries[entries.length - 1]?.user : null);
+
+      if (userObj) {
         if (req.session) {
           req.session.tokens = {
-            access_token: match.access_token,
-            refresh_token: match.refresh_token,
-            expires_at: match.expires_at,
+            access_token: validToken,
+            refresh_token: match?.refresh_token || req.session.tokens?.refresh_token,
+            expires_at: match?.expires_at || Date.now() + 3600 * 1000,
           };
-          req.session.user = match.user;
+          req.session.user = { ...userObj, accessToken: validToken };
         }
+        res.setHeader("X-New-Access-Token", validToken);
         return res.json({
           isLoggedIn: true,
-          user: { ...match.user, accessToken: validToken },
+          user: { ...userObj, accessToken: validToken },
+          accessToken: validToken,
         });
       }
+    }
+
+    if (req.session?.user) {
+      const u = req.session.user;
+      return res.json({
+        isLoggedIn: true,
+        user: u,
+      });
     }
 
     // Fallback to disk store if session was cleared on server reload
     if (entries.length > 0) {
       const latest = entries[entries.length - 1] as any;
       if (latest?.user) {
-        const activeAccessToken = latest.access_token || validToken;
+        const activeAccessToken = validToken || latest.access_token;
         if (req.session) {
           req.session.tokens = {
             access_token: activeAccessToken,
             refresh_token: latest.refresh_token,
             expires_at: latest.expires_at,
           };
-          req.session.user = latest.user;
+          req.session.user = { ...latest.user, accessToken: activeAccessToken };
         }
         return res.json({
           isLoggedIn: true,

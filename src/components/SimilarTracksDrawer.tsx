@@ -34,8 +34,8 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
             currentTrack.genre || ""
           )}`
         );
-        const data = await res.json();
-        if (isMounted && data.similarTracks) {
+        const data = await res.json().catch(() => ({}));
+        if (isMounted && data?.similarTracks) {
           setSimilarTracks(data.similarTracks);
         }
       } catch (err) {
