@@ -337,6 +337,12 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
   }
 }
 
+const WAVEFORM_BARS = [
+  18, 28, 42, 65, 80, 50, 35, 75, 95, 85, 45, 60, 90, 100, 70, 40,
+  85, 92, 60, 30, 45, 78, 95, 88, 55, 38, 70, 92, 80, 45, 60, 85,
+  75, 50, 35, 65, 80, 60, 40, 25, 18, 12
+];
+
 export const Player: React.FC<PlayerProps> = ({
   playerState,
   setPlayerState,
@@ -1171,13 +1177,13 @@ export const Player: React.FC<PlayerProps> = ({
             : "pointer-events-none opacity-0 invisible"
         }`}
       >
-        {/* Prominent 3D Multi-Layer Ambient Depth Shadow & Dynamic Glow for Video */}
+        {/* Ambient Depth Shadow & Dynamic Glow for Video */}
         {isVideoModeActive && (
           <>
             {/* Dynamic themed colored backlight glow */}
-            <div className={`absolute -inset-3 sm:-inset-4 rounded-[2rem] bg-gradient-to-tr ${fpTheme.artGlowRing} blur-2xl opacity-80 pointer-events-none`} />
-            {/* Deep 3D atmospheric floor drop shadow */}
-            <div className="absolute -inset-1 rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.95),0_15px_40px_rgba(0,0,0,0.85),0_0_2px_1px_rgba(255,255,255,0.15)] pointer-events-none" />
+            <div className={`absolute -inset-2 sm:-inset-3 rounded-2xl sm:rounded-3xl bg-gradient-to-tr ${fpTheme.artGlowRing} blur-xl opacity-60 pointer-events-none`} />
+            {/* Contained 3D atmospheric floor drop shadow */}
+            <div className="absolute -inset-0.5 rounded-2xl sm:rounded-3xl shadow-[0_12px_28px_rgba(0,0,0,0.7),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
           </>
         )}
 
@@ -1507,16 +1513,16 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             ) : playerState.mediaMode === "video" ? (
               /* Music Video Mode on Center Stage */
-              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 max-w-2xl w-full animate-fade-in my-auto py-1">
+              <div className="flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-1">
                 {/* 16:9 Video Placeholder - exact bounding frame synchronized with YouTube wrapper */}
                 <div
                   ref={videoPlaceholderRef}
-                  className="w-[min(90vw,520px)] aspect-video max-h-[38vh] sm:max-h-[44vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none"
+                  className="w-[min(90vw,520px)] aspect-video max-h-[34vh] sm:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none"
                 />
 
-                {/* Song Title, Artist, & Master Video Tags - always rendered with clean margin below the video screen */}
-                <div className="text-center space-y-1 sm:space-y-1.5 max-w-xs sm:max-w-md w-full px-2">
-                  <h2 className={`text-base sm:text-2xl md:text-3xl font-semibold tracking-normal truncate ${fpTheme.stageTitle} text-white/95 drop-shadow-sm`}>
+                {/* Song Title, Artist, & Master Video Tags - lowered with clean gap below the video screen and clear of shadows */}
+                <div className="relative z-30 text-center space-y-1.5 sm:space-y-2 max-w-xs sm:max-w-md w-full px-2 mt-6 sm:mt-8 pt-2">
+                  <h2 className={`text-base sm:text-2xl md:text-3xl font-semibold tracking-normal truncate ${fpTheme.stageTitle} text-white drop-shadow-md`}>
                     {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                   </h2>
                   <p className={`text-xs sm:text-sm md:text-base font-normal tracking-wide truncate ${fpTheme.stageArtist}`}>
@@ -1535,16 +1541,16 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             ) : (
               /* Audio / Song Mode: Central HD Album Artwork & Dynamic Stage */
-              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 max-w-md w-full animate-fade-in my-auto">
-                {/* HD Cover Art with Prominent 3D Ambient Shadow and Glowing Dynamic Aura */}
+              <div className="flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto">
+                {/* HD Cover Art with Contained Ambient Shadow and Glowing Dynamic Aura */}
                 <div className="relative group flex items-center justify-center">
                   {/* Dynamic themed colored backlight aura */}
-                  <div className={`absolute -inset-3 sm:-inset-4 rounded-[2.5rem] bg-gradient-to-tr ${fpTheme.artGlowRing} blur-2xl opacity-80 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
+                  <div className={`absolute -inset-2 sm:-inset-3 rounded-[2rem] bg-gradient-to-tr ${fpTheme.artGlowRing} blur-xl opacity-70 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
 
-                  {/* Deep 3D atmospheric floor drop shadow */}
-                  <div className="absolute -inset-1 rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.95),0_15px_40px_rgba(0,0,0,0.85),0_0_2px_1px_rgba(255,255,255,0.15)] pointer-events-none" />
+                  {/* Contained 3D atmospheric floor drop shadow */}
+                  <div className="absolute -inset-0.5 rounded-3xl shadow-[0_12px_28px_rgba(0,0,0,0.7),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
 
-                  <div className={`relative w-[min(58vw,230px)] h-[min(58vw,230px)] xs:w-[min(64vw,260px)] xs:h-[min(64vw,260px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[34vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} shadow-[0_25px_70px_rgba(0,0,0,0.9),0_10px_25px_rgba(0,0,0,0.7)]`}>
+                  <div className={`relative w-[min(54vw,220px)] h-[min(54vw,220px)] xs:w-[min(60vw,250px)] xs:h-[min(60vw,250px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[32vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} shadow-[0_16px_36px_rgba(0,0,0,0.7)]`}>
                     <img
                       src={getHdCoverUrl(currentTrack.coverUrl)}
                       alt={currentTrack.title}
@@ -1561,9 +1567,9 @@ export const Player: React.FC<PlayerProps> = ({
                   </div>
                 </div>
 
-                {/* Song Title, Artist, & Master Quality Tag */}
-                <div className="text-center space-y-1 sm:space-y-1.5 max-w-xs sm:max-w-md w-full px-2">
-                  <h2 className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle}`}>
+                {/* Song Title, Artist, & Master Quality Tag - lowered with clean gap below album artwork and clear of shadows */}
+                <div className="relative z-30 text-center space-y-1.5 sm:space-y-2 max-w-xs sm:max-w-md w-full px-2 mt-6 sm:mt-8 pt-2">
+                  <h2 className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle} text-white drop-shadow-md`}>
                     {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                   </h2>
                   <p className={`text-xs sm:text-sm md:text-base font-semibold truncate ${fpTheme.stageArtist}`}>
@@ -1582,77 +1588,12 @@ export const Player: React.FC<PlayerProps> = ({
             )}
           </div>
 
-          {/* Fullscreen Player Controls Bar - Responsively anchored with safe bottom padding */}
-          <div className={`relative z-20 shrink-0 p-3.5 sm:p-5 pb-5 sm:pb-6 border-t backdrop-blur-2xl space-y-2.5 sm:space-y-4 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
-            {/* Seekbar Slider - Designer Dual-Track with Scrubber Handle */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="relative flex items-center group cursor-pointer py-1.5">
-                {/* Background Track */}
-                <div className={`w-full h-2 group-hover:h-2.5 rounded-full overflow-hidden transition-all relative ${fpTheme.seekbarTrack}`}>
-                  {/* Active Progress Fill */}
-                  <div
-                    className={`absolute top-0 left-0 h-full rounded-full transition-all duration-75 ${fpTheme.seekbarFill} ${isPlaying ? "animate-gradient-shift" : ""}`}
-                    style={{
-                      width: `${duration > 0 ? ((isSeeking ? seekValue : currentTime) / duration) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-
-                {/* Scrubber Thumb Handle */}
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full ${fpTheme.seekbarThumb} shadow-lg transition-transform group-hover:scale-125 pointer-events-none`}
-                  style={{
-                    left: `${duration > 0 ? Math.min(100, Math.max(0, ((isSeeking ? seekValue : currentTime) / duration) * 100)) : 0}%`,
-                  }}
-                />
-
-                {/* Interactive Drag & Tap Surface */}
-                <input
-                  type="range"
-                  min={0}
-                  max={duration > 0 ? duration : (currentTrack?.duration || 100)}
-                  step={0.1}
-                  value={isSeeking ? seekValue : currentTime}
-                  onMouseDown={() => {
-                    setIsSeeking(true);
-                    setSeekValue(currentTime);
-                  }}
-                  onTouchStart={() => {
-                    setIsSeeking(true);
-                    setSeekValue(currentTime);
-                  }}
-                  onChange={(e) => {
-                    setSeekValue(Number(e.target.value));
-                  }}
-                  onMouseUp={(e) => {
-                    setIsSeeking(false);
-                    const t = Number((e.target as HTMLInputElement).value);
-                    handleSeekInternal(t);
-                  }}
-                  onTouchEnd={() => {
-                    setIsSeeking(false);
-                    handleSeekInternal(seekValue);
-                  }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-              </div>
-
-              <div className={`flex items-center justify-between text-[11px] sm:text-xs font-mono select-none ${fpTheme.timeText}`}>
-                <span>
-                  {Math.floor((isSeeking ? seekValue : currentTime) / 60)}:
-                  {String(Math.floor((isSeeking ? seekValue : currentTime) % 60)).padStart(2, "0")}
-                </span>
-                <span>
-                  {Math.floor((duration || currentTrack?.duration || 0) / 60)}:
-                  {String(Math.floor((duration || currentTrack?.duration || 0) % 60)).padStart(2, "0")}
-                </span>
-              </div>
-            </div>
-
-            {/* Main Buttons Bar: Like, Add to Playlist, Download, Shuffle, Prev, Play/Pause, Next, Repeat, Volume */}
+          {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
+          <div className={`relative z-20 shrink-0 p-3 sm:p-4 pb-5 sm:pb-6 border-t backdrop-blur-2xl space-y-2.5 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
+            {/* Top Row Controls: Like, Add, Shuffle, Prev, Play/Pause, Next, Repeat, Volume */}
             <div className="flex items-center justify-between gap-1.5 sm:gap-2">
               {/* Left Group: Like, Add to Playlist */}
-              <div className="flex items-center gap-1 sm:gap-2">
+              <div className="flex items-center gap-1 sm:gap-1.5">
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
                   className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${
@@ -1684,12 +1625,12 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
 
               {/* Center Group: Shuffle, Previous, Play/Pause, Next, Repeat */}
-              <div className="flex items-center gap-1.5 sm:gap-4">
+              <div className="flex items-center gap-1 sm:gap-3">
                 <button
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
-                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
                     isShuffle ? fpTheme.activeText : fpTheme.mutedText
                   }`}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
@@ -1699,35 +1640,35 @@ export const Player: React.FC<PlayerProps> = ({
 
                 <button
                   onClick={onPrevTrack}
-                  className={`p-2 sm:p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Previous Song"
                 >
-                  <SkipBack className="w-4 h-4 sm:w-6 sm:h-6" />
+                  <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 <button
                   onClick={() => handleUserTogglePlay()}
-                  className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all active:scale-95 ${fpTheme.playBtn}`}
+                  className={`w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-lg ${fpTheme.playBtn}`}
                   title={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
-                    <Pause className={`w-5 h-5 sm:w-7 sm:h-7 ${fpTheme.playIconFill}`} />
+                    <Pause className={`w-5 h-5 sm:w-6 sm:h-6 ${fpTheme.playIconFill}`} />
                   ) : (
-                    <Play className={`w-5 h-5 sm:w-7 sm:h-7 ${fpTheme.playIconFill} ml-0.5`} />
+                    <Play className={`w-5 h-5 sm:w-6 sm:h-6 ${fpTheme.playIconFill} ml-0.5`} />
                   )}
                 </button>
 
                 <button
                   onClick={onNextTrack}
-                  className={`p-2 sm:p-3 rounded-2xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Next Song"
                 >
-                  <SkipForward className="w-4 h-4 sm:w-6 sm:h-6" />
+                  <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 <button
                   onClick={cycleRepeatMode}
-                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
                     repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText
                   }`}
                   title={`Repeat: ${repeatMode}`}
@@ -1736,18 +1677,19 @@ export const Player: React.FC<PlayerProps> = ({
                 </button>
               </div>
 
-              {/* Right Group: Volume Slider */}
-              <div className="hidden sm:flex items-center gap-2">
+              {/* Right Group: Volume Slider on sm+ screens */}
+              <div className="hidden sm:flex items-center gap-1.5">
                 <button
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isMuted: !prev.isMuted }))
                   }
-                  className={`p-2 transition-colors ${fpTheme.mutedText}`}
+                  className={`p-1.5 transition-colors ${fpTheme.mutedText}`}
+                  title={isMuted ? "Unmute" : "Mute"}
                 >
                   {isMuted || volume === 0 ? (
-                    <VolumeX className="w-5 h-5 text-rose-400" />
+                    <VolumeX className="w-4 h-4 text-rose-400" />
                   ) : (
-                    <Volume2 className="w-5 h-5" />
+                    <Volume2 className="w-4 h-4" />
                   )}
                 </button>
                 <input
@@ -1757,8 +1699,51 @@ export const Player: React.FC<PlayerProps> = ({
                   step={0.01}
                   value={isMuted ? 0 : volume}
                   onChange={(e) => onVolumeChange(Number(e.target.value))}
-                  className={`w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
+                  className={`w-16 md:w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
                 />
+              </div>
+            </div>
+
+            {/* Bottom Row: Waveform Scrubber & Timestamps matching Mini Player */}
+            <div className="flex items-center gap-3 pt-0.5">
+              <div 
+                className={`flex-1 h-8 sm:h-9 flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer relative py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-colors`}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const newTime = pos * duration;
+                  handleSeekInternal(newTime);
+                }}
+                title="Click anywhere on waveform to seek"
+              >
+                {WAVEFORM_BARS.map((heightPct, idx) => {
+                  const barPosPct = (idx / (WAVEFORM_BARS.length - 1)) * 100;
+                  const isPassed = barPosPct <= (duration > 0 ? (currentTime / duration) * 100 : 0);
+                  
+                  return (
+                    <div
+                      key={idx}
+                      className="flex-1 flex items-center justify-center h-full min-w-[2px]"
+                    >
+                      <span
+                        className={`w-full rounded-full transition-all duration-150 ${
+                          isPassed
+                            ? `${designConfig.waveformGradient || designConfig.progressGradient || fpTheme.seekbarFill || "bg-amber-500"} ${isPlaying ? "animate-gradient-flow animate-waveform-shimmer" : ""}`
+                            : `${designConfig.borderSubtle || "border-white/10"} bg-white/10 dark:bg-slate-700 hover:opacity-80`
+                        } ${isPlaying && isPassed ? "animate-pulse" : ""}`}
+                        style={{
+                          height: `${Math.max(15, isPlaying ? (heightPct * (0.7 + (Math.sin(idx + currentTime * 3) * 0.3))) : heightPct)}%`,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={`text-[11px] sm:text-xs font-mono font-medium ${designConfig.textMuted || fpTheme.timeText || "text-slate-400"} shrink-0 whitespace-nowrap`}>
+                <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
+                <span className="mx-1">/</span>
+                <span>{Math.floor((duration || currentTrack?.duration || 0) / 60)}:{String(Math.floor((duration || currentTrack?.duration || 0) % 60)).padStart(2, "0")}</span>
               </div>
             </div>
           </div>
@@ -1946,8 +1931,8 @@ export const Player: React.FC<PlayerProps> = ({
                 }}
                 title="Click anywhere on waveform to seek"
               >
-                {waveformBars.map((heightPct, idx) => {
-                  const barPosPct = (idx / (waveformBars.length - 1)) * 100;
+                {WAVEFORM_BARS.map((heightPct, idx) => {
+                  const barPosPct = (idx / (WAVEFORM_BARS.length - 1)) * 100;
                   const isPassed = barPosPct <= progressPercent;
                   
                   return (
