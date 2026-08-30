@@ -4,7 +4,9 @@ import fs from "fs";
 import dns from "dns";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import crypto from "crypto";
 import { GoogleGenAI } from "@google/genai";
+import { DecodedSignature, recognizeBytes } from "shazamio-core";
 
 // Prefer IPv4 connections to prevent dual-stack IPv6 ConnectTimeoutError in cloud containers
 if (typeof (dns as any).setDefaultResultOrder === "function") {
@@ -4819,6 +4821,109 @@ app.post("/api/auth/logout", (req, res) => {
   req.session.destroy(() => {
     res.json({ success: true });
   });
+});
+
+app.post("/api/identify-music", async (req, res) => {
+  try {
+    const { samples, sampleRate = 16000, base64Audio, uri: clientUri, samplems: clientSamplems } = req.body;
+
+    let signatureUri = clientUri;
+    let signatureSampleMs = clientSamplems || 5000;
+
+    if (!signatureUri) {
+      if (samples && Array.isArray(samples) && samples.length > 0) {
+        const floatArray = new Float32Array(samples);
+        const sig = DecodedSignature.new(floatArray, sampleRate, 1);
+        signatureUri = sig.uri;
+        signatureSampleMs = sig.samplems || Math.round((samples.length / sampleRate) * 1000);
+        sig.free();
+      } else if (base64Audio) {
+        const buffer = Buffer.from(base64Audio, "base64");
+        const sigs = recognizeBytes(new Uint8Array(buffer));
+        if (sigs && sigs.length > 0) {
+          signatureUri = sigs[0].uri;
+          signatureSampleMs = sigs[0].samplems;
+          for (const s of sigs) s.free();
+        }
+      }
+    }
+
+    if (!signatureUri) {
+      return res.status(400).json({ success: false, message: "No audio data or signature provided" });
+    }
+
+    const uuid1 = crypto.randomUUID().toUpperCase();
+    const uuid2 = crypto.randomUUID().toUpperCase();
+    const url = `https://amp.shazam.com/discovery/v5/en/US/web/-/tag/${uuid1}/${uuid2}?sync=true&webv3=true&sampling=true&connected=&shazamapiversion=v3&sharehub=true&hubv5minorversion=v5.1&hidelb=true&video=v3`;
+
+    const shazamRes = await fetchWithRetry(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+      },
+      body: JSON.stringify({
+        timezone: "America/New_York",
+        signature: {
+          uri: signatureUri,
+          samplems: signatureSampleMs,
+        },
+        timestamp: Date.now(),
+        context: {},
+        geolocation: {},
+      }),
+    }, 2, 8000);
+
+    if (!shazamRes.ok) {
+      return res.json({ success: false, message: `Recognition service returned status ${shazamRes.status}` });
+    }
+
+    const shazamData = await shazamRes.json();
+    const track = shazamData?.track;
+
+    if (track && track.title) {
+      const artwork =
+        track.images?.coverarthq ||
+        track.images?.coverart ||
+        track.images?.background ||
+        track.share?.image ||
+        "";
+
+      let albumName = "";
+      if (Array.isArray(track.sections)) {
+        for (const sec of track.sections) {
+          if (sec.metadata && Array.isArray(sec.metadata)) {
+            const albumMeta = sec.metadata.find((m: any) => m.title?.toLowerCase() === "album");
+            if (albumMeta) albumName = albumMeta.text;
+          }
+        }
+      }
+
+      return res.json({
+        success: true,
+        match: {
+          title: track.title,
+          artist: track.subtitle || track.artists?.[0]?.name || "Unknown Artist",
+          album: albumName,
+          artwork: artwork,
+          genre: track.genres?.primary || "",
+          key: track.key,
+          url: track.url || track.share?.href || "",
+        },
+      });
+    }
+
+    return res.json({
+      success: false,
+      message: "No song match found. Try again closer to the sound source.",
+    });
+  } catch (err: any) {
+    console.error("Music identification error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to identify music",
+    });
+  }
 });
 
 async function startServer() {

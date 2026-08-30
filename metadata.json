@@ -1,6 +1,6 @@
 {
   "name": "Oblivion Music",
   "description": "Oblivion Music client player with Google and YouTube account sync, dynamic Home & Explore feeds, background playback, real-time playlist management, synchronized lyrics, and smart recommendations.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

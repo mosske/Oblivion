@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Track, Playlist } from "../types";
-import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2 } from "lucide-react";
+import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2, Mic } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { IdentifyMusicModal } from "./IdentifyMusicModal";
 
 interface SearchViewProps {
   initialQuery?: string;
@@ -53,6 +54,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const [results, setResults] = useState<Track[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [openPlaylistMenuId, setOpenPlaylistMenuId] = useState<string | null>(null);
+  const [isIdentifyModalOpen, setIsIdentifyModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     setQuery(initialQuery || "");
@@ -118,10 +120,23 @@ export const SearchView: React.FC<SearchViewProps> = ({
     <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 pb-40 md:pb-48 select-none">
       {/* Search Header Bar */}
       <div className="space-y-4">
-        <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2.5`}>
-          <Search className={`w-6 h-6 ${designConfig.accentText}`} />
-          <span>Search Oblivion Music</span>
-        </h1>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2.5`}>
+            <Search className={`w-6 h-6 ${designConfig.accentText}`} />
+            <span>Search Oblivion Music</span>
+          </h1>
+
+          {/* Identify Music Button */}
+          <button
+            id="identify-music-btn"
+            onClick={() => setIsIdentifyModalOpen(true)}
+            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 ${designConfig.btnPrimary}`}
+            title="Identify music from audio"
+          >
+            <Mic className="w-4 h-4" />
+            <span>Identify Music</span>
+          </button>
+        </div>
 
         <div className="relative max-w-2xl">
           <Search className={`absolute left-4 top-3.5 w-5 h-5 ${designConfig.textMuted}`} />
@@ -345,6 +360,17 @@ export const SearchView: React.FC<SearchViewProps> = ({
           })
         )}
       </div>
+
+      {/* Identify Music Modal */}
+      <IdentifyMusicModal
+        isOpen={isIdentifyModalOpen}
+        onClose={() => setIsIdentifyModalOpen(false)}
+        onSelectSong={(songQuery) => {
+          setQuery(songQuery);
+          onQueryChange?.(songQuery);
+        }}
+        designConfig={designConfig}
+      />
     </div>
   );
 };
