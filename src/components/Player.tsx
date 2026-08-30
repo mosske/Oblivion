@@ -1590,10 +1590,10 @@ export const Player: React.FC<PlayerProps> = ({
 
           {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
           <div className={`relative z-20 shrink-0 p-3 sm:p-4 pb-5 sm:pb-6 border-t backdrop-blur-2xl space-y-2.5 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
-            {/* Top Row Controls: Like, Add, Shuffle, Prev, Play/Pause, Next, Repeat, Volume */}
+            {/* Top Row Controls: Like, Add, Prev, Play/Pause, Next, Shuffle, Repeat, Volume */}
             <div className="flex items-center justify-between gap-1.5 sm:gap-2">
               {/* Left Group: Like, Add to Playlist */}
-              <div className="flex items-center gap-1 sm:gap-1.5">
+              <div className="flex-1 flex items-center justify-start gap-1 sm:gap-1.5">
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
                   className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${
@@ -1624,20 +1624,8 @@ export const Player: React.FC<PlayerProps> = ({
                 </button>
               </div>
 
-              {/* Center Group: Shuffle, Previous, Play/Pause, Next, Repeat */}
-              <div className="flex items-center gap-1 sm:gap-3">
-                <button
-                  onClick={() =>
-                    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
-                  }
-                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
-                    isShuffle ? fpTheme.activeText : fpTheme.mutedText
-                  }`}
-                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
-                >
-                  <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-
+              {/* Center Group: Previous (Back), Play/Pause in Center, Next (Forward) */}
+              <div className="flex items-center justify-center gap-2 sm:gap-4 shrink-0">
                 <button
                   onClick={onPrevTrack}
                   className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
@@ -1665,6 +1653,21 @@ export const Player: React.FC<PlayerProps> = ({
                 >
                   <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
+              </div>
+
+              {/* Right Group: Remaining controls sitting after Forward/Next (Shuffle, Repeat, Volume) */}
+              <div className="flex-1 flex items-center justify-end gap-1.5 sm:gap-2">
+                <button
+                  onClick={() =>
+                    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
+                  }
+                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
+                    isShuffle ? fpTheme.activeText : fpTheme.mutedText
+                  }`}
+                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
+                >
+                  <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
 
                 <button
                   onClick={cycleRepeatMode}
@@ -1675,32 +1678,32 @@ export const Player: React.FC<PlayerProps> = ({
                 >
                   {repeatMode === "one" ? <Repeat1 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
-              </div>
 
-              {/* Right Group: Volume Slider on sm+ screens */}
-              <div className="hidden sm:flex items-center gap-1.5">
-                <button
-                  onClick={() =>
-                    setPlayerState((prev) => ({ ...prev, isMuted: !prev.isMuted }))
-                  }
-                  className={`p-1.5 transition-colors ${fpTheme.mutedText}`}
-                  title={isMuted ? "Unmute" : "Mute"}
-                >
-                  {isMuted || volume === 0 ? (
-                    <VolumeX className="w-4 h-4 text-rose-400" />
-                  ) : (
-                    <Volume2 className="w-4 h-4" />
-                  )}
-                </button>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={isMuted ? 0 : volume}
-                  onChange={(e) => onVolumeChange(Number(e.target.value))}
-                  className={`w-16 md:w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
-                />
+                {/* Volume Slider on sm+ screens */}
+                <div className="hidden sm:flex items-center gap-1.5">
+                  <button
+                    onClick={() =>
+                      setPlayerState((prev) => ({ ...prev, isMuted: !prev.isMuted }))
+                    }
+                    className={`p-1.5 transition-colors ${fpTheme.mutedText}`}
+                    title={isMuted ? "Unmute" : "Mute"}
+                  >
+                    {isMuted || volume === 0 ? (
+                      <VolumeX className="w-4 h-4 text-rose-400" />
+                    ) : (
+                      <Volume2 className="w-4 h-4" />
+                    )}
+                  </button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={isMuted ? 0 : volume}
+                    onChange={(e) => onVolumeChange(Number(e.target.value))}
+                    className={`w-16 md:w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
+                  />
+                </div>
               </div>
             </div>
 
@@ -1784,15 +1787,17 @@ export const Player: React.FC<PlayerProps> = ({
               onClick={handleCloseMiniPlayer}
             />
 
-            {/* Top Row: Track Artwork, Play/Pause, Metadata & Controls */}
-            <div className="flex items-center justify-between gap-3">
-              {/* Left Play/Pause and Track Info */}
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* Artwork Thumbnail with quick full player expand */}
+            {/* Top Row: Track Info (Left), Center Playback (Back, Play/Pause, Next), Remaining Controls (Right) */}
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
+              {/* Left: Track Artwork and Info */}
+              <div 
+                onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
+                className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group"
+                title="Click to open Full Player"
+              >
+                {/* Artwork Thumbnail */}
                 <div
-                  onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                  className={`relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} cursor-pointer group shadow-sm bg-slate-800 flex items-center justify-center`}
-                  title="Click to open Full Player"
+                  className={`relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} shadow-sm bg-slate-800 flex items-center justify-center`}
                 >
                   <img
                     src={currentTrack.coverUrl || (currentTrack.youtubeVideoId || currentTrack.id ? `https://i.ytimg.com/vi/${currentTrack.youtubeVideoId || currentTrack.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
@@ -1819,22 +1824,7 @@ export const Player: React.FC<PlayerProps> = ({
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleUserTogglePlay()}
-                  className={`w-10 h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
-                  title={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? (
-                    <Pause className="w-4 h-4 fill-white" />
-                  ) : (
-                    <Play className="w-4 h-4 fill-white ml-0.5" />
-                  )}
-                </button>
-
-                <div 
-                  onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                  className="min-w-0 flex-1 cursor-pointer group pr-1"
-                >
+                <div className="min-w-0 flex-1 pr-1">
                   <h4 className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
                     {cleanTrackTitle(currentTrack.title)}
                   </h4>
@@ -1844,14 +1834,67 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
               </div>
 
-              {/* Right Meta Controls: Like, Add to Playlist, Shuffle, Prev, Next, Repeat, Expand */}
-              <div className="flex items-center gap-1 shrink-0">
+              {/* Center: Back Navigation Button, Play/Pause in Center, Forward/Next Navigation Button */}
+              <div className="flex items-center justify-center gap-1 sm:gap-2 shrink-0">
+                <button
+                  onClick={onPrevTrack}
+                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                  title="Previous"
+                >
+                  <SkipBack className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                </button>
+
+                <button
+                  onClick={() => handleUserTogglePlay()}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                  title={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white" />
+                  ) : (
+                    <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white ml-0.5" />
+                  )}
+                </button>
+
+                <button
+                  onClick={onNextTrack}
+                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                  title="Next"
+                >
+                  <SkipForward className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                </button>
+              </div>
+
+              {/* Right: Remaining buttons sitting after Forward/Next button (Shuffle, Repeat, Like, Add, Expand) */}
+              <div className="flex-1 flex items-center justify-end gap-0.5 sm:gap-1 shrink-0">
+                <button
+                  onClick={() =>
+                    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
+                  }
+                  className={`p-1.5 transition-colors ${
+                    isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                  }`}
+                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
+                >
+                  <Shuffle className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  onClick={cycleRepeatMode}
+                  className={`p-1.5 transition-colors ${
+                    repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                  }`}
+                  title={`Repeat: ${repeatMode}`}
+                >
+                  {repeatMode === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
+                </button>
+
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
                   className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
                   title="Favorite"
                 >
-                  <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
                 </button>
 
                 {/* Add to Playlist button on Mini Player */}
@@ -1867,46 +1910,7 @@ export const Player: React.FC<PlayerProps> = ({
                   className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors`}
                   title="Add to Playlist"
                 >
-                  <Plus className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={() =>
-                    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
-                  }
-                  className={`p-1.5 transition-colors ${
-                    isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                  }`}
-                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
-                >
-                  <Shuffle className="w-3.5 h-3.5" />
-                </button>
-
-                <button
-                  onClick={onPrevTrack}
-                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                  title="Previous"
-                >
-                  <SkipBack className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={onNextTrack}
-                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
-                  title="Next"
-                >
-                  <SkipForward className="w-4 h-4" />
-                </button>
-
-                {/* Repeat button on Mini Player */}
-                <button
-                  onClick={cycleRepeatMode}
-                  className={`p-1.5 transition-colors ${
-                    repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                  }`}
-                  title={`Repeat: ${repeatMode}`}
-                >
-                  {repeatMode === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
+                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
 
                 <button
@@ -1914,7 +1918,7 @@ export const Player: React.FC<PlayerProps> = ({
                   className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
                   title="Full View"
                 >
-                  <Maximize2 className="w-3.5 h-3.5" />
+                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>
