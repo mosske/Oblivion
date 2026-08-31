@@ -428,7 +428,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
         transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
       }}
-      className="flex-1 flex flex-col select-none pb-40 md:pb-48 will-change-transform"
+      className="flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52 will-change-transform"
     >
       {/* Top Sticky Header with Close (X) Button */}
       <div className={`sticky top-14 sm:top-16 z-20 flex flex-col px-4 sm:px-6 py-2 sm:py-2.5 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle} shadow-sm shrink-0`}>

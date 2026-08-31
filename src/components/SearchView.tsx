@@ -117,7 +117,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   });
 
   return (
-    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 pb-40 md:pb-48 select-none">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 pb-64 sm:pb-72 md:pb-52 select-none">
       {/* Search Header Bar */}
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">

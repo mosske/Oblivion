@@ -111,7 +111,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-40 md:pb-48 select-none">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-64 sm:pb-72 md:pb-52 select-none">
       {/* Top Banner */}
       <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${designConfig.bannerGradient} border ${designConfig.accentBorder} p-6 sm:p-8 shadow-2xl transition-all duration-300`}>
         <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-500/30 via-indigo-600/40 to-transparent"></div>

@@ -239,7 +239,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
   return (
     <div className="flex flex-col select-none">
-      <div className="flex-1 space-y-8 p-6 md:p-8 pb-40 md:pb-48">
+      <div className="flex-1 space-y-8 p-6 md:p-8 pb-64 sm:pb-72 md:pb-52">
         {/* Playlists Section Header */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
