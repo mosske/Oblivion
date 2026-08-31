@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { User, UserSettings, AudioQuality, PlayerBackgroundAnimation } from "../types";
-import { FULL_APP_DESIGNS, FullAppDesignConfig } from "../utils/appDesignThemes";
+import { FULL_APP_DESIGNS, FULL_APP_DESIGNS_LIST, FullAppDesignConfig } from "../utils/appDesignThemes";
 import {
   Settings,
   Sliders,
@@ -165,7 +165,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* 6 Full App Design Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.values(FULL_APP_DESIGNS).map((design) => {
+          {FULL_APP_DESIGNS_LIST.map((design) => {
             const isSelected = (settings.fullAppDesign || "designer") === design.id;
 
             return (
@@ -180,14 +180,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 }}
                 className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
                   isSelected
-                    ? `bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-lg scale-[1.01]`
+                    ? `bg-white/95 shadow-lg scale-[1.01]`
                     : `bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-sm`
                 }`}
+                style={
+                  isSelected
+                    ? {
+                        border: "2px solid var(--accent-primary)",
+                        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-primary)",
+                      }
+                    : undefined
+                }
               >
                 {/* Active Checkmark Badge */}
                 {isSelected && (
-                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[10px] flex items-center gap-1 shadow-md">
-                    <Check className="w-3 h-3 stroke-[3]" />
+                  <div
+                    className="absolute top-3 right-3 px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-md"
+                    style={{
+                      backgroundColor: "var(--accent-primary)",
+                      color: "var(--accent-contrast-text)",
+                    }}
+                  >
+                    <Check className="w-3 h-3 stroke-[3]" style={{ color: "var(--accent-contrast-text)" }} />
                     <span>ACTIVE</span>
                   </div>
                 )}
@@ -229,7 +243,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       />
                     ))}
                   </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? "text-[#855f10] font-mono" : "text-zinc-600 group-hover:text-zinc-900"}`}>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? "font-mono font-black" : "text-zinc-600 group-hover:text-zinc-900"}`}
+                    style={isSelected ? { color: "var(--accent-primary)" } : undefined}
+                  >
                     {isSelected ? "● Live On App" : "Apply Design →"}
                   </span>
                 </div>
@@ -265,7 +282,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   animationOrbitalSpeed: 6,
                 })
               }
-              className={`px-3 py-1.5 rounded-xl ${designConfig.isLight ? "bg-white border-[#d8d2c4] hover:border-[#c89b3c] hover:bg-[#f4f1ea] text-zinc-800" : "bg-white/10 border-white/20 hover:border-white/40 hover:bg-white/15 text-white"} text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 shrink-0`}
+              className={`px-3 py-1.5 rounded-xl ${designConfig.isLight ? "bg-white border-[#d8d2c4] hover:border-zinc-400 hover:bg-[#f4f1ea] text-zinc-800" : "bg-white/10 border-white/20 hover:border-white/40 hover:bg-white/15 text-white"} text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 shrink-0`}
               title="Reset all animation durations to default (6s)"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
@@ -291,18 +308,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "ambient-drift" })}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               (settings.playerBackgroundAnimation || "ambient-drift") === "ambient-drift"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
+                ? "bg-white/95 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
+            style={
+              (settings.playerBackgroundAnimation || "ambient-drift") === "ambient-drift"
+                ? {
+                    border: "2px solid var(--accent-primary)",
+                    boxShadow: "0 6px 18px -3px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-primary)",
+                  }
+                : undefined
+            }
           >
             {(settings.playerBackgroundAnimation || "ambient-drift") === "ambient-drift" && (
-              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
-                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              <div
+                className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full font-black text-[9px] flex items-center gap-1 shadow"
+                style={{
+                  backgroundColor: "var(--accent-primary)",
+                  color: "var(--accent-contrast-text)",
+                }}
+              >
+                <Check className="w-2.5 h-2.5 stroke-[3]" style={{ color: "var(--accent-contrast-text)" }} />
                 <span>ACTIVE</span>
               </div>
             )}
             <div>
-              <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-2.5 text-amber-700">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center mb-2.5"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                  color: "var(--accent-primary)",
+                }}
+              >
                 <Waves className="w-4 h-4" />
               </div>
               <h4 className="text-xs font-bold text-zinc-900 mb-1">1. Ambient Zoom & Drift</h4>
@@ -314,14 +352,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* Embedded Timing Control */}
             <div
               onClick={(e) => e.stopPropagation()}
-              className="mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2"
+              className="mt-2 p-3 bg-zinc-100/90 border border-zinc-200 rounded-xl space-y-2"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-[11px] font-bold text-amber-900">
-                  <Timer className="w-3.5 h-3.5 text-amber-700" />
+                <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-800">
+                  <Timer className="w-3.5 h-3.5" style={{ color: "var(--accent-primary)" }} />
                   <span>Cycle Duration</span>
                 </div>
-                <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-amber-800 border border-amber-300 shadow-sm">
+                <span
+                  className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white border shadow-xs"
+                  style={{ color: "var(--accent-primary)", borderColor: "var(--border-subtle)" }}
+                >
                   {settings.animationDriftSpeed ?? 6}s
                 </span>
               </div>
@@ -338,11 +379,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     playerBackgroundAnimation: "ambient-drift",
                   });
                 }}
-                className="w-full h-1.5 bg-amber-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
+                style={{ accentColor: "var(--accent-primary)" }}
+                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="flex justify-between text-[9px] text-amber-800/80 font-mono font-medium">
+              <div className="flex justify-between text-[9px] text-zinc-600 font-mono font-medium">
                 <span>Fast (3s)</span>
-                <span className="font-bold text-amber-900">Default: 6s</span>
+                <span className="font-bold text-zinc-800">Default: 6s</span>
                 <span>Slow (20s)</span>
               </div>
             </div>
@@ -353,18 +395,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "aurora-pulse" })}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               settings.playerBackgroundAnimation === "aurora-pulse"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
+                ? "bg-white/95 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
+            style={
+              settings.playerBackgroundAnimation === "aurora-pulse"
+                ? {
+                    border: "2px solid var(--accent-primary)",
+                    boxShadow: "0 6px 18px -3px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-primary)",
+                  }
+                : undefined
+            }
           >
             {settings.playerBackgroundAnimation === "aurora-pulse" && (
-              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
-                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              <div
+                className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full font-black text-[9px] flex items-center gap-1 shadow"
+                style={{
+                  backgroundColor: "var(--accent-primary)",
+                  color: "var(--accent-contrast-text)",
+                }}
+              >
+                <Check className="w-2.5 h-2.5 stroke-[3]" style={{ color: "var(--accent-contrast-text)" }} />
                 <span>ACTIVE</span>
               </div>
             )}
             <div>
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-2.5 text-emerald-700">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center mb-2.5"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                  color: "var(--accent-primary)",
+                }}
+              >
                 <Activity className="w-4 h-4" />
               </div>
               <h4 className="text-xs font-bold text-zinc-900 mb-1">2. Aurora Pulse</h4>
@@ -376,14 +439,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* Embedded Timing Control */}
             <div
               onClick={(e) => e.stopPropagation()}
-              className="mt-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2"
+              className="mt-2 p-3 bg-zinc-100/90 border border-zinc-200 rounded-xl space-y-2"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-900">
-                  <Timer className="w-3.5 h-3.5 text-emerald-700" />
+                <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-800">
+                  <Timer className="w-3.5 h-3.5" style={{ color: "var(--accent-primary)" }} />
                   <span>Cycle Duration</span>
                 </div>
-                <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-emerald-800 border border-emerald-300 shadow-sm">
+                <span
+                  className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white border shadow-xs"
+                  style={{ color: "var(--accent-primary)", borderColor: "var(--border-subtle)" }}
+                >
                   {settings.animationAuroraSpeed ?? 6}s
                 </span>
               </div>
@@ -400,11 +466,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     playerBackgroundAnimation: "aurora-pulse",
                   });
                 }}
-                className="w-full h-1.5 bg-emerald-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
+                style={{ accentColor: "var(--accent-primary)" }}
+                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="flex justify-between text-[9px] text-emerald-800/80 font-mono font-medium">
+              <div className="flex justify-between text-[9px] text-zinc-600 font-mono font-medium">
                 <span>Fast (3s)</span>
-                <span className="font-bold text-emerald-900">Default: 6s</span>
+                <span className="font-bold text-zinc-800">Default: 6s</span>
                 <span>Slow (20s)</span>
               </div>
             </div>
@@ -415,18 +482,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "orbital-flow" })}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               settings.playerBackgroundAnimation === "orbital-flow"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
+                ? "bg-white/95 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
+            style={
+              settings.playerBackgroundAnimation === "orbital-flow"
+                ? {
+                    border: "2px solid var(--accent-primary)",
+                    boxShadow: "0 6px 18px -3px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-primary)",
+                  }
+                : undefined
+            }
           >
             {settings.playerBackgroundAnimation === "orbital-flow" && (
-              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
-                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              <div
+                className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full font-black text-[9px] flex items-center gap-1 shadow"
+                style={{
+                  backgroundColor: "var(--accent-primary)",
+                  color: "var(--accent-contrast-text)",
+                }}
+              >
+                <Check className="w-2.5 h-2.5 stroke-[3]" style={{ color: "var(--accent-contrast-text)" }} />
                 <span>ACTIVE</span>
               </div>
             )}
             <div>
-              <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center mb-2.5 text-violet-700">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center mb-2.5"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                  color: "var(--accent-primary)",
+                }}
+              >
                 <Sparkles className="w-4 h-4" />
               </div>
               <h4 className="text-xs font-bold text-zinc-900 mb-1">3. Orbital Flow</h4>
@@ -438,14 +526,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* Embedded Timing Control */}
             <div
               onClick={(e) => e.stopPropagation()}
-              className="mt-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2"
+              className="mt-2 p-3 bg-zinc-100/90 border border-zinc-200 rounded-xl space-y-2"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-[11px] font-bold text-violet-900">
-                  <Timer className="w-3.5 h-3.5 text-violet-700" />
+                <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-800">
+                  <Timer className="w-3.5 h-3.5" style={{ color: "var(--accent-primary)" }} />
                   <span>Cycle Duration</span>
                 </div>
-                <span className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white text-violet-800 border border-violet-300 shadow-sm">
+                <span
+                  className="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-white border shadow-xs"
+                  style={{ color: "var(--accent-primary)", borderColor: "var(--border-subtle)" }}
+                >
                   {settings.animationOrbitalSpeed ?? 6}s
                 </span>
               </div>
@@ -462,11 +553,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     playerBackgroundAnimation: "orbital-flow",
                   });
                 }}
-                className="w-full h-1.5 bg-violet-200/80 rounded-lg appearance-none cursor-pointer accent-[#c89b3c]"
+                style={{ accentColor: "var(--accent-primary)" }}
+                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="flex justify-between text-[9px] text-violet-800/80 font-mono font-medium">
+              <div className="flex justify-between text-[9px] text-zinc-600 font-mono font-medium">
                 <span>Fast (3s)</span>
-                <span className="font-bold text-violet-900">Default: 6s</span>
+                <span className="font-bold text-zinc-800">Default: 6s</span>
                 <span>Slow (20s)</span>
               </div>
             </div>
@@ -477,13 +569,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => onUpdateSettings({ playerBackgroundAnimation: "off" })}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
               settings.playerBackgroundAnimation === "off"
-                ? "bg-[#f4f1ea] border-[#c89b3c] ring-2 ring-[#c89b3c]/50 shadow-md"
+                ? "bg-white/95 shadow-md"
                 : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
             }`}
+            style={
+              settings.playerBackgroundAnimation === "off"
+                ? {
+                    border: "2px solid var(--accent-primary)",
+                    boxShadow: "0 6px 18px -3px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-primary)",
+                  }
+                : undefined
+            }
           >
             {settings.playerBackgroundAnimation === "off" && (
-              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#c89b3c] text-slate-950 font-black text-[9px] flex items-center gap-1 shadow">
-                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              <div
+                className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full font-black text-[9px] flex items-center gap-1 shadow"
+                style={{
+                  backgroundColor: "var(--accent-primary)",
+                  color: "var(--accent-contrast-text)",
+                }}
+              >
+                <Check className="w-2.5 h-2.5 stroke-[3]" style={{ color: "var(--accent-contrast-text)" }} />
                 <span>ACTIVE</span>
               </div>
             )}
@@ -610,7 +716,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <select
               value={settings.audioQuality}
               onChange={(e) => onUpdateSettings({ audioQuality: e.target.value as AudioQuality })}
-              className={`w-full px-4 py-2.5 ${designConfig.isLight ? "bg-white border-zinc-300 text-zinc-900" : "bg-slate-900/90 border-slate-700 text-white"} rounded-xl text-sm font-semibold focus:outline-none focus:border-[#c89b3c] shadow-sm`}
+              className={`w-full px-4 py-2.5 ${designConfig.isLight ? "bg-white border-zinc-300 text-zinc-900" : "bg-slate-900/90 border-slate-700 text-white"} rounded-xl text-sm font-semibold focus:outline-none shadow-sm transition-all`}
+              style={{
+                borderColor: "var(--border-subtle)",
+              }}
             >
               <option value="normal" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>Normal (160 kbps AAC)</option>
               <option value="high" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>High Quality (320 kbps MP3)</option>
@@ -624,7 +733,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <label className={`text-xs font-bold uppercase ${designConfig.textPrimary}`}>
                 Crossfade Tracks
               </label>
-              <span className={`text-xs font-mono font-bold ${designConfig.accentText}`}>{settings.crossfadeDuration}s</span>
+              <span className="text-xs font-mono font-bold" style={{ color: "var(--accent-primary)" }}>
+                {settings.crossfadeDuration}s
+              </span>
             </div>
             <input
               type="range"
@@ -632,7 +743,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               max={10}
               value={settings.crossfadeDuration}
               onChange={(e) => onUpdateSettings({ crossfadeDuration: Number(e.target.value) })}
-              className={`w-full h-2 ${designConfig.isLight ? "bg-zinc-200" : "bg-slate-700/60"} rounded-lg appearance-none cursor-pointer accent-[#c89b3c]`}
+              style={{ accentColor: "var(--accent-primary)" }}
+              className="w-full h-2 bg-zinc-200 dark:bg-slate-700/60 rounded-lg appearance-none cursor-pointer"
             />
           </div>
         </div>
@@ -648,7 +760,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="checkbox"
               checked={settings.backgroundPlay ?? true}
               onChange={(e) => onUpdateSettings({ backgroundPlay: e.target.checked })}
-              className="w-4 h-4 accent-[#c89b3c] cursor-pointer ml-2 shrink-0"
+              style={{ accentColor: "var(--accent-primary)" }}
+              className="w-4 h-4 cursor-pointer ml-2 shrink-0"
             />
           </label>
 
@@ -661,7 +774,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="checkbox"
               checked={settings.normalizeVolume}
               onChange={(e) => onUpdateSettings({ normalizeVolume: e.target.checked })}
-              className="w-4 h-4 accent-[#c89b3c] cursor-pointer ml-2 shrink-0"
+              style={{ accentColor: "var(--accent-primary)" }}
+              className="w-4 h-4 cursor-pointer ml-2 shrink-0"
             />
           </label>
 
@@ -674,7 +788,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="checkbox"
               checked={settings.autoPlaySimilar}
               onChange={(e) => onUpdateSettings({ autoPlaySimilar: e.target.checked })}
-              className="w-4 h-4 accent-[#c89b3c] cursor-pointer ml-2 shrink-0"
+              style={{ accentColor: "var(--accent-primary)" }}
+              className="w-4 h-4 cursor-pointer ml-2 shrink-0"
             />
           </label>
         </div>
@@ -684,9 +799,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="flex flex-col items-center justify-center pt-3 pb-2 space-y-1 select-none">
         <div
           id="shadowflash-design-badge"
-          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full ${designConfig.isLight ? "bg-gradient-to-r from-amber-500/10 via-[#c89b3c]/20 to-amber-500/10 border-[#c89b3c]/30 text-[#855f10]" : "bg-white/10 border-white/20 text-white"} border shadow-sm`}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--accent-primary) 12%, transparent)",
+            borderColor: "color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+            color: "var(--card-text)",
+          }}
         >
-          <Sparkles className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
+          <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--accent-primary)" }} />
           <span className="text-xs font-mono font-bold tracking-wider uppercase">
             Shadowflash Design
           </span>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FullAppDesignId, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { FullAppDesignId, FULL_APP_DESIGNS, FULL_APP_DESIGNS_LIST } from "../utils/appDesignThemes";
 import { PlayerState, Track, MiniPlayerLayout } from "../types";
 import {
   Layout,
@@ -119,7 +119,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-          {Object.values(FULL_APP_DESIGNS).map((design) => {
+          {FULL_APP_DESIGNS_LIST.map((design) => {
             const isSelected = activeDesignId === design.id;
 
             return (

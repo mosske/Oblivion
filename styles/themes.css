@@ -215,3 +215,41 @@ button.active *,
   color: var(--accent-contrast-text) !important;
   fill: var(--accent-contrast-text) !important;
 }
+
+/* Universal Range Slider & Thumb Styling bound to var(--accent-primary) */
+input[type="range"] {
+  accent-color: var(--accent-primary) !important;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  background-color: var(--accent-primary) !important;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background-color: var(--accent-primary) !important;
+}
+
+/* Universal Checkbox Styling bound to var(--accent-primary) */
+input[type="checkbox"] {
+  accent-color: var(--accent-primary) !important;
+}
+
+/* Dynamic Active Card Border & Badge Indicator Classes */
+.theme-card-active {
+  border: 2px solid var(--accent-primary) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--accent-primary) !important;
+}
+
+.theme-badge-active {
+  background-color: var(--accent-primary) !important;
+  color: var(--accent-contrast-text) !important;
+}
+
+.theme-badge-active * {
+  color: var(--accent-contrast-text) !important;
+  stroke: var(--accent-contrast-text) !important;
+}
+
+.theme-status-active {
+  color: var(--accent-primary) !important;
+}

@@ -1,5 +1,5 @@
 import React from "react";
-import { FullAppDesignId, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { FullAppDesignId, FULL_APP_DESIGNS, FULL_APP_DESIGNS_LIST } from "../utils/appDesignThemes";
 import {
   X,
   Palette,
@@ -65,7 +65,7 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
         {/* Designs List / Grid */}
         <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.values(FULL_APP_DESIGNS).map((design) => {
+            {FULL_APP_DESIGNS_LIST.map((design) => {
               const isSelected = activeDesignId === design.id;
 
               return (

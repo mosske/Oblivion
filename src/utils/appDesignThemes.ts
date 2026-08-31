@@ -69,7 +69,7 @@ export interface FullAppDesignConfig {
   trackRowHover: string;
 }
 
-export const FULL_APP_DESIGNS: Record<string, FullAppDesignConfig> = {
+export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
   designer: {
     id: "designer",
     name: "Studio Ivory & Gold",
@@ -480,5 +480,36 @@ export const FULL_APP_DESIGNS: Record<string, FullAppDesignConfig> = {
   },
 };
 
-// Also keep a backward-compatible alias for 'ytmusic-red' resolving to candyland
-(FULL_APP_DESIGNS as any)["ytmusic-red"] = FULL_APP_DESIGNS.candyland;
+/**
+ * Array of the 6 canonical Full App Designs (guaranteed unique IDs for React key rendering)
+ */
+export const FULL_APP_DESIGNS_LIST: FullAppDesignConfig[] = Object.values(FULL_APP_DESIGNS_BASE);
+
+/**
+ * Safely lookup a FullAppDesignConfig by ID with backward compatibility for legacy aliases
+ */
+export function getFullAppDesign(id?: string | null): FullAppDesignConfig {
+  if (!id) return FULL_APP_DESIGNS_BASE.designer;
+  if (id === "ytmusic-red") return FULL_APP_DESIGNS_BASE.candyland;
+  return FULL_APP_DESIGNS_BASE[id] || FULL_APP_DESIGNS_BASE.designer;
+}
+
+/**
+ * Proxy object for FULL_APP_DESIGNS preserving record index access while keeping Object.values unique
+ */
+export const FULL_APP_DESIGNS: Record<string, FullAppDesignConfig> = new Proxy(FULL_APP_DESIGNS_BASE, {
+  get(target, prop: string | symbol) {
+    if (typeof prop === "string") {
+      if (prop === "ytmusic-red") return target.candyland;
+      if (prop in target) return target[prop];
+    }
+    return (target as any)[prop];
+  },
+  ownKeys(target) {
+    return Object.keys(target);
+  },
+  getOwnPropertyDescriptor(target, prop) {
+    return Object.getOwnPropertyDescriptor(target, prop);
+  },
+});
+
