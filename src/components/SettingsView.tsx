@@ -513,20 +513,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </section>
 
-      {/* SYNCHRONIZED REAL-TIME LYRICS PREFERENCES */}
+      {/* SYNCHRONIZED REAL-TIME LYRICS & ROMANIZATION PREFERENCES */}
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-5 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} text-[10px] font-mono font-bold tracking-wider mb-1`}>
               <Mic2 className={`w-3 h-3 ${designConfig.accentText}`} />
-              <span>LRCLIB Real-Time Lyrics</span>
+              <span>LRCLIB & Instant Romanization</span>
             </div>
             <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
               <Mic2 className={`w-4 h-4 ${designConfig.accentText}`} />
-              <span>Synchronized Lyrics Styling</span>
+              <span>Synchronized Lyrics & Romanization</span>
             </h3>
             <p className={`text-xs ${designConfig.textMuted}`}>
-              Configure font sizing and text alignment for real-time synchronized playback lyrics.
+              Configure font sizing and text alignment for synchronized lyrics and client-side phonetic romanization.
             </p>
           </div>
         </div>

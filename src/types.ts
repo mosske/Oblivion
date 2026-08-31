@@ -76,7 +76,10 @@ export interface User {
 export interface LyricLine {
   time: number; // seconds
   text: string;
+  subText?: string; // Optional secondary line for interleaved dual-line display (romanized)
 }
+
+export type LyricsMode = 'original' | 'romanized';
 
 export type ThemePreset = 
   | 'designer-ivory'
@@ -130,6 +133,8 @@ export interface UserSettings {
   compactMode: boolean;
   lyricsFontSize: LyricsFontSize;
   lyricsAlignment: LyricsAlignment;
+  lyricsDualLine?: boolean;
+  lyricsDefaultMode?: LyricsMode;
   autoDownloadFavorites: boolean;
   maxCacheSizeMB: number;
 }

@@ -5,7 +5,7 @@ export interface LyricsResult {
   syncedLyrics?: string;
   plainLyrics?: string;
   isSynced: boolean;
-  source: "lrclib" | "server" | "none";
+  source: "lrclib" | "youtube_music" | "server" | "none";
   trackName?: string;
   artistName?: string;
 }
@@ -61,29 +61,70 @@ export function parsePlainLyrics(plainText: string): LyricLine[] {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((text, idx) => ({
+    .map((text) => ({
       time: -1, // untimed
       text,
     }));
 }
 
 /**
- * Fetches real-time synchronized lyrics using LRCLIB REST API (https://lrclib.net)
- * with robust fallbacks:
- * 1. Direct GET https://lrclib.net/api/get with exact parameters
- * 2. Search GET https://lrclib.net/api/search?q=
- * 3. Server-side proxy fallback
+ * Creates interleaved dual-line lyric objects (Original text with subText for romanization)
  */
-export async function fetchLyricsFromLRCLIB(
+export function createDualLyricLines(
+  originalLines: LyricLine[],
+  subLines: LyricLine[]
+): LyricLine[] {
+  if (!originalLines || originalLines.length === 0) return [];
+  if (!subLines || subLines.length === 0) return originalLines;
+
+  return originalLines.map((orig, idx) => {
+    // 1. Try finding matching subLine with close timestamp (within 0.75s tolerance)
+    if (orig.time >= 0) {
+      const exactMatch = subLines.find((s) => Math.abs(s.time - orig.time) <= 0.75);
+      if (exactMatch && exactMatch.text) {
+        return {
+          ...orig,
+          subText: exactMatch.text,
+        };
+      }
+    }
+
+    // 2. Fallback to index-based pairing
+    if (subLines[idx] && subLines[idx].text) {
+      return {
+        ...orig,
+        subText: subLines[idx].text,
+      };
+    }
+
+    return orig;
+  });
+}
+
+/**
+ * Multi-Source Lyrics Pipeline:
+ * Step 1 (LRCLIB): Query LRCLIB API first for synced .lrc lyrics. If found, return synced lyrics.
+ * Step 2 (YouTube Music Native Fallback): If LRCLIB returns a 404 or empty response, fetch YouTube Music's native lyrics
+ *        via the YouTube Music backend route (calling YouTubei next & browse with lyricsBrowseId).
+ * Step 3 (Display Handling): Return native YouTube Music text as unsynced plain lyrics with source "youtube_music".
+ * Step 4 (Empty): Return empty result if all providers in the fallback chain return no data.
+ */
+export async function fetchLyricsMultiSource(
   rawTitle: string,
   rawArtist: string,
-  durationInSeconds?: number
+  durationInSeconds?: number,
+  videoId?: string
 ): Promise<LyricsResult> {
   const cleanTitle = cleanTrackTitle(rawTitle, rawArtist);
   const cleanArtist = (rawArtist || "").replace(/\s*-\s*Topic$/i, "").trim();
   const dur = durationInSeconds && durationInSeconds > 10 ? Math.round(durationInSeconds) : undefined;
+  const cleanVid = videoId ? videoId.split("_")[0] : "";
 
-  // 1. Direct GET endpoint
+  let lrclibPlainMatch: LyricsResult | null = null;
+
+  // =========================================================================
+  // Step 1: Query LRCLIB API for Synced .lrc Lyrics
+  // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
       const params = new URLSearchParams({
@@ -97,12 +138,12 @@ export async function fetchLyricsFromLRCLIB(
       const getUrl = `https://lrclib.net/api/get?${params.toString()}`;
       const res = await fetch(getUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(4500),
       });
 
       if (res.ok) {
         const data = await res.json();
-        if (data.syncedLyrics) {
+        if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
           return {
             syncedLyrics: data.syncedLyrics,
             plainLyrics: data.plainLyrics,
@@ -112,8 +153,8 @@ export async function fetchLyricsFromLRCLIB(
             artistName: data.artistName,
           };
         }
-        if (data.plainLyrics) {
-          return {
+        if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
+          lrclibPlainMatch = {
             plainLyrics: data.plainLyrics,
             isSynced: false,
             source: "lrclib",
@@ -127,7 +168,7 @@ export async function fetchLyricsFromLRCLIB(
     }
   }
 
-  // 2. Search endpoint fallback (querying with artist + clean title, or raw query)
+  // LRCLIB Search endpoint fallback
   const searchQueries = [
     cleanArtist ? `${cleanArtist} ${cleanTitle}` : cleanTitle,
     rawTitle,
@@ -138,13 +179,13 @@ export async function fetchLyricsFromLRCLIB(
       const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(q)}`;
       const res = await fetch(searchUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(4500),
       });
 
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list) && list.length > 0) {
-          // Find first result with syncedLyrics
+          // Priority 1: Synced lyrics
           const withSynced = list.find((item) => item.syncedLyrics && item.syncedLyrics.trim().length > 0);
           if (withSynced) {
             return {
@@ -156,10 +197,10 @@ export async function fetchLyricsFromLRCLIB(
               artistName: withSynced.artistName,
             };
           }
-          // Or first result with plainLyrics
+          // Priority 2: Stash plain lyrics from search
           const withPlain = list.find((item) => item.plainLyrics && item.plainLyrics.trim().length > 0);
-          if (withPlain) {
-            return {
+          if (withPlain && !lrclibPlainMatch) {
+            lrclibPlainMatch = {
               plainLyrics: withPlain.plainLyrics,
               isSynced: false,
               source: "lrclib",
@@ -174,39 +215,56 @@ export async function fetchLyricsFromLRCLIB(
     }
   }
 
-  // 3. Fallback to Server Proxy /api/youtube/lyrics
+  // =========================================================================
+  // Step 2: YouTube Music Native Lyrics Fallback
+  // =========================================================================
   try {
-    const serverUrl = `/api/youtube/lyrics?title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}&duration=${dur || 0}`;
+    const params = new URLSearchParams({
+      title: cleanTitle,
+      artist: cleanArtist,
+      duration: (dur || 0).toString(),
+      videoId: cleanVid,
+    });
+
+    const serverUrl = `/api/youtube/lyrics?${params.toString()}`;
     const serverRes = await fetch(serverUrl, { signal: AbortSignal.timeout(6000) });
     if (serverRes.ok) {
       const data = await serverRes.json();
-      if (data.syncedLyrics) {
+      if (data.syncedLyrics && data.isSynced) {
         return {
           syncedLyrics: data.syncedLyrics,
           plainLyrics: data.plainLyrics,
           isSynced: true,
-          source: "server",
+          source: (data.source as any) || "lrclib",
         };
       }
-      if (data.lyricsRaw) {
-        return {
-          syncedLyrics: data.lyricsRaw,
-          isSynced: true,
-          source: "server",
-        };
-      }
-      if (data.plainLyrics) {
+      if (data.plainLyrics && (data.source === "youtube_music" || !lrclibPlainMatch)) {
         return {
           plainLyrics: data.plainLyrics,
           isSynced: false,
-          source: "server",
+          source: (data.source as any) || "youtube_music",
         };
       }
     }
   } catch (_sErr) {}
 
+  // =========================================================================
+  // Step 3: LRCLIB Plain Text Fallback (if saved from earlier)
+  // =========================================================================
+  if (lrclibPlainMatch) {
+    return lrclibPlainMatch;
+  }
+
+  // =========================================================================
+  // Step 4: No lyrics available across all providers
+  // =========================================================================
   return {
     isSynced: false,
     source: "none",
   };
 }
+
+/**
+ * Backward-compatible alias
+ */
+export const fetchLyricsFromLRCLIB = fetchLyricsMultiSource;

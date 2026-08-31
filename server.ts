@@ -18,6 +18,21 @@ if (typeof (dns as any).setDefaultResultOrder === "function") {
 const app = express();
 const PORT = 3000;
 
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(cookieParser());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "oblivion_super_secret_music_session_2026",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    },
+  })
+);
+
 // Resilient fetch with exponential backoff and timeout protection
 async function fetchWithRetry(url: string, options: any = {}, maxRetries = 2, timeoutMs = 12000): Promise<Response> {
   let attempt = 0;
@@ -1827,10 +1842,25 @@ async function searchYouTubeMusic(query: string, accessToken?: string, type: str
   return results;
 }
 
-function getGeminiClient() {
+let geminiClientInstance: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === "MY_GEMINI_API_KEY") return null;
-  return new GoogleGenAI({ apiKey });
+  if (!geminiClientInstance) {
+    try {
+      geminiClientInstance = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build",
+          },
+        },
+      });
+    } catch (e) {
+      console.warn("Failed to initialize GoogleGenAI client:", e);
+    }
+  }
+  return geminiClientInstance;
 }
 
 function getBaseUrl(req: express.Request) {
@@ -4549,18 +4579,176 @@ app.get("/api/youtube/search", async (req, res) => {
   }
 });
 
+async function fetchYouTubeMusicNativeLyrics(videoId: string): Promise<{ plainLyrics?: string; source: string } | null> {
+  if (!videoId) return null;
+  const cleanVid = videoId.split("_")[0];
+  const cacheKey = `ytm_native_lyrics:${cleanVid}`;
+  const cached = getFromCache<any>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    // Step 1: Call YouTube Music /next endpoint to find the Lyrics tab & browseId
+    const nextRes = await fetch("https://music.youtube.com/youtubei/v1/next", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "X-Origin": "https://music.youtube.com",
+        Referer: "https://music.youtube.com/",
+      },
+      body: JSON.stringify({
+        context: {
+          client: {
+            clientName: "WEB_REMIX",
+            clientVersion: "1.20240101.01.00",
+            hl: "en",
+            gl: "US",
+          },
+        },
+        videoId: cleanVid,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (!nextRes.ok) return null;
+    const nextData = await nextRes.json();
+
+    let lyricsBrowseId: string | null = null;
+    const tabs = nextData.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs;
+    if (Array.isArray(tabs)) {
+      for (const tab of tabs) {
+        const tr = tab.tabRenderer;
+        if (!tr) continue;
+        const tabTitle = tr.title?.runs?.[0]?.text || tr.title || "";
+        const browseId = tr.endpoint?.browseEndpoint?.browseId;
+        if (browseId && (browseId.startsWith("MPLYt") || /lyrics/i.test(tabTitle))) {
+          if (!tr.unselectable) {
+            lyricsBrowseId = browseId;
+            break;
+          }
+        }
+      }
+    }
+
+    // Fallback: regex search in nextData for MPLYt_ browseId
+    if (!lyricsBrowseId) {
+      const match = JSON.stringify(nextData).match(/"browseId"\s*:\s*"(MPLYt_[a-zA-Z0-9_-]+)"/);
+      if (match) {
+        lyricsBrowseId = match[1];
+      }
+    }
+
+    if (!lyricsBrowseId) return null;
+
+    // Step 2: Fetch native lyrics from YouTube Music browse endpoint
+    const browseRes = await fetch("https://music.youtube.com/youtubei/v1/browse", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "X-Origin": "https://music.youtube.com",
+        Referer: "https://music.youtube.com/",
+      },
+      body: JSON.stringify({
+        context: {
+          client: {
+            clientName: "WEB_REMIX",
+            clientVersion: "1.20240101.01.00",
+            hl: "en",
+            gl: "US",
+          },
+        },
+        browseId: lyricsBrowseId,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (!browseRes.ok) return null;
+    const browseData = await browseRes.json();
+
+    let lyricsText = "";
+    const sectionList = browseData.contents?.sectionListRenderer?.contents;
+    if (Array.isArray(sectionList)) {
+      for (const section of sectionList) {
+        const renderer = section.musicLyricsRenderer || section.musicDescriptionShelfRenderer;
+        if (renderer) {
+          if (renderer.description?.runs) {
+            lyricsText = renderer.description.runs.map((r: any) => r.text || "").join("");
+          } else if (renderer.description?.simpleText) {
+            lyricsText = renderer.description.simpleText;
+          }
+          break;
+        }
+      }
+    }
+
+    if (!lyricsText) {
+      // Universal finder for description runs
+      const findLyrics = (obj: any, d = 0): string | null => {
+        if (!obj || typeof obj !== "object" || d > 20) return null;
+        if (obj.musicLyricsRenderer || obj.musicDescriptionShelfRenderer) {
+          const r = obj.musicLyricsRenderer || obj.musicDescriptionShelfRenderer;
+          if (r.description?.runs) return r.description.runs.map((x: any) => x.text || "").join("");
+          if (r.description?.simpleText) return r.description.simpleText;
+        }
+        for (const k of Object.keys(obj)) {
+          const found = findLyrics(obj[k], d + 1);
+          if (found) return found;
+        }
+        return null;
+      };
+      lyricsText = findLyrics(browseData) || "";
+    }
+
+    if (lyricsText && lyricsText.trim()) {
+      const payload = {
+        plainLyrics: lyricsText.trim(),
+        source: "youtube_music",
+      };
+      setInCache(cacheKey, payload);
+      return payload;
+    }
+  } catch (err) {
+    console.warn(`YouTube Music native lyrics fetch error for ${cleanVid}:`, err);
+  }
+
+  return null;
+}
+
+app.get(["/api/youtube/ytmusic-lyrics", "/api/lyrics/ytmusic"], async (req, res) => {
+  const videoId = (req.query.videoId as string) || "";
+  if (!videoId) {
+    return res.status(400).json({ error: "Missing videoId parameter" });
+  }
+
+  const ytmLyrics = await fetchYouTubeMusicNativeLyrics(videoId);
+  if (ytmLyrics) {
+    return res.json({
+      plainLyrics: ytmLyrics.plainLyrics,
+      lyricsRaw: ytmLyrics.plainLyrics,
+      isSynced: false,
+      source: "youtube_music",
+    });
+  }
+
+  return res.json({ lyricsRaw: "", isSynced: false, source: "none" });
+});
+
 app.get("/api/youtube/lyrics", async (req, res) => {
   const title = (req.query.title as string) || "Song";
   const artist = (req.query.artist as string) || "Artist";
   const duration = req.query.duration ? parseInt(req.query.duration as string, 10) : undefined;
+  const videoId = (req.query.videoId as string) || "";
 
-  const cacheKey = `lyrics:${title}:${artist}`;
+  const cacheKey = `lyrics:${title}:${artist}:${videoId}`;
   const cached = getFromCache<any>(cacheKey);
   if (cached) {
     return res.json(cached);
   }
 
-  // 1. Fetch from LRCLIB public REST API
+  let lrcPlainFallback: string | undefined = undefined;
+
+  // Step 1: Query LRCLIB public REST API for synced LRC lyrics
   try {
     const cleanTitle = title
       .replace(/\s*[\(\[]\s*(official\s*(music\s*)?(video|audio|lyric\s*video|hd|4k|stream)?|hd|4k|remastered|lyric\s*video|audio|visualizer)\s*[\)\]]/gi, "")
@@ -4582,16 +4770,19 @@ app.get("/api/youtube/lyrics", async (req, res) => {
 
     if (lrcRes.ok) {
       const data = await lrcRes.json();
-      if (data.syncedLyrics || data.plainLyrics) {
+      if (data.syncedLyrics) {
         const payload = {
           syncedLyrics: data.syncedLyrics,
           plainLyrics: data.plainLyrics,
-          lyricsRaw: data.syncedLyrics || data.plainLyrics,
-          isSynced: Boolean(data.syncedLyrics),
+          lyricsRaw: data.syncedLyrics,
+          isSynced: true,
           source: "lrclib",
         };
         setInCache(cacheKey, payload);
         return res.json(payload);
+      }
+      if (data.plainLyrics) {
+        lrcPlainFallback = data.plainLyrics;
       }
     }
 
@@ -4603,40 +4794,63 @@ app.get("/api/youtube/lyrics", async (req, res) => {
     if (searchRes.ok) {
       const list = await searchRes.json();
       if (Array.isArray(list) && list.length > 0) {
-        const match = list.find((it) => it.syncedLyrics) || list.find((it) => it.plainLyrics);
-        if (match) {
+        const syncedMatch = list.find((it) => it.syncedLyrics && it.syncedLyrics.trim().length > 0);
+        if (syncedMatch) {
           const payload = {
-            syncedLyrics: match.syncedLyrics,
-            plainLyrics: match.plainLyrics,
-            lyricsRaw: match.syncedLyrics || match.plainLyrics,
-            isSynced: Boolean(match.syncedLyrics),
+            syncedLyrics: syncedMatch.syncedLyrics,
+            plainLyrics: syncedMatch.plainLyrics,
+            lyricsRaw: syncedMatch.syncedLyrics,
+            isSynced: true,
             source: "lrclib",
           };
           setInCache(cacheKey, payload);
           return res.json(payload);
         }
+        const plainMatch = list.find((it) => it.plainLyrics && it.plainLyrics.trim().length > 0);
+        if (plainMatch && !lrcPlainFallback) {
+          lrcPlainFallback = plainMatch.plainLyrics;
+        }
       }
     }
   } catch (err) {
-    console.warn("LRCLIB server fetch error:", err);
+    console.warn("LRCLIB server fetch notice:", err);
   }
 
-  // 2. Fallback to Gemini AI if available
-  const ai = getGeminiClient();
-  if (ai) {
+  // Step 2: YouTube Music Native Lyrics Fallback
+  let targetVid = videoId ? videoId.split("_")[0] : "";
+  if (!targetVid) {
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: `Generate real timed LRC format lyrics for the song "${title}" by "${artist}". Output ONLY valid LRC formatted lines with [mm:ss.xx] timestamps and lyric text.`
-      });
-      if (response.text) {
-        const payload = { lyricsRaw: response.text, syncedLyrics: response.text, isSynced: true, source: "gemini" };
-        setInCache(cacheKey, payload);
-        return res.json(payload);
+      const searchRes = await searchYouTubeMusic(`${artist} ${title}`);
+      if (searchRes && searchRes[0]?.youtubeVideoId) {
+        targetVid = searchRes[0].youtubeVideoId;
       }
-    } catch (e) {
-      console.warn("Gemini lyrics generation fallback:", e);
+    } catch {}
+  }
+
+  if (targetVid) {
+    const ytmLyrics = await fetchYouTubeMusicNativeLyrics(targetVid);
+    if (ytmLyrics && ytmLyrics.plainLyrics) {
+      const payload = {
+        plainLyrics: ytmLyrics.plainLyrics,
+        lyricsRaw: ytmLyrics.plainLyrics,
+        isSynced: false,
+        source: "youtube_music",
+      };
+      setInCache(cacheKey, payload);
+      return res.json(payload);
     }
+  }
+
+  // Step 3: Use LRCLIB plain text if available
+  if (lrcPlainFallback) {
+    const payload = {
+      plainLyrics: lrcPlainFallback,
+      lyricsRaw: lrcPlainFallback,
+      isSynced: false,
+      source: "lrclib",
+    };
+    setInCache(cacheKey, payload);
+    return res.json(payload);
   }
 
   return res.json({ lyricsRaw: "", isSynced: false, source: "none" });
