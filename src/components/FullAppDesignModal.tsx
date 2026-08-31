@@ -74,7 +74,7 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                   onClick={() => onSelectDesign(design.id)}
                   className={`rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer relative group ${
                     isSelected
-                      ? `bg-slate-900 border-cyan-400 ring-2 ring-cyan-400/50 shadow-2xl ${design.glowRing} scale-[1.01]`
+                      ? `bg-slate-900 border-cyan-400 ring-2 ring-cyan-400/50 shadow-2xl scale-[1.01]`
                       : `bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90`
                   }`}
                 >
@@ -110,11 +110,11 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                       </div>
 
                       {/* Mini Hero Banner */}
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${design.mockup.bannerGradient} border text-left`}>
-                        <div className="text-[10px] font-bold text-white truncate">{design.mockup.heroTitle}</div>
-                        <div className="text-[8px] text-slate-300 truncate">{design.mockup.heroSubtitle}</div>
+                      <div className={`p-2 rounded-lg bg-gradient-to-r ${(design as any).mockup?.bannerGradient || design.multiAccentGradient || "from-white/10 to-white/5"} border border-white/10 text-left`}>
+                        <div className="text-[10px] font-bold text-white truncate">{(design as any).mockup?.heroTitle || design.name}</div>
+                        <div className="text-[8px] text-slate-300 truncate">{(design as any).mockup?.heroSubtitle || design.subtitle}</div>
                         <div className="flex gap-1 mt-1.5">
-                          {design.mockup.chipLabels.slice(0, 2).map((chip, i) => (
+                          {((design as any).mockup?.chipLabels || design.features).slice(0, 2).map((chip: string, i: number) => (
                             <span key={i} className="text-[7px] px-1 py-0.2 rounded bg-black/40 text-white border border-white/10">
                               {chip}
                             </span>

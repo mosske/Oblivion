@@ -1,406 +1,484 @@
-import { MiniPlayerLayout, ThemePreset } from "../types";
+import { FullAppDesignId, ThemePreset, MiniPlayerLayout } from "../types";
 
-export type FullAppDesignId = 
-  | "designer"           // 1. Designer (Off-White Studio Canvas, Shadows, Gold Accents & Emerald Backdrop)
-  | "cyberpunk-neon"     // 2. Cyberpunk Neon Glass (Futuristic Obsidian & Electric Cyan/Magenta)
-  | "ytmusic-red"        // 3. YouTube Music Red (Authentic Edge-to-Edge Studio Dark)
-  | "dynamic-emerald"    // 4. Dynamic Island Emerald (Ultra-Minimalist Monolith & Jade Pulse)
-  | "audiophile-gold"    // 5. Studio Audiophile Gold (Warm Carbon, Vinyl Gold & VU Meter)
-  | "twilight-vaporwave"; // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Ambient Aura)
+export type { FullAppDesignId };
 
 export interface FullAppDesignConfig {
   id: FullAppDesignId;
-  num: string;
   name: string;
   subtitle: string;
   badge: string;
+  num: string;
+  themePreset: ThemePreset;
+  playerLayout: MiniPlayerLayout;
   description: string;
-  isLight: boolean;
-  accentColor: string;
-  accentBg: string;
-  accentText: string;
-  accentBorder: string;
-  glowRing: string;
-  progressGradient: string;
-  waveformGradient: string;
-  waveformGlow: string;
+  features: string[];
+  swatchColors: string[];
+  multiAccentGradient?: string;
+  isLight?: boolean;
+  isCandy?: boolean;
+  themeColorMeta?: string;
+
+  // Visual Styling Classes
   bgCanvas: string;
-  bgAtmosphere: string;
+  cardBg: string;
   headerBg: string;
   sidebarBg: string;
-  cardBg: string;
-  cardHover: string;
-  pillBg: string;
-  pillActive: string;
   bottomNavBg: string;
-  headingPrimary: string;
-  headingSecondary: string;
-  headingMuted: string;
+  borderSubtle: string;
+  borderStrong: string;
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
-  borderSubtle: string;
-  inputBg: string;
+  accentBg: string;
+  accentText: string;
+  accentBorder: string;
+  accentContrastText: string;
+
+  // Additional component compatibility styling
+  bannerGradient?: string;
+  cardHover?: string;
+  headingPrimary?: string;
+  headingSecondary?: string;
+  headingMuted?: string;
+  modalBg?: string;
+  pillBg?: string;
+  pillActive?: string;
+  inputBg?: string;
+  waveformGradient?: string;
+  progressGradient?: string;
+  glowRing?: string;
+  mockup?: {
+    bannerGradient: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    chipLabels: string[];
+    dockStyle?: string;
+  };
+
+  // Multi-Accent System
+  accentSecondaryBg?: string;
+  accentSecondaryText?: string;
+  accentTertiaryBg?: string;
+  accentTertiaryText?: string;
+
+  // Buttons & Controls
   btnPrimary: string;
   btnSecondary: string;
   navActive: string;
   navInactive: string;
-  modalBg: string;
-  bannerGradient: string;
-  playerLayout: MiniPlayerLayout;
-  themePreset: ThemePreset;
-  swatchColors: string[];
-  features: string[];
-  mockup: {
-    heroTitle: string;
-    heroSubtitle: string;
-    chipLabels: string[];
-    bannerGradient: string;
-    dockStyle: string;
-  };
+  trackRowHover: string;
 }
 
-export const FULL_APP_DESIGNS: Record<FullAppDesignId, FullAppDesignConfig> = {
-  "designer": {
+export const FULL_APP_DESIGNS: Record<string, FullAppDesignConfig> = {
+  designer: {
     id: "designer",
+    name: "Studio Ivory & Gold",
+    subtitle: "Warm Frosted Alabaster, Gold Accents & Emerald Backdrop",
+    badge: "DESIGNER DEFAULT",
     num: "01",
-    name: "Designer",
-    subtitle: "Off-White Studio, Warm Shadows & Gold Accents",
-    badge: "Designer Default",
-    description: "Atmospheric deep rich emerald and dark forest backdrop holding a pristine off-white & warm ivory studio canvas. Paired with soft multi-layer drop shadows, refined stone borders, warm ochre gold highlights, and an interactive waveform mini-player.",
-    isLight: true,
-    accentColor: "amber",
-    accentBg: "bg-[#c89b3c]",
-    accentText: "text-[#c89b3c]",
-    accentBorder: "border-[#c89b3c]/50",
-    glowRing: "ring-[#c89b3c]/40 shadow-[#c89b3c]/20",
-    progressGradient: "bg-gradient-to-r from-[#b88928] via-[#e5b85c] to-[#f5d78e]",
-    waveformGradient: "bg-gradient-to-t from-[#b88928] via-[#e5b85c] to-[#fef08a]",
-    waveformGlow: "shadow-[0_0_12px_rgba(200,155,60,0.45)]",
-    bgCanvas: "from-[#081e17] via-[#0e2c22] to-[#05130f] text-slate-100",
-    bgAtmosphere: "bg-[radial-gradient(ellipse_95%_95%_at_50%_-10%,rgba(16,185,129,0.22),rgba(5,150,105,0.12),rgba(6,22,17,0.96))]",
-    headerBg: "bg-[#fbfaf7]/95 border-[#e6e2d8] backdrop-blur-xl text-[#181816]",
-    sidebarBg: "bg-[#fbfaf7]/98 border-[#e6e2d8] text-[#181816]",
-    cardBg: "bg-white/95 border border-[#e6e2d8] hover:border-[#c89b3c]/60 shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#181816]",
-    cardHover: "hover:bg-white hover:shadow-[0_12px_30px_rgba(0,0,0,0.12)] hover:border-[#c89b3c] hover:scale-[1.01]",
-    pillBg: "bg-[#ede8dc] text-[#33302a] hover:text-[#181816] hover:bg-[#e2ddd1] border border-[#d8d2c4] font-semibold",
-    pillActive: "bg-[#c89b3c] text-white shadow-md shadow-[#c89b3c]/25 border border-[#c89b3c]",
-    bottomNavBg: "bg-[#fbfaf7]/95 border-[#e6e2d8] text-[#181816] backdrop-blur-2xl",
-    headingPrimary: "text-white sm:text-slate-100",
-    headingSecondary: "text-emerald-100/90",
-    headingMuted: "text-emerald-200/80",
-    textPrimary: "text-[#181816]",
-    textSecondary: "text-[#423f38]",
-    textMuted: "text-[#666258]",
-    borderSubtle: "border-[#e6e2d8]",
-    inputBg: "bg-[#f4f1ea] border border-[#d8d2c4] text-[#181816] placeholder-[#666258] focus:border-[#c89b3c]",
-    btnPrimary: "bg-[#c89b3c] hover:bg-[#d8a846] text-white shadow-md shadow-[#c89b3c]/25 font-bold",
-    btnSecondary: "bg-[#ede8dc] hover:bg-[#e2ddd1] text-[#181816] border border-[#d8d2c4] font-semibold shadow-sm",
-    navActive: "bg-[#ede8dc] text-[#181816] shadow-sm border border-[#d8d2c4] font-bold",
-    navInactive: "text-[#57534a] hover:text-[#181816] hover:bg-[#ede8dc] font-medium",
-    modalBg: "bg-[#fbfaf7] border border-[#e6e2d8] text-[#181816]",
-    bannerGradient: "from-[#13372c] via-[#0d271f] to-[#081914] border-[#c89b3c]/40 text-slate-100",
-    playerLayout: "designer-waveform",
     themePreset: "designer-ivory",
-    swatchColors: ["#13372c", "#fbfaf7", "#c89b3c", "#736f66"],
+    playerLayout: "designer-waveform",
+    description:
+      "A bespoke editorial aesthetic featuring warm frosted alabaster cards, deep obsidian-onyx typography, brushed gold accents, and an atmospheric deep emerald canvas.",
     features: [
-      "Signature deep rich emerald to dark forest atmospheric container",
-      "Pristine off-white & warm ivory cards with soft dimensional shadows",
-      "Warm ochre gold action buttons, active rings, and highlight accents",
-      "Floating ivory mini-player with interactive golden acoustic waveform"
+      "Frosted Alabaster glass cards & high-contrast onyx text",
+      "Brushed Gold accents with strict WCAG contrast pairing",
+      "Floating dock with responsive dual-side action buttons",
+      "Dual-line Romanized lyrics with synced indicator tags",
     ],
+    swatchColors: ["#051911", "#f8f6f0", "#c59b27", "#e5b85c"],
+    multiAccentGradient: "from-[#c59b27] to-[#e5b85c]",
+    isLight: true,
+    themeColorMeta: "#051911",
+
+    bgCanvas: "from-[#051911] via-[#082017] to-[#0a261b]",
+    cardBg: "bg-[#f8f6f0]/95 backdrop-blur-xl",
+    headerBg: "bg-[#f8f6f0]/90 backdrop-blur-xl",
+    sidebarBg: "bg-[#f8f6f0]/95 backdrop-blur-2xl",
+    bottomNavBg: "bg-[#f8f6f0]/95 backdrop-blur-2xl",
+    borderSubtle: "border-[#e6e2d8]",
+    borderStrong: "border-[#d8d2c4]",
+    textPrimary: "text-[#1a201c]",
+    textSecondary: "text-[#666258]",
+    textMuted: "text-[#8a857b]",
+    accentBg: "bg-[#c59b27]",
+    accentText: "text-[#c59b27]",
+    accentBorder: "border-[#c59b27]/40",
+    accentContrastText: "text-[#1a201c]",
+
+    headingPrimary: "text-[#f8f6f0]",
+    headingSecondary: "text-[#d8d2c4]",
+    headingMuted: "text-[#a39c8e]",
+    cardHover: "hover:bg-[#ede8dc]/80",
+    modalBg: "bg-[#f8f6f0]",
+    pillBg: "bg-black/5",
+    pillActive: "bg-[#c59b27] text-[#1a201c]",
+    inputBg: "bg-[#ebe7dc] text-[#1a201c] border-[#d8d2c4]",
+    glowRing: "shadow-[0_0_25px_rgba(197,155,39,0.35)]",
+    waveformGradient: "from-[#c59b27] to-[#e5b85c]",
+    progressGradient: "bg-gradient-to-r from-[#c59b27] to-[#e5b85c]",
+    bannerGradient: "from-[#c59b27]/20 via-[#e5b85c]/10 to-transparent",
     mockup: {
-      heroTitle: "Studio Audio Master",
-      heroSubtitle: "Curated soundscapes, voice models & lossless acoustics",
-      chipLabels: ["✨ Gold Accent", "🌊 Golden Wave", "🏛️ Studio Ivory"],
-      bannerGradient: "from-[#174335] via-[#103127] to-[#0a1e18] border-[#c89b3c]/30",
-      dockStyle: "Designer Floating Golden Waveform Deck"
-    }
+      bannerGradient: "from-[#c59b27] to-[#e5b85c]",
+      heroTitle: "Editorial Classical & Jazz",
+      heroSubtitle: "Curated Masterpieces",
+      chipLabels: ["Alabaster Studio", "Pure Master", "Hi-Res FLAC", "Editorial"],
+      dockStyle: "bg-[#f8f6f0]/95 border-[#e6e2d8] shadow-2xl",
+    },
+
+    accentSecondaryBg: "bg-[#e5b85c]",
+    accentSecondaryText: "text-[#e5b85c]",
+    accentTertiaryBg: "bg-[#fef08a]",
+    accentTertiaryText: "text-[#fef08a]",
+
+    btnPrimary: "bg-[#c59b27] hover:bg-[#b0881e] text-[#1a201c] font-bold shadow-md active:scale-95",
+    btnSecondary: "bg-[#ebe7dc] hover:bg-[#dfd9cb] text-[#1a201c] font-semibold border border-[#d8d2c4]",
+    navActive: "bg-[#1a201c] text-[#f8f6f0] shadow-md font-bold",
+    navInactive: "text-[#666258] hover:text-[#1a201c] hover:bg-[#ede8dc]",
+    trackRowHover: "hover:bg-[#ede8dc]/80",
   },
 
   "cyberpunk-neon": {
     id: "cyberpunk-neon",
-    num: "02",
     name: "Cyberpunk Neon Glass",
-    subtitle: "Futuristic Hologram & Radiant Cyan/Magenta",
-    badge: "Futuristic Glass",
-    description: "Deep obsidian canvas with neon cyan & fuchsia glow rings, frosted glass cards (backdrop-blur-xl), holographic audio tags, and an elevated floating glass pill mini-player.",
+    subtitle: "Electric Cyan, Fuchsia Magenta & Electric Purple",
+    badge: "NEON SYNTH",
+    num: "02",
+    themePreset: "cyberpunk",
+    playerLayout: "card-expanded",
+    description:
+      "High-tech futuristic dark obsidian mesh paired with neon cyan, radiant fuchsia magenta, and electric purple multi-accent gradients behind translucent frosted glass.",
+    features: [
+      "Multi-accent: Electric Cyan (#00f3ff) + Fuchsia Magenta (#ff007f)",
+      "Electric Purple (#7b2cbf) tertiary highlights & glow",
+      "Frosted Obsidian tinted-glass cards (blur-16px)",
+      "High-contrast dark obsidian active button text (#050814)",
+    ],
+    swatchColors: ["#0a0d1a", "#00f3ff", "#ff007f", "#7b2cbf"],
+    multiAccentGradient: "from-[#00f3ff] via-[#ff007f] to-[#7b2cbf]",
     isLight: false,
-    accentColor: "cyan",
-    accentBg: "bg-cyan-500",
-    accentText: "text-cyan-400",
-    accentBorder: "border-cyan-500/40",
-    glowRing: "ring-cyan-500/30 shadow-cyan-500/20",
-    progressGradient: "bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-pink-500",
-    waveformGradient: "bg-gradient-to-t from-cyan-500 via-fuchsia-500 to-pink-400",
-    waveformGlow: "shadow-[0_0_15px_rgba(6,182,212,0.6)]",
-    bgCanvas: "from-slate-950 via-slate-900 to-slate-950 text-slate-100",
-    bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(6,182,212,0.15),rgba(255,255,255,0))]",
-    headerBg: "bg-slate-950/90 border-slate-800/80 backdrop-blur-xl text-white",
-    sidebarBg: "bg-slate-950/90 border-slate-800/70 backdrop-blur-2xl text-slate-200",
-    cardBg: "bg-slate-900/60 border border-slate-800/80 hover:border-cyan-500/50 shadow-lg text-slate-100",
-    cardHover: "hover:bg-slate-900/90 hover:shadow-cyan-500/10 hover:scale-[1.01]",
-    pillBg: "bg-slate-800/80 text-cyan-300 border border-cyan-500/30",
-    pillActive: "bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20 font-bold",
-    bottomNavBg: "bg-slate-950/95 border-slate-800/80 backdrop-blur-2xl text-slate-200",
-    headingPrimary: "text-white",
-    headingSecondary: "text-cyan-100",
-    headingMuted: "text-slate-300",
+    themeColorMeta: "#0a0d1a",
+
+    bgCanvas: "from-[#0a0d1a] via-[#12092b] to-[#05030a]",
+    cardBg: "bg-[#0a0d1a]/75 backdrop-blur-xl",
+    headerBg: "bg-[#0a0d1a]/85 backdrop-blur-xl",
+    sidebarBg: "bg-[#0a0d1a]/90 backdrop-blur-2xl",
+    bottomNavBg: "bg-[#0a0d1a]/90 backdrop-blur-2xl",
+    borderSubtle: "border-[#00f3ff]/25",
+    borderStrong: "border-[#00f3ff]/40",
     textPrimary: "text-white",
     textSecondary: "text-slate-300",
     textMuted: "text-slate-400",
-    borderSubtle: "border-slate-800/80",
-    inputBg: "bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 focus:border-cyan-500",
-    btnPrimary: "bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-400/25 font-bold",
-    btnSecondary: "bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold",
-    navActive: "bg-slate-800/90 text-white shadow-md border border-slate-700/60 font-semibold",
-    navInactive: "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60",
-    modalBg: "bg-slate-900 border border-slate-800 text-slate-200",
-    bannerGradient: "from-violet-950 via-indigo-900 to-cyan-950 border-cyan-500/30 text-white",
-    playerLayout: "floating-dock",
-    themePreset: "oblivion-dark",
-    swatchColors: ["#030712", "#06b6d4", "#ec4899", "#6366f1"],
-    features: [
-      "Floating frosted glass dock with neon cyan accents",
-      "Obsidian dark mode with ambient radial cyan aura",
-      "Cyberpunk pill navigation and futuristic badges",
-      "High-contrast text hierarchy for night listening"
-    ],
+    accentBg: "bg-[#00f3ff]",
+    accentText: "text-[#00f3ff]",
+    accentBorder: "border-[#00f3ff]/40",
+    accentContrastText: "text-[#050814]",
+
+    headingPrimary: "text-white",
+    headingSecondary: "text-slate-300",
+    headingMuted: "text-slate-400",
+    cardHover: "hover:bg-white/10",
+    modalBg: "bg-[#0a0d1a]",
+    pillBg: "bg-white/10",
+    pillActive: "bg-[#00f3ff] text-[#050814]",
+    inputBg: "bg-[#12092b]/80 text-white border-[#00f3ff]/30",
+    glowRing: "shadow-[0_0_30px_rgba(0,243,255,0.4)]",
+    waveformGradient: "from-[#00f3ff] via-[#ff007f] to-[#7b2cbf]",
+    progressGradient: "bg-gradient-to-r from-[#00f3ff] via-[#ff007f] to-[#7b2cbf]",
+    bannerGradient: "from-[#00f3ff]/25 via-[#ff007f]/20 to-transparent",
     mockup: {
-      heroTitle: "Good evening to Oblivion",
-      heroSubtitle: "Real-time YouTube streaming, lyrics & playlist sync",
-      chipLabels: ["⚡ Cyberpunk", "🎛️ Neon Glow", "💎 Floating Pill"],
-      bannerGradient: "from-violet-950 via-indigo-900 to-cyan-950 border-cyan-500/30",
-      dockStyle: "Floating Glass Pill Player"
-    }
+      bannerGradient: "from-[#00f3ff] via-[#ff007f] to-[#7b2cbf]",
+      heroTitle: "Cyber Synth & Darksynth",
+      heroSubtitle: "Neon Future Overdrive",
+      chipLabels: ["Cyberpunk", "Synthwave", "Darksynth", "Glitch"],
+      dockStyle: "bg-[#0a0d1a]/90 border-[#00f3ff]/40 shadow-[0_0_30px_rgba(0,243,255,0.3)]",
+    },
+
+    accentSecondaryBg: "bg-[#ff007f]",
+    accentSecondaryText: "text-[#ff007f]",
+    accentTertiaryBg: "bg-[#7b2cbf]",
+    accentTertiaryText: "text-[#7b2cbf]",
+
+    btnPrimary: "bg-gradient-to-r from-[#00f3ff] to-[#ff007f] hover:brightness-110 text-[#050814] font-extrabold shadow-lg shadow-[#00f3ff]/20 active:scale-95",
+    btnSecondary: "bg-[#16122e]/80 hover:bg-[#1f1940] text-[#00f3ff] border border-[#00f3ff]/30 font-semibold",
+    navActive: "bg-gradient-to-r from-[#00f3ff]/20 to-[#ff007f]/20 text-[#00f3ff] border border-[#00f3ff]/40 shadow-sm font-bold",
+    navInactive: "text-slate-400 hover:text-white hover:bg-white/5",
+    trackRowHover: "hover:bg-[#00f3ff]/10",
   },
 
-  "ytmusic-red": {
-    id: "ytmusic-red",
+  candyland: {
+    id: "candyland",
+    name: "Candyland Pastel",
+    subtitle: "Frosted Sugar-Glass, Bubblegum Pink & Sweet Berry Text",
+    badge: "PASTEL CANDY",
     num: "03",
-    name: "YouTube Music Studio Red",
-    subtitle: "Authentic Clean Edge-to-Edge & Crimson Red",
-    badge: "Official YT Music",
-    description: "The classic YouTube Music interface: pitch black and dark charcoal (#0f0f0f & #212121), signature YouTube red highlights, edge-to-edge flush bottom dock with top red micro-scrubber, and YouTube-style mood pill filters.",
-    isLight: false,
-    accentColor: "red",
-    accentBg: "bg-red-600",
-    accentText: "text-red-500",
-    accentBorder: "border-red-500/40",
-    glowRing: "ring-red-500/30 shadow-red-600/20",
-    progressGradient: "bg-gradient-to-r from-red-600 via-rose-500 to-amber-500",
-    waveformGradient: "bg-gradient-to-t from-red-700 via-rose-500 to-amber-400",
-    waveformGlow: "shadow-[0_0_14px_rgba(220,38,38,0.55)]",
-    bgCanvas: "from-[#0f0f0f] via-[#141414] to-[#0f0f0f] text-neutral-100",
-    bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(220,38,38,0.12),rgba(255,255,255,0))]",
-    headerBg: "bg-[#0f0f0f]/95 border-neutral-800 backdrop-blur-xl text-white",
-    sidebarBg: "bg-[#0a0a0a] border-neutral-800/80 text-neutral-200",
-    cardBg: "bg-[#181818] border border-neutral-800 hover:border-red-500/50 shadow-md text-neutral-100",
-    cardHover: "hover:bg-[#202020] hover:shadow-red-500/10 hover:scale-[1.01]",
-    pillBg: "bg-[#272727] text-white hover:bg-[#383838] border border-neutral-700",
-    pillActive: "bg-red-600 text-white shadow-md shadow-red-600/20 font-bold",
-    bottomNavBg: "bg-[#121212] border-neutral-800 text-neutral-200",
-    headingPrimary: "text-white",
-    headingSecondary: "text-neutral-100",
-    headingMuted: "text-neutral-300",
-    textPrimary: "text-white",
-    textSecondary: "text-neutral-300",
-    textMuted: "text-neutral-400",
-    borderSubtle: "border-neutral-800",
-    inputBg: "bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 focus:border-red-500",
-    btnPrimary: "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/25 font-bold",
-    btnSecondary: "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 font-semibold",
-    navActive: "bg-neutral-800 text-white shadow-md border border-neutral-700 font-semibold",
-    navInactive: "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900",
-    modalBg: "bg-[#141414] border border-neutral-800 text-neutral-200",
-    bannerGradient: "from-red-950 via-neutral-900 to-black border-red-500/30 text-white",
-    playerLayout: "ytmusic-classic",
-    themePreset: "oled-black",
-    swatchColors: ["#0f0f0f", "#212121", "#ff0033", "#ffffff"],
+    themePreset: "candyland-pastel",
+    playerLayout: "floating-dock",
+    description:
+      "High-energy light mode aesthetic with dynamic multi-stop pastel mesh gradients, frosted white sugar-glass, sharp dark ocean blue & deep berry plum typography, subtle candy cane stripes, and playful candy icons.",
     features: [
-      "Authentic edge-to-edge flush bottom player (#212121)",
-      "Top hairline micro-scrubber in signature YouTube red",
-      "YouTube Music category pill chips (Workout, Relax, Focus)",
-      "Studio dark grey cards with rounded-xl contours"
+      "Dynamic candy cane striped pastel mesh canvas (#ffd1dc / #ffe4e1 / #e0bbff / #d4f0f0)",
+      "Translucent frosted white sugar-glass cards with blur-16px",
+      "High-contrast Dark Ocean Blue (#1e4a7a) & Deep Berry Plum (#3b1235) text for crisp WCAG AA legibility",
+      "Candy emojis & icons (🍭 Original, 🍬 Romanized, 🧁 Dual-Line, 🍩 Autoscroll)",
     ],
+    swatchColors: ["#ffd1dc", "#ff70a6", "#a3c4f3", "#ffd166"],
+    multiAccentGradient: "from-[#ff70a6] via-[#a3c4f3] to-[#ffd166]",
+    isLight: true,
+    isCandy: true,
+    themeColorMeta: "#ffd1dc",
+
+    bgCanvas: "candyland-canvas-bg",
+    cardBg: "bg-white/75 backdrop-blur-xl",
+    headerBg: "bg-white/80 backdrop-blur-xl",
+    sidebarBg: "bg-white/85 backdrop-blur-2xl",
+    bottomNavBg: "bg-white/90 backdrop-blur-2xl",
+    borderSubtle: "border-white/80",
+    borderStrong: "border-white/95",
+    textPrimary: "text-[#3b1235]",
+    textSecondary: "text-[#6b2d5f]",
+    textMuted: "text-[#8d4780]",
+    accentBg: "bg-[#ff70a6]",
+    accentText: "text-[#ff70a6]",
+    accentBorder: "border-[#ff70a6]/40",
+    accentContrastText: "text-white",
+
+    headingPrimary: "text-[#1e4a7a]",
+    headingSecondary: "text-[#3b1235]",
+    headingMuted: "text-[#5e356d]",
+    cardHover: "hover:bg-white/90",
+    modalBg: "bg-white/95 backdrop-blur-2xl",
+    pillBg: "bg-white/60 backdrop-blur-md",
+    pillActive: "bg-[#ff70a6] text-white font-bold",
+    inputBg: "bg-white/90 text-[#3b1235] border-pink-200",
+    waveformGradient: "from-[#ff70a6] via-[#a3c4f3] to-[#ffd166]",
+    progressGradient: "bg-gradient-to-r from-[#ff70a6] via-[#a3c4f3] to-[#ffd166]",
+    glowRing: "shadow-[0_0_25px_rgba(255,112,166,0.35)]",
+    bannerGradient: "from-[#ff70a6]/25 via-[#a3c4f3]/20 to-[#ffd166]/20",
     mockup: {
-      heroTitle: "Music for Your Soul",
-      heroSubtitle: "Trending charts, live mixes & subscribed artists",
-      chipLabels: ["🔴 YT Red", "📱 Edge-to-Edge", "⚡ Micro Scrubber"],
-      bannerGradient: "from-red-950 via-neutral-900 to-black border-red-500/30",
-      dockStyle: "Edge-to-Edge Flush Dock"
-    }
+      bannerGradient: "from-[#ff70a6] via-[#a3c4f3] to-[#ffd166]",
+      heroTitle: "Candyland Sweet Sessions",
+      heroSubtitle: "Frosted Sugar-Glass & Candy Pop",
+      chipLabels: ["🍭 Pop Hits", "🍬 Lo-Fi Sugar", "🧁 Chillout", "🍩 Electro Sweets"],
+      dockStyle: "bg-white/80 border-white/90 shadow-xl",
+    },
+
+    accentSecondaryBg: "bg-[#a3c4f3]",
+    accentSecondaryText: "text-[#4a6fa5]",
+    accentTertiaryBg: "bg-[#ffd166]",
+    accentTertiaryText: "text-[#b08800]",
+
+    btnPrimary: "bg-gradient-to-r from-[#ff70a6] to-[#ff9ebb] hover:brightness-105 text-white font-extrabold shadow-md shadow-[#ff70a6]/30 active:scale-95",
+    btnSecondary: "bg-white/80 hover:bg-white text-[#3b1235] border border-pink-200/80 font-semibold shadow-xs",
+    navActive: "bg-[#ff70a6] text-white shadow-md font-bold",
+    navInactive: "text-[#6b2d5f] hover:text-[#3b1235] hover:bg-white/50",
+    trackRowHover: "hover:bg-white/60",
   },
 
   "dynamic-emerald": {
     id: "dynamic-emerald",
-    num: "04",
     name: "Dynamic Island Emerald",
-    subtitle: "Ultra-Minimalist Monolith & Jade Equalizer",
-    badge: "Ultra Minimal",
-    description: "Pure AMOLED midnight canvas (#000000) with luminous emerald & mint accents, maximum negative space, minimal pill-shaped Dynamic Island player dock with live pulsating equalizer waves.",
-    isLight: false,
-    accentColor: "emerald",
-    accentBg: "bg-emerald-500",
-    accentText: "text-emerald-400",
-    accentBorder: "border-emerald-500/40",
-    glowRing: "ring-emerald-500/30 shadow-emerald-500/20",
-    progressGradient: "bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-300",
-    waveformGradient: "bg-gradient-to-t from-emerald-600 via-teal-400 to-cyan-300",
-    waveformGlow: "shadow-[0_0_14px_rgba(16,185,129,0.55)]",
-    bgCanvas: "from-black via-zinc-950 to-black text-zinc-100",
-    bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.12),rgba(255,255,255,0))]",
-    headerBg: "bg-black/90 border-zinc-800/80 backdrop-blur-xl text-white",
-    sidebarBg: "bg-black border-zinc-800/70 text-zinc-200",
-    cardBg: "bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/50 shadow-md text-zinc-100",
-    cardHover: "hover:bg-zinc-900 hover:shadow-emerald-500/10 hover:scale-[1.01]",
-    pillBg: "bg-zinc-800/80 text-emerald-300 border border-emerald-500/30",
-    pillActive: "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-bold",
-    bottomNavBg: "bg-black/95 border-zinc-800/80 backdrop-blur-2xl text-zinc-200",
-    headingPrimary: "text-white",
-    headingSecondary: "text-emerald-100",
-    headingMuted: "text-zinc-300",
-    textPrimary: "text-zinc-50",
-    textSecondary: "text-zinc-300",
-    textMuted: "text-zinc-400",
-    borderSubtle: "border-zinc-800/80",
-    inputBg: "bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-emerald-500",
-    btnPrimary: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 font-bold",
-    btnSecondary: "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 font-semibold",
-    navActive: "bg-zinc-800 text-white shadow-md border border-zinc-700 font-semibold",
-    navInactive: "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900",
-    modalBg: "bg-zinc-950 border border-zinc-800 text-zinc-200",
-    bannerGradient: "from-emerald-950 via-zinc-950 to-black border-emerald-500/30 text-white",
-    playerLayout: "minimal-capsule",
+    subtitle: "Luminous Mint, Electric Teal & Deep Sea Aqua",
+    badge: "MONOLITH JADE",
+    num: "04",
     themePreset: "emerald-synth",
-    swatchColors: ["#000000", "#09090b", "#10b981", "#6ee7b7"],
+    playerLayout: "minimal-capsule",
+    description:
+      "Sleek architectural deep forest canvas with luminous mint and electric teal multi-accents, deep sea aqua depth, and frosted deep emerald glass.",
     features: [
-      "Dynamic Island compact pill mini-player dock",
-      "Animated green equalizer audio wave visualization",
-      "Pure AMOLED black with battery-saving efficiency",
-      "Clean monochromatic typography and minimal dividers"
+      "Multi-accent: Luminous Mint (#00f5a0) + Electric Teal (#00d9f5)",
+      "Deep Sea Aqua (#05668d) tertiary depth & ambient reflections",
+      "Frosted Deep Emerald tinted-glass (blur-16px)",
+      "High-contrast dark obsidian active button text (#021a12)",
     ],
+    swatchColors: ["#021a12", "#00f5a0", "#00d9f5", "#05668d"],
+    multiAccentGradient: "from-[#00f5a0] to-[#00d9f5]",
+    isLight: false,
+    themeColorMeta: "#021a12",
+
+    bgCanvas: "from-[#021a12] via-[#072419] to-[#010e08]",
+    cardBg: "bg-[#021a12]/75 backdrop-blur-xl",
+    headerBg: "bg-[#021a12]/80 backdrop-blur-xl",
+    sidebarBg: "bg-[#021a12]/90 backdrop-blur-2xl",
+    bottomNavBg: "bg-[#021a12]/90 backdrop-blur-2xl",
+    borderSubtle: "border-[#00f5a0]/25",
+    borderStrong: "border-[#00f5a0]/40",
+    textPrimary: "text-[#d0fbe9]",
+    textSecondary: "text-[#6ee7b7]",
+    textMuted: "text-emerald-400/70",
+    accentBg: "bg-[#00f5a0]",
+    accentText: "text-[#00f5a0]",
+    accentBorder: "border-[#00f5a0]/40",
+    accentContrastText: "text-[#021a12]",
+
+    headingPrimary: "text-[#d0fbe9]",
+    headingSecondary: "text-[#a7f3d0]",
+    headingMuted: "text-emerald-400/70",
+    cardHover: "hover:bg-emerald-950/60",
+    modalBg: "bg-[#021a12]",
+    pillBg: "bg-emerald-950/40",
+    pillActive: "bg-[#00f5a0] text-[#021a12]",
+    inputBg: "bg-[#042f20]/80 text-[#d0fbe9] border-[#00f5a0]/30",
+    glowRing: "shadow-[0_0_25px_rgba(0,245,160,0.35)]",
+    waveformGradient: "from-[#00f5a0] to-[#00d9f5]",
+    progressGradient: "bg-gradient-to-r from-[#00f5a0] to-[#00d9f5]",
+    bannerGradient: "from-[#00f5a0]/20 via-[#00d9f5]/15 to-transparent",
     mockup: {
-      heroTitle: "Pure Sound & Atmosphere",
-      heroSubtitle: "Distraction-free high fidelity acoustic streaming",
-      chipLabels: ["🟢 Jade Monolith", "🏝️ Dynamic Island", "〰️ Waveform"],
-      bannerGradient: "from-emerald-950 via-zinc-950 to-black border-emerald-500/30",
-      dockStyle: "Dynamic Island Minimal Capsule"
-    }
+      bannerGradient: "from-[#00f5a0] to-[#00d9f5]",
+      heroTitle: "Organic Lo-Fi & Chillwave",
+      heroSubtitle: "Luminous Emerald Resonance",
+      chipLabels: ["Emerald Waves", "Deep Ambient", "Bioluminescence", "Teal Night"],
+      dockStyle: "bg-[#021a12]/90 border-[#00f5a0]/40 shadow-xl",
+    },
+
+    accentSecondaryBg: "bg-[#00d9f5]",
+    accentSecondaryText: "text-[#00d9f5]",
+    accentTertiaryBg: "bg-[#05668d]",
+    accentTertiaryText: "text-[#05668d]",
+
+    btnPrimary: "bg-gradient-to-r from-[#00f5a0] to-[#00d9f5] hover:brightness-110 text-[#021a12] font-extrabold shadow-lg shadow-[#00f5a0]/20 active:scale-95",
+    btnSecondary: "bg-[#042f20]/80 hover:bg-[#07402c] text-[#00f5a0] border border-[#00f5a0]/30 font-semibold",
+    navActive: "bg-gradient-to-r from-[#00f5a0]/20 to-[#00d9f5]/20 text-[#00f5a0] border border-[#00f5a0]/40 font-bold",
+    navInactive: "text-emerald-300/70 hover:text-[#d0fbe9] hover:bg-emerald-950/40",
+    trackRowHover: "hover:bg-[#00f5a0]/10",
   },
 
   "audiophile-gold": {
     id: "audiophile-gold",
+    name: "Studio Audiophile Gold",
+    subtitle: "Solar Gold, Warm Copper & Antique Brass",
+    badge: "CARBON ANALOG",
     num: "05",
-    name: "Studio Audiophile Deck",
-    subtitle: "Warm Carbon, Golden Brass & Hi-Res DJ Deck",
-    badge: "Audiophile / DJ",
-    description: "Rich dark carbon mahogany canvas with warm amber & gold accents, Hi-Res lossless tags, vinyl record disc spinning visualizers, analog studio VU meters, and an expanded holographic DJ deck player.",
-    isLight: false,
-    accentColor: "amber",
-    accentBg: "bg-amber-500",
-    accentText: "text-amber-400",
-    accentBorder: "border-amber-500/40",
-    glowRing: "ring-amber-500/30 shadow-amber-500/20",
-    progressGradient: "bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-200",
-    waveformGradient: "bg-gradient-to-t from-amber-700 via-amber-400 to-yellow-200",
-    waveformGlow: "shadow-[0_0_14px_rgba(245,158,11,0.55)]",
-    bgCanvas: "from-[#14100c] via-[#1c1612] to-[#14100c] text-amber-50",
-    bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,158,11,0.12),rgba(255,255,255,0))]",
-    headerBg: "bg-[#14100c]/95 border-amber-900/40 backdrop-blur-xl text-amber-50",
-    sidebarBg: "bg-[#0f0c09] border-amber-900/30 text-amber-100",
-    cardBg: "bg-[#221c17] border border-amber-900/40 hover:border-amber-500/50 shadow-lg text-amber-50",
-    cardHover: "hover:bg-[#2c241e] hover:shadow-amber-500/10 hover:scale-[1.01]",
-    pillBg: "bg-amber-950/60 text-amber-300 border border-amber-500/40",
-    pillActive: "bg-amber-500 text-stone-950 shadow-md shadow-amber-500/20 font-bold",
-    bottomNavBg: "bg-[#14100c]/95 border-amber-900/50 backdrop-blur-2xl text-amber-100",
-    headingPrimary: "text-amber-50",
-    headingSecondary: "text-amber-100",
-    headingMuted: "text-amber-200/80",
-    textPrimary: "text-amber-50",
-    textSecondary: "text-amber-200/80",
-    textMuted: "text-amber-300/60",
-    borderSubtle: "border-amber-900/40",
-    inputBg: "bg-[#1c1612] border border-amber-900/50 text-amber-100 placeholder-amber-400/40 focus:border-amber-500",
-    btnPrimary: "bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-lg shadow-amber-500/25 font-bold",
-    btnSecondary: "bg-[#221c17] hover:bg-[#2c241e] text-amber-100 border border-amber-900/50 font-semibold",
-    navActive: "bg-amber-950/80 text-amber-200 shadow-md border border-amber-700/50 font-semibold",
-    navInactive: "text-amber-300/70 hover:text-amber-100 hover:bg-amber-950/40",
-    modalBg: "bg-[#18130e] border border-amber-900/50 text-amber-100",
-    bannerGradient: "from-amber-950 via-stone-900 to-black border-amber-500/30 text-amber-50",
-    playerLayout: "card-expanded",
-    themePreset: "sunset-horizon",
-    swatchColors: ["#1c1917", "#78350f", "#f59e0b", "#fef3c7"],
+    themePreset: "rose-gold",
+    playerLayout: "split-slider",
+    description:
+      "Vintage high-end analog audio deck aesthetic featuring warm carbon vinyl glass, solar gold with warm copper multi-accents, and antique brass tertiary trims.",
     features: [
-      "Expanded Holographic Deck with live waveform scrubber",
-      "Hi-Res 24-bit Lossless Studio audio badge styling",
-      "Warm golden brass accents and vinyl turntable motif",
-      "High-density DJ controls with quick queue management"
+      "Multi-accent: Solar Gold (#f59e0b) + Warm Copper (#e65c00)",
+      "Antique Brass (#d4af37) tertiary trims and VU indicators",
+      "Frosted Warm Carbon Vinyl glass cards (blur-16px)",
+      "High-contrast dark walnut active button text (#170d06)",
     ],
+    swatchColors: ["#170d06", "#f59e0b", "#e65c00", "#d4af37"],
+    multiAccentGradient: "from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
+    isLight: false,
+    themeColorMeta: "#170d06",
+
+    bgCanvas: "from-[#170d06] via-[#261408] to-[#100804]",
+    cardBg: "bg-[#261408]/75 backdrop-blur-xl",
+    headerBg: "bg-[#261408]/80 backdrop-blur-xl",
+    sidebarBg: "bg-[#261408]/90 backdrop-blur-2xl",
+    bottomNavBg: "bg-[#261408]/90 backdrop-blur-2xl",
+    borderSubtle: "border-[#f59e0b]/30",
+    borderStrong: "border-[#f59e0b]/50",
+    textPrimary: "text-[#fef3c7]",
+    textSecondary: "text-[#fbbf24]",
+    textMuted: "text-amber-400/60",
+    accentBg: "bg-[#f59e0b]",
+    accentText: "text-[#f59e0b]",
+    accentBorder: "border-[#f59e0b]/40",
+    accentContrastText: "text-[#170d06]",
+
+    headingPrimary: "text-[#fef3c7]",
+    headingSecondary: "text-[#fbbf24]",
+    headingMuted: "text-amber-400/60",
+    cardHover: "hover:bg-amber-950/60",
+    modalBg: "bg-[#170d06]",
+    pillBg: "bg-amber-950/40",
+    pillActive: "bg-[#f59e0b] text-[#170d06]",
+    inputBg: "bg-[#381e0b]/80 text-[#fef3c7] border-[#f59e0b]/30",
+    glowRing: "shadow-[0_0_25px_rgba(245,158,11,0.35)]",
+    waveformGradient: "from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
+    progressGradient: "bg-gradient-to-r from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
+    bannerGradient: "from-[#f59e0b]/20 via-[#e65c00]/15 to-transparent",
     mockup: {
-      heroTitle: "Studio Master Audio 24-Bit",
-      heroSubtitle: "Lossless bit-perfect decoding & analog warmth",
-      chipLabels: ["🟡 Studio Gold", "🎛️ Hologram Deck", "📀 Hi-Res FLAC"],
-      bannerGradient: "from-amber-950 via-stone-900 to-black border-amber-500/30",
-      dockStyle: "Holographic Expanded Deck"
-    }
+      bannerGradient: "from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
+      heroTitle: "Analog Master Tape & Vinyl",
+      heroSubtitle: "Solar Gold & Warm Copper Acoustics",
+      chipLabels: ["Vacuum Tube", "DSD Master", "Direct Cut", "24-bit 192k"],
+      dockStyle: "bg-[#261408]/90 border-[#f59e0b]/40 shadow-2xl",
+    },
+
+    accentSecondaryBg: "bg-[#e65c00]",
+    accentSecondaryText: "text-[#e65c00]",
+    accentTertiaryBg: "bg-[#d4af37]",
+    accentTertiaryText: "text-[#d4af37]",
+
+    btnPrimary: "bg-gradient-to-r from-[#f59e0b] to-[#e65c00] hover:brightness-110 text-[#170d06] font-extrabold shadow-lg shadow-[#f59e0b]/20 active:scale-95",
+    btnSecondary: "bg-[#381e0b]/80 hover:bg-[#4a2810] text-[#f59e0b] border border-[#f59e0b]/30 font-semibold",
+    navActive: "bg-gradient-to-r from-[#f59e0b]/20 to-[#e65c00]/20 text-[#f59e0b] border border-[#f59e0b]/40 font-bold",
+    navInactive: "text-amber-300/70 hover:text-[#fef3c7] hover:bg-amber-950/40",
+    trackRowHover: "hover:bg-[#f59e0b]/10",
   },
 
   "twilight-vaporwave": {
     id: "twilight-vaporwave",
+    name: "Twilight Vaporwave",
+    subtitle: "Sunset Magenta, Neon Coral & Twilight Violet",
+    badge: "VAPOR RETRO",
     num: "06",
-    name: "Twilight Vaporwave Sunset",
-    subtitle: "Dreamy Purple Violet, Sunset Rose & Touch Gestures",
-    badge: "Dreamy Sunset",
-    description: "Lush sunset violet & midnight magenta gradient canvas, ultra-smooth frosted glassmorphism, soft glowing pill tabs, warm ambient lighting, fluid gesture cards, and a split-slider touch controller player with ±10s jump buttons.",
-    isLight: false,
-    accentColor: "purple",
-    accentBg: "bg-purple-600",
-    accentText: "text-purple-300",
-    accentBorder: "border-purple-500/40",
-    glowRing: "ring-purple-500/30 shadow-purple-500/20",
-    progressGradient: "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-400",
-    waveformGradient: "bg-gradient-to-t from-purple-600 via-fuchsia-500 to-pink-400",
-    waveformGlow: "shadow-[0_0_15px_rgba(168,85,247,0.55)]",
-    bgCanvas: "from-[#1e1035] via-[#160a29] to-[#0d051a] text-purple-100",
-    bgAtmosphere: "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(168,85,247,0.15),rgba(236,72,153,0.08))]",
-    headerBg: "bg-[#160a29]/90 border-purple-800/40 backdrop-blur-xl text-purple-50",
-    sidebarBg: "bg-[#110620]/90 border-purple-800/30 backdrop-blur-2xl text-purple-200",
-    cardBg: "bg-purple-950/40 border border-purple-800/40 hover:border-purple-400/50 shadow-xl text-purple-100",
-    cardHover: "hover:bg-purple-900/50 hover:shadow-purple-500/15 hover:scale-[1.01]",
-    pillBg: "bg-purple-900/50 text-purple-200 border border-purple-500/30",
-    pillActive: "bg-purple-600 text-white shadow-md shadow-purple-600/25 font-bold",
-    bottomNavBg: "bg-[#110620]/95 border-purple-900/50 backdrop-blur-2xl text-purple-200",
-    headingPrimary: "text-white",
-    headingSecondary: "text-purple-100",
-    headingMuted: "text-purple-200/80",
-    textPrimary: "text-purple-50",
-    textSecondary: "text-purple-200/80",
-    textMuted: "text-purple-300/60",
-    borderSubtle: "border-purple-800/40",
-    inputBg: "bg-purple-950/60 border border-purple-800/50 text-purple-100 placeholder-purple-400/40 focus:border-purple-500",
-    btnPrimary: "bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/25 font-bold",
-    btnSecondary: "bg-purple-950/80 hover:bg-purple-900/80 text-purple-200 border border-purple-800 font-semibold",
-    navActive: "bg-purple-900/70 text-white shadow-md border border-purple-700/50 font-semibold",
-    navInactive: "text-purple-300/70 hover:text-purple-100 hover:bg-purple-950/40",
-    modalBg: "bg-[#180b2a] border border-purple-800/50 text-purple-100",
-    bannerGradient: "from-fuchsia-950 via-purple-950 to-slate-950 border-purple-500/30 text-purple-50",
-    playerLayout: "split-slider",
-    themePreset: "cyberpunk",
-    swatchColors: ["#1e1035", "#701a75", "#a855f7", "#f43f5e"],
+    themePreset: "sunset-horizon",
+    playerLayout: "floating-dock",
+    description:
+      "Nostalgic sunset horizon aesthetic featuring sunset magenta, neon coral, and twilight violet multi-accent gradients behind translucent frosted rose glass.",
     features: [
-      "Split-Slider Gesture player with wide scrub and ±10s jumps",
-      "Dreamy violet-rose twilight ambient gradient backdrop",
-      "Soft glowing rounded-3xl cards with smooth micro-interactions",
-      "Vibrant music discovery cards with ambient gradient auras"
+      "Multi-accent: Sunset Magenta (#ff2a8d) + Neon Coral (#ff758c)",
+      "Twilight Violet (#8a2be2) tertiary depth & ambient reflections",
+      "Frosted Twilight Rose tinted-glass cards (blur-16px)",
+      "High-contrast crisp white active button text (#ffffff)",
     ],
+    swatchColors: ["#1e0b36", "#ff2a8d", "#ff758c", "#8a2be2"],
+    multiAccentGradient: "from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
+    isLight: false,
+    themeColorMeta: "#1e0b36",
+
+    bgCanvas: "from-[#1e0b36] via-[#4a1235] to-[#180826]",
+    cardBg: "bg-[#1e0b36]/65 backdrop-blur-xl",
+    headerBg: "bg-[#1e0b36]/80 backdrop-blur-xl",
+    sidebarBg: "bg-[#1e0b36]/90 backdrop-blur-2xl",
+    bottomNavBg: "bg-[#1e0b36]/90 backdrop-blur-2xl",
+    borderSubtle: "border-[#ff2a8d]/30",
+    borderStrong: "border-[#ff2a8d]/50",
+    textPrimary: "text-[#fdf4ff]",
+    textSecondary: "text-[#f0abfc]",
+    textMuted: "text-fuchsia-300/60",
+    accentBg: "bg-[#ff2a8d]",
+    accentText: "text-[#ff2a8d]",
+    accentBorder: "border-[#ff2a8d]/40",
+    accentContrastText: "text-white",
+
+    headingPrimary: "text-[#fdf4ff]",
+    headingSecondary: "text-[#f0abfc]",
+    headingMuted: "text-fuchsia-300/60",
+    cardHover: "hover:bg-fuchsia-950/60",
+    modalBg: "bg-[#1e0b36]",
+    pillBg: "bg-purple-950/40",
+    pillActive: "bg-[#ff2a8d] text-white",
+    inputBg: "bg-[#33114a]/80 text-[#fdf4ff] border-[#ff2a8d]/30",
+    glowRing: "shadow-[0_0_25px_rgba(255,42,141,0.35)]",
+    waveformGradient: "from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
+    progressGradient: "bg-gradient-to-r from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
+    bannerGradient: "from-[#ff2a8d]/25 via-[#ff758c]/20 to-transparent",
     mockup: {
-      heroTitle: "Sunset Dreams & Chill Beats",
-      heroSubtitle: "Immersive spatial acoustics and ambient mood mixes",
-      chipLabels: ["🟣 Sunset Purple", "🎛️ Split Gestures", "✨ Rose Glow"],
-      bannerGradient: "from-fuchsia-950 via-purple-950 to-slate-950 border-purple-500/30",
-      dockStyle: "Split-Slider Gesture Deck"
-    }
-  }
+      bannerGradient: "from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
+      heroTitle: "Sunset FM 1984 & Chill",
+      heroSubtitle: "Neon Horizon & Synth Chords",
+      chipLabels: ["Vaporwave", "Future Funk", "Retrowave", "Dream Pop"],
+      dockStyle: "bg-[#1e0b36]/90 border-[#ff2a8d]/40 shadow-[0_0_25px_rgba(255,42,141,0.3)]",
+    },
+
+    accentSecondaryBg: "bg-[#ff758c]",
+    accentSecondaryText: "text-[#ff758c]",
+    accentTertiaryBg: "bg-[#8a2be2]",
+    accentTertiaryText: "text-[#8a2be2]",
+
+    btnPrimary: "bg-gradient-to-r from-[#ff2a8d] to-[#ff758c] hover:brightness-110 text-white font-extrabold shadow-lg shadow-[#ff2a8d]/25 active:scale-95",
+    btnSecondary: "bg-[#33114a]/80 hover:bg-[#431761] text-[#ff758c] border border-[#ff2a8d]/30 font-semibold",
+    navActive: "bg-gradient-to-r from-[#ff2a8d]/20 to-[#ff758c]/20 text-[#ff2a8d] border border-[#ff2a8d]/40 font-bold",
+    navInactive: "text-fuchsia-300/70 hover:text-[#fdf4ff] hover:bg-fuchsia-950/40",
+    trackRowHover: "hover:bg-[#ff2a8d]/10",
+  },
 };
 
+// Also keep a backward-compatible alias for 'ytmusic-red' resolving to candyland
+(FULL_APP_DESIGNS as any)["ytmusic-red"] = FULL_APP_DESIGNS.candyland;

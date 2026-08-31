@@ -297,6 +297,34 @@ export default function App() {
 
   const activeFullDesign = FULL_APP_DESIGNS[settings.fullAppDesign || "designer"] || FULL_APP_DESIGNS["designer"];
 
+  // Set data-theme attribute on <html> element and sync <meta name="theme-color"> whenever active full design changes
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", activeFullDesign.id);
+
+      const themeColors: Record<string, string> = {
+        designer: "#051911",
+        "cyberpunk-neon": "#0a0d1a",
+        candyland: "#ffd1dc",
+        "ytmusic-red": "#ffd1dc",
+        "dynamic-emerald": "#021a12",
+        "audiophile-gold": "#170d06",
+        "twilight-vaporwave": "#1e0b36",
+      };
+
+      const targetColor = activeFullDesign.themeColorMeta || themeColors[activeFullDesign.id] || "#051911";
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute("content", targetColor);
+      } else {
+        const meta = document.createElement("meta");
+        meta.name = "theme-color";
+        meta.content = targetColor;
+        document.head.appendChild(meta);
+      }
+    }
+  }, [activeFullDesign.id, activeFullDesign.themeColorMeta]);
+
   // Save settings whenever updated
   useEffect(() => {
     try {
@@ -1793,7 +1821,7 @@ export default function App() {
   }, [selectedPlaylist?.id]);
 
   return (
-    <div className={`flex min-h-screen w-full bg-gradient-to-b ${activeFullDesign.bgCanvas} text-slate-100 font-sans select-none`}>
+    <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none`}>
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
@@ -1819,7 +1847,7 @@ export default function App() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative bg-gradient-to-b ${activeFullDesign.bgCanvas}`}>
+      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative ${activeFullDesign.isCandy ? "candyland-canvas-bg" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
         {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
         <header className={`sticky top-0 h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-30 shadow-xs`}>
           <div

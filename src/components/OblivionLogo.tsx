@@ -66,17 +66,28 @@ const PALETTES: Record<string, GradientPalette> = {
     textGold: "#00f0ff",
   },
 
-  // 3. YouTube Music Studio Red (Crimson Fire, Red & Amber)
-  "ytmusic-red": {
-    ringGrad: { c1: "#ff4d6d", c2: "#ff0033", c3: "#99001f", c4: "#ff758c" },
-    tri1Grad: { c1: "#ff1a40", c2: "#dc2626", c3: "#7f1d1d" },
-    tri2Grad: { c1: "#ffa3b1", c2: "#ff0033", c3: "#b91c1c" },
+  // 3. Candyland Pastel (Bubblegum Pink, Cotton Candy Violet & Sweet Lemon)
+  candyland: {
+    ringGrad: { c1: "#ffd1dc", c2: "#ff70a6", c3: "#a3c4f3", c4: "#ffd166" },
+    tri1Grad: { c1: "#ff70a6", c2: "#f72585", c3: "#7209b7" },
+    tri2Grad: { c1: "#a3c4f3", c2: "#ffd166", c3: "#ff70a6" },
     highlight: "#ffffff",
-    shadow: "#450a0a",
+    shadow: "#3b1235",
     playCore: "#FFFFFF",
-    playHighlight: "#fee2e2",
-    auraColor: "#ff0033",
-    textGold: "#ff3355",
+    playHighlight: "#ffd166",
+    auraColor: "#ff70a6",
+    textGold: "#ff70a6",
+  },
+  "ytmusic-red": {
+    ringGrad: { c1: "#ffd1dc", c2: "#ff70a6", c3: "#a3c4f3", c4: "#ffd166" },
+    tri1Grad: { c1: "#ff70a6", c2: "#f72585", c3: "#7209b7" },
+    tri2Grad: { c1: "#a3c4f3", c2: "#ffd166", c3: "#ff70a6" },
+    highlight: "#ffffff",
+    shadow: "#3b1235",
+    playCore: "#FFFFFF",
+    playHighlight: "#ffd166",
+    auraColor: "#ff70a6",
+    textGold: "#ff70a6",
   },
 
   // 4. Dynamic Island Emerald (Jade, Neon Mint & Deep Forest)

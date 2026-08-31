@@ -158,7 +158,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               Select your preferred overall design. This transforms the entire application: background canvas, headers, navigation, cards, typography, and bottom player dock.
             </p>
           </div>
-          <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} text-slate-950 self-start sm:self-auto shadow-md`}>
+          <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} ${designConfig.accentContrastText} self-start sm:self-auto shadow-md`}>
             Active: {FULL_APP_DESIGNS[settings.fullAppDesign || "designer"]?.name || "Designer"}
           </span>
         </div>
@@ -271,7 +271,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <RotateCcw className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
               <span>Reset Defaults (6s)</span>
             </button>
-            <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} text-slate-950 shadow-md`}>
+            <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} ${designConfig.accentContrastText} shadow-md`}>
               Active: {
                 settings.playerBackgroundAnimation === "off"
                   ? "Off (Static)"

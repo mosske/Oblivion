@@ -169,7 +169,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               onClick={() => handleMoodSelect(filter)}
               className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 ${
                 isActive
-                  ? `${designConfig.accentBg} text-white shadow-md ring-2 ring-[#c89b3c]/30`
+                  ? `${designConfig.accentBg} ${designConfig.accentContrastText} shadow-md ring-2 ${designConfig.accentBorder}`
                   : `${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle}`
               }`}
             >

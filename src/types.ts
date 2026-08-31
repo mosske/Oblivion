@@ -90,6 +90,7 @@ export type ThemePreset =
   | 'emerald-synth' 
   | 'sunset-horizon' 
   | 'rose-gold' 
+  | 'candyland-pastel'
   | 'minimal-light';
 export type AudioQuality = 'normal' | 'high' | 'lossless';
 export type LyricsFontSize = 'sm' | 'md' | 'lg';
@@ -111,11 +112,12 @@ export type MiniPlayerLayout =
 
 export type FullAppDesignId = 
   | 'designer'           // 1. Designer (Off-White Studio Canvas, Shadows, Gold Accents & Emerald Backdrop)
-  | 'cyberpunk-neon'     // 2. Cyberpunk Neon Glass (Futuristic Obsidian & Electric Cyan)
-  | 'ytmusic-red'        // 3. YouTube Music Red (Authentic Edge-to-Edge Studio Dark)
-  | 'dynamic-emerald'    // 4. Dynamic Island Emerald (Ultra-Minimalist Monolith & Jade Pulse)
-  | 'audiophile-gold'    // 5. Studio Audiophile Gold (Warm Carbon, Vinyl Gold & VU Meter)
-  | 'twilight-vaporwave'; // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Ambient Aura)
+  | 'cyberpunk-neon'     // 2. Cyberpunk Neon Glass (Futuristic Obsidian & Electric Cyan/Magenta Multi-Accent)
+  | 'candyland'          // 3. Candyland Pastel (Vibrant Light Mode, Sugar-Glass, Bubblegum Pink & Sweet Berry Text)
+  | 'ytmusic-red'        // Legacy alias for Candyland
+  | 'dynamic-emerald'    // 4. Dynamic Island Emerald (Ultra-Minimalist Monolith & Jade Pulse Multi-Accent)
+  | 'audiophile-gold'    // 5. Studio Audiophile Gold (Warm Carbon, Vinyl Gold & Solar Amber Multi-Accent)
+  | 'twilight-vaporwave'; // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Sunset Magenta Multi-Accent)
 
 export interface UserSettings {
   audioQuality: AudioQuality;

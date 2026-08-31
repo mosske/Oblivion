@@ -182,6 +182,24 @@ export class ThemeRegistry {
       textColor: "text-slate-900",
       subtextColor: "text-slate-600",
       swatchColors: ["#f1f5f9", "#e2e8f0", "#0891b2"]
+    },
+    "candyland-pastel": {
+      id: "candyland-pastel",
+      name: "Candyland Pastel",
+      description: "Vibrant high-energy light mode with multi-stop pastel mesh gradient, frosted sugar glass, and berry plum text.",
+      category: "Light",
+      previewGradient: "from-[#ffd1dc] via-[#e0bbff] to-[#d4f0f0]",
+      accentClass: "text-[#ff70a6]",
+      accentText: "text-[#ff70a6]",
+      accentBg: "bg-[#ff70a6]",
+      borderAccent: "border-[#ff70a6]/40",
+      bgCanvas: "from-[#ffd1dc] via-[#e0bbff] to-[#d4f0f0]",
+      cardBg: "bg-white/70 backdrop-blur-xl border-white/80 shadow-md",
+      sidebarBg: "bg-white/60 backdrop-blur-xl border-white/60",
+      playerBg: "bg-white/80 backdrop-blur-xl border-white/80",
+      textColor: "text-[#3b1235]",
+      subtextColor: "text-[#6b2d5f]",
+      swatchColors: ["#ffd1dc", "#ff70a6", "#a3c4f3", "#ffd166"]
     }
   };
 

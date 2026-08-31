@@ -113,20 +113,26 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-64 sm:pb-72 md:pb-52 select-none">
       {/* Top Banner */}
-      <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${designConfig.bannerGradient} border ${designConfig.accentBorder} p-6 sm:p-8 shadow-2xl transition-all duration-300`}>
+      <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${designConfig.bannerGradient || designConfig.multiAccentGradient || "from-slate-900 via-indigo-950 to-slate-900"} border ${designConfig.accentBorder} p-6 sm:p-8 shadow-2xl transition-all duration-300`}>
         <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-500/30 via-indigo-600/40 to-transparent"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="max-w-xl space-y-2">
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/15 text-[#fbfaf7] border border-[#c89b3c]/40" : "bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"} text-xs font-semibold`}>
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${
+              designConfig.isCandy
+                ? "bg-white/90 text-[#1e4a7a] border border-pink-200 shadow-xs"
+                : designConfig.isLight
+                ? "bg-white/15 text-[#f8f6f0] border border-white/25"
+                : "bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"
+            } text-xs font-bold`}>
               <Compass className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
               <span>YouTube Music Explore</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            <h1 className={`text-2xl sm:text-3xl md:text-4xl font-extrabold ${designConfig.isCandy ? "text-[#1e4a7a]" : "text-white"} tracking-tight leading-tight`}>
               Explore & Discover
             </h1>
-            <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed font-normal">
+            <p className={`text-xs sm:text-sm ${designConfig.isCandy ? "text-[#3b1235]" : "text-slate-200/90"} leading-relaxed font-medium`}>
               New releases, live global charts, trending music videos, and mood stations pulled fresh from YouTube Music.
             </p>
           </div>

@@ -236,11 +236,16 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
 
   const alignClass = settings.lyricsAlignment === "center" ? "text-center" : "text-left";
 
+  const pillBgClass = (designConfig as any).pillBg || (designConfig.isLight ? "bg-black/5" : "bg-white/10");
+  const isCandy = Boolean(designConfig.isCandy);
+
   // Provider Badge Label
   const badgeLabel = useMemo(() => {
     if (isSynced) {
+      if (isCandy) return "🍫 Synced LRC";
       return lyricsSource === "lrclib" ? "Synced (LRCLIB)" : "Synced";
     }
+    if (isCandy) return "🍦 Plain Text";
     if (lyricsSource === "youtube_music") {
       return "Plain Text (YouTube Music)";
     }
@@ -248,7 +253,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
       return "Plain Text (LRCLIB)";
     }
     return "Plain Text";
-  }, [isSynced, lyricsSource]);
+  }, [isSynced, lyricsSource, isCandy]);
 
   return (
     <div
@@ -260,7 +265,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
       >
         {/* Left: Track Information with Marquee */}
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div className={`p-1.5 rounded-xl ${designConfig.pillBg} shrink-0`}>
+          <div className={`p-1.5 rounded-xl ${pillBgClass} shrink-0`}>
             <Mic2 className={`w-4 h-4 ${designConfig.accentText}`} />
           </div>
           <div className="min-w-0 flex-1">
@@ -282,46 +287,46 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           {isSynced && (
             <>
               {/* Segmented Pill: Original vs Romanized */}
-              <div className={`p-0.5 rounded-2xl flex items-center gap-0.5 border ${designConfig.borderSubtle} ${designConfig.pillBg}`}>
+              <div className={`p-0.5 rounded-2xl flex items-center gap-1 border ${designConfig.borderSubtle} ${pillBgClass}`}>
                 <button
+                  id="lyrics-mode-original-btn"
                   onClick={() => setMode("original")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                    mode === "original"
-                      ? `${designConfig.accentBg} ${designConfig.accentText} shadow-sm border ${designConfig.accentBorder}`
-                      : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                  aria-selected={mode === "original"}
+                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    mode === "original" ? "active" : ""
                   }`}
                   title="Display original lyrics"
                 >
-                  <span>Original</span>
+                  <span>{isCandy ? "🍭 Original" : "Original"}</span>
                 </button>
 
                 <button
+                  id="lyrics-mode-romanized-btn"
                   onClick={() => setMode("romanized")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                    mode === "romanized"
-                      ? `${designConfig.accentBg} ${designConfig.accentText} shadow-sm border ${designConfig.accentBorder}`
-                      : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                  aria-selected={mode === "romanized"}
+                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    mode === "romanized" ? "active" : ""
                   }`}
                   title="Display instant phonetic Romanized (Romaji / Pinyin / Revised Korean) lyrics"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Romanized</span>
+                  {!isCandy && <Sparkles className="w-3.5 h-3.5" />}
+                  <span>{isCandy ? "🍬 Romanized" : "Romanized"}</span>
                 </button>
               </div>
 
               {/* Dual-Line Interleaved Toggle (Available when in Romanized mode) */}
               {mode === "romanized" && (
                 <button
+                  id="lyrics-toggle-dualline-btn"
                   onClick={() => setIsDualLine(!isDualLine)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
-                    isDualLine
-                      ? `${designConfig.accentBg} ${designConfig.accentText} border ${designConfig.accentBorder} shadow-sm`
-                      : `${designConfig.pillBg} ${designConfig.borderSubtle} ${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                  aria-pressed={isDualLine}
+                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                    isDualLine ? "active" : ""
                   }`}
                   title={isDualLine ? "Disable interleaved dual-line display" : "Enable interleaved dual-line display"}
                 >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Dual-Line</span>
+                  {!isCandy && <Layers className="w-3.5 h-3.5" />}
+                  <span>{isCandy ? "🧁 Dual-Line" : "Dual-Line"}</span>
                 </button>
               )}
             </>
@@ -332,16 +337,16 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
             <div className="shrink-0 flex items-center">
               {isSynced ? (
                 <span
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1.5 border ${designConfig.accentBorder} ${designConfig.pillBg} ${designConfig.accentText} shadow-sm`}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1.5 border ${designConfig.accentBorder} ${pillBgClass} ${designConfig.accentText} shadow-sm`}
                 >
-                  <CheckCircle2 className="w-3 h-3" />
+                  {!isCandy && <CheckCircle2 className="w-3 h-3" />}
                   <span>{badgeLabel}</span>
                 </span>
               ) : (
                 <span
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium flex items-center gap-1.5 border ${designConfig.borderSubtle} ${designConfig.pillBg} ${designConfig.textMuted}`}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium flex items-center gap-1.5 border ${designConfig.borderSubtle} ${pillBgClass} ${designConfig.textMuted}`}
                 >
-                  <FileText className="w-3 h-3" />
+                  {!isCandy && <FileText className="w-3 h-3" />}
                   <span>{badgeLabel}</span>
                 </span>
               )}
@@ -449,7 +454,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
             onClick={handleResumeAutoscroll}
             className={`pointer-events-auto px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 shadow-xl border transition-all transform hover:scale-105 active:scale-95 ${designConfig.btnPrimary}`}
           >
-            <ArrowDown className="w-4 h-4 animate-bounce" />
+            {isCandy ? <span>🍩</span> : <ArrowDown className="w-4 h-4 animate-bounce" />}
             <span>Resume Autoscroll</span>
           </button>
         </div>

@@ -1,0 +1,217 @@
+/* Oblivion Music - 6 Full-App Design Themes, Multi-Accent Gradients, Frosted Glass & WCAG Contrast Architecture */
+
+:root,
+[data-theme="designer"],
+.theme-designer {
+  --bg-canvas: linear-gradient(135deg, #051911 0%, #082017 50%, #0a261b 100%);
+  --canvas-text-primary: #f8f6f0;
+  --canvas-text-secondary: #d8d2c4;
+  --canvas-text-muted: #a39c8e;
+  --card-bg: rgba(248, 246, 240, 0.95);
+  --card-text: #1a201c;
+  --card-border: rgba(230, 226, 216, 0.8);
+  --accent-primary: #c59b27;
+  --accent-secondary: #e5b85c;
+  --accent-tertiary: #fef08a;
+  --accent-contrast-text: #1a201c;
+  --text-muted: #666258;
+  --border-subtle: #e6e2d8;
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(248, 246, 240, 0.92);
+  --glass-border: rgba(230, 226, 216, 0.8);
+}
+
+[data-theme="cyberpunk-neon"],
+.theme-cyberpunk-neon {
+  --bg-canvas: radial-gradient(at 0% 0%, #0a0d1a 0%, #12092b 50%, #05030a 100%);
+  --canvas-text-primary: #ffffff;
+  --canvas-text-secondary: #cbd5e1;
+  --canvas-text-muted: #94a3b8;
+  --card-bg: rgba(10, 13, 26, 0.75);
+  --card-text: #ffffff;
+  --card-border: rgba(0, 243, 255, 0.3);
+  --accent-primary: #00f3ff;
+  --accent-secondary: #ff007f;
+  --accent-tertiary: #7b2cbf;
+  --accent-contrast-text: #050814;
+  --text-muted: #94a3b8;
+  --border-subtle: rgba(0, 243, 255, 0.25);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(10, 13, 26, 0.75);
+  --glass-border: rgba(0, 243, 255, 0.3);
+}
+
+/* Candyland Light Mode Theme (Theme 03) & Legacy ytmusic-red alias */
+/* 3x Thicker Upward Candy-Cane Stripes (145-degree angle, 60px/120px cycle) */
+[data-theme="candyland"],
+.theme-candyland,
+[data-theme="ytmusic-red"],
+.theme-ytmusic-red {
+  --bg-canvas: repeating-linear-gradient(
+    145deg,
+    #ffd1dc 0px,
+    #ffd1dc 60px,
+    #ffe4e1 60px,
+    #ffe4e1 120px
+  );
+  --canvas-text-primary: #1e4a7a;
+  --canvas-text-secondary: #3b1235;
+  --canvas-text-muted: #5e356d;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-text: #3b1235;
+  --card-border: rgba(255, 255, 255, 0.95);
+  --accent-primary: #ff70a6;
+  --accent-secondary: #a3c4f3;
+  --accent-tertiary: #ffd166;
+  --accent-contrast-text: #ffffff;
+  --text-muted: #5e356d;
+  --border-subtle: rgba(255, 182, 193, 0.5);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dynamic-emerald"],
+.theme-dynamic-emerald {
+  --bg-canvas: linear-gradient(150deg, #021a12 0%, #072419 60%, #010e08 100%);
+  --canvas-text-primary: #d0fbe9;
+  --canvas-text-secondary: #a7f3d0;
+  --canvas-text-muted: #6ee7b7;
+  --card-bg: rgba(2, 26, 18, 0.75);
+  --card-text: #d0fbe9;
+  --card-border: rgba(0, 245, 160, 0.3);
+  --accent-primary: #00f5a0;
+  --accent-secondary: #00d9f5;
+  --accent-tertiary: #05668d;
+  --accent-contrast-text: #021a12;
+  --text-muted: #6ee7b7;
+  --border-subtle: rgba(0, 245, 160, 0.25);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(2, 26, 18, 0.75);
+  --glass-border: rgba(0, 245, 160, 0.3);
+}
+
+[data-theme="audiophile-gold"],
+.theme-audiophile-gold {
+  --bg-canvas: linear-gradient(160deg, #170d06 0%, #261408 50%, #100804 100%);
+  --canvas-text-primary: #fef3c7;
+  --canvas-text-secondary: #fde68a;
+  --canvas-text-muted: #fbbf24;
+  --card-bg: rgba(38, 20, 8, 0.75);
+  --card-text: #fef3c7;
+  --card-border: rgba(245, 158, 11, 0.35);
+  --accent-primary: #f59e0b;
+  --accent-secondary: #e65c00;
+  --accent-tertiary: #d4af37;
+  --accent-contrast-text: #170d06;
+  --text-muted: #fbbf24;
+  --border-subtle: rgba(245, 158, 11, 0.3);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(38, 20, 8, 0.75);
+  --glass-border: rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="twilight-vaporwave"],
+.theme-twilight-vaporwave {
+  --bg-canvas: linear-gradient(135deg, #1e0b36 0%, #4a1235 55%, #180826 100%);
+  --canvas-text-primary: #fdf4ff;
+  --canvas-text-secondary: #fae8ff;
+  --canvas-text-muted: #f0abfc;
+  --card-bg: rgba(30, 11, 54, 0.65);
+  --card-text: #fdf4ff;
+  --card-border: rgba(255, 42, 141, 0.35);
+  --accent-primary: #ff2a8d;
+  --accent-secondary: #ff758c;
+  --accent-tertiary: #8a2be2;
+  --accent-contrast-text: #ffffff;
+  --text-muted: #f0abfc;
+  --border-subtle: rgba(255, 42, 141, 0.3);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(30, 11, 54, 0.65);
+  --glass-border: rgba(255, 42, 141, 0.35);
+}
+
+/* Candyland 3x Thicker Upward Candy-Cane Diagonal Striped Canvas Background */
+.candyland-canvas-bg {
+  background: repeating-linear-gradient(
+    145deg,
+    #ffd1dc 0px,
+    #ffd1dc 60px,
+    #ffe4e1 60px,
+    #ffe4e1 120px
+  ) !important;
+  background-attachment: fixed !important;
+}
+
+.theme-canvas-bg {
+  background: var(--bg-canvas) !important;
+}
+
+/* Universal Frosted Glass Base Classes */
+.frosted-glass-card {
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.frosted-glass-dock {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Lyric Mode Pills & Toggles Styling (Dynamically bound across all 6 themes) */
+.lyrics-mode-pill {
+  background: var(--card-bg) !important;
+  color: var(--card-text) !important;
+  border: 1px solid var(--card-border) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lyrics-mode-pill:hover {
+  opacity: 0.92;
+  border-color: var(--accent-primary) !important;
+}
+
+.lyrics-mode-pill.active,
+.lyrics-mode-pill[aria-selected="true"],
+.lyrics-mode-pill[aria-pressed="true"] {
+  background-color: var(--accent-primary) !important;
+  color: var(--accent-contrast-text) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+.lyrics-mode-pill.active *,
+.lyrics-mode-pill[aria-selected="true"] *,
+.lyrics-mode-pill[aria-pressed="true"] * {
+  color: var(--accent-contrast-text) !important;
+  fill: var(--accent-contrast-text) !important;
+  stroke: var(--accent-contrast-text) !important;
+}
+
+.lyrics-mode-pill:not(.active):not([aria-selected="true"]):not([aria-pressed="true"]) * {
+  color: var(--card-text) !important;
+}
+
+/* Enforced WCAG Active Button, Pill, & Toggle Rule */
+.active-accent-state,
+button.active,
+.btn-active,
+[aria-selected="true"],
+[aria-pressed="true"],
+.pill-active-theme {
+  background-color: var(--accent-primary) !important;
+  color: var(--accent-contrast-text) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.active-accent-state *,
+button.active *,
+.btn-active *,
+[aria-selected="true"] *,
+[aria-pressed="true"] *,
+.pill-active-theme * {
+  color: var(--accent-contrast-text) !important;
+  fill: var(--accent-contrast-text) !important;
+}

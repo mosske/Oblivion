@@ -100,7 +100,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
               <span className="text-sm font-bold text-white truncate">{currentDesign.name}</span>
             </div>
             <div className="text-xs text-cyan-300 font-mono">
-              Dock: {currentDesign.mockup.dockStyle}
+              Dock: {currentDesign.mockup?.dockStyle || currentDesign.playerLayout}
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                 onClick={() => onSelectDesign(design.id)}
                 className={`rounded-3xl border transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer relative group ${
                   isSelected
-                    ? `bg-slate-900/95 border-cyan-400 ring-4 ring-cyan-500/20 shadow-2xl ${design.glowRing} scale-[1.01]`
+                    ? `bg-slate-900/95 border-cyan-400 ring-4 ring-cyan-500/20 shadow-2xl scale-[1.01]`
                     : `bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90`
                 }`}
               >
@@ -146,7 +146,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                     <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-black/60 text-white border border-white/10">
                       {design.badge}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">Design {design.num} / 05</span>
+                    <span className="text-xs font-mono text-slate-400">Design {design.num} / 06</span>
                   </div>
 
                   {/* Complete App Wireframe Box */}
@@ -168,11 +168,11 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                     </div>
 
                     {/* Simulated Hero Banner */}
-                    <div className={`p-2.5 rounded-xl bg-gradient-to-r ${design.mockup.bannerGradient} border border-white/10 text-left`}>
-                      <div className="text-[11px] font-bold text-white truncate">{design.mockup.heroTitle}</div>
-                      <div className="text-[9px] text-slate-300 truncate mt-0.5">{design.mockup.heroSubtitle}</div>
+                    <div className={`p-2.5 rounded-xl bg-gradient-to-r ${(design as any).mockup?.bannerGradient || design.multiAccentGradient || "from-white/10 to-white/5"} border border-white/10 text-left`}>
+                      <div className="text-[11px] font-bold text-white truncate">{(design as any).mockup?.heroTitle || design.name}</div>
+                      <div className="text-[9px] text-slate-300 truncate mt-0.5">{(design as any).mockup?.heroSubtitle || design.subtitle}</div>
                       <div className="flex gap-1.5 mt-2">
-                        {design.mockup.chipLabels.map((chip, i) => (
+                        {((design as any).mockup?.chipLabels || design.features).slice(0, 3).map((chip: string, i: number) => (
                           <span key={i} className="text-[8px] px-1.5 py-0.5 rounded-md bg-black/40 text-white border border-white/10">
                             {chip}
                           </span>
