@@ -253,3 +253,19 @@ input[type="checkbox"] {
 .theme-status-active {
   color: var(--accent-primary) !important;
 }
+
+/* User Profile Avatar Dynamic Theme Ring & Glow (Theme 01-06 dynamic accent binding) */
+.user-avatar-ring,
+.theme-avatar-ring {
+  border: 2px solid var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px var(--accent-primary) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-avatar-ring:hover,
+.theme-avatar-ring:hover,
+.user-avatar-ring:focus-visible,
+.theme-avatar-ring:focus-visible {
+  border-color: var(--accent-secondary, var(--accent-primary)) !important;
+  box-shadow: 0 0 8px var(--accent-primary), 0 0 0 2px var(--accent-secondary, var(--accent-primary)) !important;
+}

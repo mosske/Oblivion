@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { User } from "../types";
-import { X, Sparkles, User as UserIcon, RefreshCw } from "lucide-react";
-import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { X, RefreshCw } from "lucide-react";
+import {
+  FullAppDesignConfig,
+  FULL_APP_DESIGNS,
+  syncDocumentThemeColor,
+  getThemeCanvasColor,
+} from "../utils/appDesignThemes";
 import { OblivionLogo } from "./OblivionLogo";
 
 interface AuthModalProps {
@@ -26,8 +31,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setErrorMessage(null);
 
+    // 1. Pre-Sign-In Theme Color Sync:
+    // Explicitly update document <meta name="theme-color"> tag and system toolbar bridges to match the active app theme
+    const activeThemeColor = syncDocumentThemeColor(designConfig);
+
     try {
-      const res = await fetch("/api/auth/google/url");
+      const res = await fetch(`/api/auth/google/url?theme_color=${encodeURIComponent(activeThemeColor)}`);
       const data = await res.json().catch(() => ({}));
 
       let targetUrl = data.url;
@@ -36,6 +45,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           ? data.error 
           : (data.error?.message || "Failed to generate Google Sign-In URL.");
         throw new Error(errorMsg);
+      }
+
+      // 2. In-App Browser / Chrome Custom Tab Toolbar Color Bridge:
+      // If opened via Chrome Custom Tabs, InAppBrowser, or native overlay bridge, pass the active theme color
+      const win = window as any;
+      if (win.CustomTabs?.openCustomTab) {
+        try {
+          win.CustomTabs.openCustomTab(targetUrl, {
+            toolbarColor: activeThemeColor,
+            secondaryToolbarColor: activeThemeColor,
+            navigationBarColor: activeThemeColor,
+            showTitle: true,
+          });
+          return;
+        } catch (e) {
+          console.debug("CustomTabs bridge error, falling back to window popup:", e);
+        }
+      } else if (win.cordova?.InAppBrowser?.open) {
+        try {
+          win.cordova.InAppBrowser.open(
+            targetUrl,
+            "_blank",
+            `toolbarcolor=${activeThemeColor},navigationbuttoncolor=#ffffff,closebuttoncolor=#ffffff,location=yes,toolbar=yes`
+          );
+          return;
+        } catch (e) {
+          console.debug("Cordova InAppBrowser error:", e);
+        }
       }
 
       const width = 500;
@@ -48,7 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         popup = window.open(
           targetUrl,
           "Google OAuth Login",
-          `width=${width},height=${height},left=${left},top=${top}`
+          `width=${width},height=${height},left=${left},top=${top},status=yes,toolbar=no,menubar=no,location=yes,toolbarColor=${encodeURIComponent(activeThemeColor)}`
         );
       } catch (e) {
         console.warn("Popup error:", e);

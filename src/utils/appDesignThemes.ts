@@ -481,6 +481,25 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
 };
 
 /**
+ * Theme Canvas Top/Header Background Hex Colors Reference
+ * Theme 01 (Designer): #051911
+ * Theme 02 (Cyberpunk Neon Glass): #0a0d1a
+ * Theme 03 (Candyland): #ffd1dc
+ * Theme 04 (Dynamic Island Emerald / Aurora Jade): #021a12
+ * Theme 05 (Studio Audiophile Gold / Golden Brass): #170d06
+ * Theme 06 (Twilight Vaporwave): #1e0b36
+ */
+export const THEME_CANVAS_COLORS: Record<string, string> = {
+  designer: "#051911",
+  "cyberpunk-neon": "#0a0d1a",
+  candyland: "#ffd1dc",
+  "ytmusic-red": "#ffd1dc",
+  "dynamic-emerald": "#021a12",
+  "audiophile-gold": "#170d06",
+  "twilight-vaporwave": "#1e0b36",
+};
+
+/**
  * Array of the 6 canonical Full App Designs (guaranteed unique IDs for React key rendering)
  */
 export const FULL_APP_DESIGNS_LIST: FullAppDesignConfig[] = Object.values(FULL_APP_DESIGNS_BASE);
@@ -492,6 +511,68 @@ export function getFullAppDesign(id?: string | null): FullAppDesignConfig {
   if (!id) return FULL_APP_DESIGNS_BASE.designer;
   if (id === "ytmusic-red") return FULL_APP_DESIGNS_BASE.candyland;
   return FULL_APP_DESIGNS_BASE[id] || FULL_APP_DESIGNS_BASE.designer;
+}
+
+/**
+ * Returns the exact top canvas background hex color for a given theme ID or config
+ */
+export function getThemeCanvasColor(themeOrId?: string | FullAppDesignConfig | null): string {
+  if (!themeOrId) return THEME_CANVAS_COLORS.designer;
+  if (typeof themeOrId === "object" && themeOrId?.themeColorMeta) {
+    return themeOrId.themeColorMeta;
+  }
+  const id = typeof themeOrId === "string" ? themeOrId : themeOrId?.id;
+  return (id && THEME_CANVAS_COLORS[id]) || THEME_CANVAS_COLORS.designer;
+}
+
+/**
+ * Explicitly updates the document <meta name="theme-color"> tag, document background,
+ * and passes the theme color to in-app browser / Chrome Custom Tabs bridges prior to navigation/popup.
+ */
+export function syncDocumentThemeColor(themeOrId?: string | FullAppDesignConfig | null): string {
+  const colorHex = getThemeCanvasColor(themeOrId);
+  if (typeof document !== "undefined") {
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", colorHex);
+    } else {
+      metaThemeColor = document.createElement("meta");
+      metaThemeColor.setAttribute("name", "theme-color");
+      metaThemeColor.setAttribute("content", colorHex);
+      document.head.appendChild(metaThemeColor);
+    }
+
+    // Also update apple mobile web app status bar style if applicable
+    let appleMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (appleMeta) {
+      // Candyland is light, others are dark
+      const isLight = colorHex.toLowerCase() === "#ffd1dc" || (typeof themeOrId === "object" && themeOrId?.isLight);
+      appleMeta.setAttribute("content", isLight ? "default" : "black-translucent");
+    }
+  }
+
+  // If running inside Android WebView, Chrome Custom Tabs wrapper, or Capacitor/Cordova bridge
+  if (typeof window !== "undefined") {
+    try {
+      const win = window as any;
+      if (win.Android?.setToolbarColor) {
+        win.Android.setToolbarColor(colorHex);
+      }
+      if (win.CustomTabs?.setToolbarColor) {
+        win.CustomTabs.setToolbarColor(colorHex);
+      }
+      if (win.Capacitor?.Plugins?.StatusBar?.setBackgroundColor) {
+        win.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: colorHex });
+      }
+      if (win.StatusBar?.backgroundColorByHexString) {
+        win.StatusBar.backgroundColorByHexString(colorHex);
+      }
+    } catch (e) {
+      console.debug("Custom Tabs / StatusBar bridge invocation skipped:", e);
+    }
+  }
+
+  return colorHex;
 }
 
 /**

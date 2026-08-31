@@ -2136,6 +2136,11 @@ app.get("/api/auth/google/url", (req, res) => {
   const clientId = getOAuthClientId();
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
+  const themeColor = (req.query.theme_color as string) || (req.query.themeColor as string) || "#051911";
+
+  if (req.session) {
+    (req.session as any).authThemeColor = themeColor;
+  }
 
   if (!clientId) {
     return res.status(400).json({ error: "Google OAuth Client ID is not configured" });
@@ -2156,9 +2161,10 @@ app.get("/api/auth/google/url", (req, res) => {
     scope: scopes.join(" "),
     access_type: "offline",
     prompt: "consent",
+    state: encodeURIComponent(themeColor),
   });
 
-  res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}` });
+  res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`, themeColor });
 });
 
 // YouTube Music API Routes - Pulls authentic YouTube content and user playlists
@@ -4875,18 +4881,54 @@ app.get("/api/youtube/similar", async (req, res) => {
 app.get("/api/auth/google/callback", async (req, res) => {
   const code = req.query.code as string;
   const error = req.query.error as string;
+  let themeColor = "#051911";
+  try {
+    if (req.query.state) {
+      themeColor = decodeURIComponent(req.query.state as string);
+    } else if ((req.session as any)?.authThemeColor) {
+      themeColor = (req.session as any).authThemeColor;
+    }
+  } catch (e) {}
+
+  const renderCallbackHtml = (scriptContent: string) => `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="${themeColor}" />
+    <title>Google Sign-In</title>
+    <style>
+      body {
+        margin: 0;
+        background-color: ${themeColor};
+        color: #ffffff;
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      ${scriptContent}
+    </script>
+  </body>
+</html>`;
 
   if (error || !code) {
-    return res.send(`
-      <script>
+    return res.send(
+      renderCallbackHtml(`
         if (window.opener) {
           window.opener.postMessage({ type: 'OAUTH_ERROR', error: '${error || "No auth code provided"}' }, '*');
           window.close();
         } else {
-          window.location.href = '/?oauth_error=${encodeURIComponent(error || "Failed")}'
+          window.location.href = '/?oauth_error=${encodeURIComponent(error || "Failed")}';
         }
-      </script>
-    `);
+      `)
+    );
   }
 
   const clientId = getOAuthClientId();
@@ -4951,20 +4993,20 @@ app.get("/api/auth/google/callback", async (req, res) => {
       req.session.save((saveErr) => {
         if (saveErr) {
           console.error("Session save error:", saveErr);
-          return res.send(`
-            <script>
+          return res.send(
+            renderCallbackHtml(`
               if (window.opener) {
                 window.opener.postMessage({ type: 'OAUTH_ERROR', error: 'Session save failed' }, '*');
                 window.close();
               } else {
                 window.location.href = '/?oauth_error=' + encodeURIComponent('Session save failed');
               }
-            </script>
-          `);
+            `)
+          );
         }
 
-        return res.send(`
-          <script>
+        return res.send(
+          renderCallbackHtml(`
             if (window.opener) {
               window.opener.postMessage({
                 type: 'OAUTH_SUCCESS',
@@ -4974,8 +5016,8 @@ app.get("/api/auth/google/callback", async (req, res) => {
             } else {
               window.location.href = '/?oauth_success=true&user=' + encodeURIComponent(JSON.stringify(${JSON.stringify(req.session.user)}));
             }
-          </script>
-        `);
+          `)
+        );
       });
     } else {
       const errDescription = tokenData.error_description || tokenData.error || "Failed to acquire tokens from Google";
@@ -4998,16 +5040,16 @@ app.get("/api/auth/google/callback", async (req, res) => {
   } catch (err: any) {
     const errorMsg = err.message || "OAuth token exchange error";
     console.error("OAuth token exchange error:", errorMsg);
-    return res.send(`
-      <script>
+    return res.send(
+      renderCallbackHtml(`
         if (window.opener) {
           window.opener.postMessage({ type: 'OAUTH_ERROR', error: ${JSON.stringify(errorMsg)} }, '*');
           window.close();
         } else {
           window.location.href = '/?oauth_error=${encodeURIComponent(errorMsg)}';
         }
-      </script>
-    `);
+      `)
+    );
   }
 });
 

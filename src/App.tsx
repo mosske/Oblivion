@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from "./types";
-import { FULL_APP_DESIGNS } from "./utils/appDesignThemes";
+import { FULL_APP_DESIGNS, syncDocumentThemeColor } from "./utils/appDesignThemes";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { HomeView } from "./components/HomeView";
@@ -301,27 +301,7 @@ export default function App() {
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-theme", activeFullDesign.id);
-
-      const themeColors: Record<string, string> = {
-        designer: "#051911",
-        "cyberpunk-neon": "#0a0d1a",
-        candyland: "#ffd1dc",
-        "ytmusic-red": "#ffd1dc",
-        "dynamic-emerald": "#021a12",
-        "audiophile-gold": "#170d06",
-        "twilight-vaporwave": "#1e0b36",
-      };
-
-      const targetColor = activeFullDesign.themeColorMeta || themeColors[activeFullDesign.id] || "#051911";
-      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-      if (metaThemeColor) {
-        metaThemeColor.setAttribute("content", targetColor);
-      } else {
-        const meta = document.createElement("meta");
-        meta.name = "theme-color";
-        meta.content = targetColor;
-        document.head.appendChild(meta);
-      }
+      syncDocumentThemeColor(activeFullDesign);
     }
   }, [activeFullDesign.id, activeFullDesign.themeColorMeta]);
 
@@ -1899,7 +1879,7 @@ export default function App() {
                 <button
                   id="top-header-user-avatar-btn"
                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                  className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#c89b3c] shadow-md hover:scale-105 active:scale-95 transition-transform flex items-center justify-center bg-zinc-800 focus:outline-none ring-2 ring-[#c89b3c]/30"
+                  className="w-9 h-9 rounded-full overflow-hidden shadow-md hover:scale-105 active:scale-95 transition-transform flex items-center justify-center bg-zinc-800 focus:outline-none user-avatar-ring"
                   title={user.name || user.email || "Account Profile"}
                 >
                   {user.picture ? (
@@ -1933,7 +1913,7 @@ export default function App() {
 
                       {/* User Info */}
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border border-zinc-300 shrink-0 shadow-sm bg-zinc-800 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 shadow-sm bg-zinc-800 flex items-center justify-center user-avatar-ring">
                           {user.picture ? (
                             <img src={user.picture} alt={user.name || "User"} className="w-full h-full object-cover" />
                           ) : (

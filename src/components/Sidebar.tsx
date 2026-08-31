@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <img
                 src={user.picture}
                 alt={user.name}
-                className={`w-9 h-9 rounded-full object-cover ring-2 ${designConfig.accentBorder}`}
+                className="w-9 h-9 rounded-full object-cover user-avatar-ring"
               />
               <div className="flex-1 min-w-0">
                 <p className={`text-xs font-semibold ${designConfig.textPrimary} truncate`}>{user.name}</p>
