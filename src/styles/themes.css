@@ -195,6 +195,46 @@
   color: var(--card-text) !important;
 }
 
+/* Lyrics Timing Calibration Control Bar & Buttons (Dynamically bound across all 6 themes) */
+.lyrics-timing-bar {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--card-text) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lyrics-timing-btn {
+  background: rgba(125, 125, 125, 0.1);
+  color: var(--card-text) !important;
+  border: 1px solid var(--border-subtle) !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lyrics-timing-btn:hover {
+  background: var(--accent-primary) !important;
+  color: var(--accent-contrast-text) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.lyrics-timing-btn:hover *,
+.lyrics-timing-btn:hover svg {
+  color: var(--accent-contrast-text) !important;
+  stroke: var(--accent-contrast-text) !important;
+}
+
+.lyrics-timing-badge {
+  color: var(--card-text);
+  border: 1px solid var(--border-subtle);
+  background: rgba(125, 125, 125, 0.06);
+}
+
+.lyrics-timing-badge.active-offset {
+  color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  background: rgba(125, 125, 125, 0.12);
+}
+
 /* Enforced WCAG Active Button, Pill, & Toggle Rule */
 .active-accent-state,
 button.active,
@@ -331,5 +371,11 @@ input[type="checkbox"] {
 [data-theme="candyland"] .unplayed-track-tint,
 .theme-candyland .unplayed-track-tint {
   background: rgba(30, 74, 122, 0.25) !important;
+}
+
+/* Dynamic Waveform Playing Equalizer Bars in Track/Playlist Views */
+.track-equalizer-bar {
+  background: linear-gradient(180deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary)) !important;
+  box-shadow: 0 0 5px var(--accent-primary) !important;
 }
 

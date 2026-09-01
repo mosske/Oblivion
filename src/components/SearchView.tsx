@@ -286,10 +286,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
                     {/* Playing Equalizer Animation Overlay if Active Song */}
                     {isCurrent && isPlaying ? (
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <div className="flex items-end justify-center gap-0.5 h-4">
-                          <span className="w-1 bg-[#c89b3c] animate-bounce h-3 rounded-full"></span>
-                          <span className="w-1 bg-[#c89b3c] animate-bounce delay-75 h-4 rounded-full"></span>
-                          <span className="w-1 bg-[#c89b3c] animate-bounce delay-150 h-2 rounded-full"></span>
+                        <div className="flex items-end justify-center gap-0.5 h-4" title="Currently Playing">
+                          <span className={`w-1 h-3 rounded-full animate-bounce bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
+                          <span className={`w-1 h-4 rounded-full animate-bounce delay-75 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
+                          <span className={`w-1 h-2 rounded-full animate-bounce delay-150 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
                         </div>
                       </div>
                     ) : (
@@ -316,8 +316,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
                         </span>
                       )}
                       {isCurrent && isPlaying && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c89b3c]/20 text-[#855f10] text-[10px] font-mono font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#c89b3c] animate-ping" />
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${designConfig.pillBg} ${designConfig.accentText} border ${designConfig.accentBorder} text-[10px] font-mono font-bold shadow-sm`}>
+                          <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} animate-ping`} />
                           Playing
                         </span>
                       )}

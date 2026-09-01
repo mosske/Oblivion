@@ -550,7 +550,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                       </>
                     ) : (
                       <>
-                        <Globe className="w-3.5 h-3.5 text-[#c89b3c]" />
+                        <Globe className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
                         <span>Public</span>
                       </>
                     )}
@@ -567,7 +567,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               </p>
 
               <div className={`flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs ${designConfig.textSecondary} pt-1 font-mono`}>
-                <span className="font-semibold text-[#c89b3c]">{tracks.length} Tracks</span>
+                <span className={`font-semibold ${designConfig.accentText}`}>{tracks.length} Tracks</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
@@ -641,7 +641,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               Tracks ({tracks.length})
             </h3>
             {isReorderMode && (
-              <span className="text-[11px] text-[#c89b3c] font-medium animate-pulse">
+              <span className={`text-[11px] ${designConfig.accentText} font-medium animate-pulse`}>
                 Drag handle or tap arrows to reposition songs, then click "Done Reordering"
               </span>
             )}
@@ -649,7 +649,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
           {isLoadingTracks ? (
             <div className={`p-16 text-center rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-3 animate-fade-in`}>
-              <Loader2 className="w-8 h-8 mx-auto text-[#c89b3c] animate-spin" />
+              <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} animate-spin`} />
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
                 {isAlbum ? "Pulling album tracks from YouTube Music..." : "Loading playlist tracks..."}
               </p>
@@ -679,12 +679,12 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                     onDrop={(e) => isReorderMode && handleDrop(e, idx)}
                     onDragEnd={handleDragEnd}
                     className={`group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all ${
-                      isReorderMode ? "cursor-grab active:cursor-grabbing border border-[#c89b3c]/30" : ""
+                      isReorderMode ? `cursor-grab active:cursor-grabbing border ${designConfig.accentBorder}` : ""
                     } ${
                       isBeingDragged
-                        ? "opacity-40 scale-[0.98] border-2 border-dashed border-[#c89b3c]"
+                        ? `opacity-40 scale-[0.98] border-2 border-dashed ${designConfig.accentBorder}`
                         : isDropTarget
-                        ? "ring-2 ring-[#c89b3c] scale-[1.01] bg-[#c89b3c]/10 shadow-lg"
+                        ? `ring-2 ${designConfig.accentBorder} scale-[1.01] ${designConfig.pillBg} shadow-lg`
                         : isCurrent
                         ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
                         : `${designConfig.cardBg} ${designConfig.cardHover}`
@@ -702,10 +702,10 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                       {/* Track number or active equalizer */}
                       <div className="w-6 text-center shrink-0">
                         {isCurrent && isPlaying ? (
-                          <div className="flex items-end justify-center gap-0.5 h-4">
-                            <span className="w-1 bg-[#c89b3c] animate-bounce h-3 rounded-full"></span>
-                            <span className="w-1 bg-[#c89b3c] animate-bounce delay-75 h-4 rounded-full"></span>
-                            <span className="w-1 bg-[#c89b3c] animate-bounce delay-150 h-2 rounded-full"></span>
+                          <div className="flex items-end justify-center gap-0.5 h-4" title="Currently Playing">
+                            <span className={`w-1 h-3 rounded-full animate-bounce bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
+                            <span className={`w-1 h-4 rounded-full animate-bounce delay-75 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
+                            <span className={`w-1 h-2 rounded-full animate-bounce delay-150 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
                           </div>
                         ) : (
                           <span className={`text-xs font-mono font-medium ${isCurrent ? designConfig.accentText : designConfig.textMuted}`}>
@@ -794,7 +794,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                             <ChevronDown className="w-3.5 h-3.5" />
                           </button>
                           <div
-                            className="flex items-center gap-1 px-2 py-1 bg-[#c89b3c]/20 border border-[#c89b3c]/40 text-[#c89b3c] rounded-lg cursor-grab active:cursor-grabbing hover:bg-[#c89b3c]/30 transition-all shadow-sm select-none"
+                            className={`flex items-center gap-1 px-2 py-1 ${designConfig.pillBg} border ${designConfig.accentBorder} ${designConfig.accentText} rounded-lg cursor-grab active:cursor-grabbing hover:opacity-90 transition-all shadow-sm select-none`}
                             title="Drag to reorder"
                           >
                             <GripVertical className="w-3.5 h-3.5 shrink-0" />
@@ -815,7 +815,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                               onAddTrackToPlaylist(track, playlists[0].id);
                             }
                           }}
-                          className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] rounded-lg hover:bg-black/10 transition-colors`}
+                          className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:${designConfig.accentText} rounded-lg hover:bg-black/10 transition-colors`}
                           title="Add to another playlist"
                         >
                           <Plus className="w-4 h-4" />

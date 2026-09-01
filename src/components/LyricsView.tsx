@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Sparkles,
   Layers,
+  RotateCcw,
 } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import {
@@ -39,6 +40,8 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   const [originalLines, setOriginalLines] = useState<LyricLine[]>([]);
   const [isSynced, setIsSynced] = useState<boolean>(true);
   const [lyricsSource, setLyricsSource] = useState<"lrclib" | "youtube_music" | "server" | "none">("none");
+  const [lrcDuration, setLrcDuration] = useState<number | undefined>(undefined);
+  const [offset, setOffset] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [isUserScrolled, setIsUserScrolled] = useState<boolean>(false);
 
@@ -79,6 +82,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               setIsSynced(false);
               setLyricsSource("lrclib");
             }
+            setLrcDuration(undefined);
             setLoading(false);
           }
           return;
@@ -92,6 +96,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
 
         if (!isCancelled) {
           setLyricsSource(result.source);
+          setLrcDuration(result.lrcDuration);
           if (result.syncedLyrics && result.isSynced) {
             const parsed = parseLRC(result.syncedLyrics);
             if (parsed.length > 0) {
@@ -118,6 +123,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           setOriginalLines([]);
           setIsSynced(false);
           setLyricsSource("none");
+          setLrcDuration(undefined);
         }
       } finally {
         if (!isCancelled) {
@@ -132,6 +138,50 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
       isCancelled = true;
     };
   }, [track.id, track.title, track.artist, track.duration, track.lyricsRaw, videoId]);
+
+  // Per-Track LocalStorage Persistence & Auto-Offset Duration Delta Calculation
+  useEffect(() => {
+    const key = videoId || track.id;
+    if (!key) return;
+
+    const storageKey = `oblivion_lyric_offset_${key}`;
+    const saved = localStorage.getItem(storageKey);
+
+    if (saved !== null && saved !== "") {
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed)) {
+        setOffset(parsed);
+        return;
+      }
+    }
+
+    // Auto-Offset Calculation (Video intro delta detection: videoDuration > lrcDuration)
+    const videoDuration = track.duration || 0;
+    if (lrcDuration && lrcDuration > 0 && videoDuration > lrcDuration) {
+      const autoOffset = Math.round((videoDuration - lrcDuration) * 10) / 10;
+      setOffset(autoOffset);
+    } else {
+      setOffset(0);
+    }
+  }, [videoId, track.id, track.duration, lrcDuration]);
+
+  // Manual Timing Offset Adjustment Handlers
+  const handleAdjustOffset = (delta: number) => {
+    const key = videoId || track.id;
+    const newOffset = Math.round((offset + delta) * 10) / 10;
+    setOffset(newOffset);
+    if (key) {
+      localStorage.setItem(`oblivion_lyric_offset_${key}`, newOffset.toString());
+    }
+  };
+
+  const handleResetOffset = () => {
+    const key = videoId || track.id;
+    setOffset(0);
+    if (key) {
+      localStorage.setItem(`oblivion_lyric_offset_${key}`, "0");
+    }
+  };
 
   // Instant Client-Side Romanization calculation (< 1ms, 0 latency, 100% offline)
   const romanizedLines = useMemo<LyricLine[]>(() => {
@@ -159,20 +209,23 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     return originalLines;
   }, [mode, originalLines, romanizedLines, isDualLine, isSynced]);
 
-  // Find active line index based on current playback time (only when synced)
+  // Find active line index based on current playback time and calibration offset (only when synced)
   const activeIndex = useMemo(() => {
     if (!isSynced || displayedLyrics.length === 0) return -1;
     
+    // Real-Time Sync Adjustment using effectiveTime
+    const effectiveTime = currentTime - offset;
+
     let active = -1;
     for (let i = 0; i < displayedLyrics.length; i++) {
-      if (currentTime >= displayedLyrics[i].time - 0.25) {
+      if (effectiveTime >= displayedLyrics[i].time - 0.25) {
         active = i;
       } else {
         break;
       }
     }
     return active >= 0 ? active : 0;
-  }, [displayedLyrics, currentTime, isSynced]);
+  }, [displayedLyrics, currentTime, offset, isSynced]);
 
   // Scroll active line into center
   const scrollToActiveLine = useCallback((smooth = true) => {
@@ -259,7 +312,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     <div
       className={`flex flex-col h-full w-full ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} p-4 sm:p-6 backdrop-blur-2xl relative overflow-hidden select-none shadow-2xl transition-all`}
     >
-      {/* Top Header: Track Metadata + Provider Badge + Synced Romanization Controls */}
+      {/* Top Header: Track Metadata + Provider Badge + Synced Romanization Controls + Calibration Bar */}
       <div
         className={`flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b ${designConfig.borderSubtle} mb-2 shrink-0 gap-3`}
       >
@@ -281,9 +334,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           </div>
         </div>
 
-        {/* Center & Right: Romanization Controls (Synced only) + UI Badge */}
+        {/* Center & Right: Romanization Controls & Timing Calibration (Synced only) + UI Badge */}
         <div className="flex items-center flex-wrap gap-2 justify-between sm:justify-end">
-          {/* Romanization Controls are available strictly when lyrics are synced */}
+          {/* Controls available strictly when lyrics are synced */}
           {isSynced && (
             <>
               {/* Segmented Pill: Original vs Romanized */}
@@ -292,7 +345,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   id="lyrics-mode-original-btn"
                   onClick={() => setMode("original")}
                   aria-selected={mode === "original"}
-                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                     mode === "original" ? "active" : ""
                   }`}
                   title="Display original lyrics"
@@ -304,7 +357,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   id="lyrics-mode-romanized-btn"
                   onClick={() => setMode("romanized")}
                   aria-selected={mode === "romanized"}
-                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                     mode === "romanized" ? "active" : ""
                   }`}
                   title="Display instant phonetic Romanized (Romaji / Pinyin / Revised Korean) lyrics"
@@ -320,7 +373,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   id="lyrics-toggle-dualline-btn"
                   onClick={() => setIsDualLine(!isDualLine)}
                   aria-pressed={isDualLine}
-                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                     isDualLine ? "active" : ""
                   }`}
                   title={isDualLine ? "Disable interleaved dual-line display" : "Enable interleaved dual-line display"}
@@ -329,6 +382,63 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   <span>{isCandy ? "🧁 Dual-Line" : "Dual-Line"}</span>
                 </button>
               )}
+
+              {/* Manual Lyric Timing Calibration Control Bar */}
+              <div
+                id="lyrics-timing-calibration-bar"
+                className={`lyrics-timing-bar flex items-center p-0.5 rounded-2xl border ${designConfig.borderSubtle} ${pillBgClass} gap-1 shadow-sm`}
+                title="Lyric Timing Calibration (Sync Offset)"
+              >
+                {/* [-0.5s] Button (Delays lyrics / shifts them back) */}
+                <button
+                  id="lyrics-offset-minus-btn"
+                  onClick={() => handleAdjustOffset(-0.5)}
+                  className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
+                  title="Delay lyrics by 0.5s (Shift back)"
+                  aria-label="Delay lyrics by 0.5s"
+                >
+                  -0.5s
+                </button>
+
+                {/* Dynamic Text Badge */}
+                <div
+                  id="lyrics-offset-badge"
+                  className={`lyrics-timing-badge px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold tracking-tight whitespace-nowrap transition-all ${
+                    offset !== 0 ? "active-offset" : ""
+                  }`}
+                  title={
+                    offset !== 0
+                      ? `Active timing calibration offset: ${offset >= 0 ? "+" : ""}${offset.toFixed(1)}s`
+                      : "Timing calibrated at default (0.0s)"
+                  }
+                >
+                  Sync: {offset >= 0 ? "+" : ""}{offset.toFixed(1)}s
+                </div>
+
+                {/* [+0.5s] Button (Advances lyrics / shifts them forward) */}
+                <button
+                  id="lyrics-offset-plus-btn"
+                  onClick={() => handleAdjustOffset(0.5)}
+                  className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
+                  title="Advance lyrics by 0.5s (Shift forward)"
+                  aria-label="Advance lyrics by 0.5s"
+                >
+                  +0.5s
+                </button>
+
+                {/* [Reset] Icon Button */}
+                <button
+                  id="lyrics-offset-reset-btn"
+                  onClick={handleResetOffset}
+                  className={`lyrics-timing-btn p-1 rounded-xl text-[11px] transition-all active:scale-90 cursor-pointer ${
+                    offset !== 0 ? "opacity-100" : "opacity-40 hover:opacity-80"
+                  }`}
+                  title="Reset timing calibration to 0.0s"
+                  aria-label="Reset timing offset to 0.0s"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+              </div>
             </>
           )}
 
@@ -398,7 +508,8 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                 ref={isActive ? activeLineRef : null}
                 onClick={() => {
                   if (line.time >= 0) {
-                    onSeek(line.time);
+                    const targetTime = Math.max(0, line.time + offset);
+                    onSeek(targetTime);
                     setIsUserScrolled(false);
                   }
                 }}

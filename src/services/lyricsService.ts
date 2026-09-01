@@ -8,6 +8,7 @@ export interface LyricsResult {
   source: "lrclib" | "youtube_music" | "server" | "none";
   trackName?: string;
   artistName?: string;
+  lrcDuration?: number;
 }
 
 /**
@@ -143,6 +144,7 @@ export async function fetchLyricsMultiSource(
 
       if (res.ok) {
         const data = await res.json();
+        const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
         if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
           return {
             syncedLyrics: data.syncedLyrics,
@@ -151,6 +153,7 @@ export async function fetchLyricsMultiSource(
             source: "lrclib",
             trackName: data.trackName,
             artistName: data.artistName,
+            lrcDuration: lrcDur,
           };
         }
         if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
@@ -160,6 +163,7 @@ export async function fetchLyricsMultiSource(
             source: "lrclib",
             trackName: data.trackName,
             artistName: data.artistName,
+            lrcDuration: lrcDur,
           };
         }
       }
@@ -188,6 +192,7 @@ export async function fetchLyricsMultiSource(
           // Priority 1: Synced lyrics
           const withSynced = list.find((item) => item.syncedLyrics && item.syncedLyrics.trim().length > 0);
           if (withSynced) {
+            const searchLrcDur = typeof withSynced.duration === "number" && withSynced.duration > 0 ? withSynced.duration : undefined;
             return {
               syncedLyrics: withSynced.syncedLyrics,
               plainLyrics: withSynced.plainLyrics,
@@ -195,6 +200,7 @@ export async function fetchLyricsMultiSource(
               source: "lrclib",
               trackName: withSynced.trackName,
               artistName: withSynced.artistName,
+              lrcDuration: searchLrcDur,
             };
           }
           // Priority 2: Stash plain lyrics from search
@@ -206,6 +212,7 @@ export async function fetchLyricsMultiSource(
               source: "lrclib",
               trackName: withPlain.trackName,
               artistName: withPlain.artistName,
+              lrcDuration: typeof withPlain.duration === "number" && withPlain.duration > 0 ? withPlain.duration : undefined,
             };
           }
         }
@@ -230,12 +237,14 @@ export async function fetchLyricsMultiSource(
     const serverRes = await fetch(serverUrl, { signal: AbortSignal.timeout(6000) });
     if (serverRes.ok) {
       const data = await serverRes.json();
+      const serverLrcDur = typeof data.lrcDuration === "number" ? data.lrcDuration : typeof data.duration === "number" ? data.duration : undefined;
       if (data.syncedLyrics && data.isSynced) {
         return {
           syncedLyrics: data.syncedLyrics,
           plainLyrics: data.plainLyrics,
           isSynced: true,
           source: (data.source as any) || "lrclib",
+          lrcDuration: serverLrcDur,
         };
       }
       if (data.plainLyrics && (data.source === "youtube_music" || !lrclibPlainMatch)) {
@@ -243,6 +252,7 @@ export async function fetchLyricsMultiSource(
           plainLyrics: data.plainLyrics,
           isSynced: false,
           source: (data.source as any) || "youtube_music",
+          lrcDuration: serverLrcDur,
         };
       }
     }
