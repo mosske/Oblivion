@@ -200,6 +200,24 @@ export class ThemeRegistry {
       textColor: "text-[#3b1235]",
       subtextColor: "text-[#6b2d5f]",
       swatchColors: ["#ffd1dc", "#ff70a6", "#a3c4f3", "#ffd166"]
+    },
+    "neue-editorial": {
+      id: "neue-editorial",
+      name: "Neue Editorial",
+      description: "High-contrast Swiss editorial layout with warm pale beige canvas (#F2E8D8), soft alabaster cards (#FAF5ED), and charcoal controls.",
+      category: "Light",
+      previewGradient: "from-[#F2E8D8] via-[#FAF5ED] to-[#1F1F1F]",
+      accentClass: "text-[#1F1F1F]",
+      accentText: "text-[#1F1F1F]",
+      accentBg: "bg-[#1F1F1F]",
+      borderAccent: "border-[#1F1F1F]/30",
+      bgCanvas: "from-[#F2E8D8] via-[#EFE5D4] to-[#FAF5ED]",
+      cardBg: "bg-[#FAF5ED] border-[#1F1F1F]/12 shadow-sm",
+      sidebarBg: "bg-[#FAF5ED]/95 border-[#1F1F1F]/12",
+      playerBg: "bg-[#FAF5ED]/98 border-[#1F1F1F]/12",
+      textColor: "text-[#1F1F1F]",
+      subtextColor: "text-[#666055]",
+      swatchColors: ["#F2E8D8", "#FAF5ED", "#1F1F1F", "#666055"]
     }
   };
 

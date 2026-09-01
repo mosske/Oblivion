@@ -132,6 +132,53 @@
   --glass-border: rgba(255, 42, 141, 0.35);
 }
 
+/* Theme 07: Neue Editorial (High-Contrast Swiss Layout, Warm Pale Beige, Alabaster Cards & Charcoal Pills) */
+[data-theme="neue-editorial"],
+.theme-neue-editorial {
+  --bg-canvas: #F2E8D8;
+  --canvas-text-primary: #1F1F1F;
+  --canvas-text-secondary: #666055;
+  --canvas-text-muted: #8A8478;
+  --card-bg: #FAF5ED;
+  --card-text: #1F1F1F;
+  --card-border: rgba(31, 31, 31, 0.12);
+  --accent-primary: #1F1F1F;
+  --accent-secondary: #3A3530;
+  --accent-tertiary: #524B44;
+  --accent-contrast-text: #F2E8D8;
+  --text-primary: #1F1F1F;
+  --text-secondary: #666055;
+  --text-muted: #666055;
+  --border-color: rgba(31, 31, 31, 0.12);
+  --border-subtle: rgba(31, 31, 31, 0.12);
+  --glow-color-1: rgba(31, 31, 31, 0.15);
+  --glow-color-2: rgba(242, 232, 216, 0.60);
+  --waveform-inactive: rgba(31, 31, 31, 0.18);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(250, 245, 237, 0.96);
+  --glass-border: rgba(31, 31, 31, 0.12);
+}
+
+[data-theme="neue-editorial"],
+.theme-neue-editorial {
+  font-family: 'Neue Haas Grotesk Display Pro', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+}
+
+[data-theme="neue-editorial"] .font-light {
+  font-weight: 300 !important;
+}
+
+[data-theme="neue-editorial"] .font-medium {
+  font-weight: 500 !important;
+}
+
+[data-theme="neue-editorial"] .font-semibold,
+[data-theme="neue-editorial"] .font-bold,
+[data-theme="neue-editorial"] .font-extrabold,
+[data-theme="neue-editorial"] .font-black {
+  font-weight: 600 !important;
+}
+
 /* Candyland 3x Thicker Upward Candy-Cane Diagonal Striped Canvas Background */
 .candyland-canvas-bg {
   background: repeating-linear-gradient(
@@ -371,6 +418,20 @@ input[type="checkbox"] {
 [data-theme="candyland"] .unplayed-track-tint,
 .theme-candyland .unplayed-track-tint {
   background: rgba(30, 74, 122, 0.25) !important;
+}
+
+[data-theme="neue-editorial"] .waveform-inactive-bar,
+.theme-neue-editorial .waveform-inactive-bar,
+[data-theme="neue-editorial"] .unplayed-track-tint,
+.theme-neue-editorial .unplayed-track-tint {
+  background: var(--waveform-inactive, rgba(31, 31, 31, 0.18)) !important;
+}
+
+/* Neue Editorial Pill-Shaped Control Elements */
+[data-theme="neue-editorial"] .lyrics-mode-pill,
+[data-theme="neue-editorial"] .lyrics-timing-btn,
+[data-theme="neue-editorial"] .lyrics-timing-bar {
+  border-radius: 9999px !important;
 }
 
 /* Dynamic Waveform Playing Equalizer Bars in Track/Playlist Views */

@@ -114,6 +114,20 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
           cardBorder: "border-purple-500/40",
           cardBg: "bg-purple-600/10",
         };
+      case "neue-editorial":
+        return {
+          accentHex: "#1F1F1F",
+          badgeBg: "bg-[#1F1F1F]/10",
+          accentText: "text-[#1F1F1F]",
+          btnPrimary: "bg-[#1F1F1F] hover:bg-[#3A3530] text-[#F2E8D8] shadow-md shadow-black/20 font-bold rounded-full",
+          btnActive: "bg-[#1F1F1F] text-[#F2E8D8]",
+          glowBg: "bg-[#1F1F1F]/10",
+          pulseBg: "bg-[#1F1F1F]/10",
+          ringBorder: "border-[#1F1F1F]/30",
+          ringColor: "ring-[#1F1F1F]/20",
+          cardBorder: "border-[#1F1F1F]/15",
+          cardBg: "bg-[#1F1F1F]/5",
+        };
       case "designer":
       default:
         return {

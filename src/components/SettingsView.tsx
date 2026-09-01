@@ -142,7 +142,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
       </section>
 
-      {/* 6 FULL APP DESIGNS & THEMES SUITE */}
+      {/* 7 FULL APP DESIGNS & THEMES SUITE */}
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -152,7 +152,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
             <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
               <Layout className={`w-4 h-4 ${designConfig.accentText}`} />
-              <span>Full App Layout & Design Archetypes (6 Options)</span>
+              <span>Full App Layout & Design Archetypes (7 Options)</span>
             </h3>
             <p className={`text-xs ${designConfig.textSecondary} font-medium mt-0.5`}>
               Select your preferred overall design. This transforms the entire application: background canvas, headers, navigation, cards, typography, and bottom player dock.
@@ -163,7 +163,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </span>
         </div>
 
-        {/* 6 Full App Design Cards */}
+        {/* 7 Full App Design Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {FULL_APP_DESIGNS_LIST.map((design) => {
             const isSelected = (settings.fullAppDesign || "designer") === design.id;
@@ -211,7 +211,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-200/90 text-zinc-900 font-bold border border-zinc-300">
                       {design.badge}
                     </span>
-                    <span className="text-[10px] font-mono text-zinc-600 font-semibold">{design.num} / 06</span>
+                    <span className="text-[10px] font-mono text-zinc-600 font-semibold">{design.num} / 07</span>
                   </div>
 
                   <h4 className="text-sm font-bold text-zinc-900 mb-1">{design.name}</h4>

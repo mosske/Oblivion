@@ -119,20 +119,34 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="max-w-xl space-y-2">
             <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${
-              designConfig.isCandy
+              designConfig.id === "neue-editorial"
+                ? "bg-[#1F1F1F]/10 text-[#1F1F1F] border border-[#1F1F1F]/20 shadow-xs"
+                : designConfig.isCandy
                 ? "bg-white/90 text-[#1e4a7a] border border-pink-200 shadow-xs"
                 : designConfig.isLight
                 ? "bg-white/15 text-[#f8f6f0] border border-white/25"
                 : "bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"
             } text-xs font-bold`}>
-              <Compass className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
+              <Compass className={`w-3.5 h-3.5 ${designConfig.id === "neue-editorial" ? "text-[#1F1F1F]" : designConfig.accentText}`} />
               <span>YouTube Music Explore</span>
             </div>
 
-            <h1 className={`text-2xl sm:text-3xl md:text-4xl font-extrabold ${designConfig.isCandy ? "text-[#1e4a7a]" : "text-white"} tracking-tight leading-tight`}>
+            <h1 className={`text-2xl sm:text-3xl md:text-4xl font-extrabold ${
+              designConfig.id === "neue-editorial"
+                ? "text-white drop-shadow-[0_2px_8px_rgba(31,31,31,0.7)] [text-shadow:_0_2px_8px_rgba(31,31,31,0.7)]"
+                : designConfig.isCandy
+                ? "text-[#1e4a7a]"
+                : "text-white"
+            } tracking-tight leading-tight`}>
               Explore & Discover
             </h1>
-            <p className={`text-xs sm:text-sm ${designConfig.isCandy ? "text-[#3b1235]" : "text-slate-200/90"} leading-relaxed font-medium`}>
+            <p className={`text-xs sm:text-sm ${
+              designConfig.id === "neue-editorial"
+                ? "text-[#3A3530]"
+                : designConfig.isCandy
+                ? "text-[#3b1235]"
+                : "text-slate-200/90"
+            } leading-relaxed font-medium`}>
               New releases, live global charts, trending music videos, and mood stations pulled fresh from YouTube Music.
             </p>
           </div>

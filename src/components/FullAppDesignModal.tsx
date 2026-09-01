@@ -43,7 +43,7 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg sm:text-xl font-black text-white">
-                  6 Full App Layouts & Designs
+                  7 Full App Layouts & Designs
                 </h3>
                 <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
                   Full Suite
@@ -92,7 +92,7 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/60 text-slate-200 border border-white/10">
                         {design.badge}
                       </span>
-                      <span className="text-xs font-mono text-slate-400">{design.num} / 06</span>
+                      <span className="text-xs font-mono text-slate-400">{design.num} / 07</span>
                     </div>
 
                     {/* Miniature UI Screen Wireframe */}

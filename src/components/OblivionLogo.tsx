@@ -128,6 +128,19 @@ const PALETTES: Record<string, GradientPalette> = {
     auraColor: "#c026d3",
     textGold: "#f472b6",
   },
+
+  // 7. Neue Editorial (Swiss High-Contrast, Charcoal & Pale Beige)
+  "neue-editorial": {
+    ringGrad: { c1: "#1F1F1F", c2: "#3A3530", c3: "#524B44", c4: "#1F1F1F" },
+    tri1Grad: { c1: "#1F1F1F", c2: "#3A3530", c3: "#1F1F1F" },
+    tri2Grad: { c1: "#FAF5ED", c2: "#F2E8D8", c3: "#EFE5D4" },
+    highlight: "#FAF5ED",
+    shadow: "#0A0A0A",
+    playCore: "#1F1F1F",
+    playHighlight: "#FAF5ED",
+    auraColor: "#1F1F1F",
+    textGold: "#1F1F1F",
+  },
 };
 
 export const OblivionLogo: React.FC<OblivionLogoProps> = ({

@@ -80,13 +80,13 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-bold tracking-wider">
               <Layout className="w-3.5 h-3.5" />
-              <span>Full-App Layouts & Themes Studio (6 Options)</span>
+              <span>Full-App Layouts & Themes Studio (7 Options)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
               Transform the Entire App Design
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Experience 6 complete, distinct full-app design archetypes. Switching designs updates the entire visual ecosystem: the canvas atmosphere, header, sidebar navigation, content cards, color palette, and docked bottom player.
+              Experience 7 complete, distinct full-app design archetypes. Switching designs updates the entire visual ecosystem: the canvas atmosphere, header, sidebar navigation, content cards, color palette, and docked bottom player.
             </p>
           </div>
 
@@ -106,12 +106,12 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
         </div>
       </div>
 
-      {/* 6 Full App Designs Grid */}
+      {/* 7 Full App Designs Grid */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-cyan-400" />
-            <span>Choose From 6 Full App Designs</span>
+            <span>Choose From 7 Full App Designs</span>
           </h2>
           <span className="text-xs text-slate-400 hidden sm:inline">
             Tap any card to instantly morph the entire app live
@@ -146,7 +146,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                     <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-black/60 text-white border border-white/10">
                       {design.badge}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">Design {design.num} / 06</span>
+                    <span className="text-xs font-mono text-slate-400">Design {design.num} / 07</span>
                   </div>
 
                   {/* Complete App Wireframe Box */}

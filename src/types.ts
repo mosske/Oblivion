@@ -91,7 +91,8 @@ export type ThemePreset =
   | 'sunset-horizon' 
   | 'rose-gold' 
   | 'candyland-pastel'
-  | 'minimal-light';
+  | 'minimal-light'
+  | 'neue-editorial';
 export type AudioQuality = 'normal' | 'high' | 'lossless';
 export type LyricsFontSize = 'sm' | 'md' | 'lg';
 export type LyricsAlignment = 'left' | 'center';
@@ -117,7 +118,8 @@ export type FullAppDesignId =
   | 'ytmusic-red'        // Legacy alias for Candyland
   | 'dynamic-emerald'    // 4. Dynamic Island Emerald (Ultra-Minimalist Monolith & Jade Pulse Multi-Accent)
   | 'audiophile-gold'    // 5. Studio Audiophile Gold (Warm Carbon, Vinyl Gold & Solar Amber Multi-Accent)
-  | 'twilight-vaporwave'; // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Sunset Magenta Multi-Accent)
+  | 'twilight-vaporwave' // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Sunset Magenta Multi-Accent)
+  | 'neue-editorial';    // 7. Neue Editorial (Swiss High-Contrast, Pale Beige & Charcoal Pills)
 
 export interface UserSettings {
   audioQuality: AudioQuality;

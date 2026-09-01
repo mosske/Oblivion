@@ -478,6 +478,74 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     navInactive: "text-fuchsia-300/70 hover:text-[#fdf4ff] hover:bg-fuchsia-950/40",
     trackRowHover: "hover:bg-[#ff2a8d]/10",
   },
+
+  "neue-editorial": {
+    id: "neue-editorial",
+    name: "Neue Editorial",
+    subtitle: "Swiss High-Contrast, Pale Beige & Charcoal Pills",
+    badge: "SWISS EDITORIAL",
+    num: "07",
+    themePreset: "neue-editorial",
+    playerLayout: "designer-waveform",
+    description:
+      "A high-contrast Swiss editorial layout featuring a warm pale beige canvas (#F2E8D8), soft off-white floating cards (#FAF5ED), deep charcoal pill-shaped controls (#1F1F1F), and clean Neue Haas typography.",
+    features: [
+      "Warm Pale Beige canvas & soft off-white floating cards",
+      "Deep Charcoal (#1F1F1F) pill action buttons & controls",
+      "Swiss Neue Haas Grotesk editorial typography hierarchy",
+      "High-contrast moving charcoal-to-black scrubber gradient",
+    ],
+    swatchColors: ["#F2E8D8", "#FAF5ED", "#1F1F1F", "#666055"],
+    multiAccentGradient: "from-[#1F1F1F] via-[#3A3530] to-[#1F1F1F]",
+    isLight: true,
+    themeColorMeta: "#F2E8D8",
+
+    bgCanvas: "from-[#F2E8D8] via-[#EFE5D4] to-[#FAF5ED]",
+    cardBg: "bg-[#FAF5ED]/95 backdrop-blur-xl",
+    headerBg: "bg-[#F2E8D8]/95 backdrop-blur-xl",
+    sidebarBg: "bg-[#FAF5ED]/95 backdrop-blur-2xl",
+    bottomNavBg: "bg-[#FAF5ED]/95 backdrop-blur-2xl",
+    borderSubtle: "border-[#1F1F1F]/12",
+    borderStrong: "border-[#1F1F1F]/20",
+    textPrimary: "text-[#1F1F1F]",
+    textSecondary: "text-[#666055]",
+    textMuted: "text-[#8A8478]",
+    accentBg: "bg-[#1F1F1F]",
+    accentText: "text-[#1F1F1F]",
+    accentBorder: "border-[#1F1F1F]/40",
+    accentContrastText: "text-[#F2E8D8]",
+
+    headingPrimary: "text-[#1F1F1F]",
+    headingSecondary: "text-[#3A3530]",
+    headingMuted: "text-[#666055]",
+    cardHover: "hover:bg-[#F5EDE1]",
+    modalBg: "bg-[#FAF5ED]",
+    pillBg: "bg-[#1F1F1F]/8",
+    pillActive: "bg-[#1F1F1F] text-[#F2E8D8]",
+    inputBg: "bg-[#FAF5ED] text-[#1F1F1F] border-[#1F1F1F]/15",
+    glowRing: "shadow-[0_0_25px_rgba(31,31,31,0.15)]",
+    waveformGradient: "from-[#1F1F1F] to-[#3A3530]",
+    progressGradient: "bg-gradient-to-r from-[#1F1F1F] via-[#3A3530] to-[#1F1F1F]",
+    bannerGradient: "from-[#1F1F1F]/15 via-[#3A3530]/10 to-transparent",
+    mockup: {
+      bannerGradient: "from-[#1F1F1F] to-[#3A3530]",
+      heroTitle: "Swiss Editorial & Minimal",
+      heroSubtitle: "High-Contrast Acoustics",
+      chipLabels: ["Neue Haas", "Charcoal Pill", "Warm Mist", "Lossless"],
+      dockStyle: "bg-[#FAF5ED] border-[#1F1F1F]/15 shadow-2xl rounded-full",
+    },
+
+    accentSecondaryBg: "bg-[#3A3530]",
+    accentSecondaryText: "text-[#3A3530]",
+    accentTertiaryBg: "bg-[#524B44]",
+    accentTertiaryText: "text-[#524B44]",
+
+    btnPrimary: "bg-[#1F1F1F] hover:bg-[#3A3530] text-[#F2E8D8] font-bold rounded-full shadow-md active:scale-95",
+    btnSecondary: "bg-[#FAF5ED] hover:bg-[#F2E8D8] text-[#1F1F1F] font-semibold border border-[#1F1F1F]/15 rounded-full",
+    navActive: "bg-[#1F1F1F] text-[#F2E8D8] shadow-md font-bold rounded-full",
+    navInactive: "text-[#666055] hover:text-[#1F1F1F] hover:bg-[#F2E8D8] rounded-full",
+    trackRowHover: "hover:bg-[#FAF5ED]/90",
+  },
 };
 
 /**
@@ -488,6 +556,7 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
  * Theme 04 (Dynamic Island Emerald / Aurora Jade): #021a12
  * Theme 05 (Studio Audiophile Gold / Golden Brass): #170d06
  * Theme 06 (Twilight Vaporwave): #1e0b36
+ * Theme 07 (Neue Editorial): #F2E8D8
  */
 export const THEME_CANVAS_COLORS: Record<string, string> = {
   designer: "#051911",
@@ -497,10 +566,11 @@ export const THEME_CANVAS_COLORS: Record<string, string> = {
   "dynamic-emerald": "#021a12",
   "audiophile-gold": "#170d06",
   "twilight-vaporwave": "#1e0b36",
+  "neue-editorial": "#F2E8D8",
 };
 
 /**
- * Array of the 6 canonical Full App Designs (guaranteed unique IDs for React key rendering)
+ * Array of the 7 canonical Full App Designs (guaranteed unique IDs for React key rendering)
  */
 export const FULL_APP_DESIGNS_LIST: FullAppDesignConfig[] = Object.values(FULL_APP_DESIGNS_BASE);
 
@@ -532,7 +602,10 @@ export function getThemeCanvasColor(themeOrId?: string | FullAppDesignConfig | n
  */
 export function syncDocumentThemeColor(themeOrId?: string | FullAppDesignConfig | null): string {
   const colorHex = getThemeCanvasColor(themeOrId);
-  const isLight = colorHex.toLowerCase() === "#ffd1dc" || (typeof themeOrId === "object" && themeOrId?.isLight);
+  const isLight =
+    colorHex.toLowerCase() === "#ffd1dc" ||
+    colorHex.toLowerCase() === "#f2e8d8" ||
+    (typeof themeOrId === "object" && Boolean(themeOrId?.isLight));
 
   if (typeof document !== "undefined") {
     // 1. Standard / Brave / Android Chrome Theme Color

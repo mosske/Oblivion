@@ -45,6 +45,8 @@ const getDoneButtonThemeStyles = (themeId?: string): string => {
       return "bg-gradient-to-r from-[#f59e0b] to-[#d4af37] hover:brightness-110 text-[#170d06] font-extrabold shadow-lg shadow-amber-500/25";
     case "twilight-vaporwave":
       return "bg-gradient-to-r from-[#ff2a8d] to-[#8a2be2] hover:brightness-110 text-white font-extrabold shadow-lg shadow-purple-500/30";
+    case "neue-editorial":
+      return "bg-[#1F1F1F] hover:bg-[#3A3530] text-[#F2E8D8] font-bold rounded-full shadow-lg shadow-black/15";
     case "designer":
     default:
       return "bg-[#c89b3c] hover:bg-[#b58b34] text-slate-950 font-bold shadow-lg shadow-[#c89b3c]/20";
@@ -64,6 +66,8 @@ const getHeaderBadgeThemeStyles = (themeId?: string): string => {
       return "bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b]/30";
     case "twilight-vaporwave":
       return "bg-[#ff2a8d]/20 text-[#ff2a8d] border-[#ff2a8d]/30";
+    case "neue-editorial":
+      return "bg-[#1F1F1F]/10 text-[#1F1F1F] border-[#1F1F1F]/20 rounded-full";
     case "designer":
     default:
       return "bg-[#c89b3c]/20 text-[#c89b3c] border-[#c89b3c]/30";
@@ -83,6 +87,8 @@ const getSearchFocusBorder = (themeId?: string): string => {
       return "focus:border-[#f59e0b]";
     case "twilight-vaporwave":
       return "focus:border-[#ff2a8d]";
+    case "neue-editorial":
+      return "focus:border-[#1F1F1F]";
     case "designer":
     default:
       return "focus:border-[#c89b3c]";
