@@ -14,6 +14,7 @@ import { PlaylistModal } from "./components/PlaylistModal";
 import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
+import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
@@ -1802,6 +1803,9 @@ export default function App() {
 
   return (
     <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none`}>
+      {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
+      <CandylandFallingSweets isActive={Boolean(activeFullDesign.isCandy || activeFullDesign.id === "candyland")} />
+
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
@@ -1827,7 +1831,7 @@ export default function App() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative ${activeFullDesign.isCandy ? "candyland-canvas-bg" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
+      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative ${activeFullDesign.isCandy ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
         {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
         <header className={`sticky top-0 h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-30 shadow-xs`}>
           <div

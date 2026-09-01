@@ -27,6 +27,7 @@ import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { MarqueeText } from "./MarqueeText";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { CandylandFallingSweets } from "./CandylandFallingSweets";
 
 interface PlayerProps {
   playerState: PlayerState;
@@ -1530,6 +1531,9 @@ export const Player: React.FC<PlayerProps> = ({
 
             {/* Layer 3: High-Legibility Contrast Readability Veil */}
             <div className={`absolute inset-0 ${fpTheme.veil}`} />
+
+            {/* Candyland Falling Sweets in Full Player Ambient Layer */}
+            <CandylandFallingSweets isActive={Boolean(designConfig.isCandy || designConfig.id === "candyland")} />
           </div>
 
           {/* Top Bar Navigation with Swipe Handle */}
