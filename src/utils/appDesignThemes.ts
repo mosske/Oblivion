@@ -86,8 +86,8 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
       "Floating dock with responsive dual-side action buttons",
       "Dual-line Romanized lyrics with synced indicator tags",
     ],
-    swatchColors: ["#051911", "#f8f6f0", "#c59b27", "#e5b85c"],
-    multiAccentGradient: "from-[#c59b27] to-[#e5b85c]",
+    swatchColors: ["#051911", "#f8f6f0", "#c59b27", "#f59e0b"],
+    multiAccentGradient: "from-[#c59b27] to-[#f59e0b]",
     isLight: true,
     themeColorMeta: "#051911",
 
@@ -115,21 +115,21 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     pillActive: "bg-[#c59b27] text-[#1a201c]",
     inputBg: "bg-[#ebe7dc] text-[#1a201c] border-[#d8d2c4]",
     glowRing: "shadow-[0_0_25px_rgba(197,155,39,0.35)]",
-    waveformGradient: "from-[#c59b27] to-[#e5b85c]",
-    progressGradient: "bg-gradient-to-r from-[#c59b27] to-[#e5b85c]",
-    bannerGradient: "from-[#c59b27]/20 via-[#e5b85c]/10 to-transparent",
+    waveformGradient: "from-[#c59b27] to-[#f59e0b]",
+    progressGradient: "bg-gradient-to-r from-[#c59b27] to-[#f59e0b]",
+    bannerGradient: "from-[#c59b27]/20 via-[#f59e0b]/10 to-transparent",
     mockup: {
-      bannerGradient: "from-[#c59b27] to-[#e5b85c]",
+      bannerGradient: "from-[#c59b27] to-[#f59e0b]",
       heroTitle: "Editorial Classical & Jazz",
       heroSubtitle: "Curated Masterpieces",
       chipLabels: ["Alabaster Studio", "Pure Master", "Hi-Res FLAC", "Editorial"],
       dockStyle: "bg-[#f8f6f0]/95 border-[#e6e2d8] shadow-2xl",
     },
 
-    accentSecondaryBg: "bg-[#e5b85c]",
-    accentSecondaryText: "text-[#e5b85c]",
-    accentTertiaryBg: "bg-[#fef08a]",
-    accentTertiaryText: "text-[#fef08a]",
+    accentSecondaryBg: "bg-[#f59e0b]",
+    accentSecondaryText: "text-[#f59e0b]",
+    accentTertiaryBg: "bg-[#e5b85c]",
+    accentTertiaryText: "text-[#e5b85c]",
 
     btnPrimary: "bg-[#c59b27] hover:bg-[#b0881e] text-[#1a201c] font-bold shadow-md active:scale-95",
     btnSecondary: "bg-[#ebe7dc] hover:bg-[#dfd9cb] text-[#1a201c] font-semibold border border-[#d8d2c4]",
@@ -354,13 +354,13 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     description:
       "Vintage high-end analog audio deck aesthetic featuring warm carbon vinyl glass, solar gold with warm copper multi-accents, and antique brass tertiary trims.",
     features: [
-      "Multi-accent: Solar Gold (#f59e0b) + Warm Copper (#e65c00)",
-      "Antique Brass (#d4af37) tertiary trims and VU indicators",
+      "Multi-accent: Solar Gold (#f59e0b) + Antique Brass (#d4af37)",
+      "Warm Copper (#e65c00) tertiary trims and VU indicators",
       "Frosted Warm Carbon Vinyl glass cards (blur-16px)",
       "High-contrast dark walnut active button text (#170d06)",
     ],
-    swatchColors: ["#170d06", "#f59e0b", "#e65c00", "#d4af37"],
-    multiAccentGradient: "from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
+    swatchColors: ["#170d06", "#f59e0b", "#d4af37", "#e65c00"],
+    multiAccentGradient: "from-[#f59e0b] to-[#d4af37]",
     isLight: false,
     themeColorMeta: "#170d06",
 
@@ -388,25 +388,25 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     pillActive: "bg-[#f59e0b] text-[#170d06]",
     inputBg: "bg-[#381e0b]/80 text-[#fef3c7] border-[#f59e0b]/30",
     glowRing: "shadow-[0_0_25px_rgba(245,158,11,0.35)]",
-    waveformGradient: "from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
-    progressGradient: "bg-gradient-to-r from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
-    bannerGradient: "from-[#f59e0b]/20 via-[#e65c00]/15 to-transparent",
+    waveformGradient: "from-[#f59e0b] to-[#d4af37]",
+    progressGradient: "bg-gradient-to-r from-[#f59e0b] to-[#d4af37]",
+    bannerGradient: "from-[#f59e0b]/20 via-[#d4af37]/15 to-transparent",
     mockup: {
-      bannerGradient: "from-[#f59e0b] via-[#e65c00] to-[#d4af37]",
+      bannerGradient: "from-[#f59e0b] to-[#d4af37]",
       heroTitle: "Analog Master Tape & Vinyl",
       heroSubtitle: "Solar Gold & Warm Copper Acoustics",
       chipLabels: ["Vacuum Tube", "DSD Master", "Direct Cut", "24-bit 192k"],
       dockStyle: "bg-[#261408]/90 border-[#f59e0b]/40 shadow-2xl",
     },
 
-    accentSecondaryBg: "bg-[#e65c00]",
-    accentSecondaryText: "text-[#e65c00]",
-    accentTertiaryBg: "bg-[#d4af37]",
-    accentTertiaryText: "text-[#d4af37]",
+    accentSecondaryBg: "bg-[#d4af37]",
+    accentSecondaryText: "text-[#d4af37]",
+    accentTertiaryBg: "bg-[#e65c00]",
+    accentTertiaryText: "text-[#e65c00]",
 
-    btnPrimary: "bg-gradient-to-r from-[#f59e0b] to-[#e65c00] hover:brightness-110 text-[#170d06] font-extrabold shadow-lg shadow-[#f59e0b]/20 active:scale-95",
+    btnPrimary: "bg-gradient-to-r from-[#f59e0b] to-[#d4af37] hover:brightness-110 text-[#170d06] font-extrabold shadow-lg shadow-[#f59e0b]/20 active:scale-95",
     btnSecondary: "bg-[#381e0b]/80 hover:bg-[#4a2810] text-[#f59e0b] border border-[#f59e0b]/30 font-semibold",
-    navActive: "bg-gradient-to-r from-[#f59e0b]/20 to-[#e65c00]/20 text-[#f59e0b] border border-[#f59e0b]/40 font-bold",
+    navActive: "bg-gradient-to-r from-[#f59e0b]/20 to-[#d4af37]/20 text-[#f59e0b] border border-[#f59e0b]/40 font-bold",
     navInactive: "text-amber-300/70 hover:text-[#fef3c7] hover:bg-amber-950/40",
     trackRowHover: "hover:bg-[#f59e0b]/10",
   },
@@ -422,13 +422,13 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     description:
       "Nostalgic sunset horizon aesthetic featuring sunset magenta, neon coral, and twilight violet multi-accent gradients behind translucent frosted rose glass.",
     features: [
-      "Multi-accent: Sunset Magenta (#ff2a8d) + Neon Coral (#ff758c)",
-      "Twilight Violet (#8a2be2) tertiary depth & ambient reflections",
+      "Multi-accent: Sunset Magenta (#ff2a8d) + Twilight Violet (#8a2be2)",
+      "Neon Coral (#ff758c) tertiary highlights & ambient reflections",
       "Frosted Twilight Rose tinted-glass cards (blur-16px)",
       "High-contrast crisp white active button text (#ffffff)",
     ],
-    swatchColors: ["#1e0b36", "#ff2a8d", "#ff758c", "#8a2be2"],
-    multiAccentGradient: "from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
+    swatchColors: ["#1e0b36", "#ff2a8d", "#8a2be2", "#ff758c"],
+    multiAccentGradient: "from-[#ff2a8d] to-[#8a2be2]",
     isLight: false,
     themeColorMeta: "#1e0b36",
 
@@ -456,25 +456,25 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     pillActive: "bg-[#ff2a8d] text-white",
     inputBg: "bg-[#33114a]/80 text-[#fdf4ff] border-[#ff2a8d]/30",
     glowRing: "shadow-[0_0_25px_rgba(255,42,141,0.35)]",
-    waveformGradient: "from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
-    progressGradient: "bg-gradient-to-r from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
-    bannerGradient: "from-[#ff2a8d]/25 via-[#ff758c]/20 to-transparent",
+    waveformGradient: "from-[#ff2a8d] to-[#8a2be2]",
+    progressGradient: "bg-gradient-to-r from-[#ff2a8d] to-[#8a2be2]",
+    bannerGradient: "from-[#ff2a8d]/25 via-[#8a2be2]/20 to-transparent",
     mockup: {
-      bannerGradient: "from-[#ff2a8d] via-[#ff758c] to-[#8a2be2]",
+      bannerGradient: "from-[#ff2a8d] to-[#8a2be2]",
       heroTitle: "Sunset FM 1984 & Chill",
       heroSubtitle: "Neon Horizon & Synth Chords",
       chipLabels: ["Vaporwave", "Future Funk", "Retrowave", "Dream Pop"],
       dockStyle: "bg-[#1e0b36]/90 border-[#ff2a8d]/40 shadow-[0_0_25px_rgba(255,42,141,0.3)]",
     },
 
-    accentSecondaryBg: "bg-[#ff758c]",
-    accentSecondaryText: "text-[#ff758c]",
-    accentTertiaryBg: "bg-[#8a2be2]",
-    accentTertiaryText: "text-[#8a2be2]",
+    accentSecondaryBg: "bg-[#8a2be2]",
+    accentSecondaryText: "text-[#8a2be2]",
+    accentTertiaryBg: "bg-[#ff758c]",
+    accentTertiaryText: "text-[#ff758c]",
 
-    btnPrimary: "bg-gradient-to-r from-[#ff2a8d] to-[#ff758c] hover:brightness-110 text-white font-extrabold shadow-lg shadow-[#ff2a8d]/25 active:scale-95",
-    btnSecondary: "bg-[#33114a]/80 hover:bg-[#431761] text-[#ff758c] border border-[#ff2a8d]/30 font-semibold",
-    navActive: "bg-gradient-to-r from-[#ff2a8d]/20 to-[#ff758c]/20 text-[#ff2a8d] border border-[#ff2a8d]/40 font-bold",
+    btnPrimary: "bg-gradient-to-r from-[#ff2a8d] to-[#8a2be2] hover:brightness-110 text-white font-extrabold shadow-lg shadow-[#ff2a8d]/25 active:scale-95",
+    btnSecondary: "bg-[#33114a]/80 hover:bg-[#431761] text-[#ff2a8d] border border-[#ff2a8d]/30 font-semibold",
+    navActive: "bg-gradient-to-r from-[#ff2a8d]/20 to-[#8a2be2]/20 text-[#ff2a8d] border border-[#ff2a8d]/40 font-bold",
     navInactive: "text-fuchsia-300/70 hover:text-[#fdf4ff] hover:bg-fuchsia-950/40",
     trackRowHover: "hover:bg-[#ff2a8d]/10",
   },
@@ -526,12 +526,16 @@ export function getThemeCanvasColor(themeOrId?: string | FullAppDesignConfig | n
 }
 
 /**
- * Explicitly updates the document <meta name="theme-color"> tag, document background,
- * and passes the theme color to in-app browser / Chrome Custom Tabs bridges prior to navigation/popup.
+ * Explicitly updates the document <meta name="theme-color"> tag, Web App Manifest,
+ * multi-vendor mobile status bars (Safari, Chrome, Brave, Edge, Firefox), and passes
+ * the theme color to in-app browser / Chrome Custom Tabs bridges prior to navigation/popup.
  */
 export function syncDocumentThemeColor(themeOrId?: string | FullAppDesignConfig | null): string {
   const colorHex = getThemeCanvasColor(themeOrId);
+  const isLight = colorHex.toLowerCase() === "#ffd1dc" || (typeof themeOrId === "object" && themeOrId?.isLight);
+
   if (typeof document !== "undefined") {
+    // 1. Standard / Brave / Android Chrome Theme Color
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
       metaThemeColor.setAttribute("content", colorHex);
@@ -542,12 +546,81 @@ export function syncDocumentThemeColor(themeOrId?: string | FullAppDesignConfig 
       document.head.appendChild(metaThemeColor);
     }
 
-    // Also update apple mobile web app status bar style if applicable
+    // 2. iOS Safari Status Bar Style
     let appleMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (appleMeta) {
-      // Candyland is light, others are dark
-      const isLight = colorHex.toLowerCase() === "#ffd1dc" || (typeof themeOrId === "object" && themeOrId?.isLight);
       appleMeta.setAttribute("content", isLight ? "default" : "black-translucent");
+    } else {
+      appleMeta = document.createElement("meta");
+      appleMeta.setAttribute("name", "apple-mobile-web-app-status-bar-style");
+      appleMeta.setAttribute("content", isLight ? "default" : "black-translucent");
+      document.head.appendChild(appleMeta);
+    }
+
+    // 3. Windows / Edge Status Bar Navigation Button Color
+    let msNavMeta = document.querySelector('meta[name="msapplication-navbutton-color"]');
+    if (msNavMeta) {
+      msNavMeta.setAttribute("content", colorHex);
+    } else {
+      msNavMeta = document.createElement("meta");
+      msNavMeta.setAttribute("name", "msapplication-navbutton-color");
+      msNavMeta.setAttribute("content", colorHex);
+      document.head.appendChild(msNavMeta);
+    }
+
+    // 4. Windows / Edge Tile Color
+    let msTileMeta = document.querySelector('meta[name="msapplication-TileColor"]');
+    if (msTileMeta) {
+      msTileMeta.setAttribute("content", colorHex);
+    } else {
+      msTileMeta = document.createElement("meta");
+      msTileMeta.setAttribute("name", "msapplication-TileColor");
+      msTileMeta.setAttribute("content", colorHex);
+      document.head.appendChild(msTileMeta);
+    }
+
+    // 5. Dynamic Web App Manifest Theme Color (Fixes Brave & Chromium CCT fallbacks)
+    try {
+      const dynamicManifest = {
+        id: "/",
+        name: "Oblivion Music",
+        short_name: "Oblivion",
+        description: "Oblivion Music - Google account sync, lossless audio streaming, background playback, and offline music caching.",
+        start_url: "/",
+        scope: "/",
+        display: "standalone",
+        display_override: ["standalone", "minimal-ui", "window-controls-overlay"],
+        background_color: colorHex,
+        theme_color: colorHex,
+        orientation: "any",
+        prefer_related_applications: false,
+        categories: ["music", "entertainment", "audio"],
+        icons: [
+          { src: "/icon-192.png", type: "image/png", sizes: "192x192", purpose: "any" },
+          { src: "/icon-192.png", type: "image/png", sizes: "192x192", purpose: "maskable" },
+          { src: "/icon-512.png", type: "image/png", sizes: "512x512", purpose: "any" },
+          { src: "/icon-512.png", type: "image/png", sizes: "512x512", purpose: "maskable" },
+          { src: "/favicon.svg", type: "image/svg+xml", sizes: "any", purpose: "any" }
+        ],
+        shortcuts: [
+          { name: "Home Dashboard", short_name: "Home", url: "/?tab=home", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
+          { name: "Music Library", short_name: "Library", url: "/?tab=library", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
+          { name: "Search Music", short_name: "Search", url: "/?tab=search", icons: [{ src: "/icon-192.png", sizes: "192x192" }] }
+        ]
+      };
+
+      const manifestDataUri = `data:application/manifest+json;charset=utf-8,${encodeURIComponent(JSON.stringify(dynamicManifest))}`;
+      let manifestLink = document.querySelector('link[rel="manifest"]');
+      if (manifestLink) {
+        manifestLink.setAttribute("href", manifestDataUri);
+      } else {
+        manifestLink = document.createElement("link");
+        manifestLink.setAttribute("rel", "manifest");
+        manifestLink.setAttribute("href", manifestDataUri);
+        document.head.appendChild(manifestLink);
+      }
+    } catch (e) {
+      console.debug("Dynamic manifest update error:", e);
     }
   }
 

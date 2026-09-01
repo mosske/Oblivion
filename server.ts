@@ -2096,6 +2096,34 @@ function getOAuthClientSecret(): string {
   return sanitizeCredential(stored.clientSecret || "");
 }
 
+app.get("/manifest.json", (req, res) => {
+  const themeColor = (req.query.theme_color as string) || (req.query.themeColor as string) || (req.session as any)?.authThemeColor || "#051911";
+  const manifestPath = path.join(process.cwd(), "public", "manifest.json");
+  try {
+    if (fs.existsSync(manifestPath)) {
+      const raw = fs.readFileSync(manifestPath, "utf-8");
+      const manifest = JSON.parse(raw);
+      manifest.theme_color = themeColor;
+      manifest.background_color = themeColor;
+      res.setHeader("Content-Type", "application/manifest+json; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      return res.json(manifest);
+    }
+  } catch (e) {}
+
+  res.setHeader("Content-Type", "application/manifest+json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  return res.json({
+    name: "Oblivion Music",
+    short_name: "Oblivion",
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+    background_color: themeColor,
+    theme_color: themeColor,
+  });
+});
+
 app.get("/api/auth/google/config", (req, res) => {
   const clientId = getOAuthClientId();
   const clientSecret = getOAuthClientSecret();

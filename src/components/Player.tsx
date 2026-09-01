@@ -344,6 +344,135 @@ const WAVEFORM_BARS = [
   75, 50, 35, 65, 80, 60, 40, 25, 18, 12
 ];
 
+interface WaveformScrubberProps {
+  currentTime: number;
+  duration: number;
+  isPlaying: boolean;
+  onSeek: (newTime: number) => void;
+  designConfig: FullAppDesignConfig;
+  className?: string;
+  isMini?: boolean;
+}
+
+const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
+  currentTime,
+  duration,
+  isPlaying,
+  onSeek,
+  designConfig,
+  className = "",
+  isMini = false,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragTime, setDragTime] = useState<number | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const effectiveTime = isDragging && dragTime !== null ? dragTime : currentTime;
+  const effectiveDuration = duration > 0 ? duration : 1;
+  const progressPercent = Math.max(0, Math.min(100, (effectiveTime / effectiveDuration) * 100));
+
+  const calculateTimeFromEvent = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return 0;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const ratio = rect.width > 0 ? x / rect.width : 0;
+    return ratio * (duration > 0 ? duration : 0);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    const newTime = calculateTimeFromEvent(e);
+    setDragTime(newTime);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const newTime = calculateTimeFromEvent(e);
+    setDragTime(newTime);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      const finalTime = calculateTimeFromEvent(e);
+      setIsDragging(false);
+      setDragTime(null);
+      onSeek(finalTime);
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsDragging(false);
+    setDragTime(null);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-all ${className}`}
+      title="Click or drag anywhere on waveform to seek"
+    >
+      {/* Waveform Bars */}
+      {WAVEFORM_BARS.map((heightPct, idx) => {
+        const barPosPct = (idx / (WAVEFORM_BARS.length - 1)) * 100;
+        const isPassed = barPosPct <= progressPercent;
+
+        return (
+          <div
+            key={idx}
+            className="flex-1 flex items-center justify-center h-full min-w-[2px] pointer-events-none"
+          >
+            <span
+              className={`w-full rounded-full transition-[height,background-color] duration-150 ${
+                isPassed
+                  ? "progress-gradient-animated shadow-[0_0_8px_var(--accent-primary)]"
+                  : "waveform-inactive-bar"
+              } ${isPlaying && isPassed && !isDragging ? "animate-pulse" : ""}`}
+              style={{
+                height: `${Math.max(
+                  15,
+                  isPlaying && !isDragging
+                    ? heightPct * (0.7 + Math.sin(idx + currentTime * 3) * 0.3)
+                    : heightPct
+                )}%`,
+              }}
+            />
+          </div>
+        );
+      })}
+
+      {/* Interactive Scrubber Knob */}
+      <div
+        className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full pointer-events-none transition-all duration-75 ${
+          isDragging || isHovered
+            ? "opacity-100 scale-125"
+            : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
+        }`}
+        style={{
+          left: `${progressPercent}%`,
+          background: "var(--accent-primary)",
+          border: "2px solid #ffffff",
+          boxShadow: "0 0 10px var(--accent-primary), 0 2px 6px rgba(0,0,0,0.5)",
+        }}
+      />
+    </div>
+  );
+};
+
 export const Player: React.FC<PlayerProps> = ({
   playerState,
   setPlayerState,
@@ -1274,6 +1403,7 @@ export const Player: React.FC<PlayerProps> = ({
             opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
             transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
           }}
+          data-theme={designConfig.id}
           className={`fixed inset-0 z-[100] w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}
         >
           {/* Animated Dynamic Ambient Background based on the HD Cover Art / Video Thumbnail & Active Theme */}
@@ -1515,10 +1645,10 @@ export const Player: React.FC<PlayerProps> = ({
             ) : playerState.mediaMode === "video" ? (
               /* Music Video Mode on Center Stage */
               <div className="flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-1">
-                {/* 16:9 Video Placeholder - exact bounding frame synchronized with YouTube wrapper */}
+                {/* 16:9 Video Placeholder - exact bounding frame synchronized with YouTube wrapper with dynamic ambient glow */}
                 <div
                   ref={videoPlaceholderRef}
-                  className="w-[min(90vw,520px)] aspect-video max-h-[34vh] sm:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none"
+                  className={`w-[min(90vw,520px)] aspect-video max-h-[34vh] sm:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none artwork-glow-dynamic border-2 ${fpTheme.artBorder}`}
                 />
 
                 {/* Song Title, Artist, & Master Video Tags - lowered with clean gap below the video screen and clear of shadows */}
@@ -1543,15 +1673,15 @@ export const Player: React.FC<PlayerProps> = ({
             ) : (
               /* Audio / Song Mode: Central HD Album Artwork & Dynamic Stage */
               <div className="flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto">
-                {/* HD Cover Art with Contained Ambient Shadow and Glowing Dynamic Aura */}
+                {/* HD Cover Art with Dynamic Pulsing Color-Shifting Ambient Glow Aura */}
                 <div className="relative group flex items-center justify-center">
                   {/* Dynamic themed colored backlight aura */}
-                  <div className={`absolute -inset-2 sm:-inset-3 rounded-[2rem] bg-gradient-to-tr ${fpTheme.artGlowRing} blur-xl opacity-70 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
+                  <div className={`absolute -inset-3 sm:-inset-4 rounded-[2.5rem] artwork-glow-dynamic opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
 
                   {/* Contained 3D atmospheric floor drop shadow */}
                   <div className="absolute -inset-0.5 rounded-3xl shadow-[0_12px_28px_rgba(0,0,0,0.7),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
 
-                  <div className={`relative w-[min(54vw,220px)] h-[min(54vw,220px)] xs:w-[min(60vw,250px)] xs:h-[min(60vw,250px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[32vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} shadow-[0_16px_36px_rgba(0,0,0,0.7)]`}>
+                  <div className={`relative w-[min(54vw,220px)] h-[min(54vw,220px)] xs:w-[min(60vw,250px)] xs:h-[min(60vw,250px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[32vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} artwork-glow-dynamic shadow-[0_16px_36px_rgba(0,0,0,0.7)]`}>
                     <img
                       src={getHdCoverUrl(currentTrack.coverUrl)}
                       alt={currentTrack.title}
@@ -1710,39 +1840,14 @@ export const Player: React.FC<PlayerProps> = ({
 
             {/* Bottom Row: Waveform Scrubber & Timestamps matching Mini Player */}
             <div className="flex items-center gap-3 pt-0.5">
-              <div 
-                className={`flex-1 h-8 sm:h-9 flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer relative py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-colors`}
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                  const newTime = pos * duration;
-                  handleSeekInternal(newTime);
-                }}
-                title="Click anywhere on waveform to seek"
-              >
-                {WAVEFORM_BARS.map((heightPct, idx) => {
-                  const barPosPct = (idx / (WAVEFORM_BARS.length - 1)) * 100;
-                  const isPassed = barPosPct <= (duration > 0 ? (currentTime / duration) * 100 : 0);
-                  
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 flex items-center justify-center h-full min-w-[2px]"
-                    >
-                      <span
-                        className={`w-full rounded-full transition-all duration-150 ${
-                          isPassed
-                            ? `${designConfig.waveformGradient || designConfig.progressGradient || fpTheme.seekbarFill || "bg-amber-500"} ${isPlaying ? "animate-gradient-flow animate-waveform-shimmer" : ""}`
-                            : `${designConfig.borderSubtle || "border-white/10"} bg-white/10 dark:bg-slate-700 hover:opacity-80`
-                        } ${isPlaying && isPassed ? "animate-pulse" : ""}`}
-                        style={{
-                          height: `${Math.max(15, isPlaying ? (heightPct * (0.7 + (Math.sin(idx + currentTime * 3) * 0.3))) : heightPct)}%`,
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+              <WaveformScrubber
+                currentTime={currentTime}
+                duration={duration || currentTrack?.duration || 0}
+                isPlaying={isPlaying}
+                onSeek={handleSeekInternal}
+                designConfig={designConfig}
+                isMini={false}
+              />
 
               <div className={`text-[11px] sm:text-xs font-mono font-medium ${designConfig.textMuted || fpTheme.timeText || "text-slate-400"} shrink-0 whitespace-nowrap`}>
                 <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
@@ -1779,6 +1884,7 @@ export const Player: React.FC<PlayerProps> = ({
               transition: isMiniDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease-out",
               touchAction: "pan-x",
             }}
+            data-theme={designConfig.id}
             className={`fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
           >
             {/* Top Drag-Down Bar Handle */}
@@ -1935,44 +2041,19 @@ export const Player: React.FC<PlayerProps> = ({
 
             {/* Bottom Row: Waveform Scrubber & Timestamps */}
             <div className="flex items-center gap-3 pt-0.5">
-              <div 
-                className={`flex-1 h-8 flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer relative py-1 px-1.5 rounded-xl ${designConfig.inputBg} border ${designConfig.borderSubtle} hover:${designConfig.accentBorder} transition-colors`}
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                  const newTime = pos * duration;
-                  handleSeekInternal(newTime);
-                }}
-                title="Click anywhere on waveform to seek"
-              >
-                {WAVEFORM_BARS.map((heightPct, idx) => {
-                  const barPosPct = (idx / (WAVEFORM_BARS.length - 1)) * 100;
-                  const isPassed = barPosPct <= progressPercent;
-                  
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 flex items-center justify-center h-full min-w-[2px]"
-                    >
-                      <span
-                        className={`w-full rounded-full transition-all duration-150 ${
-                          isPassed
-                            ? `${designConfig.waveformGradient || designConfig.progressGradient || designConfig.accentBg} ${isPlaying ? "animate-gradient-flow animate-waveform-shimmer" : ""}`
-                            : `${designConfig.borderSubtle} dark:bg-slate-700 hover:opacity-80`
-                        } ${isPlaying && isPassed ? "animate-pulse" : ""}`}
-                        style={{
-                          height: `${Math.max(15, isPlaying ? (heightPct * (0.7 + (Math.sin(idx + currentTime * 3) * 0.3))) : heightPct)}%`,
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+              <WaveformScrubber
+                currentTime={currentTime}
+                duration={duration || currentTrack?.duration || 0}
+                isPlaying={isPlaying}
+                onSeek={handleSeekInternal}
+                designConfig={designConfig}
+                isMini={true}
+              />
 
               <div className={`text-[11px] font-mono font-medium ${designConfig.textMuted} shrink-0 whitespace-nowrap`}>
                 <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
                 <span className="mx-1">/</span>
-                <span>{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, "0")}</span>
+                <span>{Math.floor((duration || currentTrack?.duration || 0) / 60)}:{String(Math.floor((duration || currentTrack?.duration || 0) % 60)).padStart(2, "0")}</span>
               </div>
             </div>
           </div>

@@ -210,6 +210,38 @@ html, body {
   animation: waveformShimmer 2s ease-in-out infinite;
 }
 
+@keyframes progress-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes artwork-glow-pulse {
+  0% {
+    box-shadow: 0 0 20px var(--accent-primary), 0 0 40px var(--accent-secondary);
+  }
+  50% {
+    box-shadow: 0 0 35px var(--accent-secondary), 0 0 70px var(--accent-primary);
+  }
+  100% {
+    box-shadow: 0 0 25px var(--accent-primary), 0 0 55px var(--accent-secondary);
+  }
+}
+
+.animate-progress-gradient {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary)) !important;
+  background-size: 200% 100% !important;
+  animation: progress-gradient-shift 3s linear infinite !important;
+}
+
+.artwork-glow-dynamic {
+  box-shadow: 0 0 25px var(--accent-primary), 0 0 50px var(--accent-secondary) !important;
+  animation: artwork-glow-pulse 6s ease-in-out infinite alternate !important;
+}
+
 /* Continuous Marquee Text Scrolling Animation */
 @keyframes marqueeContinuous {
   0% {

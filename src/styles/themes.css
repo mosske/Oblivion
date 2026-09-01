@@ -11,11 +11,12 @@
   --card-text: #1a201c;
   --card-border: rgba(230, 226, 216, 0.8);
   --accent-primary: #c59b27;
-  --accent-secondary: #e5b85c;
-  --accent-tertiary: #fef08a;
+  --accent-secondary: #f59e0b;
+  --accent-tertiary: #e5b85c;
   --accent-contrast-text: #1a201c;
   --text-muted: #666258;
   --border-subtle: #e6e2d8;
+  --waveform-inactive: rgba(102, 98, 88, 0.48);
   --glass-blur: blur(16px);
   --glass-bg: rgba(248, 246, 240, 0.92);
   --glass-border: rgba(230, 226, 216, 0.8);
@@ -101,8 +102,8 @@
   --card-text: #fef3c7;
   --card-border: rgba(245, 158, 11, 0.35);
   --accent-primary: #f59e0b;
-  --accent-secondary: #e65c00;
-  --accent-tertiary: #d4af37;
+  --accent-secondary: #d4af37;
+  --accent-tertiary: #e65c00;
   --accent-contrast-text: #170d06;
   --text-muted: #fbbf24;
   --border-subtle: rgba(245, 158, 11, 0.3);
@@ -121,8 +122,8 @@
   --card-text: #fdf4ff;
   --card-border: rgba(255, 42, 141, 0.35);
   --accent-primary: #ff2a8d;
-  --accent-secondary: #ff758c;
-  --accent-tertiary: #8a2be2;
+  --accent-secondary: #8a2be2;
+  --accent-tertiary: #ff758c;
   --accent-contrast-text: #ffffff;
   --text-muted: #f0abfc;
   --border-subtle: rgba(255, 42, 141, 0.3);
@@ -269,3 +270,66 @@ input[type="checkbox"] {
   border-color: var(--accent-secondary, var(--accent-primary)) !important;
   box-shadow: 0 0 8px var(--accent-primary), 0 0 0 2px var(--accent-secondary, var(--accent-primary)) !important;
 }
+
+/* =========================================================================
+   Animated Gradient Waveform, Scrubber Fill & Dynamic Artwork Glow
+   ========================================================================= */
+
+@keyframes progress-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes artwork-glow-pulse {
+  0% {
+    box-shadow: 0 0 20px var(--accent-primary), 0 0 40px var(--accent-secondary);
+  }
+  50% {
+    box-shadow: 0 0 35px var(--accent-secondary), 0 0 70px var(--accent-primary);
+  }
+  100% {
+    box-shadow: 0 0 25px var(--accent-primary), 0 0 55px var(--accent-secondary);
+  }
+}
+
+/* High-Contrast Dynamic Multi-Stop Animated Gradient Fill */
+.progress-gradient-animated,
+.active-progress-gradient {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary)) !important;
+  background-size: 200% 100% !important;
+  animation: progress-gradient-shift 3s linear infinite !important;
+}
+
+/* Dynamic Color-Shifting Ambient Glow for Album Artwork & Video Player Window */
+.artwork-glow-dynamic,
+.artwork-ambient-glow {
+  box-shadow: 0 0 25px var(--accent-primary), 0 0 50px var(--accent-secondary) !important;
+  animation: artwork-glow-pulse 6s ease-in-out infinite alternate !important;
+}
+
+/* Crisp Structural Inactive Waveform Bars & Unplayed Scrubber Track */
+.waveform-inactive-bar,
+.unplayed-track-tint {
+  background: rgba(255, 255, 255, 0.20) !important;
+}
+
+[data-theme="designer"] .waveform-inactive-bar,
+.theme-designer .waveform-inactive-bar,
+[data-theme="designer"] .unplayed-track-tint,
+.theme-designer .unplayed-track-tint {
+  background: var(--waveform-inactive, rgba(102, 98, 88, 0.48)) !important;
+}
+
+[data-theme="candyland"] .waveform-inactive-bar,
+.theme-candyland .waveform-inactive-bar,
+[data-theme="ytmusic-red"] .waveform-inactive-bar,
+.theme-ytmusic-red .waveform-inactive-bar,
+[data-theme="candyland"] .unplayed-track-tint,
+.theme-candyland .unplayed-track-tint {
+  background: rgba(30, 74, 122, 0.25) !important;
+}
+
