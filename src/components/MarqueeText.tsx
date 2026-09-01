@@ -44,6 +44,8 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
     };
 
     checkOverflow();
+    const rafId = requestAnimationFrame(checkOverflow);
+    const timeoutId = setTimeout(checkOverflow, 150);
 
     // Resize observer to recheck when container size changes
     let observer: ResizeObserver | null = null;
@@ -57,6 +59,8 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
     // Window resize fallback
     window.addEventListener("resize", checkOverflow);
     return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
       if (observer) observer.disconnect();
       window.removeEventListener("resize", checkOverflow);
     };
@@ -76,10 +80,10 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
           className={`animate-marquee-continuous ${pauseOnHover ? "hover:[animation-play-state:paused]" : ""}`}
           style={{ "--marquee-duration": `${duration}s` } as React.CSSProperties}
         >
-          <span ref={textRef} className={`shrink-0 pr-8 inline-block ${className}`}>
+          <span ref={textRef} className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`}>
             {text}
           </span>
-          <span className={`shrink-0 pr-8 inline-block ${className}`} aria-hidden="true">
+          <span className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`} aria-hidden="true">
             {text}
           </span>
         </div>

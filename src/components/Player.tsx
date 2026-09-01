@@ -1694,13 +1694,21 @@ export const Player: React.FC<PlayerProps> = ({
                 />
 
                 {/* Song Title, Artist, & Master Video Tags - lowered with clean gap below the video screen and clear of shadows */}
-                <div className="relative z-30 text-center space-y-1.5 sm:space-y-2 max-w-xs sm:max-w-md w-full px-2 mt-6 sm:mt-8 pt-2">
-                  <h2 className={`text-base sm:text-2xl md:text-3xl font-semibold tracking-normal truncate ${fpTheme.stageTitle} text-white drop-shadow-md`}>
-                    {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                  </h2>
-                  <p className={`text-xs sm:text-sm md:text-base font-normal tracking-wide truncate ${fpTheme.stageArtist}`}>
-                    {currentTrack.artist}
-                  </p>
+                <div className="relative z-30 text-center space-y-1 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-5 sm:mt-7 pt-1">
+                  <MarqueeText
+                    as="h2"
+                    text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                    className={`text-base sm:text-2xl md:text-3xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
+                    containerClassName="w-full mx-auto text-center"
+                    speed={30}
+                  />
+                  <MarqueeText
+                    as="p"
+                    text={currentTrack.artist || "Unknown Artist"}
+                    className={`text-xs sm:text-sm md:text-base font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
+                    containerClassName="w-full mx-auto text-center"
+                    speed={26}
+                  />
                   <div className="flex items-center justify-center gap-2 pt-0.5">
                     <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono flex items-center gap-1 ${fpTheme.stageTagNeutral}`}>
                       <Video className="w-3 h-3 text-red-500" />
@@ -1741,13 +1749,21 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
 
                 {/* Song Title, Artist, & Master Quality Tag - lowered with clean gap below album artwork and clear of shadows */}
-                <div className="relative z-30 text-center space-y-1.5 sm:space-y-2 max-w-xs sm:max-w-md w-full px-2 mt-6 sm:mt-8 pt-2">
-                  <h2 className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight truncate ${fpTheme.stageTitle} text-white drop-shadow-md`}>
-                    {cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                  </h2>
-                  <p className={`text-xs sm:text-sm md:text-base font-semibold truncate ${fpTheme.stageArtist}`}>
-                    {currentTrack.artist}
-                  </p>
+                <div className="relative z-30 text-center space-y-1 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-5 sm:mt-7 pt-1">
+                  <MarqueeText
+                    as="h2"
+                    text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                    className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
+                    containerClassName="w-full mx-auto text-center"
+                    speed={30}
+                  />
+                  <MarqueeText
+                    as="p"
+                    text={currentTrack.artist || "Unknown Artist"}
+                    className={`text-xs sm:text-sm md:text-base font-semibold ${fpTheme.stageArtist} text-center`}
+                    containerClassName="w-full mx-auto text-center"
+                    speed={26}
+                  />
                   <div className="flex items-center justify-center gap-2 pt-0.5">
                     <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagNeutral}`}>
                       {currentTrack.album || "Oblivion HD"}
