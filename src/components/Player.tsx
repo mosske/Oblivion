@@ -28,6 +28,7 @@ import { MarqueeText } from "./MarqueeText";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { CandylandFallingSweets } from "./CandylandFallingSweets";
+import { equalizerManager } from "../utils/equalizerEngine";
 
 interface PlayerProps {
   playerState: PlayerState;
@@ -546,6 +547,9 @@ export const Player: React.FC<PlayerProps> = ({
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState<number>(0);
 
+  // Dedicated radioSeedTrack state that locks to the song that initiated the radio station
+  const [radioSeedTrack, setRadioSeedTrack] = useState<Track | null>(null);
+
   // Swipe-down gesture state for collapsing Full Player back to mini player
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -1054,7 +1058,9 @@ export const Player: React.FC<PlayerProps> = ({
     }
 
     if (audioRef.current) {
+      equalizerManager.attachAudioElement(audioRef.current);
       if (isPlaying) {
+        equalizerManager.resume();
         // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
         const silentUrl = getSilentAudioUrl();
         if (audioRef.current.src !== silentUrl) {
@@ -1108,8 +1114,9 @@ export const Player: React.FC<PlayerProps> = ({
 
   // User manual play/pause toggle handler
   const handleUserTogglePlay = (explicitPlay?: boolean) => {
-    // Wake up / resume AudioContext on user gesture for reliable background playback
+    // Wake up / resume AudioContext on user gesture for reliable background playback and Web Audio EQ
     try {
+      equalizerManager.resume();
       if (!audioContextRef.current) {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
         if (AudioCtx) {
@@ -1704,9 +1711,16 @@ export const Player: React.FC<PlayerProps> = ({
               </button>
 
               <button
-                onClick={() =>
-                  setPlayerState((prev) => ({ ...prev, showSimilar: !prev.showSimilar, showLyrics: false }))
-                }
+                onClick={() => {
+                  setPlayerState((prev) => {
+                    const nextShowSimilar = !prev.showSimilar;
+                    if (nextShowSimilar && currentTrack) {
+                      // Lock the seed track to the track that initiated the radio
+                      setRadioSeedTrack(currentTrack);
+                    }
+                    return { ...prev, showSimilar: nextShowSimilar, showLyrics: false };
+                  });
+                }}
                 className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                   showSimilar ? fpTheme.tabActive : fpTheme.tabInactive
                 }`}
@@ -1735,14 +1749,19 @@ export const Player: React.FC<PlayerProps> = ({
                 />
               </div>
             ) : showSimilar ? (
-              <div className="w-full max-w-md h-full flex items-center justify-center">
-                <SimilarTracksDrawer
-                  currentTrack={currentTrack}
-                  onPlayTrack={onPlayTrack}
-                  onAddToQueue={onAddToQueue}
-                  onClose={() => setPlayerState((prev) => ({ ...prev, showSimilar: false }))}
-                  designConfig={designConfig}
-                />
+              <div className="w-full max-w-md h-full flex flex-col items-center justify-center py-1 sm:py-2">
+                {/* Radio Pop-Up Window */}
+                <div className="w-full flex-1 min-h-0 flex items-center justify-center">
+                  <SimilarTracksDrawer
+                    currentTrack={currentTrack}
+                    seedTrack={radioSeedTrack || currentTrack}
+                    isPlaying={isPlaying}
+                    onPlayTrack={onPlayTrack}
+                    onAddToQueue={onAddToQueue}
+                    onClose={() => setPlayerState((prev) => ({ ...prev, showSimilar: false }))}
+                    designConfig={designConfig}
+                  />
+                </div>
               </div>
             ) : playerState.mediaMode === "video" ? (
               /* Music Video Mode on Center Stage */

@@ -1570,16 +1570,18 @@ async function searchYouTubePublic(query: string, searchType: string = "all"): P
         if (item.videoRenderer) {
           const v = item.videoRenderer;
           const videoId = v.videoId;
-          const title = v.title?.runs?.[0]?.text || "Unknown";
-          const artist = v.ownerText?.runs?.[0]?.text || v.longBylineText?.runs?.[0]?.text || "Unknown Artist";
+          const rawTitle = v.title?.runs?.[0]?.text || "Unknown";
+          const rawChannel = v.ownerText?.runs?.[0]?.text || v.longBylineText?.runs?.[0]?.text || "Unknown Artist";
+          const meta = parseTrackMetadataServer(rawTitle, rawChannel);
           const coverUrl = v.thumbnail?.thumbnails?.slice(-1)?.[0]?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
           const durationText = v.lengthText?.simpleText || "0:00";
           results.push({
             id: videoId,
             youtubeVideoId: videoId,
-            title,
-            artist,
-            album: searchType === "album" ? title : "",
+            title: meta.title,
+            artist: meta.artist,
+            uploader: meta.uploader,
+            album: searchType === "album" ? meta.title : "",
             type: searchType === "album" ? "album" : "track",
             coverUrl,
             audioUrl: `/api/youtube/stream/${videoId}`,
@@ -1646,6 +1648,49 @@ async function searchYouTubePublic(query: string, searchType: string = "all"): P
     }
     return [];
   }
+}
+
+// Utility to strictly disambiguate true artist from channel/uploader
+function parseTrackMetadataServer(rawTitle: string, channelOrUploader?: string): { title: string; artist: string; uploader: string } {
+  const uploader = (channelOrUploader || "").trim();
+  if (!rawTitle) {
+    return {
+      title: "Untitled Track",
+      artist: uploader || "Unknown Artist",
+      uploader,
+    };
+  }
+
+  let cleaned = rawTitle.trim();
+  cleaned = cleaned
+    .replace(/\s*[\(\[]\s*(official\s*(music\s*)?(video|audio|lyric\s*video|hd|4k|stream)?|hd|4k|remastered|lyric\s*video|audio|visualizer)\s*[\)\]]/gi, "")
+    .trim();
+
+  const splitMatch = cleaned.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
+  if (splitMatch) {
+    const extractedArtist = splitMatch[1].trim();
+    let extractedTitle = splitMatch[2].trim().replace(/^["']|["']$/g, "").trim();
+    if (extractedArtist && extractedTitle) {
+      return {
+        title: extractedTitle,
+        artist: extractedArtist,
+        uploader,
+      };
+    }
+  }
+
+  let cleanArtist = uploader || "Unknown Artist";
+  if (cleanArtist.endsWith(" - Topic")) {
+    cleanArtist = cleanArtist.replace(/ - Topic$/, "").trim();
+  } else if (cleanArtist.toLowerCase().endsWith("vevo")) {
+    cleanArtist = cleanArtist.replace(/vevo$/i, "").trim();
+  }
+
+  return {
+    title: cleaned || rawTitle,
+    artist: cleanArtist || "Unknown Artist",
+    uploader,
+  };
 }
 
 // Utility to detect non-music content (vlogs, house tours, real estate, tutorials, gameplay, etc.)
@@ -1815,19 +1860,25 @@ async function searchYouTubeMusic(query: string, accessToken?: string, type: str
       const data = await response.json();
 
       if (data.items && data.items.length > 0) {
-        const items = data.items.map((item: any) => ({
-          id: item.id?.videoId || item.id?.playlistId || item.id,
-          youtubeVideoId: item.id?.videoId,
-          playlistId: item.id?.playlistId,
-          title: item.snippet?.title || 'Unknown',
-          artist: item.snippet?.channelTitle || 'Unknown Artist',
-          album: type === 'album' ? item.snippet?.title : '',
-          type: item.id?.playlistId || type === 'album' ? 'album' : 'track',
-          coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
-          audioUrl: item.id?.videoId ? `/api/youtube/stream/${item.id.videoId}` : undefined,
-          genre: 'Music',
-          playsCount: 0
-        }));
+        const items = data.items.map((item: any) => {
+          const rawTitle = item.snippet?.title || 'Unknown';
+          const rawChannel = item.snippet?.channelTitle || 'Unknown Artist';
+          const meta = parseTrackMetadataServer(rawTitle, rawChannel);
+          return {
+            id: item.id?.videoId || item.id?.playlistId || item.id,
+            youtubeVideoId: item.id?.videoId,
+            playlistId: item.id?.playlistId,
+            title: meta.title,
+            artist: meta.artist,
+            uploader: meta.uploader,
+            album: type === 'album' ? meta.title : '',
+            type: item.id?.playlistId || type === 'album' ? 'album' : 'track',
+            coverUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+            audioUrl: item.id?.videoId ? `/api/youtube/stream/${item.id.videoId}` : undefined,
+            genre: 'Music',
+            playsCount: 0
+          };
+        });
         const deduped = deduplicateById(items);
         setInCache(cacheKey, deduped);
         return deduped;
@@ -4893,13 +4944,35 @@ app.get("/api/youtube/lyrics", async (req, res) => {
 app.get("/api/youtube/similar", async (req, res) => {
   const title = (req.query.title as string) || "";
   const artist = (req.query.artist as string) || "";
-  const genre = (req.query.genre as string) || "Music";
+  const genre = (req.query.genre as string) || "";
+  const currentId = (req.query.trackId as string) || "";
 
   try {
     const accessToken = await getValidAccessToken(req);
-    const searchQuery = `${artist} ${genre} music`;
-    const results = await searchYouTubeMusic(searchQuery, accessToken || undefined);
-    res.json({ similarTracks: deduplicateById(results || []) });
+    const cleanMeta = parseTrackMetadataServer(title, artist);
+    const targetArtist = cleanMeta.artist && cleanMeta.artist !== "Unknown Artist" ? cleanMeta.artist : artist;
+    const targetTitle = cleanMeta.title && cleanMeta.title !== "Untitled Track" ? cleanMeta.title : title;
+
+    // Search genuine songs using specialized searchYouTubeMusicSongs
+    let songResults: any[] = [];
+    if (targetArtist && targetArtist !== "Unknown Artist") {
+      songResults = await searchYouTubeMusicSongs(`${targetArtist} ${genre} songs`, accessToken || undefined);
+    }
+    if (songResults.length < 10 && targetTitle) {
+      const moreSongs = await searchYouTubeMusicSongs(`${targetArtist} ${targetTitle} music`, accessToken || undefined);
+      songResults = [...songResults, ...moreSongs];
+    }
+    if (songResults.length < 10) {
+      const fallbackResults = await searchYouTubeMusic(`${targetArtist || genre || "Top"} music songs`, accessToken || undefined);
+      songResults = [...songResults, ...fallbackResults];
+    }
+
+    const filtered = deduplicateById(songResults).filter((tr: any) => {
+      const trId = tr.id || tr.youtubeVideoId;
+      return trId && trId !== currentId;
+    });
+
+    res.json({ similarTracks: filtered });
   } catch (err) {
     console.error("Error in /api/youtube/similar:", err);
     res.json({ similarTracks: [] });

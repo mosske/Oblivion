@@ -21,6 +21,7 @@ import {
   AlignCenter
 } from "lucide-react";
 import { OblivionLogo } from "./OblivionLogo";
+import { AudioEqualizer } from "./AudioEqualizer";
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -698,6 +699,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
         </div>
+      </section>
+
+      {/* 7-Band Audio Equalizer Section */}
+      <section>
+        <AudioEqualizer designConfig={designConfig} />
       </section>
 
       {/* Player Engine Controls */}

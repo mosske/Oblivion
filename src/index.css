@@ -273,3 +273,45 @@ html, body {
   display: block !important;
 }
 
+/* 7-Band Equalizer Vertical Slider Enhancements */
+.eq-vertical-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+.eq-vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-primary, #c59b27);
+  box-shadow: 0 0 10px var(--accent-primary, rgba(197, 155, 39, 0.5)), 0 2px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  border: 2px solid white;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eq-vertical-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 14px var(--accent-primary, #c59b27), 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+.eq-vertical-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-primary, #c59b27);
+  box-shadow: 0 0 10px var(--accent-primary, rgba(197, 155, 39, 0.5)), 0 2px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  border: 2px solid white;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eq-vertical-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 14px var(--accent-primary, #c59b27), 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+

@@ -66,6 +66,62 @@ export function getHdCoverUrl(url?: string): string {
   return url;
 }
 
+/**
+ * Parses raw video title and uploader/channel info into disambiguated { title, artist, uploader }.
+ * Strictly separates the true performing artist from the YouTube channel/uploader.
+ */
+export function parseTrackMetadata(
+  rawTitle: string,
+  rawUploaderOrArtist?: string
+): { title: string; artist: string; uploader?: string } {
+  const uploader = rawUploaderOrArtist?.trim();
+  if (!rawTitle) {
+    return {
+      title: "Untitled Track",
+      artist: uploader || "Unknown Artist",
+      uploader,
+    };
+  }
+
+  let cleaned = rawTitle.trim();
+  // Strip YouTube badges
+  cleaned = cleaned
+    .replace(/\s*[\(\[]\s*(official\s*(music\s*)?(video|audio|lyric\s*video|hd|4k|stream)?|hd|4k|remastered|lyric\s*video|audio|visualizer)\s*[\)\]]/gi, "")
+    .trim();
+
+  // Pattern: "Artist - Title" or "Artist : Title" or "Artist ~ Title"
+  const splitMatch = cleaned.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
+  if (splitMatch) {
+    const extractedArtist = splitMatch[1].trim();
+    let extractedTitle = splitMatch[2].trim();
+    // Clean trailing quotes if any
+    extractedTitle = extractedTitle.replace(/^["']|["']$/g, "").trim();
+
+    if (extractedArtist && extractedTitle) {
+      return {
+        title: extractedTitle,
+        artist: extractedArtist,
+        uploader,
+      };
+    }
+  }
+
+  // If title did not have a separator, but uploader is known and clean:
+  // Strip common channel suffixes like " - Topic", "VEVO", "Official"
+  let cleanArtist = uploader || "Unknown Artist";
+  if (cleanArtist.endsWith(" - Topic")) {
+    cleanArtist = cleanArtist.replace(/ - Topic$/, "").trim();
+  } else if (cleanArtist.toLowerCase().endsWith("vevo")) {
+    cleanArtist = cleanArtist.replace(/vevo$/i, "").trim();
+  }
+
+  return {
+    title: cleaned || rawTitle,
+    artist: cleanArtist || "Unknown Artist",
+    uploader,
+  };
+}
+
 export function getPlayableAudioUrl(track: Track | null | undefined): string {
   if (!track) return "";
   if (track.audioUrl && (track.audioUrl.startsWith("http") || track.audioUrl.startsWith("blob:") || track.audioUrl.startsWith("/api/"))) {

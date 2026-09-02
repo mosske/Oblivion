@@ -43,7 +43,10 @@ export function isValidPlaylistId(id: string | undefined | null): boolean {
   return false;
 }
 
-// Resilient client fetch helper with automatic retry
+// Global auth expiry handler callback registration
+let globalAuthExpiryHandler: (() => void) | null = null;
+
+// Resilient client fetch helper with automatic retry and global auth interceptor
 async function safeClientFetch(
   url: string,
   options: RequestInit = {},
@@ -54,6 +57,22 @@ async function safeClientFetch(
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, options);
+
+      // Global API interceptor: detect 401 Unauthorized or 403 Forbidden
+      if (res && (res.status === 401 || res.status === 403)) {
+        // Intercept playlist or user endpoint authorization failures
+        if (
+          url.includes("/api/youtube/playlists") ||
+          url.includes("/api/auth/me") ||
+          url.includes("/api/user")
+        ) {
+          console.warn(`[Auth Interceptor] Intercepted status ${res.status} on ${url.split("?")[0]}. Triggering session expiry.`);
+          if (globalAuthExpiryHandler) {
+            globalAuthExpiryHandler();
+          }
+        }
+      }
+
       return res;
     } catch (err: any) {
       lastError = err;
@@ -540,6 +559,27 @@ export default function App() {
     showToast("Signed out successfully.");
   };
 
+  // Register global auth expiry interceptor to transition out of phantom sign-in state
+  useEffect(() => {
+    globalAuthExpiryHandler = () => {
+      console.warn("[Auth Interceptor] Active session invalidated. Clearing phantom auth state.");
+      setUser(null);
+      localStorage.removeItem("oblivion_saved_user");
+      localStorage.removeItem("oblivion_saved_playlists");
+      localStorage.removeItem("oblivion_playlist_sync_time");
+      localStorage.removeItem("oblivion_selected_playlist");
+      setPlaylists([]);
+      setSelectedPlaylist(null);
+      setIsSyncingYouTube(false);
+      showToast("Google session expired. Please sign in again.");
+      setIsAuthModalOpen(true);
+    };
+
+    return () => {
+      globalAuthExpiryHandler = null;
+    };
+  }, []);
+
   // Helper to append cache-busting timestamp to custom artwork CDN URLs
   const applyArtworkCacheBuster = (url: string | undefined | null, ts: number): string | undefined => {
     if (!url) return undefined;
@@ -648,9 +688,14 @@ export default function App() {
         return { success: false, count: playlists.length };
       }
 
-      if (res.status === 401) {
-        console.warn("YouTube API returned 401 Unauthorized.");
+      if (res.status === 401 || res.status === 403) {
+        console.warn(`YouTube API returned ${res.status} Unauthorized.`);
         setIsSyncingYouTube(false);
+        setUser(null);
+        localStorage.removeItem("oblivion_saved_user");
+        localStorage.removeItem("oblivion_saved_playlists");
+        localStorage.removeItem("oblivion_playlist_sync_time");
+        setPlaylists([]);
         return { success: false, count: 0, authExpired: true };
       }
 
@@ -659,6 +704,11 @@ export default function App() {
       if (data.authExpired || data.error === "AUTH_EXPIRED") {
         console.warn("YouTube API returned AUTH_EXPIRED");
         setIsSyncingYouTube(false);
+        setUser(null);
+        localStorage.removeItem("oblivion_saved_user");
+        localStorage.removeItem("oblivion_saved_playlists");
+        localStorage.removeItem("oblivion_playlist_sync_time");
+        setPlaylists([]);
         return { success: false, count: 0, authExpired: true };
       }
 

@@ -3,6 +3,7 @@ export interface Track {
   youtubeVideoId?: string;
   title: string;
   artist: string;
+  uploader?: string;
   album: string;
   duration: number; // in seconds
   coverUrl: string;

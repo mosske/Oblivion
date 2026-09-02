@@ -28,152 +28,113 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   const [candidateIndex, setCandidateIndex] = useState(0);
   const [allFailed, setAllFailed] = useState(false);
 
-  const playlistId = playlist.id || (playlist as any).playlistId;
+  const playlistId = playlist.id || (playlist as any).playlistId || "";
+  const customCoverUrl = playlist.customCoverUrl;
+  const standardCoverUrl = playlist.coverUrl;
+  const isExplicitCustom = Boolean(playlist.isCustomCover || customCoverUrl);
 
-  // Reset error state when playlist or coverUrl changes
-  useEffect(() => {
-    setAllFailed(false);
-    setCandidateIndex(0);
-  }, [playlistId, playlist.customCoverUrl, playlist.coverUrl]);
+  // Helper to append Google User Content sizing variants
+  const addGoogleUserContentVariants = (url: string, targetList: string[]) => {
+    if (!url) return;
+    let clean = url.startsWith("//") ? `https:${url}` : url;
+    clean = clean.replace(/&amp;/g, "&");
 
-  // Build candidate URL hierarchy directly from YouTube source of truth:
-  // 1. Explicit customCoverUrl from YouTube Music / Server
-  // 2. Custom YouTube Music image artwork variants (googleusercontent, ggpht, yt3, /pl/, /s_p/)
-  // 3. Playlist coverUrl & YouTube fallback resolution strings
-  // 4. YouTube Data API standard thumbnails (maxres -> standard -> high -> medium -> default)
+    if (clean.includes("studio_square_thumbnail") || clean.includes("/pl_c/")) {
+      targetList.push(clean);
+      return;
+    }
+
+    if (
+      clean.includes("googleusercontent.com") ||
+      clean.includes("ggpht.com") ||
+      clean.includes("yt3.ggpht.com") ||
+      clean.includes("yt4.ggpht.com") ||
+      clean.includes("yt3.googleusercontent.com") ||
+      clean.includes("lh3.googleusercontent.com") ||
+      clean.includes("play-lh.googleusercontent.com") ||
+      clean.includes("photos.googleusercontent.com") ||
+      clean.includes("ytimg.com/pl/") ||
+      clean.includes("/pl/") ||
+      clean.includes("/s_p/")
+    ) {
+      if (clean.match(/=w\d+-h\d+/)) {
+        targetList.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w1200-h1200-l90-rj"));
+        targetList.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w800-h800-l90-rj"));
+        targetList.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w544-h544-l90-rj"));
+        targetList.push(clean);
+      } else if (clean.match(/=s\d+/)) {
+        targetList.push(clean.replace(/=s\d+[^?&]*/, "=s1200"));
+        targetList.push(clean.replace(/=s\d+[^?&]*/, "=s800"));
+        targetList.push(clean.replace(/=s\d+[^?&]*/, "=s544"));
+        targetList.push(clean);
+      } else if (clean.match(/=w\d+/)) {
+        targetList.push(clean.replace(/=w\d+[^?&]*/, "=w1200-h1200-l90-rj"));
+        targetList.push(clean);
+      } else {
+        targetList.push(`${clean}=w1200-h1200-l90-rj`);
+        targetList.push(`${clean}=w544-h544-l90-rj`);
+        targetList.push(clean);
+      }
+    } else {
+      targetList.push(clean);
+    }
+  };
+
+  /**
+   * Refactored artwork rendering hierarchy:
+   * 1. If customCoverUrl is present, it is STRICTLY prioritized.
+   *    Fallbacks to first track or generic video thumbnails execute ONLY if custom artwork URL is
+   *    explicitly null/undefined OR all custom URL variants trigger onError.
+   */
   const candidates: string[] = useMemo(() => {
     const list: string[] = [];
 
-    const addGoogleUserContentVariants = (url: string) => {
-      if (!url) return;
-      let clean = url.startsWith("//") ? `https:${url}` : url;
-      clean = clean.replace(/&amp;/g, "&");
-
-      if (
-        clean.includes("studio_square_thumbnail") ||
-        clean.includes("/pl_c/")
-      ) {
-        list.push(clean);
-        return;
-      }
-
-      if (
-        clean.includes("googleusercontent.com") ||
-        clean.includes("ggpht.com") ||
-        clean.includes("yt3.ggpht.com") ||
-        clean.includes("yt4.ggpht.com") ||
-        clean.includes("yt3.googleusercontent.com") ||
-        clean.includes("lh3.googleusercontent.com") ||
-        clean.includes("play-lh.googleusercontent.com") ||
-        clean.includes("photos.googleusercontent.com") ||
-        clean.includes("ytimg.com/pl/") ||
-        clean.includes("/pl/") ||
-        clean.includes("/s_p/")
-      ) {
-        if (clean.match(/=w\d+-h\d+/)) {
-          list.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w1200-h1200-l90-rj"));
-          list.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w800-h800-l90-rj"));
-          list.push(clean.replace(/=w\d+-h\d+[^?&]*/, "=w544-h544-l90-rj"));
-          list.push(clean);
-        } else if (clean.match(/=s\d+/)) {
-          list.push(clean.replace(/=s\d+[^?&]*/, "=s1200"));
-          list.push(clean.replace(/=s\d+[^?&]*/, "=s800"));
-          list.push(clean.replace(/=s\d+[^?&]*/, "=s544"));
-          list.push(clean);
-        } else if (clean.match(/=w\d+/)) {
-          list.push(clean.replace(/=w\d+[^?&]*/, "=w1200-h1200-l90-rj"));
-          list.push(clean);
-        } else {
-          list.push(`${clean}=w1200-h1200-l90-rj`);
-          list.push(`${clean}=w544-h544-l90-rj`);
-          list.push(clean);
-        }
-      } else {
-        list.push(clean);
-      }
-    };
-
-    // 1. Explicit customCoverUrl from YouTube Music / Server
-    if (playlist.customCoverUrl) {
-      addGoogleUserContentVariants(playlist.customCoverUrl);
+    // Phase 1: Custom Artwork candidates
+    if (customCoverUrl) {
+      addGoogleUserContentVariants(customCoverUrl, list);
     }
 
-    // 3. If playlist.coverUrl is custom or has high-res Google User Content / studio thumbnail
-    if (playlist.coverUrl) {
+    // Phase 2: If isExplicitCustom flag is true and coverUrl looks like custom Google User Content
+    if (list.length === 0 && standardCoverUrl) {
       const isCustomUrl =
-        playlist.coverUrl.includes("studio_square_thumbnail") ||
-        playlist.coverUrl.includes("/pl_c/") ||
-        playlist.coverUrl.includes("googleusercontent.com") ||
-        playlist.coverUrl.includes("ggpht.com") ||
-        playlist.coverUrl.includes("yt3.ggpht.com") ||
-        playlist.coverUrl.includes("yt4.ggpht.com") ||
-        playlist.coverUrl.includes("yt3.googleusercontent.com") ||
-        playlist.coverUrl.includes("lh3.googleusercontent.com") ||
-        playlist.coverUrl.includes("play-lh.googleusercontent.com") ||
-        playlist.coverUrl.includes("photos.googleusercontent.com") ||
-        playlist.coverUrl.includes("ytimg.com/pl/") ||
-        playlist.coverUrl.includes("/pl/") ||
-        playlist.coverUrl.includes("/s_p/") ||
-        playlist.coverUrl.includes("ytimg.com/an_webp/") ||
-        playlist.coverUrl.includes("ytimg.com/v2/") ||
-        playlist.coverUrl.startsWith("data:") ||
+        standardCoverUrl.includes("studio_square_thumbnail") ||
+        standardCoverUrl.includes("/pl_c/") ||
+        standardCoverUrl.includes("googleusercontent.com") ||
+        standardCoverUrl.includes("ggpht.com") ||
+        standardCoverUrl.includes("ytimg.com/pl/") ||
+        standardCoverUrl.includes("/pl/") ||
+        standardCoverUrl.includes("/s_p/") ||
+        standardCoverUrl.startsWith("data:") ||
         Boolean(playlist.isCustomCover);
 
       if (isCustomUrl) {
-        addGoogleUserContentVariants(playlist.coverUrl);
+        addGoogleUserContentVariants(standardCoverUrl, list);
       }
     }
 
-    // 4. YouTube Thumbnails from snippet (checking for custom URLs first)
+    // Phase 3: Standard playlist coverUrl (non-custom) and resolution variants
+    if (standardCoverUrl) {
+      list.push(standardCoverUrl);
+      if (standardCoverUrl.includes("i.ytimg.com")) {
+        if (standardCoverUrl.includes("maxresdefault.jpg")) {
+          list.push(standardCoverUrl.replace("maxresdefault.jpg", "sddefault.jpg"));
+          list.push(standardCoverUrl.replace("maxresdefault.jpg", "hqdefault.jpg"));
+          list.push(standardCoverUrl.replace("maxresdefault.jpg", "mqdefault.jpg"));
+          list.push(standardCoverUrl.replace("maxresdefault.jpg", "default.jpg"));
+        } else if (standardCoverUrl.includes("sddefault.jpg")) {
+          list.push(standardCoverUrl.replace("sddefault.jpg", "hqdefault.jpg"));
+          list.push(standardCoverUrl.replace("sddefault.jpg", "mqdefault.jpg"));
+          list.push(standardCoverUrl.replace("sddefault.jpg", "default.jpg"));
+        } else if (standardCoverUrl.includes("hqdefault.jpg")) {
+          list.push(standardCoverUrl.replace("hqdefault.jpg", "mqdefault.jpg"));
+          list.push(standardCoverUrl.replace("hqdefault.jpg", "default.jpg"));
+          list.push(standardCoverUrl.replace("hqdefault.jpg", "sddefault.jpg"));
+        }
+      }
+    }
+
+    // Phase 4: YouTube Data API thumbnails
     const thumbs = (playlist as any).thumbnails as YouTubeThumbnails | undefined;
-    if (thumbs) {
-      const thumbUrls = [
-        thumbs.maxres?.url,
-        thumbs.standard?.url,
-        thumbs.high?.url,
-        thumbs.medium?.url,
-        thumbs.default?.url,
-      ].filter(Boolean) as string[];
-
-      for (const u of thumbUrls) {
-        if (
-          u.includes("studio_square_thumbnail") ||
-          u.includes("/pl_c/") ||
-          u.includes("googleusercontent.com") ||
-          u.includes("ggpht.com") ||
-          u.includes("yt3.ggpht.com") ||
-          u.includes("yt4.ggpht.com") ||
-          u.includes("ytimg.com/pl/") ||
-          u.includes("/pl/") ||
-          u.includes("/s_p/")
-        ) {
-          addGoogleUserContentVariants(u);
-        }
-      }
-    }
-
-    // 5. Standard playlist.coverUrl if not already added
-    if (playlist.coverUrl) {
-      list.push(playlist.coverUrl);
-      if (playlist.coverUrl.includes("i.ytimg.com")) {
-        if (playlist.coverUrl.includes("maxresdefault.jpg")) {
-          list.push(playlist.coverUrl.replace("maxresdefault.jpg", "sddefault.jpg"));
-          list.push(playlist.coverUrl.replace("maxresdefault.jpg", "hqdefault.jpg"));
-          list.push(playlist.coverUrl.replace("maxresdefault.jpg", "mqdefault.jpg"));
-          list.push(playlist.coverUrl.replace("maxresdefault.jpg", "default.jpg"));
-        } else if (playlist.coverUrl.includes("sddefault.jpg")) {
-          list.push(playlist.coverUrl.replace("sddefault.jpg", "hqdefault.jpg"));
-          list.push(playlist.coverUrl.replace("sddefault.jpg", "mqdefault.jpg"));
-          list.push(playlist.coverUrl.replace("sddefault.jpg", "default.jpg"));
-        } else if (playlist.coverUrl.includes("hqdefault.jpg")) {
-          list.push(playlist.coverUrl.replace("hqdefault.jpg", "mqdefault.jpg"));
-          list.push(playlist.coverUrl.replace("hqdefault.jpg", "default.jpg"));
-          list.push(playlist.coverUrl.replace("hqdefault.jpg", "sddefault.jpg"));
-        }
-      }
-    }
-
-    // 6. Generic YouTube Data API video thumbnails
     if (thumbs) {
       if (thumbs.maxres?.url) list.push(thumbs.maxres.url);
       if (thumbs.standard?.url) list.push(thumbs.standard.url);
@@ -182,13 +143,14 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
       if (thumbs.default?.url) list.push(thumbs.default.url);
     }
 
-    // 7. Fallback to first track's thumbnail if available
+    // Phase 5: Fallback to first track's cover ONLY as the absolute last resort
+    // (i.e. if no custom artwork or all other resolutions fail)
     const firstTrackCover = playlist.tracks?.[0]?.coverUrl;
     if (firstTrackCover) {
       list.push(firstTrackCover);
     }
 
-    // Deduplicate while preserving order
+    // Deduplicate preserving strict priority order
     const unique: string[] = [];
     for (const url of list) {
       if (url && !unique.includes(url)) {
@@ -197,34 +159,31 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     }
     return unique;
   }, [
-    playlist.customCoverUrl,
-    playlist.coverUrl,
+    customCoverUrl,
+    standardCoverUrl,
     playlist.isCustomCover,
     (playlist as any).thumbnails,
+    playlist.tracks?.[0]?.coverUrl,
   ]);
 
-  // Reset candidates index when playlist changes
+  // Reset candidate index ONLY when the identity of the playlist or its artwork URLs change
   useEffect(() => {
     setCandidateIndex(0);
     setAllFailed(false);
-  }, [playlistId, playlist.coverUrl, playlist.customCoverUrl]);
-
-  const isExplicitCustom = Boolean(
-    playlist.isCustomCover || playlist.customCoverUrl
-  );
+  }, [playlistId, customCoverUrl, standardCoverUrl]);
 
   const currentSrc = candidates[candidateIndex] || null;
 
   const handleImageError = () => {
     if (candidateIndex < candidates.length - 1) {
-      // Step down to next resolution in prioritized fallback order (e.g. maxres -> standard -> high -> medium -> default)
+      // Step down to next candidate in prioritized fallback order
       setCandidateIndex((prev) => prev + 1);
     } else {
       setAllFailed(true);
     }
   };
 
-  // 1. If a valid candidate URL is available and hasn't failed all resolutions
+  // 1. If a valid candidate URL is available and hasn't failed all candidate variants
   if (currentSrc && !allFailed) {
     return (
       <div
@@ -250,7 +209,7 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     );
   }
 
-  // 2. Default elegant music disc artwork for playlists
+  // 2. Default music disc artwork fallback
   return (
     <div
       className={`relative overflow-hidden bg-gradient-to-br from-[#122820] via-[#0d1d17] to-[#07100d] flex items-center justify-center border border-[#1a382d]/40 ${
