@@ -553,13 +553,19 @@ export const Player: React.FC<PlayerProps> = ({
   const [dragOffsetY, setDragOffsetY] = useState<number>(0);
   const [isDraggingDown, setIsDraggingDown] = useState<boolean>(false);
 
-  // Swipe-down gesture state for closing mini player
+  // Swipe-down and mouse drag-down gesture state for closing mini player
   const [miniTouchStartY, setMiniTouchStartY] = useState<number | null>(null);
   const [miniTouchStartX, setMiniTouchStartX] = useState<number | null>(null);
   const [miniTouchStartTime, setMiniTouchStartTime] = useState<number>(0);
   const [miniDragOffsetY, setMiniDragOffsetY] = useState<number>(0);
   const [isMiniDraggingDown, setIsMiniDraggingDown] = useState<boolean>(false);
   const [isMiniClosing, setIsMiniClosing] = useState<boolean>(false);
+
+  // Ref tracking active mouse drag on PC for clean window listener binding
+  const isMiniMouseDraggingRef = useRef<boolean>(false);
+  const miniMouseStartYRef = useRef<number>(0);
+  const miniMouseStartXRef = useRef<number>(0);
+  const miniMouseStartTimeRef = useRef<number>(0);
 
   const handleCloseMiniPlayer = () => {
     setIsMiniClosing(true);
@@ -632,6 +638,60 @@ export const Player: React.FC<PlayerProps> = ({
 
     setMiniTouchStartY(null);
     setMiniTouchStartX(null);
+  };
+
+  // PC Mouse drag-to-close handlers for mini player
+  const handleMiniMouseDown = (e: React.MouseEvent) => {
+    // Only primary mouse button
+    if (e.button !== 0) return;
+    // Don't initiate drag when clicking on interactive controls (buttons, sliders, inputs, scrubber, artwork)
+    const target = e.target as HTMLElement | null;
+    if (target?.closest("button, input, a, [role='slider'], .waveform-bar, [data-interactive='true']")) {
+      return;
+    }
+
+    isMiniMouseDraggingRef.current = true;
+    miniMouseStartYRef.current = e.clientY;
+    miniMouseStartXRef.current = e.clientX;
+    miniMouseStartTimeRef.current = Date.now();
+    setIsMiniDraggingDown(false);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isMiniMouseDraggingRef.current) return;
+      const deltaY = moveEvent.clientY - miniMouseStartYRef.current;
+      const deltaX = moveEvent.clientX - miniMouseStartXRef.current;
+
+      if (deltaY > 4 && deltaY > Math.abs(deltaX) * 0.6) {
+        setIsMiniDraggingDown(true);
+        const dampedOffset = deltaY < 120 ? deltaY : 120 + (deltaY - 120) * 0.4;
+        setMiniDragOffsetY(dampedOffset);
+      } else if (deltaY <= 0) {
+        setMiniDragOffsetY(0);
+        setIsMiniDraggingDown(false);
+      }
+    };
+
+    const handleMouseUp = (upEvent: MouseEvent) => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      if (!isMiniMouseDraggingRef.current) return;
+      isMiniMouseDraggingRef.current = false;
+
+      const deltaY = upEvent.clientY - miniMouseStartYRef.current;
+      const deltaX = upEvent.clientX - miniMouseStartXRef.current;
+      const duration = Math.max(1, Date.now() - miniMouseStartTimeRef.current);
+      const velocityY = deltaY / duration;
+
+      if ((deltaY > 50 || (deltaY > 25 && velocityY > 0.3)) && deltaY > Math.abs(deltaX) * 0.6) {
+        handleCloseMiniPlayer();
+      } else {
+        setMiniDragOffsetY(0);
+        setIsMiniDraggingDown(false);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -1932,6 +1992,7 @@ export const Player: React.FC<PlayerProps> = ({
             onTouchStart={handleMiniTouchStart}
             onTouchMove={handleMiniTouchMove}
             onTouchEnd={handleMiniTouchEnd}
+            onMouseDown={handleMiniMouseDown}
             style={{
               transform: isMiniClosing
                 ? "translate(-50%, 140px) scale(0.95)"
@@ -1941,6 +2002,7 @@ export const Player: React.FC<PlayerProps> = ({
               opacity: isMiniClosing ? 0 : isMiniDraggingDown ? Math.max(0.2, 1 - miniDragOffsetY / 140) : 1,
               transition: isMiniDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease-out",
               touchAction: "pan-x",
+              cursor: isMiniDraggingDown ? "grabbing" : "default",
             }}
             data-theme={designConfig.id}
             className={`fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}

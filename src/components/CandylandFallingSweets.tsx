@@ -306,9 +306,9 @@ export const CandylandFallingSweets: React.FC<CandylandFallingSweetsProps> = ({ 
           continue;
         }
 
-        // 6. Draw Sweet Sprite with soft shadow
+        // 6. Draw Sweet Sprite with original aspect ratio and soft shadow
         const img = PRELOADED_SWEET_IMAGES[sweet.spriteIndex];
-        if (img && img.complete && img.naturalWidth > 0) {
+        if (img && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
           ctx.save();
           ctx.translate(sweet.x, sweet.y);
           ctx.rotate((sweet.rotation * Math.PI) / 180);
@@ -318,8 +318,21 @@ export const CandylandFallingSweets: React.FC<CandylandFallingSweetsProps> = ({ 
           ctx.shadowBlur = 8;
           ctx.shadowOffsetY = 4;
 
-          const renderSize = sweet.size;
-          ctx.drawImage(img, -renderSize / 2, -renderSize / 2, renderSize, renderSize);
+          // Preserve original aspect ratio of PNG without stretching or distortion
+          const nw = img.naturalWidth;
+          const nh = img.naturalHeight;
+          const baseDim = sweet.size;
+          let drawW = baseDim;
+          let drawH = baseDim;
+          if (nw >= nh) {
+            drawW = baseDim;
+            drawH = baseDim * (nh / nw);
+          } else {
+            drawH = baseDim;
+            drawW = baseDim * (nw / nh);
+          }
+
+          ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
 
           ctx.restore();
         }
