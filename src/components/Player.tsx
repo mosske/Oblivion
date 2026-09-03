@@ -29,6 +29,7 @@ import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/fo
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { CandylandFallingSweets } from "./CandylandFallingSweets";
 import { equalizerManager } from "../utils/equalizerEngine";
+import { useEqualizer } from "../context/EqualizerContext";
 
 interface PlayerProps {
   playerState: PlayerState;
@@ -41,6 +42,8 @@ interface PlayerProps {
   onToggleLike: (trackId: string) => void;
   isLiked: boolean;
   onPlayTrack: (track: Track) => void;
+  onPlayQueue?: (tracks: Track[], startIndex: number) => void;
+  onRegisterRadioQueue?: (tracks: Track[]) => void;
   onAddToQueue: (track: Track) => void;
   settings: UserSettings;
   playlists?: Playlist[];
@@ -524,6 +527,8 @@ export const Player: React.FC<PlayerProps> = ({
   onToggleLike,
   isLiked,
   onPlayTrack,
+  onPlayQueue,
+  onRegisterRadioQueue,
   onAddToQueue,
   settings,
   playlists = [],
@@ -538,6 +543,22 @@ export const Player: React.FC<PlayerProps> = ({
   const isChangingTrackTimeoutRef = useRef<any>(null);
   const userManualPauseRef = useRef<boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Equalizer Web Audio context & refs hook
+  const {
+    attachAudioElement,
+    resumeAudioContext,
+    audioCtxRef,
+    sourceNodeRef,
+    filtersRef,
+  } = useEqualizer();
+
+  // Attach main <audio> element to Web Audio pipeline on mount
+  useEffect(() => {
+    if (audioRef.current) {
+      attachAudioElement(audioRef.current);
+    }
+  }, [attachAudioElement]);
 
   // Video placeholder ref and dynamic screen bounds to prevent any overlap across PC, tablet, and mobile
   const videoPlaceholderRef = useRef<HTMLDivElement | null>(null);
@@ -1058,9 +1079,9 @@ export const Player: React.FC<PlayerProps> = ({
     }
 
     if (audioRef.current) {
-      equalizerManager.attachAudioElement(audioRef.current);
+      attachAudioElement(audioRef.current);
       if (isPlaying) {
-        equalizerManager.resume();
+        resumeAudioContext();
         // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
         const silentUrl = getSilentAudioUrl();
         if (audioRef.current.src !== silentUrl) {
@@ -1073,7 +1094,7 @@ export const Player: React.FC<PlayerProps> = ({
         audioRef.current.pause();
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, attachAudioElement, resumeAudioContext]);
 
   // Sync volume state to players
   useEffect(() => {
@@ -1116,6 +1137,7 @@ export const Player: React.FC<PlayerProps> = ({
   const handleUserTogglePlay = (explicitPlay?: boolean) => {
     // Wake up / resume AudioContext on user gesture for reliable background playback and Web Audio EQ
     try {
+      resumeAudioContext();
       equalizerManager.resume();
       if (!audioContextRef.current) {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -1434,8 +1456,12 @@ export const Player: React.FC<PlayerProps> = ({
       {/* Hidden Native Audio Element for Offline Cache & Mobile Background Audio Session */}
       <audio
         ref={audioRef}
+        crossOrigin="anonymous"
         playsInline
         autoPlay
+        onPlay={() => {
+          resumeAudioContext();
+        }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleAudioEnded}
         onError={() => console.warn("Audio element fallback")}
@@ -1757,6 +1783,8 @@ export const Player: React.FC<PlayerProps> = ({
                     seedTrack={radioSeedTrack || currentTrack}
                     isPlaying={isPlaying}
                     onPlayTrack={onPlayTrack}
+                    onPlayQueue={onPlayQueue}
+                    onRegisterRadioQueue={onRegisterRadioQueue}
                     onAddToQueue={onAddToQueue}
                     onClose={() => setPlayerState((prev) => ({ ...prev, showSimilar: false }))}
                     designConfig={designConfig}

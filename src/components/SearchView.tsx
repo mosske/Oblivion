@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Track, Playlist } from "../types";
-import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2, Mic } from "lucide-react";
+import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2, Mic, X, Clock, Trash2 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { IdentifyMusicModal } from "./IdentifyMusicModal";
 
 interface SearchViewProps {
   initialQuery?: string;
+  initialResults?: Track[];
+  initialFilter?: "all" | "track" | "album" | "artist";
   onQueryChange?: (query: string) => void;
+  onResultsChange?: (results: Track[]) => void;
+  onFilterChange?: (filter: "all" | "track" | "album" | "artist") => void;
   onPlayTrack: (track: Track) => void;
   onPlayQueue?: (tracks: Track[], startIndex: number) => void;
   onAddToQueue: (track: Track) => void;
@@ -34,9 +38,15 @@ const SEARCH_EXPLORE_TAGS = [
   "Ambient Soundscapes"
 ];
 
+const SEARCH_HISTORY_KEY = "oblivion_search_history";
+
 export const SearchView: React.FC<SearchViewProps> = ({
   initialQuery = "",
+  initialResults = [],
+  initialFilter = "all",
   onQueryChange,
+  onResultsChange,
+  onFilterChange,
   onPlayTrack,
   onPlayQueue,
   onAddToQueue,
@@ -49,21 +59,127 @@ export const SearchView: React.FC<SearchViewProps> = ({
   currentTrack,
   isPlaying = false,
 }) => {
-  const [query, setQuery] = useState(initialQuery);
-  const [filter, setFilter] = useState<"all" | "track" | "album" | "artist">("all");
-  const [results, setResults] = useState<Track[]>([]);
+  const [query, setQuery] = useState<string>(initialQuery);
+  const [filter, setFilter] = useState<"all" | "track" | "album" | "artist">(initialFilter);
+  const [results, setResults] = useState<Track[]>(initialResults);
   const [loading, setLoading] = useState<boolean>(false);
-  const [openPlaylistMenuId, setOpenPlaylistMenuId] = useState<string | null>(null);
   const [isIdentifyModalOpen, setIsIdentifyModalOpen] = useState<boolean>(false);
 
+  // Search history state
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(SEARCH_HISTORY_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showHistory, setShowHistory] = useState<boolean>(false);
+
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const lastFetchedQueryRef = useRef<string>(
+    initialQuery && initialResults.length > 0 ? `${initialQuery.trim()}_${initialFilter}` : ""
+  );
+
+  // Close search history dropdown on outside click
   useEffect(() => {
-    setQuery(initialQuery || "");
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowHistory(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Save query to localStorage history (max 10 items)
+  const saveQueryToHistory = (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed || trimmed.length < 2) return;
+    try {
+      const current = (() => {
+        try {
+          const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      })();
+      const updated = [trimmed, ...current.filter((item: string) => item.toLowerCase() !== trimmed.toLowerCase())].slice(0, 10);
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+      setSearchHistory(updated);
+    } catch (err) {
+      console.warn("Failed to persist search history", err);
+    }
+  };
+
+  const handleRemoveHistoryItem = (e: React.MouseEvent, itemToRemove: string) => {
+    e.stopPropagation();
+    try {
+      const updated = searchHistory.filter((item) => item !== itemToRemove);
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+      setSearchHistory(updated);
+    } catch (err) {
+      console.warn("Failed to remove search history item", err);
+    }
+  };
+
+  const handleClearAllHistory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      localStorage.removeItem(SEARCH_HISTORY_KEY);
+      setSearchHistory([]);
+    } catch (err) {
+      console.warn("Failed to clear search history", err);
+    }
+  };
+
+  const handleSelectHistoryItem = (selectedText: string) => {
+    setQuery(selectedText);
+    onQueryChange?.(selectedText);
+    saveQueryToHistory(selectedText);
+    setShowHistory(false);
+    searchInputRef.current?.focus();
+  };
+
+  // Clear search input, results, and refocus input
+  const handleClearSearch = () => {
+    setQuery("");
+    onQueryChange?.("");
+    setResults([]);
+    onResultsChange?.([]);
+    lastFetchedQueryRef.current = "";
+    setShowHistory(true);
+    searchInputRef.current?.focus();
+  };
+
+  // Synchronize when initialQuery changes from parent
+  useEffect(() => {
+    if (initialQuery !== query) {
+      setQuery(initialQuery);
+    }
   }, [initialQuery]);
 
+  // Synchronize filter with parent
+  const handleFilterSelect = (newFilter: "all" | "track" | "album" | "artist") => {
+    setFilter(newFilter);
+    onFilterChange?.(newFilter);
+  };
+
+  // Search execution
   useEffect(() => {
-    if (!query.trim()) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       setResults([]);
+      onResultsChange?.([]);
       setLoading(false);
+      lastFetchedQueryRef.current = "";
+      return;
+    }
+
+    // If initial query was already fetched and results exist, skip duplicate search
+    if (lastFetchedQueryRef.current === `${trimmed}_${filter}` && results.length > 0) {
       return;
     }
 
@@ -86,7 +202,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
           headers["Authorization"] = `Bearer ${activeToken}`;
         }
 
-        const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(query.trim())}&type=${filter}`, {
+        const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(trimmed)}&type=${filter}`, {
           headers,
           signal: controller.signal
         });
@@ -94,6 +210,9 @@ export const SearchView: React.FC<SearchViewProps> = ({
           const data = await res.json().catch(() => ({ results: [] }));
           if (data?.results) {
             setResults(data.results);
+            onResultsChange?.(data.results);
+            lastFetchedQueryRef.current = `${trimmed}_${filter}`;
+            saveQueryToHistory(trimmed);
           }
         }
       } catch (err: any) {
@@ -138,19 +257,89 @@ export const SearchView: React.FC<SearchViewProps> = ({
           </button>
         </div>
 
-        <div className="relative max-w-2xl">
+        {/* Search Input Box with Clear Button & History Dropdown */}
+        <div ref={searchContainerRef} className="relative max-w-2xl">
           <Search className={`absolute left-4 top-3.5 w-5 h-5 ${designConfig.textMuted}`} />
           <input
+            ref={searchInputRef}
             type="text"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
-              onQueryChange?.(e.target.value);
+              const val = e.target.value;
+              setQuery(val);
+              onQueryChange?.(val);
+            }}
+            onFocus={() => setShowHistory(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && query.trim()) {
+                saveQueryToHistory(query);
+                setShowHistory(false);
+              } else if (e.key === "Escape") {
+                setShowHistory(false);
+              }
             }}
             placeholder="Search songs, artists, albums, or genres..."
-            className={`w-full pl-12 pr-4 py-3 ${designConfig.inputBg} rounded-2xl text-sm focus:outline-none shadow-md transition-all font-medium`}
+            className={`w-full pl-12 ${query.trim().length > 0 ? "pr-12" : "pr-4"} py-3 ${designConfig.inputBg} rounded-2xl text-sm focus:outline-none shadow-md transition-all font-medium border ${designConfig.borderSubtle}`}
             autoFocus
           />
+
+          {/* Clear Button ("X" icon) on the far right inside the input box */}
+          {query.trim().length > 0 && (
+            <button
+              type="button"
+              id="search-clear-input-btn"
+              onClick={handleClearSearch}
+              className={`absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors active:scale-90`}
+              title="Clear search text and results"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Search History Dropdown (Last 10 Queries) */}
+          {showHistory && searchHistory.length > 0 && (
+            <div
+              id="search-history-dropdown"
+              className={`absolute left-0 right-0 top-full mt-2 z-50 ${designConfig.cardBg} backdrop-blur-xl border ${designConfig.borderSubtle} rounded-2xl shadow-2xl p-2 animate-fade-in`}
+            >
+              <div className={`flex items-center justify-between px-3 py-1.5 mb-1 border-b ${designConfig.borderSubtle}`}>
+                <span className={`text-[11px] font-mono font-bold uppercase tracking-wider ${designConfig.accentText} flex items-center gap-1.5`}>
+                  <Clock className="w-3.5 h-3.5" />
+                  Recent Searches
+                </span>
+                <button
+                  type="button"
+                  id="clear-all-search-history-btn"
+                  onClick={handleClearAllHistory}
+                  className={`text-[10px] ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors font-medium`}
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="max-h-60 overflow-y-auto space-y-0.5 custom-scrollbar">
+                {searchHistory.map((item, idx) => (
+                  <div
+                    key={`hist_${item}_${idx}`}
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer ${designConfig.textPrimary} hover:${designConfig.pillBg} transition-colors group`}
+                    onClick={() => handleSelectHistoryItem(item)}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <Clock className={`w-3.5 h-3.5 ${designConfig.textMuted} group-hover:${designConfig.accentText} shrink-0`} />
+                      <span className="truncate">{item}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => handleRemoveHistoryItem(e, item)}
+                      className={`p-1 rounded-lg ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 opacity-0 group-hover:opacity-100 transition-all shrink-0`}
+                      title="Remove from history"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filter Pills */}
@@ -158,7 +347,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
           {(["all", "track", "album", "artist"] as const).map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => handleFilterSelect(f)}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all ${
                 filter === f
                   ? designConfig.pillActive
@@ -175,7 +364,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
       {!query.trim() && (
         <div className="space-y-4 animate-fade-in pt-2">
           <h3 className={`text-xs font-bold ${designConfig.headingMuted} uppercase tracking-wider flex items-center gap-1.5 font-mono`}>
-            <TrendingUp className="w-4 h-4 text-[#c89b3c]" />
+            <TrendingUp className={`w-4 h-4 ${designConfig.accentText}`} />
             Trending Search Topics
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -185,6 +374,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 onClick={() => {
                   setQuery(tag);
                   onQueryChange?.(tag);
+                  saveQueryToHistory(tag);
+                  setShowHistory(false);
                 }}
                 className={`px-3.5 py-2 rounded-xl text-xs font-semibold ${designConfig.cardBg} ${designConfig.cardHover} ${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-all hover:scale-105 active:scale-95 shadow-sm`}
               >
@@ -236,7 +427,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
               } else if (isArtist) {
                 setQuery(item.title);
                 onQueryChange?.(item.title);
-                setFilter("all");
+                saveQueryToHistory(item.title);
+                handleFilterSelect("all");
               } else {
                 const trackResults = (filteredResults || []).filter((i: any) => !i.type || i.type === "track");
                 const trackIdx = trackResults.findIndex((t: any) => (t.id || t.youtubeVideoId) === itemVid);
@@ -253,14 +445,29 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 key={`sr_${item.id || item.youtubeVideoId || item.playlistId || 'item'}_${idx}`}
                 className={`group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
                   isCurrent
-                    ? `${designConfig.cardBg} ring-2 ring-[#c89b3c] shadow-lg bg-[#c89b3c]/5`
-                    : `${designConfig.cardBg} ${designConfig.cardHover}`
+                    ? `${designConfig.cardBg} shadow-lg ring-2`
+                    : `${designConfig.cardBg} ${designConfig.cardHover} border border-transparent`
                 }`}
+                style={
+                  isCurrent
+                    ? {
+                        borderColor: "var(--border-active, var(--accent-primary))",
+                        boxShadow: "0 0 0 2px var(--border-active, var(--accent-primary)), 0 4px 14px rgba(0, 0, 0, 0.12)",
+                        backgroundColor: "rgba(var(--accent-primary-rgb, 197, 155, 39), 0.08)",
+                      }
+                    : undefined
+                }
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <div
                     onClick={handleItemClick}
-                    className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${isCurrent ? "border-[#c89b3c]" : designConfig.borderSubtle} cursor-pointer shadow-sm bg-slate-800 flex items-center justify-center`}
+                    className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border cursor-pointer shadow-sm bg-slate-800 flex items-center justify-center transition-all"
+                    style={{
+                      borderColor: isCurrent
+                        ? "var(--border-active, var(--accent-primary))"
+                        : "var(--border-subtle, rgba(200, 200, 200, 0.25))",
+                      boxShadow: isCurrent ? "0 0 0 1.5px var(--border-active, var(--accent-primary))" : undefined,
+                    }}
                   >
                     <img
                       src={item.coverUrl || (item.youtubeVideoId || item.id ? `https://i.ytimg.com/vi/${item.youtubeVideoId || item.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
@@ -347,7 +554,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                             onAddTrackToPlaylist(item, playlists[0].id);
                           }
                         }}
-                        className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:text-[#c89b3c] rounded-xl hover:bg-black/10 transition-colors`}
+                        className={`p-2 ${designConfig.textMuted} hover:${designConfig.accentText} rounded-xl hover:bg-black/10 transition-colors`}
                         title="Add to playlist"
                       >
                         <Plus className="w-4 h-4" />
@@ -368,6 +575,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
         onSelectSong={(songQuery) => {
           setQuery(songQuery);
           onQueryChange?.(songQuery);
+          saveQueryToHistory(songQuery);
         }}
         designConfig={designConfig}
       />

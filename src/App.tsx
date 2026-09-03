@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from "./types";
 import { FULL_APP_DESIGNS, syncDocumentThemeColor } from "./utils/appDesignThemes";
 import { Sidebar } from "./components/Sidebar";
@@ -15,6 +15,7 @@ import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
+import { EqualizerProvider } from "./context/EqualizerContext";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
@@ -170,17 +171,63 @@ export default function App() {
     return [];
   });
 
-  // Persistent selectedPlaylist state so user stays in the playlist they were viewing
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(() => {
+  // Tab view stack for restoring exact open Playlist/Album when switching tabs (Home, Explore, Library, Search)
+  const [tabViewStack, setTabViewStack] = useState<Record<string, Playlist | null>>(() => {
     try {
-      const saved = localStorage.getItem("oblivion_selected_playlist");
+      const saved = localStorage.getItem("oblivion_tab_view_stack");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && (parsed.id || parsed.title)) return parsed;
+        if (parsed && typeof parsed === "object") return parsed;
       }
     } catch {}
-    return null;
+    try {
+      const legacy = localStorage.getItem("oblivion_selected_playlist");
+      if (legacy) {
+        const parsed = JSON.parse(legacy);
+        if (parsed && (parsed.id || parsed.title)) {
+          const tab = localStorage.getItem("oblivion_active_tab") || "library";
+          return { [tab]: parsed };
+        }
+      }
+    } catch {}
+    return { home: null, explore: null, search: null, library: null, settings: null };
   });
+
+  const activeTabRef = useRef<NavTab>(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  const selectedPlaylist = tabViewStack[activeTab] || null;
+
+  const setSelectedPlaylist = useCallback(
+    (
+      pl: Playlist | null | ((prev: Playlist | null) => Playlist | null),
+      targetTab?: string
+    ) => {
+      setTabViewStack((prev) => {
+        const tabToUpdate = targetTab || activeTabRef.current;
+        const currentForTab = prev[tabToUpdate] || null;
+        const nextVal = typeof pl === "function" ? pl(currentForTab) : pl;
+        const nextStack = {
+          ...prev,
+          [tabToUpdate]: nextVal,
+        };
+        try {
+          localStorage.setItem("oblivion_tab_view_stack", JSON.stringify(nextStack));
+          if (tabToUpdate === activeTabRef.current) {
+            if (nextVal) {
+              localStorage.setItem("oblivion_selected_playlist", JSON.stringify(nextVal));
+            } else {
+              localStorage.removeItem("oblivion_selected_playlist");
+            }
+          }
+        } catch {}
+        return nextStack;
+      });
+    },
+    []
+  );
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
@@ -201,7 +248,52 @@ export default function App() {
   const [isSyncingYouTube, setIsSyncingYouTube] = useState<boolean>(false);
   const [isSyncingPlaylist, setIsSyncingPlaylist] = useState<boolean>(false);
   const [oauthBannerError, setOauthBannerError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Persistent search state (query, results, and active filter)
+  const [searchQuery, setSearchQuery] = useState<string>(() => {
+    try {
+      return localStorage.getItem("oblivion_saved_search_query") || "";
+    } catch {
+      return "";
+    }
+  });
+
+  const [searchResults, setSearchResults] = useState<Track[]>(() => {
+    try {
+      const saved = localStorage.getItem("oblivion_saved_search_results");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [searchFilter, setSearchFilter] = useState<"all" | "track" | "album" | "artist">(() => {
+    try {
+      const saved = localStorage.getItem("oblivion_saved_search_filter");
+      if (saved && ["all", "track", "album", "artist"].includes(saved)) {
+        return saved as any;
+      }
+    } catch {}
+    return "all";
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("oblivion_saved_search_query", searchQuery);
+    } catch {}
+  }, [searchQuery]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("oblivion_saved_search_results", JSON.stringify(searchResults));
+    } catch {}
+  }, [searchResults]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("oblivion_saved_search_filter", searchFilter);
+    } catch {}
+  }, [searchFilter]);
 
   useEffect(() => {
     // Check if app is already running as standalone PWA
@@ -1852,22 +1944,23 @@ export default function App() {
   }, [selectedPlaylist?.id]);
 
   return (
-    <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none`}>
+    <EqualizerProvider>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean(activeFullDesign.isCandy || activeFullDesign.id === "candyland")} />
 
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setSelectedPlaylist(null);
-          setActiveTab(tab);
-        }}
+        setActiveTab={setActiveTab}
         user={user}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         playlists={playlists}
-        onSelectPlaylist={(pl) => setSelectedPlaylist(pl)}
+        onSelectPlaylist={(pl) => {
+          setActiveTab("library");
+          setSelectedPlaylist(pl, "library");
+        }}
         onCreatePlaylist={() => {
           setEditingPlaylist(null);
           setIsPlaylistModalOpen(true);
@@ -1903,8 +1996,6 @@ export default function App() {
             <button
               id="top-header-search-btn"
               onClick={() => {
-                setSearchQuery("");
-                setSelectedPlaylist(null);
                 setActiveTab("search");
               }}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
@@ -2134,7 +2225,11 @@ export default function App() {
             {activeTab === "search" && (
               <SearchView
                 initialQuery={searchQuery}
+                initialResults={searchResults}
+                initialFilter={searchFilter}
                 onQueryChange={setSearchQuery}
+                onResultsChange={setSearchResults}
+                onFilterChange={setSearchFilter}
                 onPlayTrack={handlePlayTrack}
                 onPlayQueue={handlePlayQueue}
                 onAddToQueue={handleAddToQueue}
@@ -2210,6 +2305,20 @@ export default function App() {
         onToggleLike={handleToggleLike}
         isLiked={!!playerState.currentTrack && playerState.likedTrackIds.includes(playerState.currentTrack.id)}
         onPlayTrack={handlePlayTrack}
+        onPlayQueue={handlePlayQueue}
+        onRegisterRadioQueue={(radioTracks) => {
+          setPlayerState((prev) => {
+            const curId = prev.currentTrack?.id || prev.currentTrack?.youtubeVideoId;
+            const curIdx = radioTracks.findIndex(
+              (t) => (t.id || t.youtubeVideoId) === curId
+            );
+            return {
+              ...prev,
+              queue: radioTracks,
+              queueIndex: curIdx >= 0 ? curIdx : 0,
+            };
+          });
+        }}
         onAddToQueue={handleAddToQueue}
         settings={settings}
         playlists={playlists}
@@ -2221,10 +2330,7 @@ export default function App() {
       {/* Mobile Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setSelectedPlaylist(null);
-          setActiveTab(tab);
-        }}
+        setActiveTab={setActiveTab}
         designConfig={activeFullDesign}
       />
 
@@ -2260,6 +2366,7 @@ export default function App() {
         onSuccess={handleLoginSuccess}
         designConfig={activeFullDesign}
       />
-    </div>
+      </div>
+    </EqualizerProvider>
   );
 }

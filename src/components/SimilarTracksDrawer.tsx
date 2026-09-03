@@ -10,6 +10,8 @@ interface SimilarTracksDrawerProps {
   seedTrack?: Track;
   isPlaying?: boolean;
   onPlayTrack: (track: Track) => void;
+  onPlayQueue?: (tracks: Track[], startIndex: number) => void;
+  onRegisterRadioQueue?: (tracks: Track[]) => void;
   onAddToQueue: (track: Track) => void;
   onClose: () => void;
   designConfig?: FullAppDesignConfig;
@@ -20,6 +22,8 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
   seedTrack,
   isPlaying = false,
   onPlayTrack,
+  onPlayQueue,
+  onRegisterRadioQueue,
   onAddToQueue,
   onClose,
   designConfig = FULL_APP_DESIGNS["designer"],
@@ -98,7 +102,49 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
     });
   }, [similarTracks]);
 
+  // Construct complete Radio Station queue (seed track at top, followed by similar tracks in order)
+  const fullRadioQueue = React.useMemo(() => {
+    const list: Track[] = [];
+    const seedId = activeSeed?.id || activeSeed?.youtubeVideoId;
+    if (activeSeed && seedId) {
+      list.push({ ...activeSeed, id: seedId });
+    }
+    for (const t of cleanSimilar) {
+      const tId = t.id || t.youtubeVideoId;
+      if (tId && tId !== seedId) {
+        list.push({ ...t, id: tId });
+      }
+    }
+    return list;
+  }, [activeSeed, cleanSimilar]);
+
+  // Register the active Radio station list into global audio playback queue once loaded
+  useEffect(() => {
+    if (cleanSimilar.length > 0 && fullRadioQueue.length > 0) {
+      onRegisterRadioQueue?.(fullRadioQueue);
+    }
+  }, [cleanSimilar.length, fullRadioQueue, onRegisterRadioQueue]);
+
+  // Play a specific item from the Radio queue, guaranteeing sequential top-to-bottom playback
+  const handlePlayRadioItem = (track: Track, fallbackIdx = 0) => {
+    const targetIdx = fullRadioQueue.findIndex(
+      (t) => (t.id || t.youtubeVideoId) === (track.id || track.youtubeVideoId)
+    );
+    const validIdx = targetIdx >= 0 ? targetIdx : fallbackIdx;
+    if (onPlayQueue) {
+      onPlayQueue(fullRadioQueue, validIdx);
+    } else {
+      onPlayTrack(track);
+    }
+  };
+
   const currentTrackId = currentTrack?.id || currentTrack?.youtubeVideoId;
+  const isSeedCurrent = Boolean(
+    currentTrackId &&
+      (activeSeedId === currentTrackId ||
+        activeSeed.id === currentTrack.id ||
+        (activeSeed.youtubeVideoId && activeSeed.youtubeVideoId === currentTrack.youtubeVideoId))
+  );
 
   return (
     <div className={`w-full max-w-md ${designConfig.sidebarBg} border ${designConfig.borderSubtle} rounded-3xl flex flex-col max-h-[calc(100vh-280px)] min-h-[260px] z-30 backdrop-blur-2xl p-4 shadow-2xl ${designConfig.textSecondary} overflow-hidden my-auto`}>
@@ -115,16 +161,35 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
         </button>
       </div>
 
-      {/* Emphasized Radio Station Seed card with marquees */}
-      <div className={`mb-3.5 px-3.5 py-3 rounded-2xl border-2 ${designConfig.accentBorder} ${designConfig.isLight ? "bg-[#f5f1e8] shadow-md shadow-[#c59b27]/5" : "bg-slate-800/80 shadow-lg shadow-black/40"} shrink-0 relative overflow-hidden group`}>
+      {/* Emphasized Radio Station Seed card with marquees & click-to-play */}
+      <div
+        onClick={() => handlePlayRadioItem(activeSeed, 0)}
+        className={`mb-3.5 px-3.5 py-3 rounded-2xl border-2 ${
+          isSeedCurrent
+            ? designConfig.accentBorder
+            : designConfig.borderSubtle
+        } ${
+          designConfig.isLight
+            ? "bg-[#f5f1e8] shadow-md shadow-[#c59b27]/5"
+            : "bg-slate-800/80 shadow-lg shadow-black/40"
+        } shrink-0 relative overflow-hidden group cursor-pointer transition-all hover:scale-[1.01]`}
+        title="Click to play Radio Seed"
+      >
         {/* Subtle accent corner glow indicator */}
         <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl ${designConfig.multiAccentGradient || "from-[#c59b27] to-transparent"} opacity-15 pointer-events-none rounded-bl-full`} />
 
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className={`w-1.5 h-1.5 rounded-full ${designConfig.accentBg} animate-pulse`} />
-          <p className={`text-[10px] ${designConfig.accentText} font-mono uppercase font-bold tracking-wider`}>
-            Radio Station Seed
-          </p>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${designConfig.accentBg} animate-pulse`} />
+            <p className={`text-[10px] ${designConfig.accentText} font-mono uppercase font-bold tracking-wider`}>
+              Radio Station Seed
+            </p>
+          </div>
+          {isSeedCurrent && isPlaying && (
+            <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-full ${designConfig.pillBg} ${designConfig.accentText}`}>
+              Playing
+            </span>
+          )}
         </div>
 
         <div className="space-y-0.5 min-w-0">
@@ -157,14 +222,15 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
             <p className="text-xs font-mono">No similar tracks found for this title.</p>
           </div>
         ) : (
-          cleanSimilar.map((track) => {
+          cleanSimilar.map((track, idx) => {
             const trId = track.id || track.youtubeVideoId;
             const isCurrent = Boolean(currentTrackId && (trId === currentTrackId || track.id === currentTrack.id || (track.youtubeVideoId && track.youtubeVideoId === currentTrack.youtubeVideoId)));
             const isAdded = addedIds.includes(track.id);
+            const radioQueueIndex = idx + 1; // 1-based because seed track is index 0
 
             return (
               <div
-                key={track.id}
+                key={track.id || `rad_${idx}`}
                 className={`group flex items-center justify-between p-2.5 rounded-2xl transition-all ${
                   isCurrent
                     ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
@@ -213,28 +279,41 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
                       }}
                     />
                     <button
-                      onClick={() => onPlayTrack(track)}
+                      onClick={() => handlePlayRadioItem(track, radioQueueIndex)}
                       className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-xl transition-opacity"
+                      title="Play track"
                     >
                       <Play className="w-4 h-4 text-white fill-white" />
                     </button>
                   </div>
 
-                  <div className="min-w-0 flex-1 cursor-pointer" onClick={() => onPlayTrack(track)}>
-                    <p className={`text-xs font-semibold truncate ${
-                      isCurrent
-                        ? designConfig.accentText
-                        : `${designConfig.textPrimary} group-hover:${designConfig.accentText}`
-                    }`}>
-                      {track.title}
-                    </p>
-                    <p className={`text-[10px] truncate ${
-                      isCurrent
-                        ? `${designConfig.accentText} opacity-80`
-                        : designConfig.textMuted
-                    }`}>
-                      {track.artist}
-                    </p>
+                  {/* Marquee text for long song titles and artist names */}
+                  <div
+                    className="min-w-0 flex-1 cursor-pointer overflow-hidden space-y-0.5"
+                    onClick={() => handlePlayRadioItem(track, radioQueueIndex)}
+                  >
+                    <MarqueeText
+                      as="div"
+                      text={track.title}
+                      className={`text-xs font-semibold ${
+                        isCurrent
+                          ? designConfig.accentText
+                          : `${designConfig.textPrimary} group-hover:${designConfig.accentText}`
+                      }`}
+                      containerClassName="w-full"
+                      speed={26}
+                    />
+                    <MarqueeText
+                      as="div"
+                      text={track.artist || track.uploader || "Unknown Artist"}
+                      className={`text-[10px] ${
+                        isCurrent
+                          ? `${designConfig.accentText} opacity-80 font-medium`
+                          : designConfig.textMuted
+                      }`}
+                      containerClassName="w-full"
+                      speed={22}
+                    />
                   </div>
                 </div>
 

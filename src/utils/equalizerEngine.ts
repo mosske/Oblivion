@@ -79,6 +79,17 @@ class EqualizerManager {
 
   // Connects the HTMLAudioElement to the 7-band peaking filter chain
   public attachAudioElement(audioElement: HTMLAudioElement): void {
+    if (!audioElement) return;
+
+    // 1. Ensure crossOrigin = "anonymous" to prevent CORS blocking
+    try {
+      if (audioElement.crossOrigin !== "anonymous") {
+        audioElement.crossOrigin = "anonymous";
+      }
+    } catch {}
+
+    // 2. createMediaElementSource(audioRef) can only be called ONCE per HTMLMediaElement instance.
+    // If sourceNode already exists, reuse it instead of instantiating a new MediaElementSourceNode
     if (this.attachedElement === audioElement && this.sourceNode) {
       return;
     }
@@ -92,61 +103,59 @@ class EqualizerManager {
         this.audioContext = new AudioContextClass();
       }
 
-      // Resume context on play or user interaction
-      if (this.audioContext.state === "suspended") {
-        const resumeCtx = () => {
-          this.audioContext?.resume().catch(() => {});
-          audioElement.removeEventListener("play", resumeCtx);
-        };
-        audioElement.addEventListener("play", resumeCtx);
-      }
+      // 4. Handle browser autoplay restrictions by automatically calling audioCtx.resume()
+      // whenever playback starts (onPlay or play() action) if audioCtx.state === 'suspended'.
+      const handlePlay = () => {
+        if (this.audioContext && this.audioContext.state === "suspended") {
+          this.audioContext.resume().catch(() => {});
+        }
+      };
+      audioElement.removeEventListener("play", handlePlay);
+      audioElement.addEventListener("play", handlePlay);
 
-      // Check if element is already bound or create media element source
+      // Check if element is already bound or create media element source once
       if (!this.sourceNode) {
         try {
           this.sourceNode = this.audioContext.createMediaElementSource(audioElement);
         } catch (err) {
-          // If already connected by browser, do not crash
           console.warn("createMediaElementSource note:", err);
           return;
         }
       }
 
-      // Construct the 7-band BiquadFilterNode chain
-      this.filterNodes = EQ_FREQUENCIES.map((freq, index) => {
-        const filter = this.audioContext!.createBiquadFilter();
-        filter.type = "peaking";
-        filter.frequency.value = freq;
-        filter.Q.value = 1.4; // standard bandwidth for 7-band EQ
-        filter.gain.value = this.currentGains[index] ?? 0;
-        return filter;
-      });
+      // Construct the 7-band BiquadFilterNode chain if not already built
+      if (this.filterNodes.length !== EQ_FREQUENCIES.length) {
+        this.filterNodes = EQ_FREQUENCIES.map((freq, index) => {
+          const filter = this.audioContext!.createBiquadFilter();
+          filter.type = "peaking";
+          filter.frequency.value = freq;
+          filter.Q.value = 1.4; // standard bandwidth for 7-band EQ
+          filter.gain.value = this.currentGains[index] ?? 0;
+          return filter;
+        });
 
-      // Connect source -> filter0 -> filter1 -> ... -> filter6 -> destination
-      let prevNode: AudioNode = this.sourceNode;
-      for (const filter of this.filterNodes) {
-        prevNode.connect(filter);
-        prevNode = filter;
+        // 1. Route the node chain:
+        // <audio> -> MediaElementSourceNode -> Filter 1 (60Hz) -> Filter 2 (150Hz) -> ... -> Filter 7 (15kHz) -> AudioContext.destination
+        let prevNode: AudioNode = this.sourceNode;
+        for (const filter of this.filterNodes) {
+          prevNode.connect(filter);
+          prevNode = filter;
+        }
+        prevNode.connect(this.audioContext.destination);
       }
-      prevNode.connect(this.audioContext.destination);
     } catch (e) {
       console.warn("Error initializing Equalizer Web Audio pipeline:", e);
     }
   }
 
+  // 3. Live Slider Gain Updates: directly update target BiquadFilterNode gain
   public setGain(index: number, value: number): void {
     if (index < 0 || index >= this.currentGains.length) return;
     const clamped = Math.max(-12, Math.min(12, value));
     this.currentGains[index] = clamped;
 
-    if (this.filterNodes[index] && this.audioContext) {
-      try {
-        const param = this.filterNodes[index].gain;
-        param.cancelScheduledValues?.(this.audioContext.currentTime);
-        param.setTargetAtTime?.(clamped, this.audioContext.currentTime, 0.015);
-      } catch {
-        this.filterNodes[index].gain.value = clamped;
-      }
+    if (this.filterNodes[index]) {
+      this.filterNodes[index].gain.value = clamped;
     }
 
     // Determine if preset still matches
@@ -163,6 +172,7 @@ class EqualizerManager {
     this.notify();
   }
 
+  // 3. Changing presets updates all 7 filterNode.gain.value properties in real time
   public setPreset(presetName: string): void {
     const presetGains = EQ_PRESETS[presetName];
     if (!presetGains) return;
@@ -171,14 +181,8 @@ class EqualizerManager {
     this.currentGains = [...presetGains];
 
     this.currentGains.forEach((gain, index) => {
-      if (this.filterNodes[index] && this.audioContext) {
-        try {
-          const param = this.filterNodes[index].gain;
-          param.cancelScheduledValues?.(this.audioContext.currentTime);
-          param.setTargetAtTime?.(gain, this.audioContext.currentTime, 0.02);
-        } catch {
-          this.filterNodes[index].gain.value = gain;
-        }
+      if (this.filterNodes[index]) {
+        this.filterNodes[index].gain.value = gain;
       }
     });
 

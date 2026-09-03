@@ -1,38 +1,133 @@
-import React, { useState, useEffect } from "react";
-import { Sliders, RotateCcw, Volume2, Sparkles, Check } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Sliders, RotateCcw, Volume2, Sparkles, Check, Play, Square } from "lucide-react";
 import { FullAppDesignConfig } from "../utils/appDesignThemes";
-import {
-  EQ_FREQUENCIES,
-  EQ_PRESETS,
-  EQState,
-  equalizerManager,
-} from "../utils/equalizerEngine";
+import { EQ_FREQUENCIES, EQ_PRESETS } from "../utils/equalizerEngine";
+import { useEqualizer } from "../context/EqualizerContext";
 
 interface AudioEqualizerProps {
   designConfig: FullAppDesignConfig;
 }
 
 export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) => {
-  const [eqState, setEqState] = useState<EQState>(() => equalizerManager.getState());
+  const {
+    eqState,
+    filtersRef,
+    audioCtxRef,
+    setGain,
+    setPreset,
+    resetEQ,
+    resumeAudioContext,
+  } = useEqualizer();
 
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+  const previewNodesRef = useRef<{ oscillators: OscillatorNode[]; gainNode: GainNode } | null>(null);
+
+  // Clean up preview nodes on unmount
   useEffect(() => {
-    const unsubscribe = equalizerManager.subscribe((newState) => {
-      setEqState(newState);
-    });
-    return unsubscribe;
+    return () => {
+      stopPreviewTone();
+    };
   }, []);
 
-  const handleSliderChange = (index: number, valStr: string) => {
-    const val = parseFloat(valStr);
-    equalizerManager.setGain(index, val);
+  const stopPreviewTone = () => {
+    if (previewNodesRef.current) {
+      try {
+        previewNodesRef.current.oscillators.forEach((osc) => {
+          try {
+            osc.stop();
+            osc.disconnect();
+          } catch {}
+        });
+        previewNodesRef.current.gainNode.disconnect();
+      } catch {}
+      previewNodesRef.current = null;
+    }
+    setIsPreviewPlaying(false);
   };
 
-  const handlePresetSelect = (preset: string) => {
-    equalizerManager.setPreset(preset);
+  const togglePreviewTone = () => {
+    if (isPreviewPlaying) {
+      stopPreviewTone();
+      return;
+    }
+
+    resumeAudioContext();
+    const audioCtx = audioCtxRef.current;
+    if (!audioCtx) return;
+
+    try {
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
+
+      // Ensure filters are connected
+      const firstFilter = filtersRef.current[0];
+      if (!firstFilter) return;
+
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+      // Create a rich harmonic chord (lows, mids, highs) to test all 7 bands
+      const frequencies = [80, 240, 500, 1200, 3000, 7500];
+      const oscillators: OscillatorNode[] = frequencies.map((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.type = i % 2 === 0 ? "sawtooth" : "triangle";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+        const bandGain = audioCtx.createGain();
+        bandGain.gain.setValueAtTime(1 / frequencies.length, audioCtx.currentTime);
+
+        osc.connect(bandGain);
+        bandGain.connect(masterGain);
+        osc.start();
+        return osc;
+      });
+
+      // Route through the head of the 7-band filter chain so all 7 filters sculpt the tone
+      masterGain.connect(firstFilter);
+
+      previewNodesRef.current = {
+        oscillators,
+        gainNode: masterGain,
+      };
+      setIsPreviewPlaying(true);
+    } catch (err) {
+      console.warn("Failed to start preview tone:", err);
+    }
+  };
+
+  // 3. Live Slider Gain Updates:
+  // In the slider onChange handler, directly update the target BiquadFilterNode gain:
+  // filtersRef.current[index].gain.value = newGainValue;
+  const handleSliderChange = (index: number, valStr: string) => {
+    const newGainValue = parseFloat(valStr);
+    if (filtersRef.current && filtersRef.current[index]) {
+      filtersRef.current[index].gain.value = newGainValue;
+    }
+    setGain(index, newGainValue);
+  };
+
+  // 3. Ensure changing presets updates all 7 filterNode.gain.value properties in real time
+  const handlePresetSelect = (presetName: string) => {
+    const presetGains = EQ_PRESETS[presetName];
+    if (presetGains) {
+      presetGains.forEach((gain, i) => {
+        if (filtersRef.current && filtersRef.current[i]) {
+          filtersRef.current[i].gain.value = gain;
+        }
+      });
+      setPreset(presetName);
+    }
   };
 
   const handleReset = () => {
-    equalizerManager.reset();
+    const flatGains = EQ_PRESETS["Flat"];
+    flatGains.forEach((gain, i) => {
+      if (filtersRef.current && filtersRef.current[i]) {
+        filtersRef.current[i].gain.value = gain;
+      }
+    });
+    resetEQ();
   };
 
   const formatFreq = (freq: number): string => {
@@ -51,7 +146,7 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
 
   return (
     <div className={`p-5 sm:p-6 rounded-3xl border ${designConfig.borderSubtle} ${designConfig.cardBg} shadow-md space-y-6 select-none`}>
-      {/* Header bar: Title, Preset Dropdown, Reset Button */}
+      {/* Header bar: Title, Preview Audio Button, Preset Dropdown, Reset Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-black/5 dark:border-white/10">
         <div>
           <div className="flex items-center gap-2">
@@ -65,12 +160,39 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
             </h3>
           </div>
           <p className={`text-xs ${designConfig.textMuted} mt-0.5 font-medium`}>
-            Tune frequency resonance directly with Web Audio Biquad peaking filters (-12 dB to +12 dB).
+            Precision Web Audio Biquad peaking filters (-12 dB to +12 dB) across 7 acoustic bands.
           </p>
         </div>
 
-        {/* Preset Selector & Reset Button */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Audio Test Preview, Preset Selector & Reset Button */}
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
+          {/* Real-time sound test button */}
+          <button
+            type="button"
+            onClick={togglePreviewTone}
+            title={isPreviewPlaying ? "Stop EQ Sound Test" : "Test EQ with Real-Time Harmonic Sound"}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+              isPreviewPlaying
+                ? "bg-amber-500 text-black border-amber-400 shadow-md animate-pulse"
+                : designConfig.isLight
+                ? "bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border-zinc-300"
+                : "bg-white/10 hover:bg-white/20 text-white/90 border-white/10"
+            }`}
+          >
+            {isPreviewPlaying ? (
+              <>
+                <Square className="w-3.5 h-3.5 fill-current" />
+                <span>Stop Tone</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Sound Test</span>
+              </>
+            )}
+          </button>
+
+          {/* Preset Select Dropdown */}
           <div className="relative">
             <select
               value={eqState.preset}
@@ -97,6 +219,7 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
             </select>
           </div>
 
+          {/* Reset Button */}
           <button
             type="button"
             onClick={handleReset}
@@ -140,7 +263,7 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
               <div className="relative h-44 sm:h-52 w-8 sm:w-10 flex items-center justify-center my-2">
                 {/* 0 dB Center Zero Marker Guide */}
                 <div className="absolute w-full h-[1px] bg-black/15 dark:bg-white/15 pointer-events-none top-1/2 -translate-y-1/2 z-0" />
-                
+
                 {/* Subdued dB ticks (+6dB, -6dB) */}
                 <div className="absolute w-2/3 h-[1px] bg-black/5 dark:bg-white/5 pointer-events-none top-1/4 -translate-y-1/2 z-0" />
                 <div className="absolute w-2/3 h-[1px] bg-black/5 dark:bg-white/5 pointer-events-none top-3/4 -translate-y-1/2 z-0" />
