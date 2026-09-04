@@ -46,13 +46,13 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
 
   // Artwork Precedence Hierarchy:
   // 1. Explicit custom cover URL (custom uploaded / AI / Google User Content artwork)
-  // 2. Playlist's own cover URL (playlist-level assigned or custom artwork)
-  // 3. First song's artwork (ONLY as a fallback if neither customCoverUrl nor coverUrl are present or valid)
+  // 2. First song's artwork (ONLY as a fallback if customCoverUrl is absent or fires onError)
+  // 3. Playlist standard cover URL (if present and valid)
   // 4. Default placeholder
   const candidateUrls: string[] = [
     customCoverUrl,
-    standardCoverUrl,
     trackZeroArtwork,
+    standardCoverUrl,
     DEFAULT_PLACEHOLDER,
   ].filter((u): u is string => Boolean(u && typeof u === "string" && u.trim().length > 0 && !failedSources.has(u)));
 

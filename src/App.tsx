@@ -16,6 +16,13 @@ import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { EqualizerProvider } from "./context/EqualizerContext";
+import {
+  getCachedPlaylistsFromDB,
+  savePlaylistsToDBCache,
+  getCustomCoversFromCache,
+  saveCustomCoverToCache,
+  savePlaylistTracksToDBCache,
+} from "./utils/playlistDb";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
@@ -787,8 +794,30 @@ export default function App() {
 
     initAuth();
 
+    // Immediate local-first playlist load from IndexedDB on startup
+    let isDbMounted = true;
+    getCachedPlaylistsFromDB().then((cached) => {
+      if (isDbMounted && Array.isArray(cached) && cached.length > 0) {
+        setPlaylists((prev) => {
+          if (prev.length === 0) return cached;
+          return prev.map((p) => {
+            const match = cached.find((c) => c.id === p.id || c.id.replace(/^VL/, "") === p.id.replace(/^VL/, ""));
+            if (match && (match.customCoverUrl || match.isCustomCover)) {
+              return {
+                ...p,
+                customCoverUrl: match.customCoverUrl || match.coverUrl,
+                isCustomCover: true,
+              };
+            }
+            return p;
+          });
+        });
+      }
+    });
+
     return () => {
       isMounted = false;
+      isDbMounted = false;
     };
   }, []);
 
@@ -999,6 +1028,7 @@ export default function App() {
       }
 
       if (data.playlists && Array.isArray(data.playlists) && data.playlists.length > 0) {
+        const customCoversMap = await getCustomCoversFromCache().catch(() => ({}));
         const seenPlIds = new Set<string>();
         const sanitizedPlaylists: Playlist[] = [];
         const syncTimestamp = Date.now();
@@ -1011,6 +1041,7 @@ export default function App() {
           if (plTitle === "liked music & videos" || plTitle === "liked videos" || plTitle === "liked music" || plTitle === "watch later" || plTitle === "history" || plTitle === "watch history") continue;
           seenPlIds.add(plId);
 
+          const cleanId = plId.replace(/^VL/, "");
           const seenTrackIds = new Set<string>();
           const sanitizedTracks: Track[] = [];
 
@@ -1022,7 +1053,10 @@ export default function App() {
             sanitizedTracks.push({ ...t, id: trId });
           }
 
+          const customCoverEntry = customCoversMap[plId] || customCoversMap[cleanId];
+
           const isAuthenticCustom =
+            Boolean(customCoverEntry?.customCoverUrl) ||
             Boolean(pl.isCustomCover) ||
             Boolean(
               pl.customCoverUrl &&
@@ -1080,10 +1114,11 @@ export default function App() {
 
           // Match with existing playlist to preserve full tracks if already fetched and preserve custom cover
           const existingMatch = playlists.find(
-            (p) => p.id === plId || (p.id && p.id.replace(/^VL/, "") === plId.replace(/^VL/, ""))
+            (p) => p.id === plId || (p.id && p.id.replace(/^VL/, "") === cleanId)
           );
 
           const resolvedCustom =
+            customCoverEntry?.customCoverUrl ||
             pl.customCoverUrl ||
             (isAuthenticCustom ? (rawCover || rawCustom) : undefined) ||
             existingMatch?.customCoverUrl ||
@@ -1094,7 +1129,7 @@ export default function App() {
             rawCover ||
             bestThumb ||
             existingMatch?.coverUrl ||
-            `https://i.ytimg.com/vi/${plId.replace(/^VL/, '')}/hqdefault.jpg`;
+            `https://i.ytimg.com/vi/${cleanId}/hqdefault.jpg`;
 
           // If manual sync, apply cache buster to force fresh CDN fetch
           if (isManualSync) {
@@ -1121,6 +1156,9 @@ export default function App() {
             privacyStatus: normalizedPlPrivacy,
           });
         }
+
+        // Save sanitized playlists to IndexedDB and local storage cache
+        savePlaylistsToDBCache(sanitizedPlaylists);
 
         // Compare and update if playlists have changed
         setPlaylists((prevPlaylists) => {
@@ -1544,6 +1582,10 @@ export default function App() {
         try {
           localStorage.setItem("oblivion_saved_playlists", JSON.stringify(next));
         } catch {}
+        savePlaylistsToDBCache(next);
+        if (coverUrl) {
+          saveCustomCoverToCache(editingPlaylist.id, coverUrl, true);
+        }
         return next;
       });
 
@@ -1762,6 +1804,9 @@ export default function App() {
   const handleUpdatePlaylistCover = async (playlistId: string, newCoverUrl: string, isCustom: boolean) => {
     const cleanId = playlistId.replace(/^VL/, "");
 
+    // Lock custom cover in dedicated store
+    saveCustomCoverToCache(playlistId, newCoverUrl, isCustom);
+
     setPlaylists((prev) => {
       const updated = prev.map((p) =>
         p.id === playlistId || p.id?.replace(/^VL/, "") === cleanId
@@ -1776,6 +1821,7 @@ export default function App() {
       try {
         localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
       } catch {}
+      savePlaylistsToDBCache(updated);
       return updated;
     });
 
@@ -1812,6 +1858,10 @@ export default function App() {
   // Reorder Tracks inside Playlist
   const handleReorderPlaylistTracks = async (playlistId: string, newTracks: Track[]) => {
     const cleanPlId = playlistId.replace(/^VL/, "");
+
+    // Save tracks to IndexedDB store immediately
+    savePlaylistTracksToDBCache(playlistId, newTracks);
+
     setPlaylists((prev) => {
       const updated = prev.map((p) => {
         const pId = p.id || (p as any).playlistId;
@@ -1823,6 +1873,7 @@ export default function App() {
       try {
         localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
       } catch {}
+      savePlaylistsToDBCache(updated);
       return updated;
     });
 

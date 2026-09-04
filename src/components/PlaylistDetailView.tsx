@@ -35,6 +35,7 @@ import { PlaylistCustomCoverModal } from "./PlaylistCustomCoverModal";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { MarqueeText } from "./MarqueeText";
 import { getInMemoryToken } from "../App";
+import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
 
 interface PlaylistDetailViewProps {
   item: Playlist | Album;
@@ -114,13 +115,24 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     if (rootEl) rootEl.scrollTop = 0;
   }, [item?.id]);
 
-  // Sync state if props item changes
+  // Immediate local-first cache loading on mount or item change
   useEffect(() => {
+    let isCurrent = true;
     if (item.tracks && item.tracks.length > 0) {
       setTracks(item.tracks.filter(Boolean));
       setIsLoadingTracks(false);
+    } else if (item.id) {
+      getCachedPlaylistTracksFromDB(item.id).then((cached) => {
+        if (isCurrent && cached && cached.length > 0) {
+          setTracks(cached);
+          setIsLoadingTracks(false);
+        }
+      });
     }
-  }, [item.tracks]);
+    return () => {
+      isCurrent = false;
+    };
+  }, [item.id, item.tracks]);
 
   // Execute silent background track fetch on open
   const executeSilentFetch = async () => {
@@ -161,15 +173,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             };
           });
 
-        // Merge with existing in-memory tracks if any are missing from the network response
+        // Merge with existing in-memory/cached tracks if any are missing from the network response
         const liveVidIds = new Set(clean.map((t) => (t.youtubeVideoId || t.id || "").replace(/^VL/, "")));
-        const missingLocalTracks = (item.tracks || []).filter((t) => {
+        const existingTrackList = tracks.length > 0 ? tracks : (item.tracks || []);
+        const missingLocalTracks = existingTrackList.filter((t) => {
           const vId = (t.youtubeVideoId || t.id || "").replace(/^VL/, "");
           return vId && !liveVidIds.has(vId);
         });
 
         const merged = missingLocalTracks.length > 0 ? [...clean, ...missingLocalTracks] : clean;
         setTracks(merged);
+        savePlaylistTracksToDBCache(item.id, merged);
         if (onReorderTracks) {
           onReorderTracks(merged);
         }
