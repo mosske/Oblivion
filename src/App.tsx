@@ -49,6 +49,41 @@ let globalAuthExpiryHandler: (() => void) | null = null;
 let globalTokenUpdateHandler: ((newToken: string, userObj?: any) => void) | null = null;
 let activeRefreshPromise: Promise<string | null> | null = null;
 
+// Synchronous In-Memory Auth & Interceptor Guard State
+let currentInMemoryToken: string | null = null;
+let currentInMemoryUser: any | null = null;
+let isAuthenticatingGlobal = false;
+
+export function setInMemoryAuth(token: string | null, userObj?: any | null) {
+  currentInMemoryToken = token;
+  if (userObj !== undefined) {
+    currentInMemoryUser = userObj;
+  }
+}
+
+export function getInMemoryToken(): string | null {
+  if (currentInMemoryToken) return currentInMemoryToken;
+  try {
+    const saved = localStorage.getItem("oblivion_saved_user");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed?.accessToken) {
+        currentInMemoryToken = parsed.accessToken;
+        return parsed.accessToken;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+export function setIsAuthenticatingGlobal(val: boolean) {
+  isAuthenticatingGlobal = val;
+}
+
+export function getIsAuthenticatingGlobal(): boolean {
+  return isAuthenticatingGlobal;
+}
+
 // Silent background token refresh mechanism
 export async function performSilentRefresh(): Promise<string | null> {
   if (activeRefreshPromise) {
@@ -57,14 +92,16 @@ export async function performSilentRefresh(): Promise<string | null> {
 
   activeRefreshPromise = (async () => {
     try {
-      let activeToken = "";
-      try {
-        const savedUser = localStorage.getItem("oblivion_saved_user");
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          activeToken = parsed?.accessToken || "";
-        }
-      } catch {}
+      let activeToken = getInMemoryToken() || "";
+      if (!activeToken) {
+        try {
+          const savedUser = localStorage.getItem("oblivion_saved_user");
+          if (savedUser) {
+            const parsed = JSON.parse(savedUser);
+            activeToken = parsed?.accessToken || "";
+          }
+        } catch {}
+      }
 
       const res = await fetch("/api/auth/refresh", {
         method: "POST",
@@ -80,6 +117,7 @@ export async function performSilentRefresh(): Promise<string | null> {
         const data = await res.json().catch(() => ({}));
         if (data?.success && data?.accessToken) {
           const newToken = data.accessToken;
+          setInMemoryAuth(newToken, data.user || null);
           try {
             const savedUser = localStorage.getItem("oblivion_saved_user");
             if (savedUser) {
@@ -101,8 +139,14 @@ export async function performSilentRefresh(): Promise<string | null> {
           return newToken;
         }
       } else if (res.status === 401 || res.status === 403) {
-        console.warn("[Auth] Refresh token revoked or expired (401/403). Invaliding session.");
-        if (globalAuthExpiryHandler) {
+        // Do not trigger session expiry if authentication is actively being processed
+        if (isAuthenticatingGlobal) {
+          console.warn("[Auth] Refresh returned 401 during active authentication; preserving session state.");
+          return null;
+        }
+        const hasActiveSession = Boolean(getInMemoryToken() || localStorage.getItem("oblivion_saved_user"));
+        if (hasActiveSession && globalAuthExpiryHandler) {
+          console.warn("[Auth] Refresh token revoked or expired (401/403). Invaliding session.");
           globalAuthExpiryHandler();
         }
         return null;
@@ -130,15 +174,39 @@ async function safeClientFetch(
   let lastError: any = null;
   let didAttemptRefresh = false;
 
+  // Clone headers and inject current in-memory bearer token immediately
+  const activeToken = getInMemoryToken();
+  const baseHeaders = new Headers(options.headers || {});
+  if (activeToken && !baseHeaders.has("Authorization")) {
+    baseHeaders.set("Authorization", `Bearer ${activeToken}`);
+    baseHeaders.set("X-Access-Token", activeToken);
+  }
+  const mergedOptions: RequestInit = {
+    ...options,
+    headers: baseHeaders,
+  };
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(url, mergedOptions);
 
       // Only 401 Unauthorized or 403 Forbidden trigger auth consideration
       if (res && (res.status === 401 || res.status === 403)) {
+        // If authentication is in progress, do not trigger false auth expiry popups
+        if (isAuthenticatingGlobal) {
+          console.log(`[Auth Interceptor] 401 on ${url.split("?")[0]} while authentication is in progress; suppressing false logout.`);
+          return res;
+        }
+
+        // If no user session exists (e.g. guest query), do not trigger auth expiry
+        const hasSession = Boolean(getInMemoryToken() || localStorage.getItem("oblivion_saved_user"));
+        if (!hasSession) {
+          return res;
+        }
+
         // If the refresh or logout endpoint itself fails with 401/403:
         if (url.includes("/api/auth/refresh") || url.includes("/api/auth/logout")) {
-          if (globalAuthExpiryHandler) {
+          if (globalAuthExpiryHandler && !isAuthenticatingGlobal) {
             globalAuthExpiryHandler();
           }
           return res;
@@ -151,10 +219,10 @@ async function safeClientFetch(
           const newToken = await performSilentRefresh();
           if (newToken) {
             // Clone and update headers with the fresh token
-            const updatedHeaders = new Headers(options.headers || {});
+            const updatedHeaders = new Headers(mergedOptions.headers || {});
             updatedHeaders.set("Authorization", `Bearer ${newToken}`);
             updatedHeaders.set("X-Access-Token", newToken);
-            const retryRes = await fetch(url, { ...options, headers: updatedHeaders });
+            const retryRes = await fetch(url, { ...mergedOptions, headers: updatedHeaders });
             return retryRes;
           }
         }
@@ -207,7 +275,9 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && (parsed.name || parsed.email)) {
-          return { ...parsed, isLoggedIn: true };
+          const u = { ...parsed, isLoggedIn: true };
+          setInMemoryAuth(u.accessToken || null, u);
+          return u;
         }
       }
     } catch (err) {
@@ -216,8 +286,10 @@ export default function App() {
     return null;
   });
 
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
+
   const getAuthHeaders = (): Record<string, string> => {
-    let activeToken = user?.accessToken;
+    let activeToken = user?.accessToken || getInMemoryToken();
     if (!activeToken) {
       try {
         const saved = localStorage.getItem("oblivion_saved_user");
@@ -225,7 +297,10 @@ export default function App() {
       } catch {}
     }
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+    if (activeToken) {
+      headers["Authorization"] = `Bearer ${activeToken}`;
+      headers["X-Access-Token"] = activeToken;
+    }
     return headers;
   };
 
@@ -628,9 +703,10 @@ export default function App() {
   // Save user changes to localStorage to keep user signed in
   useEffect(() => {
     if (user && user.isLoggedIn) {
-      localStorage.setItem("oblivion_saved_user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("oblivion_saved_user");
+      setInMemoryAuth(user.accessToken || null, user);
+      try {
+        localStorage.setItem("oblivion_saved_user", JSON.stringify(user));
+      } catch {}
     }
   }, [user]);
 
@@ -649,19 +725,29 @@ export default function App() {
         setActiveTab("settings");
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (successParam || userParam) {
+        setIsAuthenticating(true);
+        setIsAuthenticatingGlobal(true);
         if (userParam) {
           try {
             const parsedUser = JSON.parse(decodeURIComponent(userParam));
             if (parsedUser && (parsedUser.id || parsedUser.email)) {
               const fullUser = { ...parsedUser, isLoggedIn: true };
+              setInMemoryAuth(fullUser.accessToken || null, fullUser);
               setUser(fullUser);
-              localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+              try {
+                localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+              } catch {}
+              showToast(`Signed in as ${fullUser.name || fullUser.email || "Google User"}`);
             }
           } catch (e) {
             console.error("Failed to parse user param:", e);
           }
         }
         window.history.replaceState({}, document.title, window.location.pathname);
+        setTimeout(() => {
+          setIsAuthenticating(false);
+          setIsAuthenticatingGlobal(false);
+        }, 1200);
       }
 
       let localToken: string | undefined = undefined;
@@ -685,6 +771,7 @@ export default function App() {
           const data = await res.json().catch(() => null);
           if (data && data.isLoggedIn && data.user) {
             const fullUser = { ...data.user, isLoggedIn: true };
+            setInMemoryAuth(fullUser.accessToken || null, fullUser);
             if (isMounted) {
               setUser(fullUser);
               localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
@@ -743,7 +830,7 @@ export default function App() {
   // Automatic live sync whenever the user navigates to Library (just like Home and Explore feeds)
   useEffect(() => {
     if (activeTab === "library") {
-      let activeToken = user?.accessToken;
+      let activeToken = user?.accessToken || getInMemoryToken();
       if (!activeToken) {
         try {
           const saved = localStorage.getItem("oblivion_saved_user");
@@ -755,12 +842,25 @@ export default function App() {
     }
   }, [activeTab]);
 
-  const handleLoginSuccess = (loggedUser: User) => {
+  const handleLoginSuccess = async (loggedUser: User) => {
+    setIsAuthenticating(true);
+    setIsAuthenticatingGlobal(true);
     const fullUser = { ...loggedUser, isLoggedIn: true };
+    setInMemoryAuth(fullUser.accessToken || null, fullUser);
+    try {
+      localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+    } catch {}
     setUser(fullUser);
-    localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
-    fetchPlaylists(true, loggedUser.accessToken, true);
-    showToast(`Signed in as ${loggedUser.name || loggedUser.email || "Google User"}`);
+    setIsAuthModalOpen(false);
+    showToast(`Signed in as ${fullUser.name || fullUser.email || "Google User"}`);
+    try {
+      await fetchPlaylists(true, fullUser.accessToken, true);
+    } catch (e) {
+      console.warn("Post-login playlist fetch notice:", e);
+    } finally {
+      setIsAuthenticating(false);
+      setIsAuthenticatingGlobal(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -769,6 +869,8 @@ export default function App() {
     } catch (err) {
       console.error("Logout error:", err);
     }
+    setInMemoryAuth(null, null);
+    setIsAuthenticatingGlobal(false);
     setUser(null);
     localStorage.removeItem("oblivion_saved_user");
     localStorage.removeItem("oblivion_saved_playlists");
@@ -785,6 +887,7 @@ export default function App() {
       setUser((prev) => {
         if (!prev) return prev;
         const updated = { ...prev, ...(userObj || {}), accessToken: newToken, isLoggedIn: true };
+        setInMemoryAuth(newToken, updated);
         try {
           localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
         } catch {}
@@ -793,7 +896,12 @@ export default function App() {
     };
 
     globalAuthExpiryHandler = () => {
+      if (isAuthenticatingGlobal) {
+        console.log("[Auth Interceptor] Expiry handler called while authenticating; ignoring.");
+        return;
+      }
       console.warn("[Auth Interceptor] Active session invalidated. Clearing phantom auth state.");
+      setInMemoryAuth(null, null);
       setUser(null);
       localStorage.removeItem("oblivion_saved_user");
       localStorage.removeItem("oblivion_saved_playlists");

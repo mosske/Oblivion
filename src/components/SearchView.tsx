@@ -5,6 +5,7 @@ import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { IdentifyMusicModal } from "./IdentifyMusicModal";
 import { MarqueeText } from "./MarqueeText";
+import { getInMemoryToken } from "../App";
 
 interface SearchViewProps {
   initialQuery?: string;
@@ -206,14 +207,16 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
     const timer = setTimeout(async () => {
       try {
-        let activeToken: string | undefined;
-        try {
-          const saved = localStorage.getItem("oblivion_saved_user");
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            activeToken = parsed?.accessToken;
-          }
-        } catch {}
+        let activeToken: string | undefined = getInMemoryToken() || undefined;
+        if (!activeToken) {
+          try {
+            const saved = localStorage.getItem("oblivion_saved_user");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              activeToken = parsed?.accessToken;
+            }
+          } catch {}
+        }
 
         const headers: Record<string, string> = {};
         if (activeToken) {

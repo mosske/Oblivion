@@ -8,6 +8,7 @@ import {
   getThemeCanvasColor,
 } from "../utils/appDesignThemes";
 import { OblivionLogo } from "./OblivionLogo";
+import { setInMemoryAuth, setIsAuthenticatingGlobal } from "../App";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -27,8 +28,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleModalClose = () => {
+    setIsAuthenticatingGlobal(false);
+    setLoading(false);
+    onClose();
+  };
+
   const startGooglePopup = async () => {
     setLoading(true);
+    setIsAuthenticatingGlobal(true);
     setErrorMessage(null);
 
     // 1. Pre-Sign-In Theme Color Sync:
@@ -100,15 +108,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
 
-      const handleMessage = (event: MessageEvent) => {
+      let pollTimer: any = null;
+
+      const handleMessage = async (event: MessageEvent) => {
         if (event.data && event.data.type === "OAUTH_SUCCESS") {
           window.removeEventListener("message", handleMessage);
+          if (pollTimer) clearInterval(pollTimer);
+
+          const incomingUser = event.data.user;
+          const fullUser: User = { ...incomingUser, isLoggedIn: true };
+
+          // 1. Immediately persist token & user to in-memory store and localStorage
+          if (fullUser.accessToken) {
+            setInMemoryAuth(fullUser.accessToken, fullUser);
+          }
+          try {
+            localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+          } catch (e) {
+            console.error("Failed to write user to localStorage", e);
+          }
+
+          // 2. Synchronously invoke onSuccess to update React state
+          await onSuccess(fullUser);
+
+          // 3. Mark authenticating as false and close the modal
           setLoading(false);
-          onSuccess(event.data.user);
+          setIsAuthenticatingGlobal(false);
           onClose();
         } else if (event.data && event.data.type === "OAUTH_ERROR") {
           window.removeEventListener("message", handleMessage);
+          if (pollTimer) clearInterval(pollTimer);
           setLoading(false);
+          setIsAuthenticatingGlobal(false);
           const rawErr = event.data.error;
           const parsedErr = typeof rawErr === "string" 
             ? rawErr 
@@ -120,7 +151,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       window.addEventListener("message", handleMessage);
 
       // Fallback check in case popup closes or token saves to local store
-      const pollTimer = setInterval(() => {
+      pollTimer = setInterval(async () => {
         try {
           const saved = localStorage.getItem("oblivion_saved_user");
           if (saved) {
@@ -128,14 +159,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             if (parsed && (parsed.id || parsed.email)) {
               clearInterval(pollTimer);
               window.removeEventListener("message", handleMessage);
+              const fullUser: User = { ...parsed, isLoggedIn: true };
+              setInMemoryAuth(fullUser.accessToken || null, fullUser);
+              await onSuccess(fullUser);
               setLoading(false);
-              onSuccess(parsed);
+              setIsAuthenticatingGlobal(false);
               onClose();
             }
           }
           if (popup && popup.closed) {
             clearInterval(pollTimer);
-            setTimeout(() => setLoading(false), 500);
+            setTimeout(() => {
+              setLoading(false);
+              setIsAuthenticatingGlobal(false);
+            }, 500);
           }
         } catch (e) {}
       }, 1000);
@@ -143,6 +180,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       console.error("Auth error:", err);
       setErrorMessage(err.message || "Failed to initiate Google login.");
       setLoading(false);
+      setIsAuthenticatingGlobal(false);
     }
   };
 
@@ -155,7 +193,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <h3 className={`text-base font-bold ${designConfig.textPrimary}`}>Connect YouTube Music</h3>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleModalClose}
             className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl transition-colors`}
           >
             <X className="w-5 h-5" />

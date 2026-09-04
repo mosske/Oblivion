@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { getInMemoryToken } from "../App";
 
 interface HomeViewProps {
   onPlayTrack: (track: Track) => void;
@@ -75,7 +76,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   const fetchHomeFeed = async (mood = "All") => {
     try {
-      let activeToken = user?.accessToken || "";
+      let activeToken = user?.accessToken || getInMemoryToken() || "";
       if (!activeToken) {
         try {
           const saved = localStorage.getItem("oblivion_saved_user");

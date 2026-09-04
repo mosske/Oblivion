@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { getInMemoryToken } from "../App";
 
 interface ExploreViewProps {
   onPlayTrack: (track: Track) => void;
@@ -61,14 +62,16 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
   const fetchExploreFeed = async () => {
     try {
-      let activeToken = "";
-      try {
-        const saved = localStorage.getItem("oblivion_saved_user");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          activeToken = parsed?.accessToken || "";
-        }
-      } catch {}
+      let activeToken = getInMemoryToken() || "";
+      if (!activeToken) {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            activeToken = parsed?.accessToken || "";
+          }
+        } catch {}
+      }
 
       const headers: Record<string, string> = {};
       if (activeToken) {

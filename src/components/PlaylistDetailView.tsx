@@ -34,6 +34,7 @@ import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes"
 import { PlaylistCustomCoverModal } from "./PlaylistCustomCoverModal";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { MarqueeText } from "./MarqueeText";
+import { getInMemoryToken } from "../App";
 
 interface PlaylistDetailViewProps {
   item: Playlist | Album;
@@ -124,14 +125,16 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   // Execute silent background track fetch on open
   const executeSilentFetch = async () => {
     try {
-      let activeToken = "";
-      try {
-        const saved = localStorage.getItem("oblivion_saved_user");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          activeToken = parsed?.accessToken || "";
-        }
-      } catch {}
+      let activeToken = getInMemoryToken() || "";
+      if (!activeToken) {
+        try {
+          const saved = localStorage.getItem("oblivion_saved_user");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            activeToken = parsed?.accessToken || "";
+          }
+        } catch {}
+      }
 
       const headers: Record<string, string> = {};
       if (activeToken) {

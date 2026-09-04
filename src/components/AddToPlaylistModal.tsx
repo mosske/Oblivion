@@ -17,6 +17,7 @@ import {
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { YOUTUBE_ARTWORK_PRESETS } from "./PlaylistModal";
+import { getInMemoryToken } from "../App";
 
 export interface AddToPlaylistModalProps {
   isOpen: boolean;
@@ -104,11 +105,13 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
       const fetchLivePlaylistCounts = async () => {
         setIsLoadingCounts(true);
         try {
-          let activeToken: string | undefined;
-          try {
-            const saved = localStorage.getItem("oblivion_saved_user");
-            if (saved) activeToken = JSON.parse(saved)?.accessToken;
-          } catch {}
+          let activeToken: string | undefined = getInMemoryToken() || undefined;
+          if (!activeToken) {
+            try {
+              const saved = localStorage.getItem("oblivion_saved_user");
+              if (saved) activeToken = JSON.parse(saved)?.accessToken;
+            } catch {}
+          }
 
           const headers: Record<string, string> = {};
           if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
