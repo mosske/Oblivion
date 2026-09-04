@@ -138,23 +138,11 @@ export async function performSilentRefresh(): Promise<string | null> {
           }
           return newToken;
         }
-      } else if (res.status === 401 || res.status === 403) {
-        // Do not trigger session expiry if authentication is actively being processed
-        if (isAuthenticatingGlobal) {
-          console.warn("[Auth] Refresh returned 401 during active authentication; preserving session state.");
-          return null;
-        }
-        const hasActiveSession = Boolean(getInMemoryToken() || localStorage.getItem("oblivion_saved_user"));
-        if (hasActiveSession && globalAuthExpiryHandler) {
-          console.warn("[Auth] Refresh token revoked or expired (401/403). Invaliding session.");
-          globalAuthExpiryHandler();
-        }
-        return null;
       }
-      // Differentiate auth errors: 500, 502, 503, offline errors must NEVER invalidate session!
+      // If refresh could not generate a new token, preserve the user's active session without disruption
       return null;
     } catch (err) {
-      console.warn("[Auth] Silent refresh network notice (preserving session):", err);
+      console.log("[Auth] Silent refresh network notice (session preserved):", err);
       return null;
     } finally {
       activeRefreshPromise = null;
@@ -190,32 +178,35 @@ async function safeClientFetch(
     try {
       const res = await fetch(url, mergedOptions);
 
+      // Check if server returned a refreshed access token in the response headers
+      if (res && res.headers) {
+        const newServerToken = res.headers.get("x-new-access-token");
+        if (newServerToken && newServerToken !== activeToken) {
+          setInMemoryAuth(newServerToken);
+          try {
+            const saved = localStorage.getItem("oblivion_saved_user");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              const updated = { ...parsed, accessToken: newServerToken };
+              localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
+            }
+          } catch {}
+          if (globalTokenUpdateHandler) {
+            globalTokenUpdateHandler(newServerToken);
+          }
+        }
+      }
+
       // Only 401 Unauthorized or 403 Forbidden trigger auth consideration
       if (res && (res.status === 401 || res.status === 403)) {
         // If authentication is in progress, do not trigger false auth expiry popups
         if (isAuthenticatingGlobal) {
-          console.log(`[Auth Interceptor] 401 on ${url.split("?")[0]} while authentication is in progress; suppressing false logout.`);
           return res;
         }
 
-        // If no user session exists (e.g. guest query), do not trigger auth expiry
-        const hasSession = Boolean(getInMemoryToken() || localStorage.getItem("oblivion_saved_user"));
-        if (!hasSession) {
-          return res;
-        }
-
-        // If the refresh or logout endpoint itself fails with 401/403:
-        if (url.includes("/api/auth/refresh") || url.includes("/api/auth/logout")) {
-          if (globalAuthExpiryHandler && !isAuthenticatingGlobal) {
-            globalAuthExpiryHandler();
-          }
-          return res;
-        }
-
-        // For other endpoints: attempt silent background token refresh once before failing
-        if (!didAttemptRefresh) {
+        // For endpoints: attempt silent background token refresh once before returning
+        if (!didAttemptRefresh && !url.includes("/api/auth/refresh") && !url.includes("/api/auth/logout")) {
           didAttemptRefresh = true;
-          console.log(`[Auth Interceptor] 401 on ${url.split("?")[0]}. Attempting silent token refresh...`);
           const newToken = await performSilentRefresh();
           if (newToken) {
             // Clone and update headers with the fresh token
@@ -236,6 +227,7 @@ async function safeClientFetch(
       }
     }
   }
+
   console.warn(`[Network Notice] Fetch to ${url.split("?")[0]} deferred:`, lastError?.message || lastError);
   return null;
 }
@@ -896,21 +888,7 @@ export default function App() {
     };
 
     globalAuthExpiryHandler = () => {
-      if (isAuthenticatingGlobal) {
-        console.log("[Auth Interceptor] Expiry handler called while authenticating; ignoring.");
-        return;
-      }
-      console.warn("[Auth Interceptor] Active session invalidated. Clearing phantom auth state.");
-      setInMemoryAuth(null, null);
-      setUser(null);
-      localStorage.removeItem("oblivion_saved_user");
-      localStorage.removeItem("oblivion_saved_playlists");
-      localStorage.removeItem("oblivion_playlist_sync_time");
-      localStorage.removeItem("oblivion_selected_playlist");
-      setPlaylists([]);
-      setSelectedPlaylist(null);
-      showToast("Google session expired. Please sign in again.");
-      setIsAuthModalOpen(true);
+      console.log("[Auth Interceptor] YouTube token notice received. Preserving user session and library.");
     };
 
     return () => {

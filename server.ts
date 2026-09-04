@@ -5260,16 +5260,15 @@ app.post("/api/auth/refresh", async (req, res) => {
       });
     }
 
-    // If no token was found or refresh failed
-    return res.status(401).json({
+    // If no new token was produced, return soft status instead of 401 to prevent false signout loops
+    return res.json({
       success: false,
-      error: "REFRESH_FAILED",
-      message: "Session could not be refreshed. Please sign in again.",
+      error: "REFRESH_UNAVAILABLE",
+      message: "Session token is unchanged or offline refresh token unavailable.",
     });
   } catch (err: any) {
     console.error("Auth refresh endpoint error:", err);
-    // Return 500 for server/network errors to prevent client from interpreting as 401/403 auth revocation
-    return res.status(500).json({
+    return res.json({
       success: false,
       error: "SERVER_ERROR",
       message: err?.message || "Failed to process token refresh",
