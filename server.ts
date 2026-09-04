@@ -18,16 +18,19 @@ if (typeof (dns as any).setDefaultResultOrder === "function") {
 const app = express();
 const PORT = 3000;
 
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cookieParser());
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "oblivion_super_secret_music_session_2026",
-    resave: false,
-    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET || "oblivion-ytmusic-secret-key-2026",
+    resave: true,
+    saveUninitialized: true,
     cookie: {
-      secure: false,
+      secure: "auto",
+      httpOnly: true,
+      sameSite: "none",
       maxAge: 30 * 24 * 60 * 60 * 1000,
     },
   })
@@ -211,24 +214,6 @@ app.use((req, res, next) => {
 app.get(["/api", "/api/"], (req, res) => {
   res.json({ status: "ok", service: "Oblivion YouTube Music API" });
 });
-
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-app.use(cookieParser());
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "oblivion-ytmusic-secret-key-2026",
-    resave: true,
-    saveUninitialized: true,
-    cookie: {
-      secure: "auto",
-      httpOnly: false,
-      sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    },
-  })
-);
 
 declare module "express-session" {
   interface SessionData {
