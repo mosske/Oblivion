@@ -45,7 +45,6 @@ interface PlaylistDetailViewProps {
   onUpdateCover?: (coverUrl: string, isCustom: boolean) => void;
   onReorderTracks?: (newTracks: Track[]) => void;
   onRemoveTrack?: (trackId: string) => void;
-  onSyncToYouTube?: (tracks: Track[]) => Promise<any>;
   onAddToQueue?: (track: Track) => void;
   onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
   onOpenAddToPlaylistModal?: (track: Track) => void;
@@ -57,8 +56,6 @@ interface PlaylistDetailViewProps {
   onToggleRepeat?: () => void;
   isShuffle?: boolean;
   onToggleShuffle?: () => void;
-  isSyncingLive?: boolean;
-  onSyncLive?: () => void;
 }
 
 export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
@@ -71,7 +68,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   onUpdateCover,
   onReorderTracks,
   onRemoveTrack,
-  onSyncToYouTube,
   onAddToQueue,
   onAddTrackToPlaylist,
   onOpenAddToPlaylistModal,
@@ -83,8 +79,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   onToggleRepeat,
   isShuffle = false,
   onToggleShuffle,
-  isSyncingLive = false,
-  onSyncLive,
 }) => {
   if (!item) {
     return (
@@ -101,12 +95,9 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   }
 
   const [tracks, setTracks] = useState<Track[]>(Array.isArray(item.tracks) ? item.tracks.filter(Boolean) : []);
-  const [isInternalSyncing, setIsInternalSyncing] = useState<boolean>(false);
   const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
 
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveSuccessBanner, setSaveSuccessBanner] = useState<boolean>(false);
   const [openPlaylistDropdownId, setOpenPlaylistDropdownId] = useState<string | null>(null);
   const [isCustomCoverModalOpen, setIsCustomCoverModalOpen] = useState<boolean>(false);
   const [isLoadingTracks, setIsLoadingTracks] = useState<boolean>(!item.tracks || item.tracks.length === 0);
@@ -130,12 +121,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     }
   }, [item.tracks]);
 
-  // Execute sync check with YouTube Music on open or when triggered
-  const executeSyncCheck = async () => {
-    if (onSyncLive) {
-      onSyncLive();
-    }
-    setIsInternalSyncing(true);
+  // Execute silent background track fetch on open
+  const executeSilentFetch = async () => {
     try {
       let activeToken = "";
       try {
@@ -186,16 +173,15 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       }
       setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {
-      console.warn("Sync with YouTube Music failed:", err);
+      console.warn("Background tracks fetch warning:", err);
     } finally {
-      setIsInternalSyncing(false);
       setIsLoadingTracks(false);
     }
   };
 
-  // Trigger sync check immediately whenever this playlist is opened
+  // Trigger silent track fetch immediately in background whenever this playlist is opened
   useEffect(() => {
-    executeSyncCheck();
+    executeSilentFetch();
   }, [item.id]);
 
   const safeTracks = React.useMemo(() => (Array.isArray(tracks) ? tracks.filter(Boolean) : []), [tracks]);
@@ -281,26 +267,13 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     }
   };
 
-  // Save / Commit changes to YouTube Music backend
-  const handleSaveToYouTube = async () => {
-    if (isAlbum || !onSyncToYouTube) return;
-    setIsSaving(true);
-    try {
-      await onSyncToYouTube(tracks);
-      setSaveSuccessBanner(true);
-      setTimeout(() => setSaveSuccessBanner(false), 3500);
-    } catch (err) {
-      console.error("Save to YouTube failed:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // When Done Reordering is clicked, exit reorder mode and sync new order to YouTube
-  const handleToggleReorderMode = async () => {
+  // When Done Reordering is clicked, exit reorder mode and save new track order locally
+  const handleToggleReorderMode = () => {
     if (isReorderMode) {
       setIsReorderMode(false);
-      await handleSaveToYouTube();
+      if (!isAlbum && onReorderTracks) {
+        onReorderTracks(tracks);
+      }
     } else {
       setIsReorderMode(true);
     }
@@ -446,57 +419,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           </button>
 
           <div className="flex items-center gap-2">
-            {saveSuccessBanner && (
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-semibold animate-fade-in">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Saved & Synced to YouTube Music!</span>
-              </div>
-            )}
-
-            {/* Live Sync Check Button */}
-            <button
-              onClick={executeSyncCheck}
-              disabled={isInternalSyncing || isSyncingLive}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95`}
-              title="Sync with YouTube Music to fetch latest songs"
-            >
-              <RefreshCw
-                className={`w-3.5 h-3.5 ${
-                  isInternalSyncing || isSyncingLive ? "animate-spin text-[#c89b3c]" : "text-[#c89b3c]"
-                }`}
-              />
-              <span>{isInternalSyncing || isSyncingLive ? "Syncing..." : "Sync with YouTube"}</span>
-            </button>
-
-            {!isAlbum && (
-              <button
-                onClick={handleSaveToYouTube}
-                disabled={isSaving}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-semibold shadow-md transition-all active:scale-95`}
-                title="Save and commit all changes to YouTube Music"
-              >
-                <Save className={`w-3.5 h-3.5 ${isSaving ? "animate-spin" : ""}`} />
-                <span>{isSaving ? "Saving..." : "Save to YouTube"}</span>
-              </button>
-            )}
-
             {!isAlbum && (
               <button
                 onClick={handleToggleReorderMode}
-                disabled={isSaving}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all active:scale-95 shadow-sm ${
                   isReorderMode
                     ? "bg-[#c89b3c] text-white border-[#c89b3c] shadow-lg ring-2 ring-[#c89b3c]/40 font-bold"
                     : `${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle}`
                 }`}
-                title={isReorderMode ? "Finish reordering and save to YouTube" : "Reorder songs in this playlist"}
+                title={isReorderMode ? "Done reordering tracks" : "Reorder songs in this playlist"}
               >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Syncing...</span>
-                  </>
-                ) : isReorderMode ? (
+                {isReorderMode ? (
                   <>
                     <Check className="w-3.5 h-3.5" />
                     <span>Done Reordering</span>

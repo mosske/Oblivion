@@ -5226,6 +5226,57 @@ app.get("/api/auth/me", async (req, res) => {
   });
 });
 
+app.post("/api/auth/refresh", async (req, res) => {
+  try {
+    const hint =
+      req.body?.token ||
+      req.body?.accessToken ||
+      req.headers.authorization?.replace(/^Bearer\s+/, "") ||
+      req.session?.tokens?.access_token;
+
+    const newToken = await refreshAccessTokenDirectly(hint);
+    if (newToken) {
+      if (!req.session.tokens) req.session.tokens = { access_token: newToken };
+      req.session.tokens.access_token = newToken;
+      req.session.tokens.expires_at = Date.now() + 3600 * 1000;
+
+      const allTokens = readStoredTokens();
+      const entries = Object.values(allTokens) as any[];
+      const match = entries.find(
+        (e: any) => e.access_token === newToken || (Array.isArray(e.previous_tokens) && e.previous_tokens.includes(newToken))
+      );
+      const userObj = match?.user || req.session?.user || (entries.length > 0 ? entries[entries.length - 1]?.user : null);
+
+      if (userObj) {
+        req.session.user = { ...userObj, accessToken: newToken };
+      }
+
+      res.setHeader("X-New-Access-Token", newToken);
+      return res.json({
+        success: true,
+        accessToken: newToken,
+        user: req.session.user || userObj,
+        expiresIn: 3600,
+      });
+    }
+
+    // If no token was found or refresh failed
+    return res.status(401).json({
+      success: false,
+      error: "REFRESH_FAILED",
+      message: "Session could not be refreshed. Please sign in again.",
+    });
+  } catch (err: any) {
+    console.error("Auth refresh endpoint error:", err);
+    // Return 500 for server/network errors to prevent client from interpreting as 401/403 auth revocation
+    return res.status(500).json({
+      success: false,
+      error: "SERVER_ERROR",
+      message: err?.message || "Failed to process token refresh",
+    });
+  }
+});
+
 app.post("/api/auth/logout", (req, res) => {
   try {
     writeStoredTokens({});

@@ -32,8 +32,6 @@ interface LibraryViewProps {
   likedTrackIds: string[];
   currentTrack?: Track | null;
   designConfig?: FullAppDesignConfig;
-  isSyncingYouTube?: boolean;
-  onSyncYouTube?: () => void;
   user?: User | null;
   onOpenAuthModal?: () => void;
   selectedPlaylist?: any;
@@ -57,8 +55,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   likedTrackIds,
   currentTrack,
   designConfig = FULL_APP_DESIGNS["designer"],
-  isSyncingYouTube = false,
-  onSyncYouTube,
   user,
   onOpenAuthModal,
 }) => {
@@ -161,13 +157,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
   const isUserAuthenticated = Boolean(user && user.isLoggedIn);
 
-  // Auto-trigger sync check on mount if list is currently empty and user is authenticated
-  useEffect(() => {
-    if (cleanPlaylists.length === 0 && onSyncYouTube && isUserAuthenticated) {
-      onSyncYouTube();
-    }
-  }, [isUserAuthenticated]);
-
   const hiddenCount = hiddenPlaylistIds.filter((id) => cleanPlaylists.some((pl) => pl.id === id)).length;
 
   // When signed out, never show any playlists; show the Sign-In prompt
@@ -269,17 +258,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 )}
               </button>
 
-              {onSyncYouTube && (
-                <button
-                  onClick={onSyncYouTube}
-                  disabled={isSyncingYouTube}
-                  className={`px-3.5 py-2.5 ${designConfig.btnSecondary} rounded-xl transition-all font-semibold flex items-center gap-2 text-xs shadow-sm hover:scale-[1.02] active:scale-95 disabled:opacity-50`}
-                  title="Sync playlists from YouTube Music"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingYouTube ? "animate-spin text-[#c89b3c]" : ""}`} />
-                  <span>{isSyncingYouTube ? "Syncing..." : "Sync YouTube"}</span>
-                </button>
-              )}
               <button
                 onClick={onCreatePlaylist}
                 className={`px-4 py-2.5 ${designConfig.btnPrimary} rounded-xl transition-all font-bold flex items-center gap-2 text-xs shadow-lg active:scale-95`}
@@ -336,7 +314,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             <div className={`p-12 text-center ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} flex flex-col items-center justify-center`}>
               <Music className={`w-12 h-12 mx-auto mb-3 ${designConfig.textMuted}`} />
               <p className={`text-sm font-semibold ${designConfig.textPrimary} mb-4`}>
-                {showHidden ? "No hidden playlists found." : "No playlists yet. Create one or sync from YouTube!"}
+                {showHidden ? "No hidden playlists found." : "No playlists yet. Create a new playlist to get started!"}
               </p>
               {showHidden ? (
                 <button
@@ -347,16 +325,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 </button>
               ) : (
                 <div className="flex flex-wrap items-center justify-center gap-3">
-                  {onSyncYouTube && (
-                    <button
-                      onClick={onSyncYouTube}
-                      disabled={isSyncingYouTube}
-                      className={`px-4 py-2 text-xs font-bold ${designConfig.btnPrimary} rounded-xl shadow-md flex items-center gap-2`}
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncingYouTube ? "animate-spin" : ""}`} />
-                      <span>{isSyncingYouTube ? "Syncing from YouTube..." : "Sync from YouTube"}</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={onCreatePlaylist}
+                    className={`px-4 py-2 text-xs font-bold ${designConfig.btnPrimary} rounded-xl shadow-md flex items-center gap-2`}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Playlist</span>
+                  </button>
                   {!user?.isLoggedIn && onOpenAuthModal && (
                     <button
                       onClick={onOpenAuthModal}

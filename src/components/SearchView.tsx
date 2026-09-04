@@ -4,6 +4,7 @@ import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { IdentifyMusicModal } from "./IdentifyMusicModal";
+import { MarqueeText } from "./MarqueeText";
 
 interface SearchViewProps {
   initialQuery?: string;
@@ -93,12 +94,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Save query to localStorage history (max 10 items)
+  // Save query to localStorage history (max 10 items) ONLY on explicit user submission or selection
   const saveQueryToHistory = (q: string) => {
     const trimmed = q.trim();
-    if (!trimmed || trimmed.length < 2) return;
+    if (!trimmed) return;
     try {
-      const current = (() => {
+      const current: string[] = (() => {
         try {
           const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
           return raw ? JSON.parse(raw) : [];
@@ -116,8 +117,17 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
   const handleRemoveHistoryItem = (e: React.MouseEvent, itemToRemove: string) => {
     e.stopPropagation();
+    e.preventDefault();
     try {
-      const updated = searchHistory.filter((item) => item !== itemToRemove);
+      const current: string[] = (() => {
+        try {
+          const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      })();
+      const updated = current.filter((item) => item !== itemToRemove);
       localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
       setSearchHistory(updated);
     } catch (err) {
@@ -127,6 +137,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
   const handleClearAllHistory = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     try {
       localStorage.removeItem(SEARCH_HISTORY_KEY);
       setSearchHistory([]);
@@ -141,6 +152,13 @@ export const SearchView: React.FC<SearchViewProps> = ({
     saveQueryToHistory(selectedText);
     setShowHistory(false);
     searchInputRef.current?.focus();
+  };
+
+  const handleExplicitSubmit = () => {
+    if (query.trim()) {
+      saveQueryToHistory(query.trim());
+      setShowHistory(false);
+    }
   };
 
   // Clear search input, results, and refocus input
@@ -212,7 +230,6 @@ export const SearchView: React.FC<SearchViewProps> = ({
             setResults(data.results);
             onResultsChange?.(data.results);
             lastFetchedQueryRef.current = `${trimmed}_${filter}`;
-            saveQueryToHistory(trimmed);
           }
         }
       } catch (err: any) {
@@ -257,9 +274,18 @@ export const SearchView: React.FC<SearchViewProps> = ({
           </button>
         </div>
 
-        {/* Search Input Box with Clear Button & History Dropdown */}
+        {/* Search Input Box with Search Button, Clear Button & History Dropdown */}
         <div ref={searchContainerRef} className="relative max-w-2xl">
-          <Search className={`absolute left-4 top-3.5 w-5 h-5 ${designConfig.textMuted}`} />
+          <button
+            type="button"
+            id="search-submit-icon-btn"
+            onClick={handleExplicitSubmit}
+            className={`absolute left-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors z-10`}
+            title="Search"
+            aria-label="Submit search"
+          >
+            <Search className="w-5 h-5" />
+          </button>
           <input
             ref={searchInputRef}
             type="text"
@@ -272,8 +298,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
             onFocus={() => setShowHistory(true)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && query.trim()) {
-                saveQueryToHistory(query);
-                setShowHistory(false);
+                handleExplicitSubmit();
               } else if (e.key === "Escape") {
                 setShowHistory(false);
               }
@@ -320,7 +345,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 {searchHistory.map((item, idx) => (
                   <div
                     key={`hist_${item}_${idx}`}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer ${designConfig.textPrimary} hover:${designConfig.pillBg} transition-colors group`}
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer ${designConfig.textPrimary} hover:bg-black/5 transition-colors group`}
                     onClick={() => handleSelectHistoryItem(item)}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -329,9 +354,11 @@ export const SearchView: React.FC<SearchViewProps> = ({
                     </div>
                     <button
                       type="button"
+                      id={`delete-search-history-item-${idx}`}
                       onClick={(e) => handleRemoveHistoryItem(e, item)}
-                      className={`p-1 rounded-lg ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 opacity-0 group-hover:opacity-100 transition-all shrink-0`}
-                      title="Remove from history"
+                      className={`p-1.5 rounded-lg ${designConfig.textMuted} hover:${designConfig.accentText} hover:bg-black/10 transition-colors shrink-0 ml-2`}
+                      title={`Remove "${item}" from history`}
+                      aria-label={`Remove "${item}" from history`}
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -348,10 +375,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
             <button
               key={f}
               onClick={() => handleFilterSelect(f)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all active:scale-95 ${
                 filter === f
-                  ? designConfig.pillActive
-                  : designConfig.pillBg
+                  ? `${designConfig.pillActive} shadow-md`
+                  : `${designConfig.pillBg} hover:opacity-90`
               }`}
             >
               {f === "all" ? "All Results" : f + "s"}
@@ -508,28 +535,38 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h4
-                        onClick={handleItemClick}
-                        className={`text-sm font-bold truncate cursor-pointer transition-colors ${
-                          isCurrent ? designConfig.accentText : `${designConfig.textPrimary} group-hover:${designConfig.accentText}`
-                        }`}
-                        title={item.title}
-                      >
-                        {cleanTrackTitle(item.title, item.artist)}
-                      </h4>
+                      <div className="min-w-0 flex-1 cursor-pointer" onClick={handleItemClick}>
+                        <MarqueeText
+                          text={cleanTrackTitle(item.title, item.artist)}
+                          className={`text-sm font-bold ${
+                            isCurrent ? designConfig.accentText : `${designConfig.textPrimary} group-hover:${designConfig.accentText}`
+                          } transition-colors`}
+                          containerClassName="w-full"
+                          speed={30}
+                        />
+                      </div>
                       {item.type && item.type !== "track" && (
-                        <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${designConfig.pillBg}`}>
+                        <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${designConfig.pillBg} shrink-0`}>
                           {item.type}
                         </span>
                       )}
                       {isCurrent && isPlaying && (
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${designConfig.pillBg} ${designConfig.accentText} border ${designConfig.accentBorder} text-[10px] font-mono font-bold shadow-sm`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${designConfig.pillBg} ${designConfig.accentText} border ${designConfig.accentBorder} text-[10px] font-mono font-bold shadow-sm shrink-0`}>
                           <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} animate-ping`} />
                           Playing
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs ${designConfig.textMuted} truncate`}>{item.artist}</p>
+                    {item.artist && (
+                      <div className="min-w-0 flex-1 mt-0.5">
+                        <MarqueeText
+                          text={item.artist}
+                          className={`text-xs ${designConfig.textMuted}`}
+                          containerClassName="w-full"
+                          speed={26}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

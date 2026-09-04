@@ -10,7 +10,6 @@ import {
   DownloadCloud,
   LogOut,
   User as UserIcon,
-  RefreshCw,
   Plus,
   Sparkles,
 } from "lucide-react";
@@ -28,8 +27,6 @@ interface SidebarProps {
   playlists: Playlist[];
   onSelectPlaylist: (playlist: Playlist) => void;
   onCreatePlaylist: () => void;
-  isSyncingYouTube: boolean;
-  onSyncYouTube: () => void;
   activeTheme?: ThemePreset;
   designConfig?: FullAppDesignConfig;
   onInstallPwa?: () => void;
@@ -45,8 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   playlists,
   onSelectPlaylist,
   onCreatePlaylist,
-  isSyncingYouTube,
-  onSyncYouTube,
   designConfig = FULL_APP_DESIGNS["designer"],
   onInstallPwa,
   isInstalled,
@@ -172,23 +167,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
-            <div className={`flex items-center gap-2 pt-1 border-t ${designConfig.borderSubtle}`}>
-              <button
-                onClick={onSyncYouTube}
-                disabled={isSyncingYouTube}
-                className={`flex-1 text-xs py-1.5 px-2 ${designConfig.btnSecondary} rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50`}
-                title="Sync Playlists with YouTube"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingYouTube ? `animate-spin ${designConfig.accentText}` : ""}`} />
-                <span>{isSyncingYouTube ? "Syncing..." : "Sync YT"}</span>
-              </button>
-
+            <div className={`flex items-center justify-end pt-1 border-t ${designConfig.borderSubtle}`}>
               <button
                 onClick={onLogout}
-                className={`p-1.5 ${designConfig.btnSecondary} hover:bg-red-500/20 text-slate-400 hover:text-red-500 rounded-lg transition-colors`}
+                className={`w-full text-xs py-1.5 px-2.5 ${designConfig.btnSecondary} hover:bg-red-500/20 text-slate-400 hover:text-red-500 rounded-lg transition-colors flex items-center justify-center gap-1.5 font-medium`}
                 title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
               </button>
             </div>
           </div>

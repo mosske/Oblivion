@@ -44,10 +44,83 @@ export function isValidPlaylistId(id: string | undefined | null): boolean {
   return false;
 }
 
-// Global auth expiry handler callback registration
+// Global auth expiry and token update handler callback registrations
 let globalAuthExpiryHandler: (() => void) | null = null;
+let globalTokenUpdateHandler: ((newToken: string, userObj?: any) => void) | null = null;
+let activeRefreshPromise: Promise<string | null> | null = null;
 
-// Resilient client fetch helper with automatic retry and global auth interceptor
+// Silent background token refresh mechanism
+export async function performSilentRefresh(): Promise<string | null> {
+  if (activeRefreshPromise) {
+    return activeRefreshPromise;
+  }
+
+  activeRefreshPromise = (async () => {
+    try {
+      let activeToken = "";
+      try {
+        const savedUser = localStorage.getItem("oblivion_saved_user");
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          activeToken = parsed?.accessToken || "";
+        }
+      } catch {}
+
+      const res = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+        },
+        body: JSON.stringify({ token: activeToken }),
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data?.success && data?.accessToken) {
+          const newToken = data.accessToken;
+          try {
+            const savedUser = localStorage.getItem("oblivion_saved_user");
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser);
+              const updated = {
+                ...parsed,
+                ...(data.user || {}),
+                accessToken: newToken,
+                isLoggedIn: true,
+                tokenRefreshedAt: Date.now(),
+              };
+              localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
+            }
+          } catch {}
+
+          if (globalTokenUpdateHandler) {
+            globalTokenUpdateHandler(newToken, data.user);
+          }
+          return newToken;
+        }
+      } else if (res.status === 401 || res.status === 403) {
+        console.warn("[Auth] Refresh token revoked or expired (401/403). Invaliding session.");
+        if (globalAuthExpiryHandler) {
+          globalAuthExpiryHandler();
+        }
+        return null;
+      }
+      // Differentiate auth errors: 500, 502, 503, offline errors must NEVER invalidate session!
+      return null;
+    } catch (err) {
+      console.warn("[Auth] Silent refresh network notice (preserving session):", err);
+      return null;
+    } finally {
+      activeRefreshPromise = null;
+    }
+  })();
+
+  return activeRefreshPromise;
+}
+
+// Resilient client fetch helper with automatic retry, silent refresh, and selective auth interceptor
 async function safeClientFetch(
   url: string,
   options: RequestInit = {},
@@ -55,21 +128,34 @@ async function safeClientFetch(
   backoffMs = 800
 ): Promise<Response | null> {
   let lastError: any = null;
+  let didAttemptRefresh = false;
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, options);
 
-      // Global API interceptor: detect 401 Unauthorized or 403 Forbidden
+      // Only 401 Unauthorized or 403 Forbidden trigger auth consideration
       if (res && (res.status === 401 || res.status === 403)) {
-        // Intercept playlist or user endpoint authorization failures
-        if (
-          url.includes("/api/youtube/playlists") ||
-          url.includes("/api/auth/me") ||
-          url.includes("/api/user")
-        ) {
-          console.warn(`[Auth Interceptor] Intercepted status ${res.status} on ${url.split("?")[0]}. Triggering session expiry.`);
+        // If the refresh or logout endpoint itself fails with 401/403:
+        if (url.includes("/api/auth/refresh") || url.includes("/api/auth/logout")) {
           if (globalAuthExpiryHandler) {
             globalAuthExpiryHandler();
+          }
+          return res;
+        }
+
+        // For other endpoints: attempt silent background token refresh once before failing
+        if (!didAttemptRefresh) {
+          didAttemptRefresh = true;
+          console.log(`[Auth Interceptor] 401 on ${url.split("?")[0]}. Attempting silent token refresh...`);
+          const newToken = await performSilentRefresh();
+          if (newToken) {
+            // Clone and update headers with the fresh token
+            const updatedHeaders = new Headers(options.headers || {});
+            updatedHeaders.set("Authorization", `Bearer ${newToken}`);
+            updatedHeaders.set("X-Access-Token", newToken);
+            const retryRes = await fetch(url, { ...options, headers: updatedHeaders });
+            return retryRes;
           }
         }
       }
@@ -245,8 +331,7 @@ export default function App() {
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState<boolean>(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [trackForAddToPlaylist, setTrackForAddToPlaylist] = useState<Track | null>(null);
-  const [isSyncingYouTube, setIsSyncingYouTube] = useState<boolean>(false);
-  const [isSyncingPlaylist, setIsSyncingPlaylist] = useState<boolean>(false);
+  const [isAuthInitializing, setIsAuthInitializing] = useState<boolean>(true);
   const [oauthBannerError, setOauthBannerError] = useState<string | null>(null);
 
   // Persistent search state (query, results, and active filter)
@@ -551,65 +636,109 @@ export default function App() {
 
   // Check auth status on mount and sync session
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const errParam = urlParams.get("oauth_error");
-    const successParam = urlParams.get("oauth_success");
-    const userParam = urlParams.get("user");
+    let isMounted = true;
 
-    if (errParam) {
-      setOauthBannerError(errParam);
-      setActiveTab("settings");
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (successParam || userParam) {
-      if (userParam) {
-        try {
-          const parsedUser = JSON.parse(decodeURIComponent(userParam));
-          if (parsedUser && (parsedUser.id || parsedUser.email)) {
-            const fullUser = { ...parsedUser, isLoggedIn: true };
-            setUser(fullUser);
-            localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+    const initAuth = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const errParam = urlParams.get("oauth_error");
+      const successParam = urlParams.get("oauth_success");
+      const userParam = urlParams.get("user");
+
+      if (errParam) {
+        setOauthBannerError(errParam);
+        setActiveTab("settings");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (successParam || userParam) {
+        if (userParam) {
+          try {
+            const parsedUser = JSON.parse(decodeURIComponent(userParam));
+            if (parsedUser && (parsedUser.id || parsedUser.email)) {
+              const fullUser = { ...parsedUser, isLoggedIn: true };
+              setUser(fullUser);
+              localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+            }
+          } catch (e) {
+            console.error("Failed to parse user param:", e);
           }
-        } catch (e) {
-          console.error("Failed to parse user param:", e);
         }
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
 
-    const headers: Record<string, string> = {};
-    let localToken: string | undefined = undefined;
-    try {
-      const savedUser = localStorage.getItem("oblivion_saved_user");
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed?.accessToken) localToken = parsed.accessToken;
-      }
-    } catch {}
+      let localToken: string | undefined = undefined;
+      try {
+        const savedUser = localStorage.getItem("oblivion_saved_user");
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed?.accessToken) localToken = parsed.accessToken;
+        }
+      } catch {}
 
-    if (localToken) {
-      headers["Authorization"] = `Bearer ${localToken}`;
-      headers["X-Access-Token"] = localToken;
-    }
+      try {
+        const headers: Record<string, string> = {};
+        if (localToken) {
+          headers["Authorization"] = `Bearer ${localToken}`;
+          headers["X-Access-Token"] = localToken;
+        }
 
-    safeClientFetch("/api/auth/me", { headers, credentials: "include" }, 1, 500)
-      .then((res) => (res ? res.json() : null))
-      .then((data) => {
-        if (data && data.isLoggedIn && data.user) {
-          const fullUser = { ...data.user, isLoggedIn: true };
-          setUser(fullUser);
-          localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
-          fetchPlaylists(false, fullUser.accessToken, false);
+        const res = await safeClientFetch("/api/auth/me", { headers, credentials: "include" }, 1, 500);
+        if (res && res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data && data.isLoggedIn && data.user) {
+            const fullUser = { ...data.user, isLoggedIn: true };
+            if (isMounted) {
+              setUser(fullUser);
+              localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
+            }
+            fetchPlaylists(false, fullUser.accessToken, false);
+          } else if (localToken) {
+            fetchPlaylists(false, localToken, false);
+          }
         } else if (localToken) {
+          // If server or network returned non-200, preserve user from localStorage and load cached playlists
           fetchPlaylists(false, localToken, false);
         }
-      })
-      .catch((err) => {
-        console.warn("Auth check notice:", err?.message || err);
+      } catch (err) {
+        console.warn("Auth check notice (preserving local session):", err);
         if (localToken) {
           fetchPlaylists(false, localToken, false);
         }
-      });
+      } finally {
+        if (isMounted) {
+          setIsAuthInitializing(false);
+        }
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  // Proactive background silent refresh before token expiry (runs every 35 minutes and on window focus)
+  useEffect(() => {
+    if (!user?.isLoggedIn) return;
+
+    const intervalId = setInterval(() => {
+      performSilentRefresh();
+    }, 35 * 60 * 1000);
+
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        performSilentRefresh();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [user?.isLoggedIn]);
 
   // Automatic live sync whenever the user navigates to Library (just like Home and Explore feeds)
   useEffect(() => {
@@ -647,12 +776,22 @@ export default function App() {
     localStorage.removeItem("oblivion_selected_playlist");
     setPlaylists([]);
     setSelectedPlaylist(null);
-    setIsSyncingYouTube(false);
     showToast("Signed out successfully.");
   };
 
-  // Register global auth expiry interceptor to transition out of phantom sign-in state
+  // Register global auth handlers for token update and session invalidation
   useEffect(() => {
+    globalTokenUpdateHandler = (newToken: string, userObj?: any) => {
+      setUser((prev) => {
+        if (!prev) return prev;
+        const updated = { ...prev, ...(userObj || {}), accessToken: newToken, isLoggedIn: true };
+        try {
+          localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+    };
+
     globalAuthExpiryHandler = () => {
       console.warn("[Auth Interceptor] Active session invalidated. Clearing phantom auth state.");
       setUser(null);
@@ -662,12 +801,12 @@ export default function App() {
       localStorage.removeItem("oblivion_selected_playlist");
       setPlaylists([]);
       setSelectedPlaylist(null);
-      setIsSyncingYouTube(false);
       showToast("Google session expired. Please sign in again.");
       setIsAuthModalOpen(true);
     };
 
     return () => {
+      globalTokenUpdateHandler = null;
       globalAuthExpiryHandler = null;
     };
   }, []);
@@ -695,38 +834,7 @@ export default function App() {
     fetchPlaylists(false, activeToken, false);
   };
 
-  // Manual Sync handler: bypasses cooldown and forces cache-busting on artwork
-  const handleManualSyncYouTube = async () => {
-    let activeToken = user?.accessToken;
-    if (!activeToken) {
-      try {
-        const saved = localStorage.getItem("oblivion_saved_user");
-        if (saved) activeToken = JSON.parse(saved)?.accessToken;
-      } catch {}
-    }
-    if (!activeToken) {
-      showToast("Please sign in to sync your YouTube Music library.");
-      setIsAuthModalOpen(true);
-      return;
-    }
-    showToast("Syncing YouTube Music playlists & artwork...");
-    localStorage.setItem("oblivion_playlist_sync_time", String(Date.now()));
-    const result = await fetchPlaylists(true, activeToken, true);
-    if (result?.authExpired) {
-      showToast("Google session expired. Please sign in again.");
-      setIsAuthModalOpen(true);
-    } else if (result?.success) {
-      if (result.count > 0) {
-        showToast(`YouTube Music library synchronized (${result.count} playlists).`);
-      } else {
-        showToast("Synchronized with YouTube Music (0 playlists found).");
-      }
-    } else {
-      showToast("Library synchronized.");
-    }
-  };
-
-  // Fetch Playlists with immediate tracks count & custom artwork resolution
+  // Fetch Playlists with immediate tracks count, silent refresh recovery, & custom artwork resolution
   const fetchPlaylists = async (
     forceRefresh: boolean = false,
     overrideToken?: string,
@@ -749,10 +857,6 @@ export default function App() {
       // If user has never logged in and no token exists, return cleanly without clearing existing playlists
       if (!activeToken && !user?.isLoggedIn) {
         return { success: false, count: playlists.length };
-      }
-
-      if (isManualSync || playlists.length === 0) {
-        setIsSyncingYouTube(true);
       }
 
       const headers: Record<string, string> = {};
@@ -781,27 +885,23 @@ export default function App() {
       }
 
       if (res.status === 401 || res.status === 403) {
-        console.warn(`YouTube API returned ${res.status} Unauthorized.`);
-        setIsSyncingYouTube(false);
-        setUser(null);
-        localStorage.removeItem("oblivion_saved_user");
-        localStorage.removeItem("oblivion_saved_playlists");
-        localStorage.removeItem("oblivion_playlist_sync_time");
-        setPlaylists([]);
-        return { success: false, count: 0, authExpired: true };
+        console.warn(`YouTube API returned ${res.status} Unauthorized. Attempting silent refresh...`);
+        const refreshedToken = await performSilentRefresh();
+        if (refreshedToken) {
+          return fetchPlaylists(forceRefresh, refreshedToken, false);
+        }
+        return { success: false, count: playlists.length, authExpired: true };
       }
 
       const data = await res.json().catch(() => ({ playlists: [] }));
 
       if (data.authExpired || data.error === "AUTH_EXPIRED") {
-        console.warn("YouTube API returned AUTH_EXPIRED");
-        setIsSyncingYouTube(false);
-        setUser(null);
-        localStorage.removeItem("oblivion_saved_user");
-        localStorage.removeItem("oblivion_saved_playlists");
-        localStorage.removeItem("oblivion_playlist_sync_time");
-        setPlaylists([]);
-        return { success: false, count: 0, authExpired: true };
+        console.warn("YouTube API returned AUTH_EXPIRED. Attempting silent refresh...");
+        const refreshedToken = await performSilentRefresh();
+        if (refreshedToken) {
+          return fetchPlaylists(forceRefresh, refreshedToken, false);
+        }
+        return { success: false, count: playlists.length, authExpired: true };
       }
 
       if (data.newAccessToken) {
@@ -914,14 +1014,23 @@ export default function App() {
           const rawPlPrivacy = (pl.privacyStatus || pl.privacy || pl.status?.privacyStatus || "PUBLIC").toUpperCase();
           const normalizedPlPrivacy = rawPlPrivacy === "PRIVATE" ? "PRIVATE" : rawPlPrivacy === "UNLISTED" ? "UNLISTED" : "PUBLIC";
 
+          // Match with existing playlist to preserve full tracks if already fetched and preserve custom cover
+          const existingMatch = playlists.find(
+            (p) => p.id === plId || (p.id && p.id.replace(/^VL/, "") === plId.replace(/^VL/, ""))
+          );
+          const finalTracks = sanitizedTracks.length > 0 ? sanitizedTracks : (existingMatch?.tracks || []);
+          const resolvedCustom = existingMatch?.customCoverUrl || customResolved;
+          const finalIsCustom = Boolean(resolvedCustom || isAuthenticCustom || existingMatch?.isCustomCover);
+          const finalPrimaryCover = resolvedCustom || primaryCover;
+
           sanitizedPlaylists.push({
             ...pl,
             id: plId,
-            coverUrl: primaryCover,
-            customCoverUrl: customResolved || (isAuthenticCustom ? primaryCover : undefined),
-            isCustomCover: isAuthenticCustom,
-            tracks: sanitizedTracks,
-            tracksCount: pl.tracksCount || sanitizedTracks.length || 0,
+            coverUrl: finalPrimaryCover,
+            customCoverUrl: finalIsCustom ? (resolvedCustom || finalPrimaryCover) : undefined,
+            isCustomCover: finalIsCustom,
+            tracks: finalTracks,
+            tracksCount: pl.tracksCount || finalTracks.length || 0,
             thumbnails: pl.thumbnails,
             privacy: normalizedPlPrivacy,
             privacyStatus: normalizedPlPrivacy,
@@ -989,15 +1098,12 @@ export default function App() {
         }
       } catch {}
       return { success: false, count: playlists.length };
-    } finally {
-      setIsSyncingYouTube(false);
     }
   };
 
   // Fetch playlist or album details & tracks from YouTube Music with live sync check
   const fetchPlaylistDetails = async (playlistId: string, title = "", artist = "", forceRefresh = true) => {
     if (!playlistId) return;
-    setIsSyncingPlaylist(true);
     const cleanId = playlistId.replace(/^VL/, "");
     try {
       let activeToken = user?.accessToken;
@@ -1029,7 +1135,6 @@ export default function App() {
         800
       );
       if (!res) {
-        setIsSyncingPlaylist(false);
         return;
       }
       const data = await res.json().catch(() => ({ tracks: [] }));
@@ -1151,8 +1256,6 @@ export default function App() {
       }
     } catch (err) {
       console.error("Fetch playlist details error:", err);
-    } finally {
-      setIsSyncingPlaylist(false);
     }
   };
 
@@ -1965,8 +2068,6 @@ export default function App() {
           setEditingPlaylist(null);
           setIsPlaylistModalOpen(true);
         }}
-        isSyncingYouTube={isSyncingYouTube}
-        onSyncYouTube={() => fetchPlaylists(true, user?.accessToken)}
         activeTheme={settings.themePreset}
         designConfig={activeFullDesign}
         onInstallPwa={handleInstallPwa}
@@ -2168,15 +2269,6 @@ export default function App() {
             }
             onReorderTracks={(newTracks) => handleReorderPlaylistTracks(selectedPlaylist.id, newTracks)}
             onRemoveTrack={(trackId) => handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId)}
-            onSyncToYouTube={(updatedTracks) => handleSyncPlaylistTracks(selectedPlaylist.id, updatedTracks)}
-            isSyncingLive={isSyncingPlaylist}
-            onSyncLive={() =>
-              fetchPlaylistDetails(
-                selectedPlaylist.id,
-                selectedPlaylist.title,
-                (selectedPlaylist as any).artist || selectedPlaylist.description
-              )
-            }
             designConfig={activeFullDesign}
           />
         ) : (
@@ -2266,10 +2358,7 @@ export default function App() {
                 likedTrackIds={playerState.likedTrackIds}
                 currentTrack={playerState.currentTrack}
                 onAddTrackToPlaylist={handleAddTrackToPlaylist}
-                onSyncPlaylistTracks={handleSyncPlaylistTracks}
                 designConfig={activeFullDesign}
-                isSyncingYouTube={isSyncingYouTube}
-                onSyncYouTube={handleManualSyncYouTube}
                 user={user}
                 onOpenAuthModal={() => setIsAuthModalOpen(true)}
               />
