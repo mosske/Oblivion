@@ -16,9 +16,11 @@ import {
   parseLRC,
   parsePlainLyrics,
   createDualLyricLines,
+  LyricsSourceType,
 } from "../services/lyricsService";
 import { romanizeLyricLines } from "../utils/romanization";
 import { cleanTrackTitle } from "../utils/formatters";
+import { sanitizeLyricsQuery } from "../utils/lyricsSanitizer";
 import { MarqueeText } from "./MarqueeText";
 
 interface LyricsViewProps {
@@ -39,7 +41,8 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   // Lyrics state
   const [originalLines, setOriginalLines] = useState<LyricLine[]>([]);
   const [isSynced, setIsSynced] = useState<boolean>(true);
-  const [lyricsSource, setLyricsSource] = useState<"lrclib" | "youtube_music" | "server" | "none">("none");
+  const [lyricsSource, setLyricsSource] = useState<LyricsSourceType>("none");
+  const [lyricsProviderName, setLyricsProviderName] = useState<string | undefined>(undefined);
   const [lrcDuration, setLrcDuration] = useState<number | undefined>(undefined);
   const [offset, setOffset] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -56,7 +59,8 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   const isAutoScrollingRef = useRef<boolean>(false);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const cleanTitle = cleanTrackTitle(track.title, track.artist);
+  const sanitized = useMemo(() => sanitizeLyricsQuery(track.title, track.artist), [track.title, track.artist]);
+  const cleanTitle = sanitized.cleanTitle || cleanTrackTitle(track.title, track.artist);
   const videoId = track.youtubeVideoId || (track.id && !track.id.startsWith("local_") ? track.id.split("_")[0] : "");
 
   // Multi-Source Lyrics Fallback Pipeline
@@ -77,10 +81,12 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               setOriginalLines(parsed);
               setIsSynced(true);
               setLyricsSource("lrclib");
+              setLyricsProviderName("LRCLIB Synced");
             } else {
               setOriginalLines(parsePlainLyrics(raw));
               setIsSynced(false);
               setLyricsSource("lrclib");
+              setLyricsProviderName("LRCLIB Plain");
             }
             setLrcDuration(undefined);
             setLoading(false);
@@ -89,13 +95,14 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         }
 
         // 2. Query Multi-Source Lyrics Fallback Chain:
-        //    Step 1: LRCLIB (Synced LRC)
-        //    Step 2: YouTube Music Native Lyrics (/next -> /browse musicLyricsRenderer)
-        //    Step 3: LRCLIB Plain Text Fallback
+        //    Step 1: Native YouTube InnerTube Synced Captions & Lyrics
+        //    Step 2: LRCLIB Synced LRC / Plain Text
+        //    Step 3: Tertiary Public Lyrics (Lyrics.ovh / Genius)
         const result = await fetchLyricsMultiSource(track.title, track.artist, track.duration, videoId);
 
         if (!isCancelled) {
           setLyricsSource(result.source);
+          setLyricsProviderName(result.provider);
           setLrcDuration(result.lrcDuration);
           if (result.syncedLyrics && result.isSynced) {
             const parsed = parseLRC(result.syncedLyrics);
@@ -123,6 +130,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           setOriginalLines([]);
           setIsSynced(false);
           setLyricsSource("none");
+          setLyricsProviderName(undefined);
           setLrcDuration(undefined);
         }
       } finally {
@@ -296,7 +304,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   const badgeLabel = useMemo(() => {
     if (isSynced) {
       if (isCandy) return "🍫 Synced LRC";
-      return lyricsSource === "lrclib" ? "Synced (LRCLIB)" : "Synced";
+      if (lyricsSource === "youtube_innertube") return "Synced (YouTube Captions)";
+      if (lyricsSource === "lrclib") return "Synced (LRCLIB)";
+      return lyricsProviderName || "Synced";
     }
     if (isCandy) return "🍦 Plain Text";
     if (lyricsSource === "youtube_music") {
@@ -305,8 +315,14 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     if (lyricsSource === "lrclib") {
       return "Plain Text (LRCLIB)";
     }
-    return "Plain Text";
-  }, [isSynced, lyricsSource, isCandy]);
+    if (lyricsSource === "genius") {
+      return "Plain Text (Genius)";
+    }
+    if (lyricsSource === "lyrics_ovh") {
+      return "Plain Text (Lyrics.ovh)";
+    }
+    return lyricsProviderName || "Plain Text";
+  }, [isSynced, lyricsSource, lyricsProviderName, isCandy]);
 
   return (
     <div

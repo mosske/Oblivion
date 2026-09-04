@@ -1,11 +1,22 @@
-import { cleanTrackTitle } from "../utils/formatters";
+import { sanitizeLyricsQuery } from "../utils/lyricsSanitizer";
 import { LyricLine } from "../types";
+
+export type LyricsSourceType =
+  | "youtube_innertube"
+  | "lrclib"
+  | "youtube_music"
+  | "genius"
+  | "lyrics_ovh"
+  | "public_lyrics"
+  | "server"
+  | "none";
 
 export interface LyricsResult {
   syncedLyrics?: string;
   plainLyrics?: string;
   isSynced: boolean;
-  source: "lrclib" | "youtube_music" | "server" | "none";
+  source: LyricsSourceType;
+  provider?: string;
   trackName?: string;
   artistName?: string;
   lrcDuration?: number;
@@ -103,12 +114,19 @@ export function createDualLyricLines(
 }
 
 /**
- * Multi-Source Lyrics Pipeline:
- * Step 1 (LRCLIB): Query LRCLIB API first for synced .lrc lyrics. If found, return synced lyrics.
- * Step 2 (YouTube Music Native Fallback): If LRCLIB returns a 404 or empty response, fetch YouTube Music's native lyrics
- *        via the YouTube Music backend route (calling YouTubei next & browse with lyricsBrowseId).
- * Step 3 (Display Handling): Return native YouTube Music text as unsynced plain lyrics with source "youtube_music".
- * Step 4 (Empty): Return empty result if all providers in the fallback chain return no data.
+ * Multi-Source Lyrics Pipeline with Title Sanitization & Provider Fallback:
+ *
+ * 1. Metadata Sanitization Pre-Filter:
+ *    Strips video noise (e.g. [Official Music Video], [4K], HD, Topic, ft.)
+ *    and cleanly separates performing artist from video uploader.
+ *
+ * 2. Multi-Provider Fallback Chain:
+ *    - Provider 1 (Primary): Native YouTube InnerTube Synced Captions & YouTube Music Lyrics API
+ *    - Provider 2 (Secondary): LRCLIB Synced .lrc & plain lyrics API (https://lrclib.net/api/get & /search)
+ *    - Provider 3 (Tertiary): Public lyrics providers (Lyrics.ovh & Genius API fallback)
+ *
+ * If a provider returns 404 or empty lyrics, the pipeline automatically advances to the next provider
+ * without failing the UI.
  */
 export async function fetchLyricsMultiSource(
   rawTitle: string,
@@ -116,15 +134,51 @@ export async function fetchLyricsMultiSource(
   durationInSeconds?: number,
   videoId?: string
 ): Promise<LyricsResult> {
-  const cleanTitle = cleanTrackTitle(rawTitle, rawArtist);
-  const cleanArtist = (rawArtist || "").replace(/\s*-\s*Topic$/i, "").trim();
+  const sanitized = sanitizeLyricsQuery(rawTitle, rawArtist);
+  const cleanTitle = sanitized.cleanTitle;
+  const cleanArtist = sanitized.cleanArtist;
   const dur = durationInSeconds && durationInSeconds > 10 ? Math.round(durationInSeconds) : undefined;
   const cleanVid = videoId ? videoId.split("_")[0] : "";
 
   let lrclibPlainMatch: LyricsResult | null = null;
 
   // =========================================================================
-  // Step 1: Query LRCLIB API for Synced .lrc Lyrics
+  // Provider 1 (Primary): Native YouTube InnerTube Synced Captions & Lyrics
+  // =========================================================================
+  if (cleanVid) {
+    try {
+      const params = new URLSearchParams({
+        videoId: cleanVid,
+        title: cleanTitle,
+        artist: cleanArtist,
+      });
+      if (dur) params.append("duration", dur.toString());
+
+      const res = await fetch(`/api/youtube/ytmusic-lyrics?${params.toString()}`, {
+        signal: AbortSignal.timeout(4500),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.syncedLyrics && data.isSynced) {
+          return {
+            syncedLyrics: data.syncedLyrics,
+            plainLyrics: data.plainLyrics,
+            isSynced: true,
+            source: (data.source as LyricsSourceType) || "youtube_innertube",
+            provider: "YouTube InnerTube Captions",
+            trackName: cleanTitle,
+            artistName: cleanArtist,
+          };
+        }
+      }
+    } catch (_cErr) {
+      // Proceed gracefully to Provider 2
+    }
+  }
+
+  // =========================================================================
+  // Provider 2 (Secondary): LRCLIB API for Synced .lrc Lyrics
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
@@ -151,8 +205,9 @@ export async function fetchLyricsMultiSource(
             plainLyrics: data.plainLyrics,
             isSynced: true,
             source: "lrclib",
-            trackName: data.trackName,
-            artistName: data.artistName,
+            provider: "LRCLIB Synced",
+            trackName: data.trackName || cleanTitle,
+            artistName: data.artistName || cleanArtist,
             lrcDuration: lrcDur,
           };
         }
@@ -161,8 +216,9 @@ export async function fetchLyricsMultiSource(
             plainLyrics: data.plainLyrics,
             isSynced: false,
             source: "lrclib",
-            trackName: data.trackName,
-            artistName: data.artistName,
+            provider: "LRCLIB Plain",
+            trackName: data.trackName || cleanTitle,
+            artistName: data.artistName || cleanArtist,
             lrcDuration: lrcDur,
           };
         }
@@ -172,10 +228,10 @@ export async function fetchLyricsMultiSource(
     }
   }
 
-  // LRCLIB Search endpoint fallback
+  // LRCLIB Search Queries Fallback
   const searchQueries = [
-    cleanArtist ? `${cleanArtist} ${cleanTitle}` : cleanTitle,
-    rawTitle,
+    sanitized.searchQuery,
+    ...sanitized.secondaryQueries,
   ].filter(Boolean);
 
   for (const q of searchQueries) {
@@ -183,13 +239,13 @@ export async function fetchLyricsMultiSource(
       const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(q)}`;
       const res = await fetch(searchUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(4500),
+        signal: AbortSignal.timeout(4000),
       });
 
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list) && list.length > 0) {
-          // Priority 1: Synced lyrics
+          // Priority: Synced lyrics
           const withSynced = list.find((item) => item.syncedLyrics && item.syncedLyrics.trim().length > 0);
           if (withSynced) {
             const searchLrcDur = typeof withSynced.duration === "number" && withSynced.duration > 0 ? withSynced.duration : undefined;
@@ -198,32 +254,34 @@ export async function fetchLyricsMultiSource(
               plainLyrics: withSynced.plainLyrics,
               isSynced: true,
               source: "lrclib",
-              trackName: withSynced.trackName,
-              artistName: withSynced.artistName,
+              provider: "LRCLIB Synced",
+              trackName: withSynced.trackName || cleanTitle,
+              artistName: withSynced.artistName || cleanArtist,
               lrcDuration: searchLrcDur,
             };
           }
-          // Priority 2: Stash plain lyrics from search
+          // Stash plain lyrics from search if not already found
           const withPlain = list.find((item) => item.plainLyrics && item.plainLyrics.trim().length > 0);
           if (withPlain && !lrclibPlainMatch) {
             lrclibPlainMatch = {
               plainLyrics: withPlain.plainLyrics,
               isSynced: false,
               source: "lrclib",
-              trackName: withPlain.trackName,
-              artistName: withPlain.artistName,
+              provider: "LRCLIB Plain",
+              trackName: withPlain.trackName || cleanTitle,
+              artistName: withPlain.artistName || cleanArtist,
               lrcDuration: typeof withPlain.duration === "number" && withPlain.duration > 0 ? withPlain.duration : undefined,
             };
           }
         }
       }
     } catch (_err) {
-      // Proceed to next fallback
+      // Proceed to next provider
     }
   }
 
   // =========================================================================
-  // Step 2: YouTube Music Native Lyrics Fallback
+  // Provider 1b & 3: Server-side Multi-Provider (YouTube Music, Lyrics.ovh, Genius)
   // =========================================================================
   try {
     const params = new URLSearchParams({
@@ -238,20 +296,27 @@ export async function fetchLyricsMultiSource(
     if (serverRes.ok) {
       const data = await serverRes.json();
       const serverLrcDur = typeof data.lrcDuration === "number" ? data.lrcDuration : typeof data.duration === "number" ? data.duration : undefined;
+
       if (data.syncedLyrics && data.isSynced) {
         return {
           syncedLyrics: data.syncedLyrics,
           plainLyrics: data.plainLyrics,
           isSynced: true,
-          source: (data.source as any) || "lrclib",
+          source: (data.source as LyricsSourceType) || "youtube_innertube",
+          provider: data.provider || "YouTube Captions",
+          trackName: cleanTitle,
+          artistName: cleanArtist,
           lrcDuration: serverLrcDur,
         };
       }
-      if (data.plainLyrics && (data.source === "youtube_music" || !lrclibPlainMatch)) {
+      if (data.plainLyrics && (data.source === "youtube_music" || data.source === "genius" || data.source === "lyrics_ovh" || !lrclibPlainMatch)) {
         return {
           plainLyrics: data.plainLyrics,
           isSynced: false,
-          source: (data.source as any) || "youtube_music",
+          source: (data.source as LyricsSourceType) || "youtube_music",
+          provider: data.provider || "YouTube Music",
+          trackName: cleanTitle,
+          artistName: cleanArtist,
           lrcDuration: serverLrcDur,
         };
       }
@@ -259,14 +324,38 @@ export async function fetchLyricsMultiSource(
   } catch (_sErr) {}
 
   // =========================================================================
-  // Step 3: LRCLIB Plain Text Fallback (if saved from earlier)
+  // Provider 2 Plain Fallback (if LRCLIB plain text was cached earlier)
   // =========================================================================
   if (lrclibPlainMatch) {
     return lrclibPlainMatch;
   }
 
   // =========================================================================
-  // Step 4: No lyrics available across all providers
+  // Provider 3 Direct Client-Side Fallback: Public Lyrics API (Lyrics.ovh)
+  // =========================================================================
+  if (cleanTitle && cleanArtist) {
+    try {
+      const ovhRes = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(cleanArtist)}/${encodeURIComponent(cleanTitle)}`, {
+        signal: AbortSignal.timeout(3500),
+      });
+      if (ovhRes.ok) {
+        const ovhData = await ovhRes.json();
+        if (ovhData.lyrics && typeof ovhData.lyrics === "string" && ovhData.lyrics.trim().length > 10) {
+          return {
+            plainLyrics: ovhData.lyrics.trim(),
+            isSynced: false,
+            source: "lyrics_ovh",
+            provider: "Lyrics.ovh",
+            trackName: cleanTitle,
+            artistName: cleanArtist,
+          };
+        }
+      }
+    } catch (_ovhErr) {}
+  }
+
+  // =========================================================================
+  // Step 4: No lyrics available across all providers in chain
   // =========================================================================
   return {
     isSynced: false,
