@@ -152,16 +152,11 @@ function writeStoredPlaylists(pls: any[]) {
     const valid = (pls || [])
       .filter((p: any) => p && p.id && isValidPlaylistId(p.id))
       .map((p: any) => {
-        // Strip any residual unsynced local data: image custom covers for YouTube playlists
-        if (p.id && !String(p.id).startsWith("pl_custom_")) {
-          if (p.customCoverUrl && String(p.customCoverUrl).startsWith("data:")) {
-            p.customCoverUrl = undefined;
-            p.isCustomCover = false;
-          }
-          if (p.coverUrl && String(p.coverUrl).startsWith("data:")) {
-            const thumbs = p.thumbnails;
-            p.coverUrl = thumbs?.maxres?.url || thumbs?.standard?.url || thumbs?.high?.url || thumbs?.medium?.url || thumbs?.default?.url || p.tracks?.[0]?.coverUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
-            p.isCustomCover = false;
+        // If custom cover exists, record it in custom covers storage as well
+        if (p.id && (p.customCoverUrl || (p.isCustomCover && p.coverUrl))) {
+          const cover = p.customCoverUrl || p.coverUrl;
+          if (cover) {
+            writeStoredCustomCover(p.id, cover);
           }
         }
         return p;

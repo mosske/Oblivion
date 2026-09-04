@@ -27,43 +27,48 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   showCustomBadge = false,
   aspectSquare = true,
 }) => {
-  const [customImageFailed, setCustomImageFailed] = useState<boolean>(false);
-  const [fallbackImageFailed, setFallbackImageFailed] = useState<boolean>(false);
+  const [failedSources, setFailedSources] = useState<Set<string>>(new Set());
 
   const playlistId = playlist?.id || (playlist as any)?.playlistId || "";
   const customCoverUrl = playlist?.customCoverUrl;
+  const standardCoverUrl = playlist?.coverUrl;
 
-  // Reset failure states ONLY when the playlist ID or custom cover URL explicitly changes
+  // Reset failure states when the playlist ID or cover URLs change
   useEffect(() => {
-    setCustomImageFailed(false);
-    setFallbackImageFailed(false);
-  }, [playlistId, customCoverUrl]);
+    setFailedSources(new Set());
+  }, [playlistId, customCoverUrl, standardCoverUrl]);
 
   const hasCustomCover = Boolean(customCoverUrl && customCoverUrl.trim().length > 0);
   const isExplicitCustom = Boolean(playlist?.isCustomCover || hasCustomCover);
 
-  // Requirement C: Enforce Immutable Image Precedence & Defensive Guard Clause
-  // Hierarchy: playlist.customCoverUrl > tracks[0].artwork > defaultPlaceholder
-  // If customCoverUrl is present and non-empty, hard-lock it as the image source.
-  // Fallback to tracks[0].artwork triggers ONLY if custom image fails and explicitly fires onError.
   const tracks = playlist?.tracks || [];
   const trackZeroArtwork = tracks[0]?.coverUrl || (tracks[0] as any)?.artwork;
-  const standardCover = playlist?.coverUrl;
 
-  const displayArtwork = (playlist?.customCoverUrl && !customImageFailed)
-    ? playlist.customCoverUrl
-    : (trackZeroArtwork || standardCover || DEFAULT_PLACEHOLDER);
+  // Artwork Precedence Hierarchy:
+  // 1. Explicit custom cover URL (custom uploaded / AI / Google User Content artwork)
+  // 2. Playlist's own cover URL (playlist-level assigned or custom artwork)
+  // 3. First song's artwork (ONLY as a fallback if neither customCoverUrl nor coverUrl are present or valid)
+  // 4. Default placeholder
+  const candidateUrls: string[] = [
+    customCoverUrl,
+    standardCoverUrl,
+    trackZeroArtwork,
+    DEFAULT_PLACEHOLDER,
+  ].filter((u): u is string => Boolean(u && typeof u === "string" && u.trim().length > 0 && !failedSources.has(u)));
+
+  const activeSrc = candidateUrls[0] || null;
 
   const handleImageError = () => {
-    if (playlist?.customCoverUrl && !customImageFailed) {
-      // Event-driven fallback: custom image explicitly fired an onError event
-      setCustomImageFailed(true);
-    } else {
-      setFallbackImageFailed(true);
+    if (activeSrc) {
+      setFailedSources((prev) => {
+        const next = new Set(prev);
+        next.add(activeSrc);
+        return next;
+      });
     }
   };
 
-  if (!fallbackImageFailed && displayArtwork) {
+  if (activeSrc) {
     return (
       <div
         className={`relative overflow-hidden bg-neutral-900 ${
@@ -71,7 +76,8 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
         } ${className}`}
       >
         <img
-          src={displayArtwork}
+          key={activeSrc}
+          src={activeSrc}
           alt={playlist?.title || "Playlist cover"}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={handleImageError}

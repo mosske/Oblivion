@@ -306,17 +306,14 @@ export default function App() {
           return parsed
             .filter((p: any) => p && p.id && isValidPlaylistId(p.id) && !p.id.startsWith("mix_"))
             .map((p: any) => {
-              // Strip local data URLs from YouTube playlists
-              if (p.id && !p.id.startsWith("pl_custom_")) {
-                const cleanCover = (p.coverUrl && p.coverUrl.startsWith("data:")) ? undefined : p.coverUrl;
-                const cleanCustom = (p.customCoverUrl && p.customCoverUrl.startsWith("data:")) ? undefined : p.customCoverUrl;
-                return {
-                  ...p,
-                  coverUrl: cleanCover || `https://i.ytimg.com/vi/${p.id.replace(/^VL/, '')}/hqdefault.jpg`,
-                  customCoverUrl: cleanCustom,
-                };
-              }
-              return p;
+              const hasCustom = Boolean(p.customCoverUrl || p.isCustomCover);
+              const bestCover = p.customCoverUrl || p.coverUrl || `https://i.ytimg.com/vi/${p.id.replace(/^VL/, '')}/hqdefault.jpg`;
+              return {
+                ...p,
+                coverUrl: bestCover,
+                customCoverUrl: hasCustom ? (p.customCoverUrl || p.coverUrl) : undefined,
+                isCustomCover: hasCustom,
+              };
             });
         }
       }
@@ -1078,35 +1075,37 @@ export default function App() {
             thumbs?.medium?.url ||
             thumbs?.default?.url;
 
-          // Strip data URLs from YouTube synced playlists
-          const rawCustom = (pl.customCoverUrl && pl.customCoverUrl.startsWith("data:") && !plId.startsWith("pl_custom_")) ? undefined : pl.customCoverUrl;
-          const rawCover = (pl.coverUrl && pl.coverUrl.startsWith("data:") && !plId.startsWith("pl_custom_")) ? undefined : pl.coverUrl;
-
-          let customResolved = rawCustom || (isAuthenticCustom ? (rawCover || rawCustom) : undefined);
-
-          let primaryCover =
-            customResolved ||
-            rawCustom ||
-            rawCover ||
-            bestThumb ||
-            `https://i.ytimg.com/vi/${plId.replace(/^VL/, '')}/hqdefault.jpg`;
-
-          // If manual sync, apply cache buster to force fresh CDN fetch
-          if (isManualSync) {
-            if (customResolved) customResolved = applyArtworkCacheBuster(customResolved, syncTimestamp);
-            if (primaryCover) primaryCover = applyArtworkCacheBuster(primaryCover, syncTimestamp) || primaryCover;
-          }
-
-          const rawPlPrivacy = (pl.privacyStatus || pl.privacy || pl.status?.privacyStatus || "PUBLIC").toUpperCase();
-          const normalizedPlPrivacy = rawPlPrivacy === "PRIVATE" ? "PRIVATE" : rawPlPrivacy === "UNLISTED" ? "UNLISTED" : "PUBLIC";
+          const rawCustom = pl.customCoverUrl;
+          const rawCover = pl.coverUrl;
 
           // Match with existing playlist to preserve full tracks if already fetched and preserve custom cover
           const existingMatch = playlists.find(
             (p) => p.id === plId || (p.id && p.id.replace(/^VL/, "") === plId.replace(/^VL/, ""))
           );
+
+          const resolvedCustom =
+            pl.customCoverUrl ||
+            (isAuthenticCustom ? (rawCover || rawCustom) : undefined) ||
+            existingMatch?.customCoverUrl ||
+            (existingMatch?.isCustomCover ? existingMatch.coverUrl : undefined);
+
+          let primaryCover =
+            resolvedCustom ||
+            rawCover ||
+            bestThumb ||
+            existingMatch?.coverUrl ||
+            `https://i.ytimg.com/vi/${plId.replace(/^VL/, '')}/hqdefault.jpg`;
+
+          // If manual sync, apply cache buster to force fresh CDN fetch
+          if (isManualSync) {
+            if (resolvedCustom) primaryCover = applyArtworkCacheBuster(resolvedCustom, syncTimestamp) || primaryCover;
+          }
+
+          const rawPlPrivacy = (pl.privacyStatus || pl.privacy || pl.status?.privacyStatus || "PUBLIC").toUpperCase();
+          const normalizedPlPrivacy = rawPlPrivacy === "PRIVATE" ? "PRIVATE" : rawPlPrivacy === "UNLISTED" ? "UNLISTED" : "PUBLIC";
+
           const finalTracks = sanitizedTracks.length > 0 ? sanitizedTracks : (existingMatch?.tracks || []);
-          const resolvedCustom = existingMatch?.customCoverUrl || customResolved;
-          const finalIsCustom = Boolean(resolvedCustom || isAuthenticCustom || existingMatch?.isCustomCover);
+          const finalIsCustom = Boolean(resolvedCustom || isAuthenticCustom || existingMatch?.isCustomCover || pl.isCustomCover);
           const finalPrimaryCover = resolvedCustom || primaryCover;
 
           sanitizedPlaylists.push({

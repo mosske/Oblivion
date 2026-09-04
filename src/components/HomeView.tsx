@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { User, Track, Album, Playlist } from "../types";
+import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import {
   Play,
   Sparkles,
@@ -659,14 +660,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${designConfig.cardBg} ${designConfig.cardHover} border border-transparent hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl`}
                   >
                     <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-black/10 shadow-inner">
-                      <img
-                        src={pl.coverUrl}
-                        alt={pl.title}
+                      <PlaylistCoverArt
+                        playlist={pl}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
-                        }}
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                         <div className="p-3 rounded-full bg-white text-black shadow-lg transform group-hover:scale-110 transition-transform">
