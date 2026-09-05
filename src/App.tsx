@@ -320,7 +320,7 @@ export default function App() {
               const customFromStore = customCoversStore[plId] || customCoversStore[cleanId];
               const resolvedCustom = customFromStore || p.customCoverUrl || (p.isCustomCover ? p.coverUrl : null) || null;
               const hasCustom = Boolean(resolvedCustom);
-              const bestCover = resolvedCustom || p.coverUrl || `https://i.ytimg.com/vi/${cleanId}/hqdefault.jpg`;
+              const bestCover = resolvedCustom || p.coverUrl || p.customCoverUrl || "";
               return {
                 ...p,
                 coverUrl: bestCover,
@@ -1142,7 +1142,7 @@ export default function App() {
             rawCover ||
             bestThumb ||
             existingMatch?.coverUrl ||
-            `https://i.ytimg.com/vi/${cleanId}/hqdefault.jpg`;
+            "";
 
           // If manual sync, apply cache buster to force fresh CDN fetch
           if (isManualSync) {

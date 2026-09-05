@@ -687,9 +687,19 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
 }
 
 function formatHighResCover(url: string | undefined | null): string | null {
-  if (!url) return null;
+  if (!url || typeof url !== "string") return null;
   let cleaned = url.startsWith("//") ? `https:${url}` : url;
   cleaned = cleaned.replace(/&amp;/g, "&");
+
+  // Reject invalid vi/ playlist URLs (e.g. i.ytimg.com/vi/PL... or i.ytimg.com/vi/VL...)
+  if (
+    cleaned.includes("i.ytimg.com/vi/PL") ||
+    cleaned.includes("i.ytimg.com/vi/VL") ||
+    cleaned.includes("i.ytimg.com/vi/RD") ||
+    cleaned.includes("i.ytimg.com/vi/OLAK5uy_")
+  ) {
+    return null;
+  }
 
   if (
     cleaned.includes("googleusercontent.com") ||
@@ -702,13 +712,11 @@ function formatHighResCover(url: string | undefined | null): string | null {
     cleaned.includes("photos.googleusercontent.com")
   ) {
     if (cleaned.match(/=w\d+-h\d+/)) {
-      cleaned = cleaned.replace(/=w\d+-h\d+[^?&]*/, "=w1200-h1200-l90-rj");
+      cleaned = cleaned.replace(/=w\d+-h\d+[^?&]*/, "=w600-h600-l90-rj");
     } else if (cleaned.match(/=s\d+/)) {
-      cleaned = cleaned.replace(/=s\d+[^?&]*/, "=s1200");
+      cleaned = cleaned.replace(/=s\d+[^?&]*/, "=s600");
     } else if (cleaned.match(/=w\d+/)) {
-      cleaned = cleaned.replace(/=w\d+[^?&]*/, "=w1200-h1200-l90-rj");
-    } else if (!cleaned.includes("=")) {
-      cleaned = `${cleaned}=w1200-h1200-l90-rj`;
+      cleaned = cleaned.replace(/=w\d+[^?&]*/, "=w600-h600-l90-rj");
     }
   } else if (cleaned.includes("i.ytimg.com/vi/")) {
     // Keep hqdefault.jpg intact because it is guaranteed to exist for all YouTube videos.
@@ -1009,7 +1017,7 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
                 playlistId,
                 title: title.trim() || "YouTube Playlist",
                 description: subtitle || "Synced from YouTube Music Library",
-                coverUrl: formatted || coverUrl || `https://i.ytimg.com/vi/${playlistId}/hqdefault.jpg`,
+                coverUrl: formatted || coverUrl || "",
                 customCoverUrl: isCustom ? (formatted || coverUrl) : undefined,
                 isCustomCover: isCustom,
                 isYouTubeSynced: true,
@@ -2407,7 +2415,7 @@ app.get("/api/youtube/playlists", async (req, res) => {
               resolvedCustom ||
               ytmMatch?.coverUrl ||
               bestThumbnail ||
-              "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
+              "";
 
             const isCustom = Boolean(resolvedCustom || ytmMatch?.isCustomCover);
             if (isCustom && resolvedCustom) {
@@ -2445,6 +2453,8 @@ app.get("/api/youtube/playlists", async (req, res) => {
               ytPlaylists[existingIdx].coverUrl = pl.customCoverUrl;
               ytPlaylists[existingIdx].customCoverUrl = pl.customCoverUrl;
               ytPlaylists[existingIdx].isCustomCover = true;
+            } else if (pl.coverUrl && !ytPlaylists[existingIdx].coverUrl) {
+              ytPlaylists[existingIdx].coverUrl = pl.coverUrl;
             }
           } else if (!seenItemIds.has(pl.id) && !seenItemIds.has(cleanId)) {
             seenItemIds.add(pl.id);
@@ -2522,6 +2532,27 @@ app.get("/api/youtube/playlists", async (req, res) => {
   } catch (err: any) {
     console.error("Error in /api/youtube/playlists:", err);
     res.json({ playlists: [] });
+  }
+});
+
+app.get("/api/youtube/playlists/:id/custom-cover", async (req, res) => {
+  const { id } = req.params;
+  const cleanPlId = id ? id.replace(/^VL/, "") : "";
+  try {
+    const accessToken = await getValidAccessToken(req);
+    const storedCustom = readStoredCustomCovers();
+    if (storedCustom[cleanPlId] || storedCustom[id]) {
+      const cachedCover = storedCustom[cleanPlId] || storedCustom[id];
+      return res.json({ customCoverUrl: cachedCover, isCustomCover: true });
+    }
+    const customCover = await fetchYouTubePlaylistCustomImage(id, accessToken);
+    if (customCover) {
+      writeStoredCustomCover(cleanPlId, customCover);
+      return res.json({ customCoverUrl: customCover, isCustomCover: true });
+    }
+    res.json({ customCoverUrl: null, isCustomCover: false });
+  } catch (err) {
+    res.json({ customCoverUrl: null, isCustomCover: false });
   }
 });
 
