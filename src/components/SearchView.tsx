@@ -434,12 +434,19 @@ export const SearchView: React.FC<SearchViewProps> = ({
             const isAlbum = item.type === "album" || Boolean(item.playlistId);
             const isArtist = item.type === "artist" || Boolean(item.channelId);
             const itemVid = item.youtubeVideoId || item.id;
-            const isCurrent = Boolean(
-              (!isAlbum && !isArtist) && (
-                (currentTrackId && (itemVid === currentTrackId || item.id === currentTrackId)) ||
-                (currentTrack?.title && item.title && item.title.toLowerCase().trim() === currentTrack.title.toLowerCase().trim())
+            const currentVid = currentTrack ? ((currentTrack as any).videoId || currentTrack.youtubeVideoId || currentTrack.id) : null;
+            const trackVid = item.videoId || item.youtubeVideoId || item.id;
+
+            const isCurrentlyPlaying = Boolean(
+              (!isAlbum && !isArtist) &&
+              currentTrack && (
+                (item.id && currentTrack.id && item.id === currentTrack.id) ||
+                (trackVid && currentVid && trackVid === currentVid) ||
+                (item.title && item.artist && currentTrack.title && currentTrack.artist &&
+                  `${item.title.toLowerCase()}::${item.artist.toLowerCase()}` === `${currentTrack.title.toLowerCase()}::${currentTrack.artist.toLowerCase()}`)
               )
             );
+            const isCurrent = isCurrentlyPlaying;
 
             const handleItemClick = () => {
               if (isAlbum && onSelectPlaylist) {
@@ -461,7 +468,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 handleFilterSelect("all");
               } else {
                 const trackResults = (filteredResults || []).filter((i: any) => !i.type || i.type === "track");
-                const trackIdx = trackResults.findIndex((t: any) => (t.id || t.youtubeVideoId) === itemVid);
+                const trackIdx = trackResults.findIndex((t: any) => (t.id || t.youtubeVideoId || t.videoId) === itemVid);
                 if (onPlayQueue && trackResults.length > 0) {
                   onPlayQueue(trackResults, trackIdx >= 0 ? trackIdx : 0);
                 } else {
@@ -472,7 +479,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
             return (
               <div
-                key={`sr_${item.id || item.youtubeVideoId || item.playlistId || 'item'}_${idx}`}
+                key={item.id || item.videoId || item.youtubeVideoId || `${item.title}-${idx}`}
                 className={`group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
                   isCurrent
                     ? `${designConfig.cardBg} shadow-lg ring-2`

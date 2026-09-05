@@ -1,4 +1,5 @@
 import { Playlist, Track } from "../types";
+import { getCustomPlaylistCovers, setCustomPlaylistCover } from "./customCoversStorage";
 
 const DB_NAME = "OblivionPlaylistStoreDB";
 const DB_VERSION = 2;
@@ -7,7 +8,7 @@ const STORE_PLAYLIST_TRACKS = "playlist_tracks";
 const STORE_CUSTOM_COVERS = "custom_covers";
 
 const LOCAL_STORAGE_KEY_PLAYLISTS = "oblivion_saved_playlists";
-const LOCAL_STORAGE_KEY_CUSTOM_COVERS = "oblivion_custom_covers_map";
+const LOCAL_STORAGE_KEY_CUSTOM_COVERS = "CUSTOM_PLAYLIST_COVERS";
 
 let dbInstance: IDBDatabase | null = null;
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -393,9 +394,10 @@ export async function savePlaylistTracksToDBCache(playlistId: string, tracks: Tr
 export function mergeRemotePlaylistsWithLocalCache(
   remotePlaylists: Playlist[],
   cachedPlaylists: Playlist[],
-  customCoversMap: Record<string, { customCoverUrl: string; isCustom: boolean }>
+  customCoversMap: Record<string, { customCoverUrl: string; isCustom: boolean }> = {}
 ): Playlist[] {
   const mergedMap = new Map<string, Playlist>();
+  const directCustomCovers = getCustomPlaylistCovers();
 
   // 1. Seed with cached playlists
   for (const pl of cachedPlaylists) {
@@ -418,14 +420,18 @@ export function mergeRemotePlaylistsWithLocalCache(
 
     const cached = mergedMap.get(plId) || mergedMap.get(cleanId);
     const customLock = customCoversMap[plId] || customCoversMap[cleanId];
+    const isolatedCustom = directCustomCovers[plId] || directCustomCovers[cleanId];
 
-    // Determine locked custom cover URL
+    // Determine locked custom cover URL with absolute immutability:
+    // CUSTOM_PLAYLIST_COVERS[updatedPlaylist.id] || existingLocalPlaylist?.customCoverUrl || null;
     const lockedCustomCoverUrl =
+      isolatedCustom ||
       customLock?.customCoverUrl ||
       cached?.customCoverUrl ||
       (cached?.isCustomCover ? cached.coverUrl : undefined) ||
       remote.customCoverUrl ||
-      (remote.isCustomCover ? remote.coverUrl : undefined);
+      (remote.isCustomCover ? remote.coverUrl : undefined) ||
+      null;
 
     const isCustom = Boolean(lockedCustomCoverUrl || customLock?.isCustom || cached?.isCustomCover || remote.isCustomCover);
 
@@ -441,7 +447,7 @@ export function mergeRemotePlaylistsWithLocalCache(
       ...remote,
       id: plId,
       coverUrl: primaryCover,
-      customCoverUrl: isCustom ? (lockedCustomCoverUrl || primaryCover) : undefined,
+      customCoverUrl: isCustom && lockedCustomCoverUrl ? lockedCustomCoverUrl : (isCustom ? primaryCover : undefined),
       isCustomCover: isCustom,
       tracks,
       tracksCount: remote.tracksCount || tracks.length || cached?.tracksCount || 0,

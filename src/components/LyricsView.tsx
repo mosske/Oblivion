@@ -304,7 +304,6 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   const badgeLabel = useMemo(() => {
     if (isSynced) {
       if (isCandy) return "🍫 Synced LRC";
-      if (lyricsSource === "youtube_innertube") return "Synced (YouTube Captions)";
       if (lyricsSource === "lrclib") return "Synced (LRCLIB)";
       return lyricsProviderName || "Synced";
     }

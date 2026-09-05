@@ -2,7 +2,6 @@ import { sanitizeLyricsQuery } from "../utils/lyricsSanitizer";
 import { LyricLine } from "../types";
 
 export type LyricsSourceType =
-  | "youtube_innertube"
   | "lrclib"
   | "youtube_music"
   | "genius"
@@ -116,17 +115,13 @@ export function createDualLyricLines(
 /**
  * Multi-Source Lyrics Pipeline with Title Sanitization & Provider Fallback:
  *
- * 1. Metadata Sanitization Pre-Filter:
- *    Strips video noise (e.g. [Official Music Video], [4K], HD, Topic, ft.)
- *    and cleanly separates performing artist from video uploader.
+ * 1. Primary: LRCLIB Synced .lrc & plain lyrics API (https://lrclib.net/api/get & /search)
+ *    - Uses community-verified synchronized and plain lyrics with duration matching.
+ *    - Strictly avoids YouTube video captions to prevent pulling unrelated/garbage subtitles.
  *
- * 2. Multi-Provider Fallback Chain:
- *    - Provider 1 (Primary): Native YouTube InnerTube Synced Captions & YouTube Music Lyrics API
- *    - Provider 2 (Secondary): LRCLIB Synced .lrc & plain lyrics API (https://lrclib.net/api/get & /search)
- *    - Provider 3 (Tertiary): Public lyrics providers (Lyrics.ovh & Genius API fallback)
+ * 2. Secondary: Official YouTube Music browse API (Record label / Musixmatch / LyricFind publisher lyrics)
  *
- * If a provider returns 404 or empty lyrics, the pipeline automatically advances to the next provider
- * without failing the UI.
+ * 3. Tertiary: Public lyrics providers (Genius & Lyrics.ovh)
  */
 export async function fetchLyricsMultiSource(
   rawTitle: string,
@@ -143,42 +138,7 @@ export async function fetchLyricsMultiSource(
   let lrclibPlainMatch: LyricsResult | null = null;
 
   // =========================================================================
-  // Provider 1 (Primary): Native YouTube InnerTube Synced Captions & Lyrics
-  // =========================================================================
-  if (cleanVid) {
-    try {
-      const params = new URLSearchParams({
-        videoId: cleanVid,
-        title: cleanTitle,
-        artist: cleanArtist,
-      });
-      if (dur) params.append("duration", dur.toString());
-
-      const res = await fetch(`/api/youtube/ytmusic-lyrics?${params.toString()}`, {
-        signal: AbortSignal.timeout(4500),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.syncedLyrics && data.isSynced) {
-          return {
-            syncedLyrics: data.syncedLyrics,
-            plainLyrics: data.plainLyrics,
-            isSynced: true,
-            source: (data.source as LyricsSourceType) || "youtube_innertube",
-            provider: "YouTube InnerTube Captions",
-            trackName: cleanTitle,
-            artistName: cleanArtist,
-          };
-        }
-      }
-    } catch (_cErr) {
-      // Proceed gracefully to Provider 2
-    }
-  }
-
-  // =========================================================================
-  // Provider 2 (Secondary): LRCLIB API for Synced .lrc Lyrics
+  // Provider 1 (Primary): LRCLIB API for Synced .lrc Lyrics
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
@@ -199,28 +159,32 @@ export async function fetchLyricsMultiSource(
       if (res.ok) {
         const data = await res.json();
         const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
-        if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
-          return {
-            syncedLyrics: data.syncedLyrics,
-            plainLyrics: data.plainLyrics,
-            isSynced: true,
-            source: "lrclib",
-            provider: "LRCLIB Synced",
-            trackName: data.trackName || cleanTitle,
-            artistName: data.artistName || cleanArtist,
-            lrcDuration: lrcDur,
-          };
-        }
-        if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
-          lrclibPlainMatch = {
-            plainLyrics: data.plainLyrics,
-            isSynced: false,
-            source: "lrclib",
-            provider: "LRCLIB Plain",
-            trackName: data.trackName || cleanTitle,
-            artistName: data.artistName || cleanArtist,
-            lrcDuration: lrcDur,
-          };
+        const isDurationMatch = !dur || !lrcDur || Math.abs(lrcDur - dur) <= 4.0;
+
+        if (isDurationMatch) {
+          if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
+            return {
+              syncedLyrics: data.syncedLyrics,
+              plainLyrics: data.plainLyrics,
+              isSynced: true,
+              source: "lrclib",
+              provider: "LRCLIB Synced",
+              trackName: data.trackName || cleanTitle,
+              artistName: data.artistName || cleanArtist,
+              lrcDuration: lrcDur,
+            };
+          }
+          if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
+            lrclibPlainMatch = {
+              plainLyrics: data.plainLyrics,
+              isSynced: false,
+              source: "lrclib",
+              provider: "LRCLIB Plain",
+              trackName: data.trackName || cleanTitle,
+              artistName: data.artistName || cleanArtist,
+              lrcDuration: lrcDur,
+            };
+          }
         }
       }
     } catch (_err) {
@@ -245,8 +209,15 @@ export async function fetchLyricsMultiSource(
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list) && list.length > 0) {
-          // Priority: Synced lyrics
-          const withSynced = list.find((item) => item.syncedLyrics && item.syncedLyrics.trim().length > 0);
+          // Priority: Synced lyrics with duration check
+          const withSynced = list.find((item) => {
+            if (!item.syncedLyrics || !item.syncedLyrics.trim()) return false;
+            if (dur && typeof item.duration === "number" && item.duration > 0) {
+              return Math.abs(item.duration - dur) <= 4.0;
+            }
+            return true;
+          });
+
           if (withSynced) {
             const searchLrcDur = typeof withSynced.duration === "number" && withSynced.duration > 0 ? withSynced.duration : undefined;
             return {
@@ -260,8 +231,16 @@ export async function fetchLyricsMultiSource(
               lrcDuration: searchLrcDur,
             };
           }
+
           // Stash plain lyrics from search if not already found
-          const withPlain = list.find((item) => item.plainLyrics && item.plainLyrics.trim().length > 0);
+          const withPlain = list.find((item) => {
+            if (!item.plainLyrics || !item.plainLyrics.trim()) return false;
+            if (dur && typeof item.duration === "number" && item.duration > 0) {
+              return Math.abs(item.duration - dur) <= 4.0;
+            }
+            return true;
+          });
+
           if (withPlain && !lrclibPlainMatch) {
             lrclibPlainMatch = {
               plainLyrics: withPlain.plainLyrics,
@@ -281,7 +260,7 @@ export async function fetchLyricsMultiSource(
   }
 
   // =========================================================================
-  // Provider 1b & 3: Server-side Multi-Provider (YouTube Music, Lyrics.ovh, Genius)
+  // Provider 2 & 3: Server-side Multi-Provider (YouTube Music Official, Lyrics.ovh, Genius)
   // =========================================================================
   try {
     const params = new URLSearchParams({
@@ -302,8 +281,8 @@ export async function fetchLyricsMultiSource(
           syncedLyrics: data.syncedLyrics,
           plainLyrics: data.plainLyrics,
           isSynced: true,
-          source: (data.source as LyricsSourceType) || "youtube_innertube",
-          provider: data.provider || "YouTube Captions",
+          source: (data.source as LyricsSourceType) || "lrclib",
+          provider: data.provider || "LRCLIB Synced",
           trackName: cleanTitle,
           artistName: cleanArtist,
           lrcDuration: serverLrcDur,
@@ -314,7 +293,7 @@ export async function fetchLyricsMultiSource(
           plainLyrics: data.plainLyrics,
           isSynced: false,
           source: (data.source as LyricsSourceType) || "youtube_music",
-          provider: data.provider || "YouTube Music",
+          provider: data.provider || "YouTube Music (Official)",
           trackName: cleanTitle,
           artistName: cleanArtist,
           lrcDuration: serverLrcDur,
@@ -324,7 +303,7 @@ export async function fetchLyricsMultiSource(
   } catch (_sErr) {}
 
   // =========================================================================
-  // Provider 2 Plain Fallback (if LRCLIB plain text was cached earlier)
+  // Provider 1 Plain Fallback (if LRCLIB plain text was cached earlier)
   // =========================================================================
   if (lrclibPlainMatch) {
     return lrclibPlainMatch;

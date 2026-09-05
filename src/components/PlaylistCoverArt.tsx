@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Playlist, Track, YouTubeThumbnails } from "../types";
 import { Music, Sparkles } from "lucide-react";
+import { getCustomPlaylistCovers, DEFAULT_PLACEHOLDER_COVER } from "../utils/customCoversStorage";
 
 interface PlaylistCoverArtProps {
   playlist: Playlist | {
@@ -19,7 +20,7 @@ interface PlaylistCoverArtProps {
   aspectSquare?: boolean;
 }
 
-const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
+const DEFAULT_PLACEHOLDER = DEFAULT_PLACEHOLDER_COVER;
 
 export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   playlist,
@@ -30,7 +31,11 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   const [failedSources, setFailedSources] = useState<Set<string>>(new Set());
 
   const playlistId = playlist?.id || (playlist as any)?.playlistId || "";
-  const customCoverUrl = playlist?.customCoverUrl;
+  const cleanId = playlistId ? playlistId.replace(/^VL/, "") : "";
+  const customCoversStore = getCustomPlaylistCovers();
+  const customFromStore = (playlistId && customCoversStore[playlistId]) || (cleanId && customCoversStore[cleanId]);
+
+  const customCoverUrl = customFromStore || playlist?.customCoverUrl;
   const standardCoverUrl = playlist?.coverUrl;
 
   // Reset failure states when the playlist ID or cover URLs change
@@ -41,22 +46,19 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   const hasCustomCover = Boolean(customCoverUrl && customCoverUrl.trim().length > 0);
   const isExplicitCustom = Boolean(playlist?.isCustomCover || hasCustomCover);
 
-  const tracks = playlist?.tracks || [];
-  const trackZeroArtwork = tracks[0]?.coverUrl || (tracks[0] as any)?.artwork;
+  const trackZeroArtwork = playlist?.tracks?.[0]?.coverUrl || (playlist?.tracks?.[0] as any)?.artwork;
 
-  // Artwork Precedence Hierarchy:
-  // 1. Explicit custom cover URL (custom uploaded / AI / Google User Content artwork)
-  // 2. First song's artwork (ONLY as a fallback if customCoverUrl is absent or fires onError)
-  // 3. Playlist standard cover URL (if present and valid)
-  // 4. Default placeholder
+  // Exact fallback resolution hierarchy:
+  // CUSTOM_PLAYLIST_COVERS[playlist.id] || playlist.customCoverUrl || playlist.coverUrl || playlist.tracks?.[0]?.coverUrl || DEFAULT_PLACEHOLDER
   const candidateUrls: string[] = [
-    customCoverUrl,
+    customFromStore,
+    playlist?.customCoverUrl,
+    playlist?.coverUrl,
     trackZeroArtwork,
-    standardCoverUrl,
     DEFAULT_PLACEHOLDER,
   ].filter((u): u is string => Boolean(u && typeof u === "string" && u.trim().length > 0 && !failedSources.has(u)));
 
-  const activeSrc = candidateUrls[0] || null;
+  const activeSrc = candidateUrls[0] || DEFAULT_PLACEHOLDER;
 
   const handleImageError = () => {
     if (activeSrc) {

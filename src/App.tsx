@@ -23,6 +23,7 @@ import {
   saveCustomCoverToCache,
   savePlaylistTracksToDBCache,
 } from "./utils/playlistDb";
+import { getCustomPlaylistCovers, setCustomPlaylistCover, resolvePlaylistCoverUrl } from "./utils/customCoversStorage";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
@@ -306,6 +307,7 @@ export default function App() {
   // Persistent playlists state - loaded immediately from local persistence and filtered
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
     try {
+      const customCoversStore = getCustomPlaylistCovers();
       const saved = localStorage.getItem("oblivion_saved_playlists");
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -313,12 +315,16 @@ export default function App() {
           return parsed
             .filter((p: any) => p && p.id && isValidPlaylistId(p.id) && !p.id.startsWith("mix_"))
             .map((p: any) => {
-              const hasCustom = Boolean(p.customCoverUrl || p.isCustomCover);
-              const bestCover = p.customCoverUrl || p.coverUrl || `https://i.ytimg.com/vi/${p.id.replace(/^VL/, '')}/hqdefault.jpg`;
+              const plId = p.id;
+              const cleanId = plId ? plId.replace(/^VL/, "") : "";
+              const customFromStore = customCoversStore[plId] || customCoversStore[cleanId];
+              const resolvedCustom = customFromStore || p.customCoverUrl || (p.isCustomCover ? p.coverUrl : null) || null;
+              const hasCustom = Boolean(resolvedCustom);
+              const bestCover = resolvedCustom || p.coverUrl || `https://i.ytimg.com/vi/${cleanId}/hqdefault.jpg`;
               return {
                 ...p,
                 coverUrl: bestCover,
-                customCoverUrl: hasCustom ? (p.customCoverUrl || p.coverUrl) : undefined,
+                customCoverUrl: resolvedCustom || undefined,
                 isCustomCover: hasCustom,
               };
             });
@@ -1028,6 +1034,7 @@ export default function App() {
       }
 
       if (data.playlists && Array.isArray(data.playlists) && data.playlists.length > 0) {
+        const customCoversStore = getCustomPlaylistCovers();
         const customCoversMap = await getCustomCoversFromCache().catch(() => ({}));
         const seenPlIds = new Set<string>();
         const sanitizedPlaylists: Playlist[] = [];
@@ -1054,8 +1061,10 @@ export default function App() {
           }
 
           const customCoverEntry = customCoversMap[plId] || customCoversMap[cleanId];
+          const isolatedCustom = customCoversStore[plId] || customCoversStore[cleanId];
 
           const isAuthenticCustom =
+            Boolean(isolatedCustom) ||
             Boolean(customCoverEntry?.customCoverUrl) ||
             Boolean(pl.isCustomCover) ||
             Boolean(
@@ -1117,12 +1126,16 @@ export default function App() {
             (p) => p.id === plId || (p.id && p.id.replace(/^VL/, "") === cleanId)
           );
 
+          // Absolute immutability rule:
+          // updatedPlaylist.customCoverUrl = CUSTOM_PLAYLIST_COVERS[updatedPlaylist.id] || existingLocalPlaylist?.customCoverUrl || null;
           const resolvedCustom =
-            customCoverEntry?.customCoverUrl ||
-            pl.customCoverUrl ||
-            (isAuthenticCustom ? (rawCover || rawCustom) : undefined) ||
+            isolatedCustom ||
             existingMatch?.customCoverUrl ||
-            (existingMatch?.isCustomCover ? existingMatch.coverUrl : undefined);
+            customCoverEntry?.customCoverUrl ||
+            (existingMatch?.isCustomCover ? existingMatch.coverUrl : null) ||
+            pl.customCoverUrl ||
+            (isAuthenticCustom ? (rawCover || rawCustom) : null) ||
+            null;
 
           let primaryCover =
             resolvedCustom ||
@@ -1147,7 +1160,7 @@ export default function App() {
             ...pl,
             id: plId,
             coverUrl: finalPrimaryCover,
-            customCoverUrl: finalIsCustom ? (resolvedCustom || finalPrimaryCover) : undefined,
+            customCoverUrl: resolvedCustom || undefined,
             isCustomCover: finalIsCustom,
             tracks: finalTracks,
             tracksCount: pl.tracksCount || finalTracks.length || 0,
@@ -1804,7 +1817,8 @@ export default function App() {
   const handleUpdatePlaylistCover = async (playlistId: string, newCoverUrl: string, isCustom: boolean) => {
     const cleanId = playlistId.replace(/^VL/, "");
 
-    // Lock custom cover in dedicated store
+    // Lock custom cover in dedicated store immediately
+    setCustomPlaylistCover(playlistId, isCustom ? newCoverUrl : null);
     saveCustomCoverToCache(playlistId, newCoverUrl, isCustom);
 
     setPlaylists((prev) => {
@@ -1813,7 +1827,7 @@ export default function App() {
           ? {
               ...p,
               coverUrl: newCoverUrl,
-              customCoverUrl: newCoverUrl,
+              customCoverUrl: isCustom ? newCoverUrl : undefined,
               isCustomCover: isCustom,
             }
           : p
