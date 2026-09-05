@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Playlist, Track, YouTubeThumbnails } from "../types";
 import { Music, Sparkles } from "lucide-react";
-import { getPlaylistCustomArtwork } from "../utils/customCoversStorage";
+import {
+  getPlaylistCustomArtwork,
+  setPlaylistCustomArtwork,
+  isAuthenticCustomArtworkUrl,
+  isVideoThumbnailUrl,
+} from "../utils/customCoversStorage";
 
 interface PlaylistCoverArtProps {
   playlist: Playlist | {
@@ -32,7 +37,16 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   // 1. ISOLATED LOCAL IMAGE RESOLUTION SYNCHRONOUSLY ON MOUNT
   const [customArt, setCustomArt] = useState<string | null>(() => {
     if (!playlistId) return null;
-    return getPlaylistCustomArtwork(playlistId);
+    const fromStore = getPlaylistCustomArtwork(playlistId);
+    if (fromStore) return fromStore;
+
+    // Check if the playlist prop already has valid custom artwork and lock it in
+    const candidate = playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
+    if (candidate && isAuthenticCustomArtworkUrl(candidate)) {
+      setPlaylistCustomArtwork(playlistId, candidate);
+      return candidate;
+    }
+    return null;
   });
 
   const [imageError, setImageError] = useState<boolean>(false);
@@ -41,7 +55,14 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   // Sync state if playlist ID changes or custom artwork event fires
   useEffect(() => {
     setImageError(false);
-    const resolved = getPlaylistCustomArtwork(playlistId);
+    let resolved = getPlaylistCustomArtwork(playlistId);
+    if (!resolved) {
+      const candidate = playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
+      if (candidate && isAuthenticCustomArtworkUrl(candidate)) {
+        setPlaylistCustomArtwork(playlistId, candidate);
+        resolved = candidate;
+      }
+    }
     setCustomArt(resolved);
 
     const handleStorageChange = (e: any) => {
@@ -50,9 +71,11 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
         detail &&
         (detail.playlistId === playlistId ||
           detail.cleanId === cleanId ||
-          detail.playlistId === cleanId)
+          detail.playlistId === cleanId ||
+          detail.sync)
       ) {
-        setCustomArt(detail.artworkUrl || null);
+        const updatedArt = getPlaylistCustomArtwork(playlistId);
+        setCustomArt(updatedArt);
         setImageError(false);
       }
     };
@@ -61,21 +84,38 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     return () => {
       window.removeEventListener("playlist_custom_artwork_changed", handleStorageChange);
     };
-  }, [playlistId, cleanId]);
+  }, [playlistId, cleanId, playlist?.customCoverUrl, playlist?.coverUrl, playlist?.isCustomCover]);
 
-  // 2. RENDER CUSTOM ARTWORK IMMEDIATELY IF PRESENT; IGNORE ALL PLAYLIST.TRACKS UPDATES
-  // Priority: customArt from independent store -> playlist.customCoverUrl -> playlist.coverUrl -> playlist.tracks?.[0]?.coverUrl
-  const finalSource =
+  // Determine if this playlist is authentically custom
+  const isExplicitCustom = Boolean(
     customArt ||
-    playlist?.customCoverUrl ||
-    playlist?.coverUrl ||
-    playlist?.tracks?.[0]?.coverUrl ||
-    fallbackCover;
+    (playlist?.customCoverUrl && isAuthenticCustomArtworkUrl(playlist.customCoverUrl)) ||
+    (playlist?.isCustomCover && playlist?.coverUrl && !isVideoThumbnailUrl(playlist.coverUrl)) ||
+    (playlist?.coverUrl && isAuthenticCustomArtworkUrl(playlist.coverUrl))
+  );
 
-  const isExplicitCustom = Boolean(customArt || playlist?.customCoverUrl || playlist?.isCustomCover);
+  // 2. STRICT RESOLUTION ORDER:
+  // If this playlist has custom artwork: ONLY resolve custom artwork, NEVER tracks[0]!
+  let finalSource: string | null = null;
+  if (customArt) {
+    finalSource = customArt;
+  } else if (playlist?.customCoverUrl && isAuthenticCustomArtworkUrl(playlist.customCoverUrl)) {
+    finalSource = playlist.customCoverUrl;
+  } else if (playlist?.isCustomCover && playlist?.coverUrl && !isVideoThumbnailUrl(playlist.coverUrl)) {
+    finalSource = playlist.coverUrl;
+  } else if (playlist?.coverUrl && isAuthenticCustomArtworkUrl(playlist.coverUrl)) {
+    finalSource = playlist.coverUrl;
+  } else if (!isExplicitCustom) {
+    // Only non-custom playlists are allowed to display tracks[0] or generic coverUrl
+    finalSource = playlist?.coverUrl || playlist?.tracks?.[0]?.coverUrl || fallbackCover;
+  }
 
   const handleImageError = () => {
-    // If the primary image fails and we have a first track cover, try fallback
+    // STRICT IMMUTABILITY: If this playlist has custom artwork, DO NOT fall back to the first song!
+    if (isExplicitCustom) {
+      setImageError(true);
+      return;
+    }
     const trackZero = playlist?.tracks?.[0];
     const trackZeroCover = trackZero?.coverUrl;
     if (finalSource !== trackZeroCover && trackZeroCover) {

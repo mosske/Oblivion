@@ -169,13 +169,32 @@ function writeStoredPlaylists(pls: any[]) {
 }
 
 function readStoredCustomCovers(): Record<string, string> {
+  const result: Record<string, string> = {};
   try {
     if (fs.existsSync(CUSTOM_COVERS_FILE)) {
       const data = fs.readFileSync(CUSTOM_COVERS_FILE, "utf-8");
-      return JSON.parse(data);
+      Object.assign(result, JSON.parse(data));
     }
   } catch {}
-  return {};
+  try {
+    if (fs.existsSync(PLAYLISTS_FILE)) {
+      const pData = fs.readFileSync(PLAYLISTS_FILE, "utf-8");
+      const pls = JSON.parse(pData);
+      if (Array.isArray(pls)) {
+        for (const pl of pls) {
+          if (pl && pl.id && (pl.isCustomCover || pl.customCoverUrl) && (pl.customCoverUrl || pl.coverUrl)) {
+            const cleanId = pl.id.replace(/^VL/, "");
+            const customUrl = pl.customCoverUrl || pl.coverUrl;
+            if (customUrl && typeof customUrl === "string" && !customUrl.includes("/vi/")) {
+              if (!result[cleanId]) result[cleanId] = customUrl;
+              if (!result[pl.id]) result[pl.id] = customUrl;
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+  return result;
 }
 
 function writeStoredCustomCovers(map: Record<string, string>) {
@@ -1040,6 +1059,29 @@ async function fetchYouTubeMusicLibraryPlaylists(accessToken: string): Promise<a
   }
 }
 
+// Helper to verify if a URL is an authentic custom playlist cover rather than a video thumbnail
+function isAuthenticCustomUrl(u: string): boolean {
+  if (!u || typeof u !== "string") return false;
+  if (u.startsWith("data:")) return true; // Local data URLs are authentic user uploads
+  return (
+    u.includes("studio_square_thumbnail") ||
+    u.includes("/pl_c/") ||
+    u.includes("googleusercontent.com") ||
+    u.includes("ggpht.com") ||
+    u.includes("yt3.ggpht.com") ||
+    u.includes("yt4.ggpht.com") ||
+    u.includes("yt3.googleusercontent.com") ||
+    u.includes("lh3.googleusercontent.com") ||
+    u.includes("play-lh.googleusercontent.com") ||
+    u.includes("photos.googleusercontent.com") ||
+    u.includes("ytimg.com/pl/") ||
+    u.includes("/pl/") ||
+    u.includes("/s_p/") ||
+    u.includes("ytimg.com/an_webp/") ||
+    u.includes("ytimg.com/v2/")
+  );
+}
+
 // High-resolution YouTube Playlist Custom Artwork Fetcher
 // Extracts authentic custom artwork (YouTube Studio square thumbnails, Google User Content covers)
 async function fetchYouTubePlaylistCustomImage(
@@ -1061,28 +1103,6 @@ async function fetchYouTubePlaylistCustomImage(
     setInCache(cacheKey, hit);
     return hit;
   }
-
-  const isAuthenticCustomUrl = (u: string) => {
-    if (!u || typeof u !== "string") return false;
-    if (u.startsWith("data:")) return false; // Reject local data URLs
-    return (
-      u.includes("studio_square_thumbnail") ||
-      u.includes("/pl_c/") ||
-      u.includes("googleusercontent.com") ||
-      u.includes("ggpht.com") ||
-      u.includes("yt3.ggpht.com") ||
-      u.includes("yt4.ggpht.com") ||
-      u.includes("yt3.googleusercontent.com") ||
-      u.includes("lh3.googleusercontent.com") ||
-      u.includes("play-lh.googleusercontent.com") ||
-      u.includes("photos.googleusercontent.com") ||
-      u.includes("ytimg.com/pl/") ||
-      u.includes("/pl/") ||
-      u.includes("/s_p/") ||
-      u.includes("ytimg.com/an_webp/") ||
-      u.includes("ytimg.com/v2/")
-    );
-  };
 
   // 1. Direct Inspection of fallbackThumbnails (from playlist snippet)
   if (fallbackThumbnails) {
@@ -3527,11 +3547,25 @@ async function syncPlaylistTracksToYouTube(
   const found = req.session.playlists.find(
     (p) => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId)
   );
+
+  const storedCustom = readStoredCustomCovers();
+  const customImg =
+    storedCustom[cleanPlId] ||
+    storedCustom[id] ||
+    (found?.customCoverUrl && isAuthenticCustomUrl(found.customCoverUrl) ? found.customCoverUrl : null) ||
+    (found?.coverUrl && isAuthenticCustomUrl(found.coverUrl) ? found.coverUrl : null);
+
+  const hasCustomCover = Boolean(customImg || found?.isCustomCover);
+
   if (found && Array.isArray(tracks)) {
     found.tracks = tracks;
     found.tracksCount = tracks.length;
-    if (tracks.length > 0 && !found.isCustomCover) {
-      found.coverUrl = tracks[0].coverUrl || found.coverUrl;
+    if (hasCustomCover && customImg) {
+      found.coverUrl = customImg;
+      found.customCoverUrl = customImg;
+      found.isCustomCover = true;
+    } else if (!hasCustomCover && tracks.length > 0 && !found.coverUrl) {
+      found.coverUrl = tracks[0].coverUrl;
     }
   }
   localPlaylistsStore = req.session.playlists;

@@ -184,9 +184,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         const merged = missingLocalTracks.length > 0 ? [...clean, ...missingLocalTracks] : clean;
         setTracks(merged);
         savePlaylistTracksToDBCache(item.id, merged);
-        if (onReorderTracks) {
-          onReorderTracks(merged);
-        }
       }
       setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {
