@@ -1060,56 +1060,6 @@ export default function App() {
             sanitizedTracks.push({ ...t, id: trId });
           }
 
-          const customCoverEntry = customCoversMap[plId] || customCoversMap[cleanId];
-          const isolatedCustom = customCoversStore[plId] || customCoversStore[cleanId];
-
-          const isAuthenticCustom =
-            Boolean(isolatedCustom) ||
-            Boolean(customCoverEntry?.customCoverUrl) ||
-            Boolean(pl.isCustomCover) ||
-            Boolean(
-              pl.customCoverUrl &&
-              !pl.customCoverUrl.startsWith("data:") &&
-              (
-                pl.customCoverUrl.includes("studio_square_thumbnail") ||
-                pl.customCoverUrl.includes("/pl_c/") ||
-                pl.customCoverUrl.includes("googleusercontent.com") ||
-                pl.customCoverUrl.includes("ggpht.com") ||
-                pl.customCoverUrl.includes("yt3.ggpht.com") ||
-                pl.customCoverUrl.includes("yt4.ggpht.com") ||
-                pl.customCoverUrl.includes("yt3.googleusercontent.com") ||
-                pl.customCoverUrl.includes("lh3.googleusercontent.com") ||
-                pl.customCoverUrl.includes("play-lh.googleusercontent.com") ||
-                pl.customCoverUrl.includes("photos.googleusercontent.com") ||
-                pl.customCoverUrl.includes("ytimg.com/pl/") ||
-                pl.customCoverUrl.includes("/pl/") ||
-                pl.customCoverUrl.includes("/s_p/") ||
-                pl.customCoverUrl.includes("ytimg.com/an_webp/") ||
-                pl.customCoverUrl.includes("ytimg.com/v2/")
-              )
-            ) ||
-            Boolean(
-              pl.coverUrl &&
-              !pl.coverUrl.startsWith("data:") &&
-              (
-                pl.coverUrl.includes("studio_square_thumbnail") ||
-                pl.coverUrl.includes("/pl_c/") ||
-                pl.coverUrl.includes("googleusercontent.com") ||
-                pl.coverUrl.includes("ggpht.com") ||
-                pl.coverUrl.includes("yt3.ggpht.com") ||
-                pl.coverUrl.includes("yt4.ggpht.com") ||
-                pl.coverUrl.includes("yt3.googleusercontent.com") ||
-                pl.coverUrl.includes("lh3.googleusercontent.com") ||
-                pl.coverUrl.includes("play-lh.googleusercontent.com") ||
-                pl.coverUrl.includes("photos.googleusercontent.com") ||
-                pl.coverUrl.includes("ytimg.com/pl/") ||
-                pl.coverUrl.includes("/pl/") ||
-                pl.coverUrl.includes("/s_p/") ||
-                pl.coverUrl.includes("ytimg.com/an_webp/") ||
-                pl.coverUrl.includes("ytimg.com/v2/")
-              )
-            );
-
           const thumbs = pl.thumbnails;
           const bestThumb =
             thumbs?.maxres?.url ||
@@ -1118,50 +1068,27 @@ export default function App() {
             thumbs?.medium?.url ||
             thumbs?.default?.url;
 
-          const rawCustom = pl.customCoverUrl;
-          const rawCover = pl.coverUrl;
-
-          // Match with existing playlist to preserve full tracks if already fetched and preserve custom cover
+          // Match with existing playlist to preserve full tracks if already fetched
           const existingMatch = playlists.find(
             (p) => p.id === plId || (p.id && p.id.replace(/^VL/, "") === cleanId)
           );
 
-          // Absolute immutability rule:
-          // updatedPlaylist.customCoverUrl = CUSTOM_PLAYLIST_COVERS[updatedPlaylist.id] || existingLocalPlaylist?.customCoverUrl || null;
-          const resolvedCustom =
-            isolatedCustom ||
-            existingMatch?.customCoverUrl ||
-            customCoverEntry?.customCoverUrl ||
-            (existingMatch?.isCustomCover ? existingMatch.coverUrl : null) ||
-            pl.customCoverUrl ||
-            (isAuthenticCustom ? (rawCover || rawCustom) : null) ||
-            null;
-
-          let primaryCover =
-            resolvedCustom ||
-            rawCover ||
-            bestThumb ||
-            existingMatch?.coverUrl ||
-            "";
-
-          // If manual sync, apply cache buster to force fresh CDN fetch
-          if (isManualSync) {
-            if (resolvedCustom) primaryCover = applyArtworkCacheBuster(resolvedCustom, syncTimestamp) || primaryCover;
-          }
+          // SINK-LEVEL IMMUTABILITY:
+          // Leave remote playlist data as purely remote data. Custom artwork is completely detached
+          // and resolved by UI components (PlaylistCoverArt) directly from the standalone store.
+          const primaryCover = pl.coverUrl || bestThumb || existingMatch?.coverUrl || "";
 
           const rawPlPrivacy = (pl.privacyStatus || pl.privacy || pl.status?.privacyStatus || "PUBLIC").toUpperCase();
           const normalizedPlPrivacy = rawPlPrivacy === "PRIVATE" ? "PRIVATE" : rawPlPrivacy === "UNLISTED" ? "UNLISTED" : "PUBLIC";
 
           const finalTracks = sanitizedTracks.length > 0 ? sanitizedTracks : (existingMatch?.tracks || []);
-          const finalIsCustom = Boolean(resolvedCustom || isAuthenticCustom || existingMatch?.isCustomCover || pl.isCustomCover);
-          const finalPrimaryCover = resolvedCustom || primaryCover;
 
           sanitizedPlaylists.push({
             ...pl,
             id: plId,
-            coverUrl: finalPrimaryCover,
-            customCoverUrl: resolvedCustom || undefined,
-            isCustomCover: finalIsCustom,
+            coverUrl: primaryCover,
+            customCoverUrl: pl.customCoverUrl || undefined,
+            isCustomCover: pl.isCustomCover,
             tracks: finalTracks,
             tracksCount: pl.tracksCount || finalTracks.length || 0,
             thumbnails: pl.thumbnails,

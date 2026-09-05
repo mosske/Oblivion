@@ -1,15 +1,20 @@
-export const CUSTOM_PLAYLIST_COVERS_KEY = "CUSTOM_PLAYLIST_COVERS";
+/**
+ * PLAYLIST_CUSTOM_ARTWORK Standalone Store
+ * 
+ * Completely decoupled from the playlists table/array and background sync routines.
+ * Maps `playlistId` (and clean playlistId without VL prefix) directly to custom artwork URL string.
+ * Supports both standalone table key PLAYLIST_CUSTOM_ARTWORK and discrete custom_art_${playlistId} entries.
+ */
 
-export const DEFAULT_PLACEHOLDER_COVER =
-  "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
+export const PLAYLIST_CUSTOM_ARTWORK_KEY = "PLAYLIST_CUSTOM_ARTWORK";
 
 /**
- * Read the entire isolated CUSTOM_PLAYLIST_COVERS store from LocalStorage
+ * Read the entire isolated PLAYLIST_CUSTOM_ARTWORK store
  */
-export function getCustomPlaylistCovers(): Record<string, string> {
+export function getCustomArtworkStore(): Record<string, string> {
   if (typeof window === "undefined" || !window.localStorage) return {};
   try {
-    const raw = localStorage.getItem(CUSTOM_PLAYLIST_COVERS_KEY);
+    const raw = localStorage.getItem(PLAYLIST_CUSTOM_ARTWORK_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") {
@@ -17,65 +22,118 @@ export function getCustomPlaylistCovers(): Record<string, string> {
       }
     }
   } catch (err) {
-    console.warn("Failed to parse CUSTOM_PLAYLIST_COVERS from localStorage", err);
+    console.warn("Failed to parse PLAYLIST_CUSTOM_ARTWORK from localStorage", err);
   }
   return {};
 }
 
 /**
- * Write a custom artwork entry to CUSTOM_PLAYLIST_COVERS immediately.
- * Writes to both full ID and clean ID (without 'VL' prefix) for rock-solid indexing.
+ * Get custom artwork for a specific playlist synchronously from standalone storage
  */
-export function setCustomPlaylistCover(playlistId: string, customCoverUrl: string | null | undefined): void {
-  if (typeof window === "undefined" || !window.localStorage || !playlistId) return;
+export function getPlaylistCustomArtwork(playlistId: string | undefined | null): string | null {
+  if (!playlistId || typeof window === "undefined" || !window.localStorage) return null;
+  
+  const cleanId = playlistId.replace(/^VL/, "");
+
+  // 1. Direct single-key check custom_art_${playlistId}
   try {
-    const store = getCustomPlaylistCovers();
-    const cleanId = playlistId.replace(/^VL/, "");
-    if (customCoverUrl && typeof customCoverUrl === "string" && customCoverUrl.trim().length > 0) {
-      store[playlistId] = customCoverUrl.trim();
-      store[cleanId] = customCoverUrl.trim();
-    } else {
-      delete store[playlistId];
-      delete store[cleanId];
+    const direct1 = localStorage.getItem(`custom_art_${playlistId}`);
+    if (direct1 && direct1.trim().length > 0) return direct1.trim();
+    if (cleanId !== playlistId) {
+      const direct2 = localStorage.getItem(`custom_art_${cleanId}`);
+      if (direct2 && direct2.trim().length > 0) return direct2.trim();
     }
-    localStorage.setItem(CUSTOM_PLAYLIST_COVERS_KEY, JSON.stringify(store));
-  } catch (err) {
-    console.warn("Failed to persist to CUSTOM_PLAYLIST_COVERS", err);
+  } catch {}
+
+  // 2. Standalone PLAYLIST_CUSTOM_ARTWORK table
+  const store = getCustomArtworkStore();
+  if (store[playlistId] && store[playlistId].trim().length > 0) {
+    return store[playlistId].trim();
   }
+  if (cleanId && store[cleanId] && store[cleanId].trim().length > 0) {
+    return store[cleanId].trim();
+  }
+
+  // 3. Backward compatibility with CUSTOM_PLAYLIST_COVERS
+  try {
+    const legacyRaw = localStorage.getItem("CUSTOM_PLAYLIST_COVERS");
+    if (legacyRaw) {
+      const legacyStore = JSON.parse(legacyRaw);
+      if (legacyStore && typeof legacyStore === "object") {
+        const val = legacyStore[playlistId] || (cleanId ? legacyStore[cleanId] : null);
+        if (val && typeof val === "string" && val.trim().length > 0) {
+          return val.trim();
+        }
+      }
+    }
+  } catch {}
+
+  return null;
 }
 
 /**
- * Enforces the exact resolution hierarchy:
- * const displayCover =
- *   CUSTOM_PLAYLIST_COVERS[playlist.id] ||
- *   playlist.customCoverUrl ||
- *   playlist.coverUrl ||
- *   playlist.tracks?.[0]?.coverUrl ||
- *   DEFAULT_PLACEHOLDER;
+ * Write directly to PLAYLIST_CUSTOM_ARTWORK and discrete custom_art_${playlistId} keys
  */
-export function resolvePlaylistCoverUrl(
-  playlist: {
-    id?: string;
-    playlistId?: string;
-    customCoverUrl?: string;
-    coverUrl?: string;
-    tracks?: Array<{ coverUrl?: string }>;
-  } | null | undefined,
-  placeholder: string = DEFAULT_PLACEHOLDER_COVER
-): string {
-  if (!playlist) return placeholder;
-  const plId = playlist.id || playlist.playlistId || "";
-  const cleanId = plId ? plId.replace(/^VL/, "") : "";
-  const customCovers = getCustomPlaylistCovers();
+export function setPlaylistCustomArtwork(playlistId: string, artworkUrl: string | null | undefined): void {
+  if (!playlistId || typeof window === "undefined" || !window.localStorage) return;
+  const cleanId = playlistId.replace(/^VL/, "");
 
-  const customFromStore = (plId && customCovers[plId]) || (cleanId && customCovers[cleanId]);
+  try {
+    // 1. Update standalone map store
+    const store = getCustomArtworkStore();
+    if (artworkUrl && typeof artworkUrl === "string" && artworkUrl.trim().length > 0) {
+      const trimmed = artworkUrl.trim();
+      store[playlistId] = trimmed;
+      store[cleanId] = trimmed;
+      localStorage.setItem(`custom_art_${playlistId}`, trimmed);
+      localStorage.setItem(`custom_art_${cleanId}`, trimmed);
+    } else {
+      delete store[playlistId];
+      delete store[cleanId];
+      localStorage.removeItem(`custom_art_${playlistId}`);
+      localStorage.removeItem(`custom_art_${cleanId}`);
+    }
+    localStorage.setItem(PLAYLIST_CUSTOM_ARTWORK_KEY, JSON.stringify(store));
 
-  const displayCover =
-    customFromStore ||
-    playlist.customCoverUrl ||
-    playlist.coverUrl ||
-    playlist.tracks?.[0]?.coverUrl ||
-    placeholder;
+    // Also mirror to legacy store for backward compatibility
+    try {
+      const legacyRaw = localStorage.getItem("CUSTOM_PLAYLIST_COVERS");
+      const legacyStore = legacyRaw ? JSON.parse(legacyRaw) : {};
+      if (artworkUrl && typeof artworkUrl === "string" && artworkUrl.trim().length > 0) {
+        legacyStore[playlistId] = artworkUrl.trim();
+        legacyStore[cleanId] = artworkUrl.trim();
+      } else {
+        delete legacyStore[playlistId];
+        delete legacyStore[cleanId];
+      }
+      localStorage.setItem("CUSTOM_PLAYLIST_COVERS", JSON.stringify(legacyStore));
+    } catch {}
 
-  return displayCover || placeholder;
+    // Dispatch custom storage event for instant UI component reactivity across all views
+    window.dispatchEvent(
+      new CustomEvent("playlist_custom_artwork_changed", {
+        detail: { playlistId, cleanId, artworkUrl },
+      })
+    );
+  } catch (err) {
+    console.warn("Failed to persist to PLAYLIST_CUSTOM_ARTWORK", err);
+  }
+}
+
+// Aliases and helper functions for seamless integration with existing imports
+export const CUSTOM_PLAYLIST_COVERS_KEY = PLAYLIST_CUSTOM_ARTWORK_KEY;
+export const getCustomPlaylistCovers = getCustomArtworkStore;
+export const setCustomPlaylistCover = setPlaylistCustomArtwork;
+
+/**
+ * Resolve playlist cover URL synchronously, checking isolated custom artwork storage first
+ */
+export function resolvePlaylistCoverUrl(playlist: { id?: string; coverUrl?: string; customCoverUrl?: string; isCustomCover?: boolean; tracks?: Array<{ coverUrl?: string }> } | null | undefined): string {
+  if (!playlist) return "";
+  const custom = getPlaylistCustomArtwork(playlist.id);
+  if (custom) return custom;
+  if (playlist.customCoverUrl) return playlist.customCoverUrl;
+  if (playlist.coverUrl) return playlist.coverUrl;
+  if (playlist.tracks?.[0]?.coverUrl) return playlist.tracks[0].coverUrl;
+  return "";
 }
