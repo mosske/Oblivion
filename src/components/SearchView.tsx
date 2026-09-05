@@ -433,19 +433,32 @@ export const SearchView: React.FC<SearchViewProps> = ({
           (filteredResults || []).map((item: any, idx: number) => {
             const isAlbum = item.type === "album" || Boolean(item.playlistId);
             const isArtist = item.type === "artist" || Boolean(item.channelId);
-            const itemVid = item.youtubeVideoId || item.id;
-            const currentVid = currentTrack ? ((currentTrack as any).videoId || currentTrack.youtubeVideoId || currentTrack.id) : null;
-            const trackVid = item.videoId || item.youtubeVideoId || item.id;
+            const itemVid = item.videoId || item.youtubeVideoId || item.id;
+            const currentVid = currentTrack
+              ? ((currentTrack as any).videoId || currentTrack.youtubeVideoId || currentTrack.id)
+              : currentTrackId || null;
 
-            const isCurrentlyPlaying = Boolean(
-              (!isAlbum && !isArtist) &&
-              currentTrack && (
-                (item.id && currentTrack.id && item.id === currentTrack.id) ||
-                (trackVid && currentVid && trackVid === currentVid) ||
-                (item.title && item.artist && currentTrack.title && currentTrack.artist &&
-                  `${item.title.toLowerCase()}::${item.artist.toLowerCase()}` === `${currentTrack.title.toLowerCase()}::${currentTrack.artist.toLowerCase()}`)
-              )
-            );
+            // 1. Strict Track Equality via Unique ID:
+            // Compare unique track identifiers instead of title alone.
+            const hasItemUniqueId = Boolean(item.id || item.videoId || item.youtubeVideoId);
+            const hasCurrentUniqueId = Boolean(currentTrack?.id || (currentTrack as any)?.videoId || currentTrack?.youtubeVideoId || currentTrackId);
+
+            let isCurrentlyPlaying = false;
+            if (!isAlbum && !isArtist && currentTrack) {
+              if (hasItemUniqueId && hasCurrentUniqueId) {
+                // Strict ID comparison: (item.id === currentTrack.id) or (item.videoId === currentTrack.videoId)
+                const idMatch = Boolean(item.id && (item.id === currentTrack.id || item.id === currentTrackId));
+                const vidMatch = Boolean(itemVid && currentVid && itemVid === currentVid);
+                isCurrentlyPlaying = idMatch || vidMatch;
+              } else if (item.title && item.artist && currentTrack.title && currentTrack.artist) {
+                // 2. Compound Fallback Matching (if IDs are missing):
+                // Fallback to matching both title AND artist name combined rather than title alone.
+                const itemCompound = `${String(item.title).trim().toLowerCase()}::${String(item.artist).trim().toLowerCase()}`;
+                const currentCompound = `${String(currentTrack.title).trim().toLowerCase()}::${String(currentTrack.artist).trim().toLowerCase()}`;
+                isCurrentlyPlaying = itemCompound === currentCompound;
+              }
+            }
+
             const isCurrent = isCurrentlyPlaying;
 
             const handleItemClick = () => {
@@ -479,7 +492,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
             return (
               <div
-                key={item.id || item.videoId || item.youtubeVideoId || `${item.title}-${idx}`}
+                key={item.id ? `${item.id}_${idx}` : (item.videoId || item.youtubeVideoId ? `${item.videoId || item.youtubeVideoId}_${idx}` : `search_track_${idx}`)}
                 className={`group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
                   isCurrent
                     ? `${designConfig.cardBg} shadow-lg ring-2`
