@@ -81,6 +81,14 @@ export function parseLRC(lrcText: string): LyricLine[] {
 export const parseLrc = parseLRC;
 
 /**
+ * Checks if a string contains valid LRC timestamp tags like [00:12.34] or [01:23.456]
+ */
+export function hasLrcTimestamps(text?: string): boolean {
+  if (!text || typeof text !== "string") return false;
+  return /\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]/.test(text);
+}
+
+/**
  * Converts plain multi-line lyrics text into LyricLine array for fallback display
  */
 export function parsePlainLyrics(plainText: string): LyricLine[] {
@@ -135,15 +143,15 @@ export function createDualLyricLines(
  *
  * Tier 1 (LRCLIB - Primary Synced):
  *   - Query https://lrclib.net/api/get passing track_name, artist_name, album_name, and duration.
- *   - If synced LRC timestamps exist, parse and return immediately.
- *   - Search fallback on LRCLIB if get 404s.
+ *   - If /api/get returns syncedLyrics: null OR lacks timestamps, DO NOT settle for plain lyrics.
+ *   - Fallback to /api/search and loop through results to find first entry with valid syncedLyrics within <= 4s tolerance.
+ *   - Only drop to plainLyrics as an absolute last resort if NO result contains synced lyrics.
  *
  * Tier 2 (YT InnerTube Native):
- *   - If LRCLIB fails or has no synced lyrics, call YouTube InnerTube browse endpoint on the backend
- *     derived from the track's videoId to fetch native YouTube Music lyrics.
+ *   - If LRCLIB fails or has no synced lyrics, call YouTube InnerTube browse endpoint on the backend.
  *
  * Tier 3 (Genius / Secondary Fallback):
- *   - Fallback to plain-text scraping/APIs (Genius & Lyrics.ovh) if no synced LRC timestamps exist.
+ *   - Fallback to tertiary APIs (Genius & Lyrics.ovh) if no synced LRC timestamps exist.
  */
 export async function fetchLyricsMultiSource(
   rawTitle: string,
@@ -187,7 +195,7 @@ export async function fetchLyricsMultiSource(
         const isDurationMatch = !durationSec || !lrcDur || Math.abs(lrcDur - durationSec) <= 4.0;
 
         if (isDurationMatch) {
-          if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
+          if (data.syncedLyrics && data.syncedLyrics.trim().length > 0 && hasLrcTimestamps(data.syncedLyrics)) {
             return {
               syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
               plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
@@ -199,6 +207,8 @@ export async function fetchLyricsMultiSource(
               lrcDuration: lrcDur,
             };
           }
+          // If syncedLyrics is null or lacks timestamp tags, DO NOT settle for plainLyrics yet.
+          // Save plainLyrics into lrclibPlainMatch and proceed to search fallback to find synced version.
           if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
             lrclibPlainMatch = {
               plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
@@ -217,9 +227,12 @@ export async function fetchLyricsMultiSource(
     }
   }
 
+  // =========================================================================
   // LRCLIB Search Queries Fallback:
-  // If /api/get returns 404, query /api/search?track_name=...&artist_name=...
+  // Query /api/search?track_name=...&artist_name=...
   // Local Filter: ONLY accept a result if Math.abs(result.duration - durationSec) <= 4
+  // Priority: first entry with non-empty syncedLyrics and valid timestamp tags.
+  // =========================================================================
   const searchEndpoints: string[] = [];
   if (cleanTitle && cleanArtist) {
     searchEndpoints.push(
@@ -255,8 +268,10 @@ export async function fetchLyricsMultiSource(
               })
             : list;
 
-          // Priority: Synced lyrics within tolerance
-          const withSynced = filteredList.find((item: any) => item.syncedLyrics && item.syncedLyrics.trim().length > 0);
+          // Priority: First entry where syncedLyrics is NOT null/empty and has timestamps
+          const withSynced = filteredList.find(
+            (item: any) => item.syncedLyrics && item.syncedLyrics.trim().length > 0 && hasLrcTimestamps(item.syncedLyrics)
+          );
 
           if (withSynced) {
             const searchLrcDur = typeof withSynced.duration === "number" && withSynced.duration > 0 ? withSynced.duration : undefined;

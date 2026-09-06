@@ -5308,7 +5308,7 @@ app.get("/api/youtube/lyrics", async (req, res) => {
       const isDurationMatch = !durationSec || !lrcDur || Math.abs(lrcDur - durationSec) <= 4.0;
 
       if (isDurationMatch) {
-        if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
+        if (data.syncedLyrics && data.syncedLyrics.trim().length > 0 && /\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]/.test(data.syncedLyrics)) {
           const sanitizedSynced = sanitizeCaptionsAndLyricsServer(data.syncedLyrics);
           const quality = validateLyricsQualityServer(sanitizedSynced, {
             isSynced: true,
@@ -5380,7 +5380,7 @@ app.get("/api/youtube/lyrics", async (req, res) => {
             : list;
 
           const syncedMatch = durationFiltered.find((it: any) => {
-            if (!it.syncedLyrics || !it.syncedLyrics.trim()) return false;
+            if (!it.syncedLyrics || !it.syncedLyrics.trim() || !/\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]/.test(it.syncedLyrics)) return false;
             const sanitized = sanitizeCaptionsAndLyricsServer(it.syncedLyrics);
             return validateLyricsQualityServer(sanitized, {
               isSynced: true,
