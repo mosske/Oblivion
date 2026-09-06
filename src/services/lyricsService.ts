@@ -1,4 +1,10 @@
-import { sanitizeLyricsQuery } from "../utils/lyricsSanitizer";
+import {
+  sanitizeLyricsQuery,
+  sanitizeCaptionsAndLyrics,
+  cleanArtistName,
+  cleanTrackTitle,
+  normalizeDurationSeconds,
+} from "../utils/lyricsSanitizer";
 import { LyricLine } from "../types";
 
 export type LyricsSourceType =
@@ -22,7 +28,7 @@ export interface LyricsResult {
 }
 
 /**
- * Parses timestamped LRC strings (e.g. "[01:23.45] Lyric line") into LyricLine array
+ * Parses timestamped LRC strings (e.g. "[01:23.45] Lyric line" or "[00:15.678]") into LyricLine array with millisecond precision
  */
 export function parseLRC(lrcText: string): LyricLine[] {
   if (!lrcText) return [];
@@ -36,23 +42,31 @@ export function parseLRC(lrcText: string): LyricLine[] {
     const trimmed = rawLine.trim();
     if (!trimmed) continue;
 
-    // Skip metadata tags like [ar: Artist], [ti: Title], [al: Album], [length: ...], etc.
+    // Skip metadata tags like [ar: Artist], [ti: Title], [al: Album], [length: ...], [by: ...], [offset: ...]
     if (/^\[(ti|ar|al|au|length|by|offset|re|ve):/i.test(trimmed)) {
       continue;
     }
 
     const matches = Array.from(trimmed.matchAll(timeRegex));
     if (matches.length > 0) {
-      const text = trimmed.replace(timeRegex, "").trim();
-      if (text) {
+      let rawContent = trimmed.replace(timeRegex, "").trim();
+      // Apply caption sanitization to strip speech-to-text artifacts ([Music], [Applause], etc.)
+      const cleaned = sanitizeCaptionsAndLyrics(rawContent);
+      if (cleaned) {
         for (const match of matches) {
           const minutes = parseInt(match[1], 10);
           const seconds = parseInt(match[2], 10);
           const msStr = match[3] || "0";
-          const msFactor = msStr.length === 1 ? 100 : msStr.length === 2 ? 10 : 1;
-          const ms = parseInt(msStr, 10) * msFactor;
-          const totalSeconds = minutes * 60 + seconds + ms / 1000;
-          parsed.push({ time: totalSeconds, text });
+          const ms =
+            msStr.length === 2
+              ? parseInt(msStr, 10) / 100
+              : msStr.length === 3
+              ? parseInt(msStr, 10) / 1000
+              : msStr.length === 1
+              ? parseInt(msStr, 10) / 10
+              : 0;
+          const totalSeconds = minutes * 60 + seconds + ms;
+          parsed.push({ time: totalSeconds, text: cleaned });
         }
       }
     }
@@ -63,12 +77,16 @@ export function parseLRC(lrcText: string): LyricLine[] {
   return parsed;
 }
 
+/** Alias for parseLRC */
+export const parseLrc = parseLRC;
+
 /**
  * Converts plain multi-line lyrics text into LyricLine array for fallback display
  */
 export function parsePlainLyrics(plainText: string): LyricLine[] {
   if (!plainText) return [];
-  return plainText
+  const sanitized = sanitizeCaptionsAndLyrics(plainText);
+  return sanitized
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
@@ -113,32 +131,36 @@ export function createDualLyricLines(
 }
 
 /**
- * Multi-Source Lyrics Pipeline with Title Sanitization & Provider Fallback:
+ * Multi-Source Lyrics Pipeline with Title Sanitization & 3-Tier Provider Fallback:
  *
- * 1. Primary: LRCLIB Synced .lrc & plain lyrics API (https://lrclib.net/api/get & /search)
- *    - Uses community-verified synchronized and plain lyrics with duration matching.
- *    - Strictly avoids YouTube video captions to prevent pulling unrelated/garbage subtitles.
+ * Tier 1 (LRCLIB - Primary Synced):
+ *   - Query https://lrclib.net/api/get passing track_name, artist_name, album_name, and duration.
+ *   - If synced LRC timestamps exist, parse and return immediately.
+ *   - Search fallback on LRCLIB if get 404s.
  *
- * 2. Secondary: Official YouTube Music browse API (Record label / Musixmatch / LyricFind publisher lyrics)
+ * Tier 2 (YT InnerTube Native):
+ *   - If LRCLIB fails or has no synced lyrics, call YouTube InnerTube browse endpoint on the backend
+ *     derived from the track's videoId to fetch native YouTube Music lyrics.
  *
- * 3. Tertiary: Public lyrics providers (Genius & Lyrics.ovh)
+ * Tier 3 (Genius / Secondary Fallback):
+ *   - Fallback to plain-text scraping/APIs (Genius & Lyrics.ovh) if no synced LRC timestamps exist.
  */
 export async function fetchLyricsMultiSource(
   rawTitle: string,
-  rawArtist: string,
-  durationInSeconds?: number,
-  videoId?: string
+  rawArtist: string | string[],
+  duration?: number,
+  videoId?: string,
+  albumName?: string
 ): Promise<LyricsResult> {
-  const sanitized = sanitizeLyricsQuery(rawTitle, rawArtist);
-  const cleanTitle = sanitized.cleanTitle;
-  const cleanArtist = sanitized.cleanArtist;
-  const dur = durationInSeconds && durationInSeconds > 10 ? Math.round(durationInSeconds) : undefined;
+  const cleanTitle = cleanTrackTitle(rawTitle);
+  const cleanArtist = cleanArtistName(rawArtist);
+  const durationSec = normalizeDurationSeconds(duration);
   const cleanVid = videoId ? videoId.split("_")[0] : "";
 
   let lrclibPlainMatch: LyricsResult | null = null;
 
   // =========================================================================
-  // Provider 1 (Primary): LRCLIB API for Synced .lrc Lyrics
+  // Tier 1 (Primary Synced): LRCLIB API (/api/get with exact track_name, artist_name, duration)
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
@@ -146,8 +168,11 @@ export async function fetchLyricsMultiSource(
         track_name: cleanTitle,
         artist_name: cleanArtist,
       });
-      if (dur) {
-        params.append("duration", dur.toString());
+      if (durationSec) {
+        params.append("duration", durationSec.toString());
+      }
+      if (albumName && albumName.trim()) {
+        params.append("album_name", albumName.trim());
       }
 
       const getUrl = `https://lrclib.net/api/get?${params.toString()}`;
@@ -159,13 +184,13 @@ export async function fetchLyricsMultiSource(
       if (res.ok) {
         const data = await res.json();
         const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
-        const isDurationMatch = !dur || !lrcDur || Math.abs(lrcDur - dur) <= 4.0;
+        const isDurationMatch = !durationSec || !lrcDur || Math.abs(lrcDur - durationSec) <= 4.0;
 
         if (isDurationMatch) {
           if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
             return {
-              syncedLyrics: data.syncedLyrics,
-              plainLyrics: data.plainLyrics,
+              syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
+              plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
               isSynced: true,
               source: "lrclib",
               provider: "LRCLIB Synced",
@@ -176,7 +201,7 @@ export async function fetchLyricsMultiSource(
           }
           if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
             lrclibPlainMatch = {
-              plainLyrics: data.plainLyrics,
+              plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
               isSynced: false,
               source: "lrclib",
               provider: "LRCLIB Plain",
@@ -192,15 +217,26 @@ export async function fetchLyricsMultiSource(
     }
   }
 
-  // LRCLIB Search Queries Fallback
+  // LRCLIB Search Queries Fallback:
+  // If /api/get returns 404, query /api/search?track_name=...&artist_name=...
+  // Local Filter: ONLY accept a result if Math.abs(result.duration - durationSec) <= 4
+  const searchEndpoints: string[] = [];
+  if (cleanTitle && cleanArtist) {
+    searchEndpoints.push(
+      `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`
+    );
+  }
+  const sanitized = sanitizeLyricsQuery(rawTitle, rawArtist);
   const searchQueries = [
     sanitized.searchQuery,
     ...sanitized.secondaryQueries,
   ].filter(Boolean);
-
   for (const q of searchQueries) {
+    searchEndpoints.push(`https://lrclib.net/api/search?q=${encodeURIComponent(q)}`);
+  }
+
+  for (const searchUrl of searchEndpoints) {
     try {
-      const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(q)}`;
       const res = await fetch(searchUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
         signal: AbortSignal.timeout(4000),
@@ -209,20 +245,24 @@ export async function fetchLyricsMultiSource(
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list) && list.length > 0) {
-          // Priority: Synced lyrics with duration check
-          const withSynced = list.find((item) => {
-            if (!item.syncedLyrics || !item.syncedLyrics.trim()) return false;
-            if (dur && typeof item.duration === "number" && item.duration > 0) {
-              return Math.abs(item.duration - dur) <= 4.0;
-            }
-            return true;
-          });
+          // Duration filter: ONLY accept a result if Math.abs(result.duration - durationSec) <= 4
+          const filteredList = durationSec
+            ? list.filter((item: any) => {
+                if (typeof item.duration === "number" && item.duration > 0) {
+                  return Math.abs(item.duration - durationSec) <= 4.0;
+                }
+                return false;
+              })
+            : list;
+
+          // Priority: Synced lyrics within tolerance
+          const withSynced = filteredList.find((item: any) => item.syncedLyrics && item.syncedLyrics.trim().length > 0);
 
           if (withSynced) {
             const searchLrcDur = typeof withSynced.duration === "number" && withSynced.duration > 0 ? withSynced.duration : undefined;
             return {
-              syncedLyrics: withSynced.syncedLyrics,
-              plainLyrics: withSynced.plainLyrics,
+              syncedLyrics: sanitizeCaptionsAndLyrics(withSynced.syncedLyrics),
+              plainLyrics: withSynced.plainLyrics ? sanitizeCaptionsAndLyrics(withSynced.plainLyrics) : undefined,
               isSynced: true,
               source: "lrclib",
               provider: "LRCLIB Synced",
@@ -232,18 +272,12 @@ export async function fetchLyricsMultiSource(
             };
           }
 
-          // Stash plain lyrics from search if not already found
-          const withPlain = list.find((item) => {
-            if (!item.plainLyrics || !item.plainLyrics.trim()) return false;
-            if (dur && typeof item.duration === "number" && item.duration > 0) {
-              return Math.abs(item.duration - dur) <= 4.0;
-            }
-            return true;
-          });
+          // Stash plain lyrics from search if not already found (within tolerance)
+          const withPlain = filteredList.find((item: any) => item.plainLyrics && item.plainLyrics.trim().length > 0);
 
           if (withPlain && !lrclibPlainMatch) {
             lrclibPlainMatch = {
-              plainLyrics: withPlain.plainLyrics,
+              plainLyrics: sanitizeCaptionsAndLyrics(withPlain.plainLyrics),
               isSynced: false,
               source: "lrclib",
               provider: "LRCLIB Plain",
@@ -255,20 +289,24 @@ export async function fetchLyricsMultiSource(
         }
       }
     } catch (_err) {
-      // Proceed to next provider
+      // Proceed to next endpoint
     }
   }
 
   // =========================================================================
-  // Provider 2 & 3: Server-side Multi-Provider (YouTube Music Official, Lyrics.ovh, Genius)
+  // Tier 2 (YT InnerTube Native) & Tier 3 (Genius / Secondary Fallback):
+  // Query server-side lyrics route (/api/youtube/lyrics)
   // =========================================================================
   try {
     const params = new URLSearchParams({
       title: cleanTitle,
       artist: cleanArtist,
-      duration: (dur || 0).toString(),
+      duration: (durationSec || 0).toString(),
       videoId: cleanVid,
     });
+    if (albumName && albumName.trim()) {
+      params.append("album", albumName.trim());
+    }
 
     const serverUrl = `/api/youtube/lyrics?${params.toString()}`;
     const serverRes = await fetch(serverUrl, { signal: AbortSignal.timeout(6000) });
@@ -278,8 +316,8 @@ export async function fetchLyricsMultiSource(
 
       if (data.syncedLyrics && data.isSynced) {
         return {
-          syncedLyrics: data.syncedLyrics,
-          plainLyrics: data.plainLyrics,
+          syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
+          plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
           isSynced: true,
           source: (data.source as LyricsSourceType) || "lrclib",
           provider: data.provider || "LRCLIB Synced",
@@ -290,7 +328,7 @@ export async function fetchLyricsMultiSource(
       }
       if (data.plainLyrics && (data.source === "youtube_music" || data.source === "genius" || data.source === "lyrics_ovh" || !lrclibPlainMatch)) {
         return {
-          plainLyrics: data.plainLyrics,
+          plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
           isSynced: false,
           source: (data.source as LyricsSourceType) || "youtube_music",
           provider: data.provider || "YouTube Music (Official)",
@@ -303,14 +341,14 @@ export async function fetchLyricsMultiSource(
   } catch (_sErr) {}
 
   // =========================================================================
-  // Provider 1 Plain Fallback (if LRCLIB plain text was cached earlier)
+  // Tier 3 Plain Fallback (if LRCLIB plain text was cached earlier)
   // =========================================================================
   if (lrclibPlainMatch) {
     return lrclibPlainMatch;
   }
 
   // =========================================================================
-  // Provider 3 Direct Client-Side Fallback: Public Lyrics API (Lyrics.ovh)
+  // Tier 3 Direct Client-Side Fallback: Public Lyrics API (Lyrics.ovh)
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
@@ -321,7 +359,7 @@ export async function fetchLyricsMultiSource(
         const ovhData = await ovhRes.json();
         if (ovhData.lyrics && typeof ovhData.lyrics === "string" && ovhData.lyrics.trim().length > 10) {
           return {
-            plainLyrics: ovhData.lyrics.trim(),
+            plainLyrics: sanitizeCaptionsAndLyrics(ovhData.lyrics.trim()),
             isSynced: false,
             source: "lyrics_ovh",
             provider: "Lyrics.ovh",
@@ -334,7 +372,7 @@ export async function fetchLyricsMultiSource(
   }
 
   // =========================================================================
-  // Step 4: No lyrics available across all providers in chain
+  // No lyrics available across all tiers
   // =========================================================================
   return {
     isSynced: false,

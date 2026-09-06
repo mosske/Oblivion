@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Track, Playlist } from "../types";
-import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2, Mic, X, Clock, Trash2 } from "lucide-react";
+import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2, Mic, X, Clock, Trash2, Disc3, User } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { IdentifyMusicModal } from "./IdentifyMusicModal";
@@ -250,10 +250,206 @@ export const SearchView: React.FC<SearchViewProps> = ({
     };
   }, [query, filter]);
 
-  const filteredResults = results.filter((item: any) => {
-    if (filter === "all") return true;
-    return item.type === filter;
-  });
+  const trackResults = (results || []).filter((i: any) => !i.type || i.type === "track");
+  const albumResults = (results || []).filter((i: any) => i.type === "album" || Boolean(i.playlistId));
+  const artistResults = (results || []).filter((i: any) => i.type === "artist" || Boolean(i.channelId));
+
+  const showTracks = (filter === "all" || filter === "track") && trackResults.length > 0;
+  const showAlbums = (filter === "all" || filter === "album") && albumResults.length > 0;
+  const showArtists = (filter === "all" || filter === "artist") && artistResults.length > 0;
+
+  const hasAnyResults = showTracks || showAlbums || showArtists;
+
+  const renderResultItem = (item: any, idx: number, sourceList: any[]) => {
+    const isAlbum = item.type === "album" || Boolean(item.playlistId);
+    const isArtist = item.type === "artist" || Boolean(item.channelId);
+    const itemVid = item.videoId || item.youtubeVideoId || item.id;
+    const currentVid = currentTrack
+      ? ((currentTrack as any).videoId || currentTrack.youtubeVideoId || currentTrack.id)
+      : currentTrackId || null;
+
+    // 1. Strict Track Equality via Unique ID:
+    const hasItemUniqueId = Boolean(item.id || item.videoId || item.youtubeVideoId);
+    const hasCurrentUniqueId = Boolean(currentTrack?.id || (currentTrack as any)?.videoId || currentTrack?.youtubeVideoId || currentTrackId);
+
+    let isCurrentlyPlaying = false;
+    if (!isAlbum && !isArtist && currentTrack) {
+      if (hasItemUniqueId && hasCurrentUniqueId) {
+        const idMatch = Boolean(item.id && (item.id === currentTrack.id || item.id === currentTrackId));
+        const vidMatch = Boolean(itemVid && currentVid && itemVid === currentVid);
+        isCurrentlyPlaying = idMatch || vidMatch;
+      } else if (item.title && item.artist && currentTrack.title && currentTrack.artist) {
+        const itemCompound = `${String(item.title).trim().toLowerCase()}::${String(item.artist).trim().toLowerCase()}`;
+        const currentCompound = `${String(currentTrack.title).trim().toLowerCase()}::${String(currentTrack.artist).trim().toLowerCase()}`;
+        isCurrentlyPlaying = itemCompound === currentCompound;
+      }
+    }
+
+    const isCurrent = isCurrentlyPlaying;
+
+    const handleItemClick = () => {
+      if (isAlbum && onSelectPlaylist) {
+        onSelectPlaylist({
+          id: item.playlistId || item.id,
+          title: item.title,
+          artist: item.artist,
+          description: item.artist || "YouTube Album",
+          coverUrl: item.coverUrl,
+          tracks: [],
+          isYouTubeSynced: true,
+          isAlbum: true,
+          tracksCount: item.tracksCount || 10,
+        });
+      } else if (isArtist) {
+        setQuery(item.title);
+        onQueryChange?.(item.title);
+        saveQueryToHistory(item.title);
+        handleFilterSelect("all");
+      } else {
+        const trackIdx = sourceList.findIndex((t: any) => (t.id || t.youtubeVideoId || t.videoId) === itemVid);
+        if (onPlayQueue && sourceList.length > 0) {
+          onPlayQueue(sourceList, trackIdx >= 0 ? trackIdx : 0);
+        } else {
+          onPlayTrack(item);
+        }
+      }
+    };
+
+    return (
+      <div
+        key={item.id ? `${item.id}_${idx}` : (item.videoId || item.youtubeVideoId ? `${item.videoId || item.youtubeVideoId}_${idx}` : `search_track_${idx}`)}
+        className={`group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
+          isCurrent
+            ? `${designConfig.cardBg} shadow-lg ring-2`
+            : `${designConfig.cardBg} ${designConfig.cardHover} border border-transparent`
+        }`}
+        style={
+          isCurrent
+            ? {
+                borderColor: "var(--border-active, var(--accent-primary))",
+                boxShadow: "0 0 0 2px var(--border-active, var(--accent-primary)), 0 4px 14px rgba(0, 0, 0, 0.12)",
+                backgroundColor: "rgba(var(--accent-primary-rgb, 197, 155, 39), 0.08)",
+              }
+            : undefined
+        }
+      >
+        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+          <div
+            onClick={handleItemClick}
+            className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border cursor-pointer shadow-sm bg-slate-800 flex items-center justify-center transition-all"
+            style={{
+              borderColor: isCurrent
+                ? "var(--border-active, var(--accent-primary))"
+                : "var(--border-subtle, rgba(200, 200, 200, 0.25))",
+              boxShadow: isCurrent ? "0 0 0 1.5px var(--border-active, var(--accent-primary))" : undefined,
+            }}
+          >
+            <img
+              src={item.coverUrl || (item.youtubeVideoId || item.id ? `https://i.ytimg.com/vi/${item.youtubeVideoId || item.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
+              alt={item.title}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              onError={(e) => {
+                const currentSrc = e.currentTarget.src || "";
+                const vId = item.youtubeVideoId || item.id;
+                if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
+                  e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                } else if (vId && currentSrc.includes("hqdefault.jpg")) {
+                  e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                } else if (vId && currentSrc.includes("mqdefault.jpg")) {
+                  e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
+                } else {
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
+                }
+              }}
+            />
+
+            {/* Playing Equalizer Animation Overlay if Active Song */}
+            {isCurrent && isPlaying ? (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <div className="flex items-end justify-center gap-0.5 h-4" title="Currently Playing">
+                  <span className={`w-1 h-3 rounded-full animate-bounce bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
+                  <span className={`w-1 h-4 rounded-full animate-bounce delay-75 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
+                  <span className={`w-1 h-2 rounded-full animate-bounce delay-150 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
+                </div>
+              </div>
+            ) : (
+              <button className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Play className="w-5 h-5 text-white fill-white" />
+              </button>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1 cursor-pointer" onClick={handleItemClick}>
+                <MarqueeText
+                  text={cleanTrackTitle(item.title, item.artist)}
+                  className={`text-sm font-bold ${
+                    isCurrent ? designConfig.accentText : `${designConfig.textPrimary} group-hover:${designConfig.accentText}`
+                  } transition-colors`}
+                  containerClassName="w-full"
+                  speed={30}
+                />
+              </div>
+              {item.type && item.type !== "track" && (
+                <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${designConfig.pillBg} shrink-0`}>
+                  {item.type}
+                </span>
+              )}
+              {isCurrent && isPlaying && (
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${designConfig.pillBg} ${designConfig.accentText} border ${designConfig.accentBorder} text-[10px] font-mono font-bold shadow-sm shrink-0`}>
+                  <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} animate-ping`} />
+                  Playing
+                </span>
+              )}
+            </div>
+            {item.artist && (
+              <div className="min-w-0 flex-1 mt-0.5">
+                <MarqueeText
+                  text={item.artist}
+                  className={`text-xs ${designConfig.textMuted}`}
+                  containerClassName="w-full"
+                  speed={26}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1">
+          {(!item.type || item.type === "track") && (
+            <>
+              <button
+                onClick={() => onAddToQueue(item)}
+                className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl hover:bg-black/10 transition-colors`}
+                title="Add to queue"
+              >
+                <Radio className="w-4 h-4" />
+              </button>
+
+              <button
+                id={`search-add-playlist-btn-${item.id}`}
+                onClick={() => {
+                  if (onOpenAddToPlaylistModal) {
+                    onOpenAddToPlaylistModal(item);
+                  } else if (onAddTrackToPlaylist && playlists.length > 0) {
+                    onAddTrackToPlaylist(item, playlists[0].id);
+                  }
+                }}
+                className={`p-2 ${designConfig.textMuted} hover:${designConfig.accentText} rounded-xl hover:bg-black/10 transition-colors`}
+                title="Add to playlist"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 pb-64 sm:pb-72 md:pb-52 select-none">
@@ -424,207 +620,58 @@ export const SearchView: React.FC<SearchViewProps> = ({
               <div key={i} className={`h-16 ${designConfig.cardBg} rounded-2xl animate-pulse`}></div>
             ))}
           </div>
-        ) : query.trim() && (filteredResults || []).length === 0 ? (
+        ) : query.trim() && !hasAnyResults ? (
           <div className={`flex flex-col items-center justify-center py-16 ${designConfig.textMuted} space-y-2`}>
             <Music2 className="w-12 h-12 stroke-1" />
             <p className="text-sm font-medium">No results found for "{query}".</p>
           </div>
         ) : (
-          (filteredResults || []).map((item: any, idx: number) => {
-            const isAlbum = item.type === "album" || Boolean(item.playlistId);
-            const isArtist = item.type === "artist" || Boolean(item.channelId);
-            const itemVid = item.videoId || item.youtubeVideoId || item.id;
-            const currentVid = currentTrack
-              ? ((currentTrack as any).videoId || currentTrack.youtubeVideoId || currentTrack.id)
-              : currentTrackId || null;
-
-            // 1. Strict Track Equality via Unique ID:
-            // Compare unique track identifiers instead of title alone.
-            const hasItemUniqueId = Boolean(item.id || item.videoId || item.youtubeVideoId);
-            const hasCurrentUniqueId = Boolean(currentTrack?.id || (currentTrack as any)?.videoId || currentTrack?.youtubeVideoId || currentTrackId);
-
-            let isCurrentlyPlaying = false;
-            if (!isAlbum && !isArtist && currentTrack) {
-              if (hasItemUniqueId && hasCurrentUniqueId) {
-                // Strict ID comparison: (item.id === currentTrack.id) or (item.videoId === currentTrack.videoId)
-                const idMatch = Boolean(item.id && (item.id === currentTrack.id || item.id === currentTrackId));
-                const vidMatch = Boolean(itemVid && currentVid && itemVid === currentVid);
-                isCurrentlyPlaying = idMatch || vidMatch;
-              } else if (item.title && item.artist && currentTrack.title && currentTrack.artist) {
-                // 2. Compound Fallback Matching (if IDs are missing):
-                // Fallback to matching both title AND artist name combined rather than title alone.
-                const itemCompound = `${String(item.title).trim().toLowerCase()}::${String(item.artist).trim().toLowerCase()}`;
-                const currentCompound = `${String(currentTrack.title).trim().toLowerCase()}::${String(currentTrack.artist).trim().toLowerCase()}`;
-                isCurrentlyPlaying = itemCompound === currentCompound;
-              }
-            }
-
-            const isCurrent = isCurrentlyPlaying;
-
-            const handleItemClick = () => {
-              if (isAlbum && onSelectPlaylist) {
-                onSelectPlaylist({
-                  id: item.playlistId || item.id,
-                  title: item.title,
-                  artist: item.artist,
-                  description: item.artist || "YouTube Album",
-                  coverUrl: item.coverUrl,
-                  tracks: [],
-                  isYouTubeSynced: true,
-                  isAlbum: true,
-                  tracksCount: item.tracksCount || 10
-                });
-              } else if (isArtist) {
-                setQuery(item.title);
-                onQueryChange?.(item.title);
-                saveQueryToHistory(item.title);
-                handleFilterSelect("all");
-              } else {
-                const trackResults = (filteredResults || []).filter((i: any) => !i.type || i.type === "track");
-                const trackIdx = trackResults.findIndex((t: any) => (t.id || t.youtubeVideoId || t.videoId) === itemVid);
-                if (onPlayQueue && trackResults.length > 0) {
-                  onPlayQueue(trackResults, trackIdx >= 0 ? trackIdx : 0);
-                } else {
-                  onPlayTrack(item);
-                }
-              }
-            };
-
-            return (
-              <div
-                key={item.id ? `${item.id}_${idx}` : (item.videoId || item.youtubeVideoId ? `${item.videoId || item.youtubeVideoId}_${idx}` : `search_track_${idx}`)}
-                className={`group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
-                  isCurrent
-                    ? `${designConfig.cardBg} shadow-lg ring-2`
-                    : `${designConfig.cardBg} ${designConfig.cardHover} border border-transparent`
-                }`}
-                style={
-                  isCurrent
-                    ? {
-                        borderColor: "var(--border-active, var(--accent-primary))",
-                        boxShadow: "0 0 0 2px var(--border-active, var(--accent-primary)), 0 4px 14px rgba(0, 0, 0, 0.12)",
-                        backgroundColor: "rgba(var(--accent-primary-rgb, 197, 155, 39), 0.08)",
-                      }
-                    : undefined
-                }
-              >
-                <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  <div
-                    onClick={handleItemClick}
-                    className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border cursor-pointer shadow-sm bg-slate-800 flex items-center justify-center transition-all"
-                    style={{
-                      borderColor: isCurrent
-                        ? "var(--border-active, var(--accent-primary))"
-                        : "var(--border-subtle, rgba(200, 200, 200, 0.25))",
-                      boxShadow: isCurrent ? "0 0 0 1.5px var(--border-active, var(--accent-primary))" : undefined,
-                    }}
-                  >
-                    <img
-                      src={item.coverUrl || (item.youtubeVideoId || item.id ? `https://i.ytimg.com/vi/${item.youtubeVideoId || item.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                      onError={(e) => {
-                        const currentSrc = e.currentTarget.src || "";
-                        const vId = item.youtubeVideoId || item.id;
-                        if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
-                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
-                        } else if (vId && currentSrc.includes("hqdefault.jpg")) {
-                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
-                        } else if (vId && currentSrc.includes("mqdefault.jpg")) {
-                          e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
-                        } else {
-                          e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
-                        }
-                      }}
-                    />
-
-                    {/* Playing Equalizer Animation Overlay if Active Song */}
-                    {isCurrent && isPlaying ? (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <div className="flex items-end justify-center gap-0.5 h-4" title="Currently Playing">
-                          <span className={`w-1 h-3 rounded-full animate-bounce bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
-                          <span className={`w-1 h-4 rounded-full animate-bounce delay-75 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
-                          <span className={`w-1 h-2 rounded-full animate-bounce delay-150 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
-                        </div>
-                      </div>
-                    ) : (
-                      <button className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Play className="w-5 h-5 text-white fill-white" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="min-w-0 flex-1 cursor-pointer" onClick={handleItemClick}>
-                        <MarqueeText
-                          text={cleanTrackTitle(item.title, item.artist)}
-                          className={`text-sm font-bold ${
-                            isCurrent ? designConfig.accentText : `${designConfig.textPrimary} group-hover:${designConfig.accentText}`
-                          } transition-colors`}
-                          containerClassName="w-full"
-                          speed={30}
-                        />
-                      </div>
-                      {item.type && item.type !== "track" && (
-                        <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${designConfig.pillBg} shrink-0`}>
-                          {item.type}
-                        </span>
-                      )}
-                      {isCurrent && isPlaying && (
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${designConfig.pillBg} ${designConfig.accentText} border ${designConfig.accentBorder} text-[10px] font-mono font-bold shadow-sm shrink-0`}>
-                          <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} animate-ping`} />
-                          Playing
-                        </span>
-                      )}
-                    </div>
-                    {item.artist && (
-                      <div className="min-w-0 flex-1 mt-0.5">
-                        <MarqueeText
-                          text={item.artist}
-                          className={`text-xs ${designConfig.textMuted}`}
-                          containerClassName="w-full"
-                          speed={26}
-                        />
-                      </div>
-                    )}
-                  </div>
+          <div className="space-y-6">
+            {/* Tracks Section */}
+            {showTracks && (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${designConfig.headingMuted} font-mono flex items-center gap-1.5`}>
+                    <Music2 className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
+                    <span>Tracks ({trackResults.length})</span>
+                  </h3>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1">
-                  {(!item.type || item.type === "track") && (
-                    <>
-                      <button
-                        onClick={() => onAddToQueue(item)}
-                        className={`p-2 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-xl hover:bg-black/10 transition-colors`}
-                        title="Add to queue"
-                      >
-                        <Radio className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        id={`search-add-playlist-btn-${item.id}`}
-                        onClick={() => {
-                          if (onOpenAddToPlaylistModal) {
-                            onOpenAddToPlaylistModal(item);
-                          } else if (onAddTrackToPlaylist && playlists.length > 0) {
-                            onAddTrackToPlaylist(item, playlists[0].id);
-                          }
-                        }}
-                        className={`p-2 ${designConfig.textMuted} hover:${designConfig.accentText} rounded-xl hover:bg-black/10 transition-colors`}
-                        title="Add to playlist"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
+                <div className="space-y-2">
+                  {trackResults.map((item, idx) => renderResultItem(item, idx, trackResults))}
                 </div>
               </div>
-            );
-          })
+            )}
+
+            {/* Albums Section */}
+            {showAlbums && (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${designConfig.headingMuted} font-mono flex items-center gap-1.5`}>
+                    <Disc3 className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
+                    <span>Albums ({albumResults.length})</span>
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {albumResults.map((item, idx) => renderResultItem(item, idx, albumResults))}
+                </div>
+              </div>
+            )}
+
+            {/* Artists Section */}
+            {showArtists && (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${designConfig.headingMuted} font-mono flex items-center gap-1.5`}>
+                    <User className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
+                    <span>Artists ({artistResults.length})</span>
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {artistResults.map((item, idx) => renderResultItem(item, idx, artistResults))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

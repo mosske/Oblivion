@@ -84,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div>
             <h1 className={`text-lg font-extrabold tracking-widest ${designConfig.textPrimary} flex items-center gap-1.5`}>
               OBLIVION
-              <span className={`text-[10px] uppercase font-bold tracking-[0.2em] px-1.5 py-0.5 rounded ${designConfig.isLight ? "bg-[#ede8dc] text-[#c89b3c] border border-[#d8d2c4]" : "bg-white/10 text-white/90 border border-white/20"}`}>
+              <span className={`text-[10px] uppercase font-bold tracking-[0.2em] px-1.5 py-0.5 rounded ${designConfig.isLight ? `bg-[#ede8dc] ${designConfig.accentText} text-[var(--accent-color,var(--primary))] border border-[#d8d2c4]` : "bg-white/10 text-white/90 border border-white/20"}`}>
                 MUSIC
               </span>
             </h1>

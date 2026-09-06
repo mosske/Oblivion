@@ -143,7 +143,7 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
         />
         {showCustomBadge && isExplicitCustom && (
           <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-[9px] font-mono text-white flex items-center gap-1 shadow-lg z-10 pointer-events-none">
-            <Sparkles className="w-2.5 h-2.5 text-[#c89b3c]" />
+            <Sparkles className="w-2.5 h-2.5 text-[var(--accent-color,var(--primary))]" />
             <span>Custom</span>
           </div>
         )}
@@ -166,10 +166,10 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
         aspectSquare ? "aspect-square" : ""
       } ${className}`}
     >
-      <div className="w-12 h-12 rounded-full bg-black/50 border border-[#c89b3c]/30 flex items-center justify-center shadow-inner mb-1">
-        <Music className="w-5 h-5 text-[#c89b3c]/90 stroke-1" />
+      <div className="w-12 h-12 rounded-full bg-black/50 border border-[var(--accent-color,var(--primary))]/30 flex items-center justify-center shadow-inner mb-1">
+        <Music className="w-5 h-5 text-[var(--accent-color,var(--primary))]/90 stroke-1" />
       </div>
-      <span className="text-[11px] font-mono font-bold tracking-widest text-[#c89b3c]/80 uppercase">
+      <span className="text-[11px] font-mono font-bold tracking-widest text-[var(--accent-color,var(--primary))]/80 uppercase">
         {initials}
       </span>
     </div>

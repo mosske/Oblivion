@@ -95,20 +95,87 @@ export function extractFeatures(input: string): { cleanText: string; featured: s
 }
 
 /**
- * Cleans channel and uploader branding to isolate the true artist name
+ * Extracts ONLY the primary artist string:
+ * - If track.artist is an array, take track.artist[0].
+ * - If track.artist is a comma/ampersand separated string (e.g. "Sergio Mendes, Band"),
+ *   splits by comma, &, feat., ft., featuring, with, ;, / and takes the first trimmed string.
+ * Example: "Sergio Mendes, The Sergio Mendes Band" -> "Sergio Mendes".
  */
-export function cleanArtistName(rawArtistOrUploader?: string): string {
+export function cleanArtistName(rawArtistOrUploader?: string | string[] | any): string {
   if (!rawArtistOrUploader) return "";
-  let artist = rawArtistOrUploader.trim();
+  let artist = "";
+  if (Array.isArray(rawArtistOrUploader)) {
+    artist = rawArtistOrUploader[0] ? String(rawArtistOrUploader[0]).trim() : "";
+  } else {
+    artist = String(rawArtistOrUploader).trim();
+  }
 
-  // Strip trailing channel branding
+  if (!artist) return "";
+
+  // Split by comma, ampersand, or feature delimiters and extract ONLY the primary artist
+  const primarySplit = artist.split(/\s*(?:,|&|\/|;|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\band\b)\s*/i);
+  if (primarySplit.length > 0 && primarySplit[0].trim()) {
+    artist = primarySplit[0].trim();
+  }
+
+  // Strip trailing channel branding (e.g. " - Topic", "VEVO", "Official")
   for (const pattern of CHANNEL_BRANDING_PATTERNS) {
     artist = artist.replace(pattern, "").trim();
   }
 
-  // Remove common prefix "The " if needed or clean multiple spaces
   artist = artist.replace(/\s{2,}/g, " ").trim();
-  return artist || rawArtistOrUploader.trim();
+  return artist;
+}
+
+/**
+ * Strips suffixes, parentheticals, and tags using regex:
+ * - Removes (Official Audio), (Official Video), (Lyric Video), (Remastered...), [Topic], (feat. ...).
+ * - Strips anything following - Remastered or - Live.
+ * Example: "Love City (Official Audio)" -> "Love City"
+ */
+export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
+  if (!rawTitle) return "Untitled Track";
+  let title = rawTitle.trim();
+
+  // Strip anything following - Remastered or - Live (e.g. "- Remastered 2011", "- Live at Wembley", etc.)
+  title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?|live|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary).*$/i, "");
+
+  // Strip suffixes, parentheticals, and tags using video noise patterns
+  for (const pattern of VIDEO_NOISE_PATTERNS) {
+    title = title.replace(pattern, " ");
+  }
+
+  // Strip (feat. ...), [feat. ...], (ft. ...), [ft. ...]
+  title = title.replace(/[\(\[]\s*(?:feat\.?|ft\.?|featuring|with)\s+[^()\[\]]+[\)\]]/gi, " ");
+  title = title.replace(/\s+(?:feat\.?|ft\.?|featuring)\s+.+$/i, " ");
+
+  // Strip empty/dangling brackets
+  title = title.replace(/\(\s*\)/g, " ").replace(/\[\s*\]/g, " ").replace(/\{\s*\}/g, " ").trim();
+  title = title.replace(/\s{2,}/g, " ").trim();
+
+  // If title is "Artist - Title", isolate the title portion
+  const delimiterMatch = title.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
+  if (delimiterMatch) {
+    const left = delimiterMatch[1].trim();
+    const right = delimiterMatch[2].trim();
+    if (artistName && (left.toLowerCase().includes(artistName.toLowerCase()) || artistName.toLowerCase().includes(left.toLowerCase()))) {
+      title = right;
+    }
+  }
+
+  return title || rawTitle.trim();
+}
+
+/**
+ * Normalizes duration to integer in seconds.
+ * Handles both milliseconds (>10000) and seconds.
+ */
+export function normalizeDurationSeconds(duration?: number): number | undefined {
+  if (duration === undefined || duration === null || isNaN(duration) || duration <= 0) {
+    return undefined;
+  }
+  const durationSec = Math.round(duration > 10000 ? duration / 1000 : duration);
+  return durationSec > 0 ? durationSec : undefined;
 }
 
 /**
@@ -117,7 +184,7 @@ export function cleanArtistName(rawArtistOrUploader?: string): string {
  */
 export function sanitizeLyricsQuery(
   rawTitle: string,
-  rawArtistOrUploader?: string
+  rawArtistOrUploader?: string | string[]
 ): SanitizedLyricsQuery {
   if (!rawTitle) {
     const fallbackArtist = cleanArtistName(rawArtistOrUploader) || "Unknown Artist";
@@ -126,56 +193,25 @@ export function sanitizeLyricsQuery(
       cleanArtist: fallbackArtist,
       searchQuery: fallbackArtist,
       secondaryQueries: [],
-      uploader: rawArtistOrUploader?.trim(),
+      uploader: typeof rawArtistOrUploader === "string" ? rawArtistOrUploader.trim() : undefined,
       featuredArtists: [],
     };
   }
 
-  let title = rawTitle.trim();
-  const uploader = rawArtistOrUploader?.trim();
-  let artistFromUploader = cleanArtistName(rawArtistOrUploader);
+  let title = cleanTrackTitle(rawTitle);
+  const uploader = typeof rawArtistOrUploader === "string" ? rawArtistOrUploader.trim() : undefined;
+  const cleanArtist = cleanArtistName(rawArtistOrUploader) || "Unknown Artist";
 
-  // 1. Strip standard video noise tags
-  for (const pattern of VIDEO_NOISE_PATTERNS) {
-    title = title.replace(pattern, " ");
-  }
-
-  // 2. Clean empty or dangling brackets
-  title = title.replace(/\(\s*\)/g, " ").replace(/\[\s*\]/g, " ").replace(/\{\s*\}/g, " ").trim();
-
-  // 3. Extract features from title
-  const { cleanText: titleWithoutFeatures, featured: titleFeatures } = extractFeatures(title);
-  title = titleWithoutFeatures;
-
-  let detectedArtist = "";
-  let detectedTitle = title;
-
-  // 4. Check for "Artist - Title" or "Artist : Title" or "Artist ~ Title"
-  const delimiterMatch = title.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
-  if (delimiterMatch) {
-    const left = delimiterMatch[1].trim();
-    const right = delimiterMatch[2].trim();
-
-    // Check if left looks like an artist name
-    if (left && right) {
-      detectedArtist = left;
-      detectedTitle = right;
-    }
-  } else if (artistFromUploader && title.toLowerCase().startsWith(artistFromUploader.toLowerCase())) {
-    // If title starts with the uploader/artist name without a clean hyphen
-    const rest = title.slice(artistFromUploader.length).replace(/^[-\s:|~–—"']+/, "").trim();
+  // Check if title still starts with the artist name without delimiter
+  if (cleanArtist && title.toLowerCase().startsWith(cleanArtist.toLowerCase())) {
+    const rest = title.slice(cleanArtist.length).replace(/^[-\s:|~–—"']+/, "").trim();
     if (rest) {
-      detectedArtist = artistFromUploader;
-      detectedTitle = rest;
+      title = rest;
     }
   }
 
-  // 5. Final fallback for artist
-  const finalArtist = cleanArtistName(detectedArtist || artistFromUploader || "Unknown Artist");
-  
-  // 6. Final cleaning on title
-  let finalTitle = detectedTitle
-    .replace(/^["']|["']$/g, "") // remove surrounding quotes
+  let finalTitle = title
+    .replace(/^["']|["']$/g, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 
@@ -185,28 +221,57 @@ export function sanitizeLyricsQuery(
     .replace(/\(\s*\)|\[\s*\]/g, "")
     .trim();
 
-  // 7. Assemble high-accuracy search queries for multi-provider fallback
-  const primarySearchQuery = `${finalArtist} ${finalTitle}`.trim();
-  
+  const primarySearchQuery = `${cleanArtist} ${finalTitle}`.trim();
   const secondaryQueries: string[] = [];
   if (finalTitle && finalTitle !== primarySearchQuery) {
     secondaryQueries.push(finalTitle);
   }
-  if (rawArtistOrUploader && rawTitle) {
-    const rawComb = `${cleanArtistName(rawArtistOrUploader)} ${rawTitle}`.trim();
-    if (!secondaryQueries.includes(rawComb) && rawComb !== primarySearchQuery) {
-      secondaryQueries.push(rawComb);
-    }
-  }
 
   return {
     cleanTitle: finalTitle || rawTitle,
-    cleanArtist: finalArtist,
+    cleanArtist: cleanArtist,
     searchQuery: primarySearchQuery,
     secondaryQueries,
     uploader,
-    featuredArtists: titleFeatures,
+    featuredArtists: [],
   };
+}
+
+/**
+ * Caption & Lyrics Sanitization Filter:
+ * For YouTube Native / ASR / plain lyric tracks, strips speech-to-text artifacts
+ * ([Music], [Applause], (Laughter), [Intro], [Outro], etc.) and purges empty lines.
+ */
+export function sanitizeCaptionsAndLyrics(rawLyricsText: string): string {
+  if (!rawLyricsText || typeof rawLyricsText !== "string") return "";
+
+  const artifactRegex = /\s*(\[|\()(?:\s*(?:music|applause|laughter|cheering|cheers|instrumental|silence|intro|outro|vocalizing|screaming|groaning|coughing|sound\s+effects?|audience\s+applause|singing|beatboxing|chatter|whistling|audio)\s*)(\]|\))\s*/gi;
+  const musicalSymbolsRegex = /[♪♫♩♬♯♭]+/g;
+
+  const lines = rawLyricsText.split("\n");
+  const cleanedLines: string[] = [];
+
+  for (const rawLine of lines) {
+    // Preserve LRC timestamp prefix if present
+    const timestampMatch = rawLine.match(/^(\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]\s*)/);
+    const prefix = timestampMatch ? timestampMatch[1] : "";
+    const lineContent = timestampMatch ? rawLine.slice(prefix.length) : rawLine;
+
+    let cleaned = lineContent
+      .replace(artifactRegex, " ")
+      .replace(musicalSymbolsRegex, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+    // If after removing artifacts nothing substantive is left, drop the line
+    if (!cleaned || /^[.,!?:;\-_'"~\s]+$/.test(cleaned)) {
+      continue;
+    }
+
+    cleanedLines.push(prefix ? `${prefix}${cleaned}` : cleaned);
+  }
+
+  return cleanedLines.join("\n");
 }
 
 /**

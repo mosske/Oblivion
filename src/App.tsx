@@ -22,6 +22,7 @@ import {
   getCustomCoversFromCache,
   saveCustomCoverToCache,
   savePlaylistTracksToDBCache,
+  deletePlaylistFromDb,
 } from "./utils/playlistDb";
 import {
   getCustomPlaylistCovers,
@@ -32,6 +33,7 @@ import {
   isAuthenticCustomArtworkUrl,
   isVideoThumbnailUrl,
   syncCustomCoversFromServer,
+  removePlaylistCustomArtwork,
 } from "./utils/customCoversStorage";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
@@ -587,11 +589,26 @@ export default function App() {
 
   const activeFullDesign = FULL_APP_DESIGNS[settings.fullAppDesign || "designer"] || FULL_APP_DESIGNS["designer"];
 
-  // Set data-theme attribute on <html> element and sync <meta name="theme-color"> whenever active full design changes
+  // Set data-theme attribute on <html> element, sync <meta name="theme-color"> and propagate dynamic --accent-color / --primary variables whenever active full design changes
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-theme", activeFullDesign.id);
       syncDocumentThemeColor(activeFullDesign);
+
+      const themeAccentColors: Record<string, string> = {
+        designer: "#c59b27",
+        "cyberpunk-neon": "#00f3ff",
+        candyland: "#ff70a6",
+        "ytmusic-red": "#ff70a6",
+        "dynamic-emerald": "#00f5a0",
+        "audiophile-gold": "#f59e0b",
+        "twilight-vaporwave": "#ff2a8d",
+        "neue-editorial": "#1F1F1F",
+      };
+
+      const accentHex = themeAccentColors[activeFullDesign.id] || "#c59b27";
+      document.documentElement.style.setProperty("--accent-color", accentHex);
+      document.documentElement.style.setProperty("--primary", accentHex);
     }
   }, [activeFullDesign.id, activeFullDesign.themeColorMeta]);
 
@@ -1750,21 +1767,34 @@ export default function App() {
 
   // Delete Playlist
   const handleDeletePlaylist = async (playlistId: string) => {
-    if (!confirm("Are you sure you want to delete this playlist?")) return;
+    const cleanId = playlistId.replace(/^VL/, "");
     try {
       const headers = getAuthHeaders();
-      await fetch(`/api/youtube/playlists/${playlistId}`, { method: "DELETE", headers });
+      await fetch(`/api/playlists/${encodeURIComponent(playlistId)}`, { method: "DELETE", headers }).catch(() => {});
+      await fetch(`/api/youtube/playlists/${encodeURIComponent(playlistId)}`, { method: "DELETE", headers }).catch(() => {});
+
+      await deletePlaylistFromDb(playlistId);
+      removePlaylistCustomArtwork(playlistId);
+
       setPlaylists((prev) => {
-        const filtered = prev.filter((p) => p.id !== playlistId);
+        const filtered = prev.filter(
+          (p) => p.id !== playlistId && p.id !== cleanId && p.id?.replace(/^VL/, "") !== cleanId
+        );
         try {
           localStorage.setItem("oblivion_saved_playlists", JSON.stringify(filtered));
         } catch {}
         return filtered;
       });
-      if (selectedPlaylist?.id === playlistId) {
+
+      if (
+        selectedPlaylist?.id === playlistId ||
+        selectedPlaylist?.id === cleanId ||
+        selectedPlaylist?.id?.replace(/^VL/, "") === cleanId
+      ) {
         setSelectedPlaylist(null);
+        setActiveTab("library");
       }
-      showToast("Playlist deleted");
+      showToast("Playlist permanently deleted");
     } catch (err) {
       console.error("Delete playlist error:", err);
     }
@@ -2357,6 +2387,13 @@ export default function App() {
               } else {
                 setSelectedPlaylist(null);
               }
+            }}
+            onBackToLibrary={() => {
+              setSelectedPlaylist(null);
+              setActiveTab("library");
+            }}
+            onDeletePlaylist={(delId) => {
+              handleDeletePlaylist(delId);
             }}
             onPlayTrack={handlePlayTrack}
             onPlayQueue={handlePlayQueue}

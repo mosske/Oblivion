@@ -22,6 +22,7 @@ import { romanizeLyricLines } from "../utils/romanization";
 import { cleanTrackTitle } from "../utils/formatters";
 import { sanitizeLyricsQuery } from "../utils/lyricsSanitizer";
 import { MarqueeText } from "./MarqueeText";
+import { OblivionIntroCountdown } from "./OblivionIntroCountdown";
 
 interface LyricsViewProps {
   track: Track;
@@ -94,11 +95,11 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           return;
         }
 
-        // 2. Query Multi-Source Lyrics Fallback Chain:
-        //    Step 1: Native YouTube InnerTube Synced Captions & Lyrics
-        //    Step 2: LRCLIB Synced LRC / Plain Text
-        //    Step 3: Tertiary Public Lyrics (Lyrics.ovh / Genius)
-        const result = await fetchLyricsMultiSource(track.title, track.artist, track.duration, videoId);
+        // 2. Query 3-Tier Multi-Source Lyrics Fallback Chain:
+        //    Tier 1: LRCLIB Synced LRC / Plain Text (/api/get & /search)
+        //    Tier 2: Native YouTube Music InnerTube Official Lyrics
+        //    Tier 3: Tertiary Public Lyrics (Genius & Lyrics.ovh)
+        const result = await fetchLyricsMultiSource(track.title, track.artist, track.duration, videoId, track.album);
 
         if (!isCancelled) {
           setLyricsSource(result.source);
@@ -145,7 +146,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [track.id, track.title, track.artist, track.duration, track.lyricsRaw, videoId]);
+  }, [track.id, track.title, track.artist, track.duration, track.lyricsRaw, track.album, videoId]);
 
   // Per-Track LocalStorage Persistence & Auto-Offset Duration Delta Calculation
   useEffect(() => {
@@ -217,32 +218,56 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     return originalLines;
   }, [mode, originalLines, romanizedLines, isDualLine, isSynced]);
 
-  // Find active line index based on current playback time and calibration offset (only when synced)
+  // Timestamp of the first synchronized vocal lyric line (strictly derived from line 1 of verified .lrc)
+  const vocalStartTime = useMemo(() => {
+    if (!isSynced || displayedLyrics.length === 0) return 0;
+    const firstLine = displayedLyrics[0];
+    return firstLine && typeof firstLine.time === "number" && firstLine.time > 0 ? firstLine.time : 0;
+  }, [displayedLyrics, isSynced]);
+
+  // Effective calibrated playback time
+  const effectivePlaybackTime = Math.max(0, currentTime - offset);
+
+  // Check if instrumental prelude countdown visual should be active (ONLY when vocalStartTime > 3 AND currentTime < vocalStartTime - 0.5)
+  const showIntroCountdown = useMemo(() => {
+    return isSynced && !loading && vocalStartTime > 3 && effectivePlaybackTime < vocalStartTime - 0.5;
+  }, [isSynced, loading, vocalStartTime, effectivePlaybackTime]);
+
+  // Find active line index based on current playback time and calibration offset:
+  // activeIndex = lyrics.findLastIndex(line => line.time <= currentTime)
   const activeIndex = useMemo(() => {
     if (!isSynced || displayedLyrics.length === 0) return -1;
     
     // Real-Time Sync Adjustment using effectiveTime
     const effectiveTime = currentTime - offset;
 
-    let active = -1;
-    for (let i = 0; i < displayedLyrics.length; i++) {
-      if (effectiveTime >= displayedLyrics[i].time - 0.25) {
-        active = i;
-      } else {
-        break;
+    for (let i = displayedLyrics.length - 1; i >= 0; i--) {
+      if (displayedLyrics[i].time <= effectiveTime) {
+        return i;
       }
     }
-    return active >= 0 ? active : 0;
+    return -1;
   }, [displayedLyrics, currentTime, offset, isSynced]);
 
-  // Scroll active line into center
+  // Smooth centered auto-scroll:
+  // targetScroll = activeLineElement.offsetTop - (container.clientHeight / 2) + (activeLineElement.clientHeight / 2)
   const scrollToActiveLine = useCallback((smooth = true) => {
     if (activeLineRef.current && containerRef.current && isSynced) {
+      const container = containerRef.current;
+      const activeLine = activeLineRef.current;
       isAutoScrollingRef.current = true;
-      activeLineRef.current.scrollIntoView({
-        behavior: smooth ? "smooth" : "auto",
-        block: "center",
-      });
+
+      const targetScroll =
+        activeLine.offsetTop - (container.clientHeight / 2) + (activeLine.clientHeight / 2);
+
+      if (smooth) {
+        container.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: "smooth",
+        });
+      } else {
+        container.scrollTop = Math.max(0, targetScroll);
+      }
 
       if (userScrollTimeoutRef.current) clearTimeout(userScrollTimeoutRef.current);
       userScrollTimeoutRef.current = setTimeout(() => {
@@ -253,10 +278,10 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
 
   // Automatic scrolling when line changes and user hasn't scrolled away (only when synced)
   useEffect(() => {
-    if (isSynced && activeIndex >= 0 && !isUserScrolled && !loading) {
+    if (isSynced && activeIndex >= 0 && !isUserScrolled && !loading && !showIntroCountdown) {
       scrollToActiveLine(true);
     }
-  }, [activeIndex, isSynced, isUserScrolled, loading, scrollToActiveLine]);
+  }, [activeIndex, isSynced, isUserScrolled, loading, showIntroCountdown, scrollToActiveLine]);
 
   // Handle user manual scroll detection
   const handleScroll = () => {
@@ -486,6 +511,10 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         onScroll={handleScroll}
         onWheel={handleUserWheelOrTouch}
         onTouchMove={handleUserWheelOrTouch}
+        style={{
+          scrollbarColor: "var(--accent-color, var(--accent-primary, var(--primary))) transparent",
+          scrollBehavior: "smooth",
+        }}
         className={`flex-1 overflow-y-auto custom-scrollbar relative scroll-smooth ${
           isSynced ? "space-y-7 sm:space-y-8 py-14 px-2 sm:px-6" : "space-y-4 sm:space-y-5 py-8 px-3 sm:px-8"
         }`}
@@ -494,9 +523,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           <div className={`flex flex-col items-center justify-center h-full ${designConfig.textMuted} space-y-3`}>
             <div className="relative">
               <div
-                className={`w-10 h-10 rounded-full border-2 border-t-transparent animate-spin ${designConfig.accentBorder}`}
+                className="w-10 h-10 rounded-full border-2 border-[var(--accent-color,var(--accent-primary,var(--primary)))] border-t-transparent animate-spin"
               />
-              <Mic2 className={`w-4 h-4 absolute inset-0 m-auto ${designConfig.accentText}`} />
+              <Mic2 className={`w-4 h-4 absolute inset-0 m-auto ${designConfig.accentText} text-[var(--accent-color,var(--accent-primary,var(--primary)))]`} stroke="currentColor" />
             </div>
             <p className={`text-sm font-medium ${designConfig.textSecondary}`}>Fetching lyrics...</p>
             <p className="text-xs opacity-75">Checking LRCLIB & YouTube Music database</p>
@@ -512,52 +541,77 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
             </p>
           </div>
         ) : isSynced ? (
-          // Synced Lyrics rendering with line-by-line highlighting and timestamp seek
-          displayedLyrics.map((line, idx) => {
-            const isActive = idx === activeIndex;
-            const isPast = idx < activeIndex;
-
-            return (
-              <div
-                key={`${idx}-${line.time}`}
-                ref={isActive ? activeLineRef : null}
-                onClick={() => {
-                  if (line.time >= 0) {
-                    const targetTime = Math.max(0, line.time + offset);
-                    onSeek(targetTime);
-                    setIsUserScrolled(false);
-                  }
+          <>
+            {/* Fluid Oblivion 'O' Instrumental Countdown Visual for tracks with intro >= 3s */}
+            {showIntroCountdown && (
+              <OblivionIntroCountdown
+                currentPlaybackTime={effectivePlaybackTime}
+                vocalStartTime={vocalStartTime}
+                firstLineTime={vocalStartTime}
+                designConfig={designConfig}
+                onCountdownComplete={() => {
+                  scrollToActiveLine(true);
                 }}
-                className={`transition-all duration-300 transform origin-left leading-relaxed ${alignClass} ${
-                  line.time >= 0 ? "cursor-pointer active:scale-[0.98]" : ""
-                } ${
-                  isActive
-                    ? `${designConfig.accentText} scale-[1.02] sm:scale-105 drop-shadow-md tracking-tight opacity-100`
-                    : isPast
-                    ? `${designConfig.textMuted} opacity-40 hover:opacity-80 hover:${designConfig.textPrimary}`
-                    : `${designConfig.textSecondary} opacity-60 hover:opacity-100 hover:${designConfig.textPrimary}`
-                }`}
-              >
-                {/* Primary Lyric Line */}
-                <div className={`${fontSizeClass} font-black`}>
-                  {line.text}
-                </div>
+              />
+            )}
 
-                {/* Sub-Lyric Line (Interleaved Phonetic Romanization) */}
-                {line.subText && (
-                  <div
-                    className={`${subFontSizeClass} mt-1.5 font-normal tracking-wide transition-opacity duration-300 ${
-                      isActive
-                        ? "opacity-90 italic font-medium"
-                        : "opacity-60 italic"
-                    }`}
-                  >
-                    {line.subText}
+            {/* Synced Lyrics rendering with line-by-line highlighting and timestamp seek */}
+            {displayedLyrics.map((line, idx) => {
+              const isActive = idx === activeIndex;
+
+              return (
+                <div
+                  key={`${idx}-${line.time}`}
+                  ref={isActive ? activeLineRef : null}
+                  onClick={() => {
+                    if (line.time >= 0) {
+                      const targetTime = Math.max(0, line.time + offset);
+                      onSeek(targetTime);
+                      setIsUserScrolled(false);
+                    }
+                  }}
+                  className={`transition-all duration-300 transform origin-left leading-relaxed ${alignClass} ${
+                    line.time >= 0 ? "cursor-pointer active:scale-[0.98]" : ""
+                  } ${
+                    isActive
+                      ? "scale-[1.02] sm:scale-105 drop-shadow-md tracking-tight opacity-100 font-black"
+                      : "opacity-35 hover:opacity-80 font-medium"
+                  }`}
+                  style={{
+                    color: isActive
+                      ? "var(--accent-color, var(--accent-primary, var(--primary)))"
+                      : undefined,
+                    textShadow: isActive
+                      ? "0 0 16px var(--accent-color, var(--accent-primary, rgba(197, 155, 39, 0.45)))"
+                      : undefined,
+                  }}
+                >
+                  {/* Primary Lyric Line */}
+                  <div className={`${fontSizeClass} ${isActive ? "font-black" : "font-semibold"}`}>
+                    {line.text}
                   </div>
-                )}
-              </div>
-            );
-          })
+
+                  {/* Sub-Lyric Line (Interleaved Phonetic Romanization) */}
+                  {line.subText && (
+                    <div
+                      className={`${subFontSizeClass} mt-1.5 tracking-wide transition-opacity duration-300 ${
+                        isActive
+                          ? "opacity-90 italic font-medium"
+                          : "opacity-40 italic font-normal"
+                      }`}
+                      style={{
+                        color: isActive
+                          ? "var(--accent-color, var(--accent-primary, var(--primary)))"
+                          : undefined,
+                      }}
+                    >
+                      {line.subText}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
         ) : (
           // Plain unsynced text rendering: standard smooth manual scrolling, comfortable line spacing, no jump autoscroll
           <div className={`space-y-4 max-w-2xl mx-auto ${alignClass}`}>

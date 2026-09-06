@@ -6,10 +6,34 @@ html, body {
   overflow-x: clip;
 }
 
-/* Custom scrollbar for modals / sidebar with high visibility and cross-browser support */
+/* Dynamic scrollbar styling bound to active theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-color, var(--accent-primary, var(--primary, #c59b27))) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color, var(--accent-primary, var(--primary, #c59b27)));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  filter: brightness(1.2);
+}
+
+/* Custom scrollbar for modals / sidebar / lyrics / drawers with high visibility and cross-browser support */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(180, 150, 100, 0.4) transparent;
+  scrollbar-color: var(--accent-color, var(--accent-primary, var(--primary, #c59b27))) transparent;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -23,13 +47,23 @@ html, body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(180, 150, 100, 0.35);
+  background-color: var(--accent-color, var(--accent-primary, var(--primary, #c59b27)));
   border-radius: 9999px;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s ease, filter 0.2s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(200, 155, 60, 0.65);
+  filter: brightness(1.2);
+}
+
+/* Dynamic theme loading spinner utilities */
+.theme-spinner-border {
+  border-color: var(--accent-color, var(--accent-primary, var(--primary, #c59b27)));
+  border-top-color: transparent !important;
+}
+
+.theme-spinner-text {
+  color: var(--accent-color, var(--accent-primary, var(--primary, #c59b27)));
 }
 
 @keyframes ambientPulse {

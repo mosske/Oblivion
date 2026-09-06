@@ -1,5 +1,5 @@
 import { Playlist, Track } from "../types";
-import { getCustomPlaylistCovers, setCustomPlaylistCover } from "./customCoversStorage";
+import { getCustomPlaylistCovers, setCustomPlaylistCover, removePlaylistCustomArtwork } from "./customCoversStorage";
 
 const DB_NAME = "OblivionPlaylistStoreDB";
 const DB_VERSION = 2;
@@ -464,4 +464,68 @@ export function mergeRemotePlaylistsWithLocalCache(
   }
 
   return result;
+}
+
+/**
+ * Permanently delete a playlist from all local persistent layers:
+ * 1. IndexedDB (`playlists`, `playlist_tracks`, and `custom_covers` stores)
+ * 2. localStorage (`oblivion_saved_playlists`)
+ * 3. Isolated custom artwork stores (`PLAYLIST_CUSTOM_ARTWORK`)
+ */
+export async function deletePlaylistFromDb(playlistId: string): Promise<void> {
+  if (!playlistId) return;
+  const cleanId = playlistId.replace(/^VL/, "");
+
+  // 1. Remove from localStorage playlists
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY_PLAYLISTS);
+    if (raw) {
+      const parsed: Playlist[] = JSON.parse(raw);
+      const filtered = parsed.filter(
+        (p) => p.id !== playlistId && p.id !== cleanId && p.id?.replace(/^VL/, "") !== cleanId
+      );
+      localStorage.setItem(LOCAL_STORAGE_KEY_PLAYLISTS, JSON.stringify(filtered));
+    }
+  } catch (err) {
+    console.warn("Failed to remove playlist from localStorage cache:", err);
+  }
+
+  // 2. Remove from PLAYLIST_CUSTOM_ARTWORK store
+  try {
+    removePlaylistCustomArtwork(playlistId);
+    removePlaylistCustomArtwork(cleanId);
+  } catch (err) {
+    console.warn("Failed to remove custom artwork for playlist:", err);
+  }
+
+  // 3. Remove from IndexedDB stores
+  try {
+    const db = await openPlaylistDB();
+    const tx = db.transaction([STORE_PLAYLISTS, STORE_PLAYLIST_TRACKS, STORE_CUSTOM_COVERS], "readwrite");
+    
+    // Playlists store
+    try {
+      tx.objectStore(STORE_PLAYLISTS).delete(playlistId);
+      tx.objectStore(STORE_PLAYLISTS).delete(cleanId);
+    } catch {}
+
+    // Tracks store
+    try {
+      tx.objectStore(STORE_PLAYLIST_TRACKS).delete(playlistId);
+      tx.objectStore(STORE_PLAYLIST_TRACKS).delete(cleanId);
+    } catch {}
+
+    // Custom covers store
+    try {
+      tx.objectStore(STORE_CUSTOM_COVERS).delete(playlistId);
+      tx.objectStore(STORE_CUSTOM_COVERS).delete(cleanId);
+    } catch {}
+
+    await new Promise<void>((resolve) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  } catch (err) {
+    console.warn("IndexedDB delete playlist notice:", err);
+  }
 }

@@ -332,9 +332,9 @@ export const PlaylistCustomCoverModal: React.FC<PlaylistCustomCoverModalProps> =
                   type="button"
                   onClick={handleGenerateAiCover}
                   disabled={isGeneratingAi || !aiPrompt.trim()}
-                  className="px-4 py-2.5 bg-[#c89b3c] hover:bg-[#b08630] disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-lg shrink-0"
+                  className={`px-4 py-2.5 ${designConfig.btnPrimary} disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-lg shrink-0`}
                 >
-                  <Wand2 className={`w-4 h-4 ${isGeneratingAi ? "animate-spin" : ""}`} />
+                  <Wand2 className={`w-4 h-4 ${isGeneratingAi ? "animate-spin" : ""}`} stroke="currentColor" />
                   <span>{isGeneratingAi ? "Creating..." : "Generate"}</span>
                 </button>
               </div>

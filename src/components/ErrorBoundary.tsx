@@ -84,7 +84,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
       // Return a seamless subtle placeholder during the fast retry cycle instead of the recovery prompt screen
       return (
         <div className="flex-1 flex items-center justify-center min-h-[300px] p-8 text-center select-none">
-          <Loader2 className="w-6 h-6 text-[#c89b3c] animate-spin opacity-60" />
+          <Loader2 className="w-6 h-6 text-[var(--accent-color,var(--primary))] animate-spin opacity-80" stroke="currentColor" />
         </div>
       );
     }

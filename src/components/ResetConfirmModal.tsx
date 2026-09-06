@@ -114,7 +114,7 @@ export const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
                   : "bg-white/5 border-white/10"
               } flex items-start gap-3`}
             >
-              <div className="w-6 h-6 rounded-lg bg-[#c89b3c]/20 text-[#855f10] dark:text-[#c89b3c] flex items-center justify-center shrink-0 mt-0.5 font-bold">
+              <div className={`w-6 h-6 rounded-lg bg-[var(--accent-color,var(--primary))]/20 ${designConfig.accentText} text-[var(--accent-color,var(--primary))] flex items-center justify-center shrink-0 mt-0.5 font-bold`}>
                 <Sliders className="w-3.5 h-3.5" />
               </div>
               <div>
@@ -132,7 +132,7 @@ export const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
                   : "bg-white/5 border-white/10"
               } flex items-start gap-3`}
             >
-              <div className="w-6 h-6 rounded-lg bg-[#c89b3c]/20 text-[#855f10] dark:text-[#c89b3c] flex items-center justify-center shrink-0 mt-0.5 font-bold">
+              <div className={`w-6 h-6 rounded-lg bg-[var(--accent-color,var(--primary))]/20 ${designConfig.accentText} text-[var(--accent-color,var(--primary))] flex items-center justify-center shrink-0 mt-0.5 font-bold`}>
                 <Layers className="w-3.5 h-3.5" />
               </div>
               <div>
@@ -150,7 +150,7 @@ export const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
                   : "bg-white/5 border-white/10"
               } flex items-start gap-3`}
             >
-              <div className="w-6 h-6 rounded-lg bg-[#c89b3c]/20 text-[#855f10] dark:text-[#c89b3c] flex items-center justify-center shrink-0 mt-0.5 font-bold">
+              <div className={`w-6 h-6 rounded-lg bg-[var(--accent-color,var(--primary))]/20 ${designConfig.accentText} text-[var(--accent-color,var(--primary))] flex items-center justify-center shrink-0 mt-0.5 font-bold`}>
                 <Film className="w-3.5 h-3.5" />
               </div>
               <div>
@@ -168,7 +168,7 @@ export const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
                   : "bg-white/5 border-white/10"
               } flex items-start gap-3`}
             >
-              <div className="w-6 h-6 rounded-lg bg-[#c89b3c]/20 text-[#855f10] dark:text-[#c89b3c] flex items-center justify-center shrink-0 mt-0.5 font-bold">
+              <div className={`w-6 h-6 rounded-lg bg-[var(--accent-color,var(--primary))]/20 ${designConfig.accentText} text-[var(--accent-color,var(--primary))] flex items-center justify-center shrink-0 mt-0.5 font-bold`}>
                 <Eye className="w-3.5 h-3.5" />
               </div>
               <div>

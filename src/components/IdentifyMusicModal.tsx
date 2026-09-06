@@ -481,7 +481,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
               {status === "listening" ? (
                 <Mic className="w-9 h-9 animate-bounce" />
               ) : status === "analyzing" ? (
-                <Sparkles className="w-9 h-9 animate-spin" />
+                <Sparkles className="w-9 h-9 animate-spin" stroke="currentColor" />
               ) : status === "matched" ? (
                 <RotateCcw className="w-8 h-8" />
               ) : (

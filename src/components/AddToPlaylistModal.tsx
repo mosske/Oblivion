@@ -333,10 +333,10 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
               id="open-create-new-playlist-dialog-btn"
               type="button"
               onClick={() => setViewMode("create")}
-              className={`w-full py-3 px-4 rounded-2xl border-2 border-dashed ${designConfig.accentBorder} bg-[#c89b3c]/10 hover:bg-[#c89b3c]/20 ${designConfig.textPrimary} flex items-center justify-between gap-3 text-xs font-bold transition-all shadow-sm group active:scale-[0.99] flex-shrink-0 cursor-pointer`}
+              className={`w-full py-3 px-4 rounded-2xl border-2 border-dashed ${designConfig.accentBorder} bg-[var(--accent-color,var(--primary))]/10 hover:bg-[var(--accent-color,var(--primary))]/20 ${designConfig.textPrimary} flex items-center justify-between gap-3 text-xs font-bold transition-all shadow-sm group active:scale-[0.99] flex-shrink-0 cursor-pointer`}
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-[#c89b3c] text-white flex items-center justify-center shadow">
+                <div className={`w-7 h-7 rounded-lg ${designConfig.accentBg} text-white flex items-center justify-center shadow`}>
                   <Plus className="w-4 h-4 stroke-[3]" />
                 </div>
                 <div className="text-left">
@@ -346,7 +346,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                   </p>
                 </div>
               </div>
-              <Sparkles className="w-4 h-4 text-[#c89b3c] group-hover:scale-110 transition-transform" />
+              <Sparkles className={`w-4 h-4 ${designConfig.accentText} text-[var(--accent-color,var(--primary))] group-hover:scale-110 transition-transform`} />
             </button>
 
             {/* Search Filter Input */}
@@ -388,7 +388,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                       disabled={isSubmitting}
                       onClick={() => handleChoosePlaylist(pl)}
                       className={`w-full text-left p-2.5 rounded-2xl ${designConfig.cardBg} ${designConfig.cardHover} border ${
-                        isSelected ? "border-[#c89b3c] ring-2 ring-[#c89b3c]/30" : designConfig.borderSubtle
+                        isSelected ? `${designConfig.accentBorder} ring-2 ring-[var(--accent-color,var(--primary))]/30` : designConfig.borderSubtle
                       } flex items-center justify-between gap-3 transition-all duration-200 group active:scale-[0.99] disabled:opacity-60 cursor-pointer`}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -397,7 +397,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-bold ${designConfig.textPrimary} group-hover:text-[#c89b3c] transition-colors truncate`}>
+                          <p className={`text-xs font-bold ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors truncate`}>
                             {pl.title}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
@@ -415,13 +415,13 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
 
                       <div className="flex-shrink-0 pl-2">
                         {isSelected && isSubmitting ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-[#c89b3c]" />
+                          <Loader2 className={`w-5 h-5 animate-spin ${designConfig.accentText} text-[var(--accent-color,var(--primary))]`} stroke="currentColor" />
                         ) : isSelected ? (
-                          <div className="w-6 h-6 rounded-full bg-[#c89b3c] text-white flex items-center justify-center shadow-md">
+                          <div className={`w-6 h-6 rounded-full ${designConfig.accentBg} text-white flex items-center justify-center shadow-md`}>
                             <Check className="w-3.5 h-3.5 stroke-[3]" />
                           </div>
                         ) : (
-                          <div className={`p-1.5 rounded-xl ${designConfig.textMuted} group-hover:text-[#c89b3c] group-hover:bg-[#c89b3c]/10 transition-colors`}>
+                          <div className={`p-1.5 rounded-xl ${designConfig.textMuted} group-hover:${designConfig.accentText} group-hover:bg-[var(--accent-color,var(--primary))]/10 transition-colors`}>
                             <Plus className="w-4 h-4" />
                           </div>
                         )}
@@ -509,7 +509,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#c89b3c] bg-[#c89b3c]/15 px-2 py-1 rounded-lg shrink-0">
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${designConfig.accentText} bg-[var(--accent-color,var(--primary))]/15 px-2 py-1 rounded-lg shrink-0`}>
                   Track #1
                 </span>
               </div>
@@ -631,7 +631,7 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                           >
                             <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
                             {coverUrl === preset.url && (
-                              <div className="absolute inset-0 bg-[#c89b3c]/40 flex items-center justify-center">
+                              <div className="absolute inset-0 bg-[var(--accent-color,var(--primary))]/40 flex items-center justify-center">
                                 <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
                               </div>
                             )}

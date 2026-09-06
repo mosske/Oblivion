@@ -156,7 +156,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           className={`self-start sm:self-auto px-3.5 py-2 rounded-xl ${designConfig.btnSecondary} font-bold text-xs flex items-center gap-2 shadow-sm hover:scale-105 active:scale-95 transition-all border ${designConfig.borderSubtle}`}
           title="Fresh pull from YouTube Music"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${designConfig.accentText} ${isRefreshing || loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${designConfig.accentText} text-[var(--accent-color,var(--primary))] ${isRefreshing || loading ? "animate-spin" : ""}`} stroke="currentColor" />
           <span className={`${designConfig.textPrimary} font-bold`}>{isRefreshing ? "Refreshing..." : "Fresh Pull"}</span>
         </button>
       </div>
@@ -183,7 +183,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {loading ? (
         <div className={`p-20 text-center rounded-3xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-3`}>
-          <Loader2 className="w-8 h-8 mx-auto text-[#c89b3c] animate-spin" />
+          <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} text-[var(--accent-color,var(--primary))] animate-spin`} stroke="currentColor" />
           <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
             Pulling fresh lineup from YouTube Music...
           </p>
@@ -196,7 +196,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Zap className="w-5 h-5 text-[#c89b3c]" />
+                  <Zap className={`w-5 h-5 ${designConfig.accentText} text-[var(--accent-color,var(--primary))]`} />
                   <div>
                     <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                       Quick picks
@@ -631,7 +631,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {communityPlaylists.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
-                <Music2 className="w-5 h-5 text-[#c89b3c]" />
+                <Music2 className={`w-5 h-5 ${designConfig.accentText} text-[var(--accent-color,var(--primary))]`} />
                 <div>
                   <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                     Community & Curated Playlists

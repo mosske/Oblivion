@@ -213,7 +213,7 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2 custom-scrollbar pr-1">
         {loading ? (
           <div className={`flex flex-col items-center justify-center h-48 space-y-2 ${designConfig.textMuted}`}>
-            <Sparkles className={`w-6 h-6 animate-spin ${designConfig.accentText}`} />
+            <Sparkles className={`w-6 h-6 animate-spin ${designConfig.accentText} text-[var(--accent-color,var(--primary))]`} stroke="currentColor" />
             <p className="text-xs font-mono">Generating Radio Queue...</p>
           </div>
         ) : cleanSimilar.length === 0 ? (

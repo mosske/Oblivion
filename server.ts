@@ -2234,10 +2234,9 @@ app.get("/api/auth/google/url", (req, res) => {
   }
 
   const scopes = [
-    "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/youtube",
-    "https://www.googleapis.com/auth/youtube.readonly",
+    "openid",
+    "email",
+    "profile",
     "https://www.googleapis.com/auth/youtube.force-ssl",
   ];
 
@@ -3479,7 +3478,7 @@ app.post(["/api/cache/clear", "/api/system/reset-cache", "/api/youtube/cache/cle
   }
 });
 
-app.delete("/api/youtube/playlists/:id", async (req, res) => {
+app.delete(["/api/playlists/:id", "/api/youtube/playlists/:id"], async (req, res) => {
   const { id } = req.params;
   const cleanId = id.replace(/^VL/, "");
   const accessToken = await getValidAccessToken(req);
@@ -3523,7 +3522,18 @@ app.delete("/api/youtube/playlists/:id", async (req, res) => {
     writeStoredPlaylists(filtered);
   } catch {}
 
-  // 4. Invalidate caches
+  // 4. Remove from PLAYLIST_CUSTOM_ARTWORK / custom covers store on server
+  try {
+    const customCovers = readStoredCustomCovers();
+    if (customCovers[id] || customCovers[cleanId] || customCovers[`VL${cleanId}`]) {
+      delete customCovers[id];
+      delete customCovers[cleanId];
+      delete customCovers[`VL${cleanId}`];
+      writeStoredCustomCovers(customCovers);
+    }
+  } catch {}
+
+  // 5. Invalidate caches
   delFromCache("yt_playlists_auth:*");
   delFromCache("yt_playlists_pub:*");
   delFromCache("user_pls_*");
@@ -3531,8 +3541,11 @@ app.delete("/api/youtube/playlists/:id", async (req, res) => {
   delFromCache(`pub_pl:${id}`);
   delFromCache(`pl_items:auth:${cleanId}`);
   delFromCache(`pl_items:pub:${cleanId}`);
+  delFromCache(`yt_pl_custom_img:${cleanId}`);
+  delFromCache(`yt_pl_custom_img:${id}`);
 
-  res.json({ success: true });
+  // Return HTTP 204 No Content on success
+  res.status(204).end();
 });
 
 async function syncPlaylistTracksToYouTube(
@@ -4713,9 +4726,23 @@ app.get("/api/youtube/search", async (req, res) => {
 // Multi-Source Lyrics Pipeline with Title Sanitization & Provider Fallback
 // =========================================================================
 
-function cleanArtistNameServer(rawArtistOrUploader?: string): string {
+function cleanArtistNameServer(rawArtistOrUploader?: string | string[] | any): string {
   if (!rawArtistOrUploader) return "";
-  let artist = rawArtistOrUploader.trim();
+  let artist = "";
+  if (Array.isArray(rawArtistOrUploader)) {
+    artist = rawArtistOrUploader[0] ? String(rawArtistOrUploader[0]).trim() : "";
+  } else {
+    artist = String(rawArtistOrUploader).trim();
+  }
+
+  if (!artist) return "";
+
+  // Split by comma, ampersand, or feature delimiters and extract ONLY the primary artist
+  const primarySplit = artist.split(/\s*(?:,|&|\/|;|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\band\b)\s*/i);
+  if (primarySplit.length > 0 && primarySplit[0].trim()) {
+    artist = primarySplit[0].trim();
+  }
+
   const branding = [
     /\s*-\s*topic$/i,
     /\s*topic$/i,
@@ -4732,29 +4759,16 @@ function cleanArtistNameServer(rawArtistOrUploader?: string): string {
   for (const b of branding) {
     artist = artist.replace(b, "").trim();
   }
-  return artist.replace(/\s{2,}/g, " ").trim() || rawArtistOrUploader.trim();
+  return artist.replace(/\s{2,}/g, " ").trim();
 }
 
-function sanitizeLyricsQueryServer(rawTitle: string, rawArtistOrUploader?: string): {
-  cleanTitle: string;
-  cleanArtist: string;
-  searchQuery: string;
-  secondaryQueries: string[];
-} {
-  if (!rawTitle) {
-    const artist = cleanArtistNameServer(rawArtistOrUploader) || "Unknown Artist";
-    return {
-      cleanTitle: "Untitled Track",
-      cleanArtist: artist,
-      searchQuery: artist,
-      secondaryQueries: [],
-    };
-  }
-
+function cleanTrackTitleServer(rawTitle: string, artistName?: string): string {
+  if (!rawTitle) return "Untitled Track";
   let title = rawTitle.trim();
-  const artistFromUploader = cleanArtistNameServer(rawArtistOrUploader);
 
-  // 1. Strip video noise patterns
+  // Strip anything following - Remastered or - Live (e.g. "- Remastered 2011", "- Live at Wembley", etc.)
+  title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?|live|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary).*$/i, "");
+
   const noisePatterns = [
     /\s*[\(\[]\s*official\s+(?:music\s+)?video\s*[\)\]]/gi,
     /\s*[\(\[]\s*official\s+(?:audio|lyric\s+video|lyrics\s+video|track|stream|visualizer)\s*[\)\]]/gi,
@@ -4785,55 +4799,119 @@ function sanitizeLyricsQueryServer(rawTitle: string, rawArtistOrUploader?: strin
     title = title.replace(p, " ");
   }
 
-  // 2. Remove bracketed features (feat. / ft. / with ...) from title
+  // Strip (feat. ...), [feat. ...], (ft. ...), [ft. ...]
   title = title.replace(/[\(\[]\s*(?:feat\.?|ft\.?|featuring|with)\s+[^()\[\]]+[\)\]]/gi, " ");
   title = title.replace(/\s+(?:feat\.?|ft\.?|featuring)\s+.+$/i, " ");
 
-  // 3. Clean empty brackets
+  // Strip empty/dangling brackets
   title = title.replace(/\(\s*\)/g, " ").replace(/\[\s*\]/g, " ").replace(/\{\s*\}/g, " ").trim();
+  title = title.replace(/\s{2,}/g, " ").trim();
 
-  let detectedArtist = "";
-  let detectedTitle = title;
-
-  // 4. Check "Artist - Title" separator
-  const splitMatch = title.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
-  if (splitMatch) {
-    detectedArtist = splitMatch[1].trim();
-    detectedTitle = splitMatch[2].trim();
-  } else if (artistFromUploader && title.toLowerCase().startsWith(artistFromUploader.toLowerCase())) {
-    const rest = title.slice(artistFromUploader.length).replace(/^[-\s:|~–—"']+/, "").trim();
-    if (rest) {
-      detectedArtist = artistFromUploader;
-      detectedTitle = rest;
+  // If title is "Artist - Title", isolate the title
+  const delimiterMatch = title.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
+  if (delimiterMatch) {
+    const left = delimiterMatch[1].trim();
+    const right = delimiterMatch[2].trim();
+    if (artistName && (left.toLowerCase().includes(artistName.toLowerCase()) || artistName.toLowerCase().includes(left.toLowerCase()))) {
+      title = right;
     }
   }
 
-  const finalArtist = cleanArtistNameServer(detectedArtist || artistFromUploader || "Unknown Artist");
-  let finalTitle = detectedTitle
+  return title || rawTitle.trim();
+}
+
+function normalizeDurationSecondsServer(duration?: number): number | undefined {
+  if (duration === undefined || duration === null || isNaN(duration) || duration <= 0) {
+    return undefined;
+  }
+  const durationSec = Math.round(duration > 10000 ? duration / 1000 : duration);
+  return durationSec > 0 ? durationSec : undefined;
+}
+
+function sanitizeLyricsQueryServer(rawTitle: string, rawArtistOrUploader?: string | string[]): {
+  cleanTitle: string;
+  cleanArtist: string;
+  searchQuery: string;
+  secondaryQueries: string[];
+} {
+  if (!rawTitle) {
+    const artist = cleanArtistNameServer(rawArtistOrUploader) || "Unknown Artist";
+    return {
+      cleanTitle: "Untitled Track",
+      cleanArtist: artist,
+      searchQuery: artist,
+      secondaryQueries: [],
+    };
+  }
+
+  let title = cleanTrackTitleServer(rawTitle);
+  const cleanArtist = cleanArtistNameServer(rawArtistOrUploader) || "Unknown Artist";
+
+  // Check if title still starts with the artist name without delimiter
+  if (cleanArtist && title.toLowerCase().startsWith(cleanArtist.toLowerCase())) {
+    const rest = title.slice(cleanArtist.length).replace(/^[-\s:|~–—"']+/, "").trim();
+    if (rest) {
+      title = rest;
+    }
+  }
+
+  let finalTitle = title
     .replace(/^["']|["']$/g, "")
     .replace(/\s{2,}/g, " ")
+    .trim();
+
+  finalTitle = finalTitle
     .replace(/\s*[\(\[]\s*(?:official|video|audio|lyrics?|visualizer|mv|hd|4k)\s*[\)\]]/gi, "")
     .replace(/\(\s*\)|\[\s*\]/g, "")
     .trim();
 
-  const primarySearchQuery = `${finalArtist} ${finalTitle}`.trim();
+  const primarySearchQuery = `${cleanArtist} ${finalTitle}`.trim();
   const secondaryQueries: string[] = [];
   if (finalTitle && finalTitle !== primarySearchQuery) {
     secondaryQueries.push(finalTitle);
   }
-  if (rawArtistOrUploader && rawTitle) {
-    const rawComb = `${cleanArtistNameServer(rawArtistOrUploader)} ${rawTitle}`.trim();
-    if (!secondaryQueries.includes(rawComb) && rawComb !== primarySearchQuery) {
-      secondaryQueries.push(rawComb);
-    }
-  }
 
   return {
     cleanTitle: finalTitle || rawTitle,
-    cleanArtist: finalArtist,
+    cleanArtist: cleanArtist,
     searchQuery: primarySearchQuery,
     secondaryQueries,
   };
+}
+
+/**
+ * Server-side Caption & Lyrics Sanitization Filter:
+ * For YouTube Native / ASR / plain lyric tracks, strips speech-to-text artifacts
+ * ([Music], [Applause], (Laughter), [Intro], [Outro], etc.) and purges empty lines.
+ */
+function sanitizeCaptionsAndLyricsServer(rawLyricsText: string): string {
+  if (!rawLyricsText || typeof rawLyricsText !== "string") return "";
+
+  const artifactRegex = /\s*(\[|\()(?:\s*(?:music|applause|laughter|cheering|cheers|instrumental|silence|intro|outro|vocalizing|screaming|groaning|coughing|sound\s+effects?|audience\s+applause|singing|beatboxing|chatter|whistling|audio)\s*)(\]|\))\s*/gi;
+  const musicalSymbolsRegex = /[♪♫♩♬♯♭]+/g;
+
+  const lines = rawLyricsText.split("\n");
+  const cleanedLines: string[] = [];
+
+  for (const rawLine of lines) {
+    const timestampMatch = rawLine.match(/^(\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]\s*)/);
+    const prefix = timestampMatch ? timestampMatch[1] : "";
+    const lineContent = timestampMatch ? rawLine.slice(prefix.length) : rawLine;
+
+    let cleaned = lineContent
+      .replace(artifactRegex, " ")
+      .replace(musicalSymbolsRegex, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+    if (!cleaned || /^[.,!?:;\-_'"~\s]+$/.test(cleaned)) {
+      continue;
+    }
+
+    cleanedLines.push(prefix ? `${prefix}${cleaned}` : cleaned);
+  }
+
+  return cleanedLines.join("\n");
 }
 
 /**
@@ -5054,14 +5132,15 @@ async function fetchYouTubeMusicNativeLyrics(videoId: string, trackDurationSec?:
     }
 
     if (lyricsText && lyricsText.trim()) {
-      const quality = validateLyricsQualityServer(lyricsText, {
+      const sanitized = sanitizeCaptionsAndLyricsServer(lyricsText.trim());
+      const quality = validateLyricsQualityServer(sanitized, {
         isSynced: false,
         trackDurationSec,
         source: "youtube_music",
       });
       if (quality.isValid) {
         const payload = {
-          plainLyrics: lyricsText.trim(),
+          plainLyrics: sanitized,
           source: "youtube_music",
         };
         setInCache(cacheKey, payload);
@@ -5187,15 +5266,16 @@ app.get(["/api/youtube/ytmusic-lyrics", "/api/lyrics/ytmusic"], async (req, res)
 app.get("/api/youtube/lyrics", async (req, res) => {
   const rawTitle = (req.query.title as string) || "Song";
   const rawArtist = (req.query.artist as string) || "Artist";
-  const duration = req.query.duration ? parseInt(req.query.duration as string, 10) : undefined;
+  const durationRaw = req.query.duration ? parseInt(req.query.duration as string, 10) : undefined;
+  const durationSec = normalizeDurationSecondsServer(durationRaw);
   const videoId = (req.query.videoId as string) || "";
 
   // 1. Metadata Sanitization Pre-Filter
+  const cleanTitle = cleanTrackTitleServer(rawTitle);
+  const cleanArtist = cleanArtistNameServer(rawArtist);
   const sanitized = sanitizeLyricsQueryServer(rawTitle, rawArtist);
-  const cleanTitle = sanitized.cleanTitle;
-  const cleanArtist = sanitized.cleanArtist;
 
-  const cacheKey = `lyrics_v5:${cleanTitle}:${cleanArtist}:${videoId}:${duration || 0}`;
+  const cacheKey = `lyrics_v5:${cleanTitle}:${cleanArtist}:${videoId}:${durationSec || 0}`;
   const cached = getFromCache<any>(cacheKey);
   if (cached) {
     return res.json(cached);
@@ -5206,15 +5286,15 @@ app.get("/api/youtube/lyrics", async (req, res) => {
 
   // =========================================================================
   // Provider 1: Primary - LRCLIB API for Synced .lrc Lyrics
-  // Strictly verifies duration match within ±3.5 seconds and tests lyric quality
+  // Strictly queries /api/get first and verifies duration match within ±4 seconds
   // =========================================================================
   try {
     const params = new URLSearchParams({
       track_name: cleanTitle,
       artist_name: cleanArtist,
     });
-    if (duration && duration > 10) {
-      params.append("duration", Math.round(duration).toString());
+    if (durationSec) {
+      params.append("duration", durationSec.toString());
     }
 
     const lrcRes = await fetch(`https://lrclib.net/api/get?${params.toString()}`, {
@@ -5225,20 +5305,21 @@ app.get("/api/youtube/lyrics", async (req, res) => {
     if (lrcRes.ok) {
       const data = await lrcRes.json();
       const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
-      const isDurationMatch = !duration || !lrcDur || Math.abs(lrcDur - duration) <= 3.5;
+      const isDurationMatch = !durationSec || !lrcDur || Math.abs(lrcDur - durationSec) <= 4.0;
 
       if (isDurationMatch) {
         if (data.syncedLyrics && data.syncedLyrics.trim().length > 0) {
-          const quality = validateLyricsQualityServer(data.syncedLyrics, {
+          const sanitizedSynced = sanitizeCaptionsAndLyricsServer(data.syncedLyrics);
+          const quality = validateLyricsQualityServer(sanitizedSynced, {
             isSynced: true,
-            trackDurationSec: duration,
+            trackDurationSec: durationSec,
             source: "lrclib",
           });
           if (quality.isValid) {
             const payload = {
-              syncedLyrics: data.syncedLyrics,
-              plainLyrics: data.plainLyrics,
-              lyricsRaw: data.syncedLyrics,
+              syncedLyrics: sanitizedSynced,
+              plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyricsServer(data.plainLyrics) : undefined,
+              lyricsRaw: sanitizedSynced,
               isSynced: true,
               source: "lrclib",
               provider: "LRCLIB Synced",
@@ -5251,37 +5332,48 @@ app.get("/api/youtube/lyrics", async (req, res) => {
           }
         }
         if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
-          const quality = validateLyricsQualityServer(data.plainLyrics, {
+          const sanitizedPlain = sanitizeCaptionsAndLyricsServer(data.plainLyrics);
+          const quality = validateLyricsQualityServer(sanitizedPlain, {
             isSynced: false,
-            trackDurationSec: duration,
+            trackDurationSec: durationSec,
             source: "lrclib",
           });
           if (quality.isValid) {
-            lrcPlainFallback = data.plainLyrics;
+            lrcPlainFallback = sanitizedPlain;
           }
         }
       }
     }
 
-    // LRCLIB Search Fallbacks with Strict Duration Check (±3.5 seconds)
+    // LRCLIB Search Fallback:
+    // Query /api/search?track_name=...&artist_name=... and filter locally with strict <= 4s tolerance
+    const searchEndpoints: string[] = [];
+    if (cleanTitle && cleanArtist) {
+      searchEndpoints.push(
+        `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`
+      );
+    }
     const searchQueries = [
       sanitized.searchQuery,
       ...sanitized.secondaryQueries,
-    ];
-
+    ].filter(Boolean);
     for (const q of searchQueries) {
-      const searchRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(q)}`, {
+      searchEndpoints.push(`https://lrclib.net/api/search?q=${encodeURIComponent(q)}`);
+    }
+
+    for (const searchUrl of searchEndpoints) {
+      const searchRes = await fetch(searchUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
         signal: AbortSignal.timeout(4000),
       });
       if (searchRes.ok) {
         const list = await searchRes.json();
         if (Array.isArray(list) && list.length > 0) {
-          // Duration filter for search results
-          const durationFiltered = duration && duration > 10
+          // Duration filter for search results: ONLY accept if within 4s window
+          const durationFiltered = durationSec
             ? list.filter((it: any) => {
                 if (typeof it.duration === "number" && it.duration > 0) {
-                  return Math.abs(it.duration - duration) <= 3.5;
+                  return Math.abs(it.duration - durationSec) <= 4.0;
                 }
                 return false;
               })
@@ -5289,18 +5381,20 @@ app.get("/api/youtube/lyrics", async (req, res) => {
 
           const syncedMatch = durationFiltered.find((it: any) => {
             if (!it.syncedLyrics || !it.syncedLyrics.trim()) return false;
-            return validateLyricsQualityServer(it.syncedLyrics, {
+            const sanitized = sanitizeCaptionsAndLyricsServer(it.syncedLyrics);
+            return validateLyricsQualityServer(sanitized, {
               isSynced: true,
-              trackDurationSec: duration,
+              trackDurationSec: durationSec,
               source: "lrclib",
             }).isValid;
           });
 
           if (syncedMatch) {
+            const sanitizedSynced = sanitizeCaptionsAndLyricsServer(syncedMatch.syncedLyrics);
             const payload = {
-              syncedLyrics: syncedMatch.syncedLyrics,
-              plainLyrics: syncedMatch.plainLyrics,
-              lyricsRaw: syncedMatch.syncedLyrics,
+              syncedLyrics: sanitizedSynced,
+              plainLyrics: syncedMatch.plainLyrics ? sanitizeCaptionsAndLyricsServer(syncedMatch.plainLyrics) : undefined,
+              lyricsRaw: sanitizedSynced,
               isSynced: true,
               source: "lrclib",
               provider: "LRCLIB Synced",
@@ -5314,15 +5408,16 @@ app.get("/api/youtube/lyrics", async (req, res) => {
 
           const plainMatch = durationFiltered.find((it: any) => {
             if (!it.plainLyrics || !it.plainLyrics.trim()) return false;
-            return validateLyricsQualityServer(it.plainLyrics, {
+            const sanitized = sanitizeCaptionsAndLyricsServer(it.plainLyrics);
+            return validateLyricsQualityServer(sanitized, {
               isSynced: false,
-              trackDurationSec: duration,
+              trackDurationSec: durationSec,
               source: "lrclib",
             }).isValid;
           });
 
           if (plainMatch && !lrcPlainFallback) {
-            lrcPlainFallback = plainMatch.plainLyrics;
+            lrcPlainFallback = sanitizeCaptionsAndLyricsServer(plainMatch.plainLyrics);
           }
         }
       }
@@ -5344,7 +5439,7 @@ app.get("/api/youtube/lyrics", async (req, res) => {
   }
 
   if (targetVid) {
-    const ytmLyrics = await fetchYouTubeMusicNativeLyrics(targetVid, duration);
+    const ytmLyrics = await fetchYouTubeMusicNativeLyrics(targetVid, durationSec);
     if (ytmLyrics && ytmLyrics.plainLyrics) {
       const payload = {
         plainLyrics: ytmLyrics.plainLyrics,
@@ -5379,7 +5474,7 @@ app.get("/api/youtube/lyrics", async (req, res) => {
   // Provider 3: Tertiary Public Lyrics Providers (Lyrics.ovh & Genius)
   // =========================================================================
   try {
-    const tertiary = await fetchTertiaryPublicLyrics(cleanTitle, cleanArtist, duration);
+    const tertiary = await fetchTertiaryPublicLyrics(cleanTitle, cleanArtist, durationSec);
     if (tertiary && tertiary.plainLyrics) {
       const payload = {
         plainLyrics: tertiary.plainLyrics,

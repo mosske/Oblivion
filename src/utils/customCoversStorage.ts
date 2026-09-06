@@ -201,6 +201,14 @@ export function setPlaylistCustomArtwork(playlistId: string, artworkUrl: string 
 }
 
 /**
+ * Permanently remove custom artwork for a playlist from PLAYLIST_CUSTOM_ARTWORK, discrete keys, and legacy stores
+ */
+export function removePlaylistCustomArtwork(playlistId: string | undefined | null): void {
+  if (!playlistId) return;
+  setPlaylistCustomArtwork(playlistId, null);
+}
+
+/**
  * Synchronize custom artwork definitions from the server into local standalone storage
  */
 export async function syncCustomCoversFromServer(): Promise<Record<string, string>> {

@@ -227,7 +227,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-black/10 dark:border-white/10">
           <div className="flex items-center gap-2">
-            <Crop className="w-5 h-5 text-[#c89b3c]" />
+            <Crop className="w-5 h-5 text-[var(--accent-color,var(--primary))]" />
             <div>
               <h3 className="text-base font-bold">Crop & Position for YouTube</h3>
               <p className="text-[11px] opacity-70">YouTube requires 1:1 square playlist artwork</p>
@@ -254,7 +254,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onWheel={handleWheel}
-            className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden bg-black cursor-grab active:cursor-grabbing border-2 border-[#c89b3c] shadow-inner flex items-center justify-center touch-none"
+            className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden bg-black cursor-grab active:cursor-grabbing border-2 border-[var(--accent-color,var(--primary))] shadow-inner flex items-center justify-center touch-none"
           >
             {/* The Image to be adjusted */}
             <img
@@ -314,7 +314,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
                 step="0.05"
                 value={zoom}
                 onChange={(e) => setZoom(parseFloat(e.target.value))}
-                className="flex-1 accent-[#c89b3c] h-1.5 rounded-lg cursor-pointer bg-black/15 dark:bg-white/15"
+                className="flex-1 accent-[var(--accent-color,var(--primary))] h-1.5 rounded-lg cursor-pointer bg-black/15 dark:bg-white/15"
               />
 
               <button
@@ -366,7 +366,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
                   setOffset({ x: 0, y: 0 });
                   setRotation(0);
                 }}
-                className="text-xs text-[#c89b3c] hover:underline"
+                className="text-xs text-[var(--accent-color,var(--primary))] hover:underline"
               >
                 Reset
               </button>
@@ -386,7 +386,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           <button
             type="button"
             onClick={handleApplyCrop}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#c89b3c] text-white hover:bg-[#b0842f] shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-[var(--accent-color,var(--primary))] text-white hover:opacity-90 shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
           >
             <Check className="w-4 h-4" />
             Apply Artwork

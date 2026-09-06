@@ -27,12 +27,14 @@ import {
   Check,
   Globe,
   Lock,
-  Link2
+  Link2,
+  Search
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCustomCoverModal } from "./PlaylistCustomCoverModal";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
+import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
 import { getInMemoryToken } from "../App";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
@@ -41,6 +43,8 @@ interface PlaylistDetailViewProps {
   item: Playlist | Album;
   isAlbum?: boolean;
   onBack: () => void;
+  onBackToLibrary?: () => void;
+  onDeletePlaylist?: (playlistId: string) => void;
   onPlayTrack: (track: Track) => void;
   onPlayQueue: (tracks: Track[], startIndex: number) => void;
   onEditPlaylist?: (playlist: Playlist) => void;
@@ -64,6 +68,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   item,
   isAlbum = false,
   onBack,
+  onBackToLibrary,
+  onDeletePlaylist,
   onPlayTrack,
   onPlayQueue,
   onEditPlaylist,
@@ -97,7 +103,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   }
 
   const [tracks, setTracks] = useState<Track[]>(Array.isArray(item.tracks) ? item.tracks.filter(Boolean) : []);
+  const [inViewSearch, setInViewSearch] = useState<string>("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
+
+  const filteredTracks = tracks.filter((track) => {
+    if (!inViewSearch.trim()) return true;
+    const term = inViewSearch.toLowerCase().trim();
+    const titleMatch = (track.title || "").toLowerCase().includes(term);
+    const artistMatch = (track.artist || "").toLowerCase().includes(term);
+    return titleMatch || artistMatch;
+  });
 
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [openPlaylistDropdownId, setOpenPlaylistDropdownId] = useState<string | null>(null);
@@ -566,8 +582,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             )}
           </div>
 
-          {/* Right Action Buttons: Edit details */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Right Action Buttons: Edit details and Delete Playlist */}
+          <div className="flex flex-col items-end gap-2">
             {!isAlbum && onEditPlaylist && (
               <button
                 onClick={() => onEditPlaylist(item as Playlist)}
@@ -578,14 +594,49 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 <span>Edit Details</span>
               </button>
             )}
+            {!isAlbum && (
+              <button
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-red-600/15 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 hover:border-red-600 rounded-xl transition-all text-xs font-semibold shadow-sm active:scale-95"
+                title="Delete Playlist"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Playlist</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Songs List */}
-        <div className="space-y-2">
+        <div className="space-y-3">
+          {/* In-View Search Filter for Playlists and Albums */}
+          <div className="sticky top-0 z-20 py-1">
+            <div className="relative">
+              <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${designConfig.textMuted}`} />
+              <input
+                type="text"
+                value={inViewSearch}
+                onChange={(e) => setInViewSearch(e.target.value)}
+                placeholder={isAlbum ? "Filter album tracks by title or artist..." : "Filter playlist tracks by title or artist..."}
+                className={`w-full pl-10 ${inViewSearch ? "pr-10" : "pr-4"} py-2.5 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
+              />
+              {inViewSearch && (
+                <button
+                  type="button"
+                  onClick={() => setInViewSearch("")}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors`}
+                  title="Clear search filter"
+                  aria-label="Clear search filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center justify-between px-3 py-1">
             <h3 className={`text-sm font-bold ${designConfig.headingPrimary} uppercase tracking-wider font-mono`}>
-              Tracks ({tracks.length})
+              Tracks ({filteredTracks.length}{inViewSearch.trim() && filteredTracks.length !== tracks.length ? ` of ${tracks.length}` : ""})
             </h3>
             {isReorderMode && (
               <span className={`text-[11px] ${designConfig.accentText} font-medium animate-pulse`}>
@@ -596,7 +647,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
           {isLoadingTracks ? (
             <div className={`p-16 text-center rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-3 animate-fade-in`}>
-              <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} animate-spin`} />
+              <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} text-[var(--accent-color,var(--primary))] animate-spin`} stroke="currentColor" />
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
                 {isAlbum ? "Pulling album tracks from YouTube Music..." : "Loading playlist tracks..."}
               </p>
@@ -608,9 +659,24 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>This collection has no songs yet.</p>
               <p className={`text-xs ${designConfig.textMuted} mt-1`}>Search for songs or try refreshing.</p>
             </div>
+          ) : filteredTracks.length === 0 ? (
+            <div className={`p-12 text-center rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-2`}>
+              <Search className={`w-8 h-8 mx-auto ${designConfig.textMuted}`} />
+              <p className={`text-sm font-bold ${designConfig.textPrimary}`}>No matching tracks found</p>
+              <p className={`text-xs ${designConfig.textMuted}`}>
+                No tracks in this {isAlbum ? "album" : "playlist"} match "{inViewSearch}".
+              </p>
+              <button
+                type="button"
+                onClick={() => setInViewSearch("")}
+                className={`mt-2 px-3.5 py-1.5 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-xs font-semibold hover:bg-white/10`}
+              >
+                Clear filter
+              </button>
+            </div>
           ) : (
             <div className="space-y-1.5">
-              {tracks.map((track, idx) => {
+              {filteredTracks.map((track, idx) => {
                 const trId = track.id || track.youtubeVideoId;
                 const isCurrent = currentTrackId === trId;
                 const isBeingDragged = draggedIndex === idx;
@@ -619,11 +685,11 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 return (
                   <div
                     key={`${trId || 'tr'}_${idx}`}
-                    draggable={isReorderMode}
-                    onDragStart={(e) => isReorderMode && handleDragStart(e, idx)}
-                    onDragOver={(e) => isReorderMode && handleDragOver(e, idx)}
+                    draggable={isReorderMode && !inViewSearch.trim()}
+                    onDragStart={(e) => isReorderMode && !inViewSearch.trim() && handleDragStart(e, idx)}
+                    onDragOver={(e) => isReorderMode && !inViewSearch.trim() && handleDragOver(e, idx)}
                     onDragLeave={handleDragLeave}
-                    onDrop={(e) => isReorderMode && handleDrop(e, idx)}
+                    onDrop={(e) => isReorderMode && !inViewSearch.trim() && handleDrop(e, idx)}
                     onDragEnd={handleDragEnd}
                     className={`group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all ${
                       isReorderMode ? `cursor-grab active:cursor-grabbing border ${designConfig.accentBorder}` : ""
@@ -641,7 +707,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                     <div
                       onClick={() => {
                         if (!isReorderMode) {
-                          onPlayQueue(tracks, idx);
+                          onPlayQueue(filteredTracks, idx);
                         }
                       }}
                       className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 cursor-pointer"
@@ -802,6 +868,27 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           onUpdateCover={(newCoverUrl, isCustom) => {
             if (onUpdateCover) {
               onUpdateCover(newCoverUrl, isCustom);
+            }
+          }}
+          designConfig={designConfig}
+        />
+      )}
+
+      {/* Delete Playlist Confirmation Modal */}
+      {!isAlbum && isDeleteModalOpen && (
+        <DeletePlaylistModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          playlistId={item.id}
+          playlistTitle={item.title}
+          onSuccessNavigate={() => {
+            if (onDeletePlaylist) {
+              onDeletePlaylist(item.id);
+            }
+            if (onBackToLibrary) {
+              onBackToLibrary();
+            } else {
+              onBack();
             }
           }}
           designConfig={designConfig}

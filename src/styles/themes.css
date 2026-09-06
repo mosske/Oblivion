@@ -11,6 +11,8 @@
   --card-text: #1a201c;
   --card-border: rgba(230, 226, 216, 0.8);
   --accent-primary: #c59b27;
+  --accent-color: #c59b27;
+  --primary: #c59b27;
   --accent-primary-rgb: 197, 155, 39;
   --accent-secondary: #f59e0b;
   --accent-tertiary: #e5b85c;
@@ -34,6 +36,8 @@
   --card-text: #ffffff;
   --card-border: rgba(0, 243, 255, 0.3);
   --accent-primary: #00f3ff;
+  --accent-color: #00f3ff;
+  --primary: #00f3ff;
   --accent-primary-rgb: 0, 243, 255;
   --accent-secondary: #ff007f;
   --accent-tertiary: #7b2cbf;
@@ -66,6 +70,8 @@
   --card-text: #3b1235;
   --card-border: rgba(255, 255, 255, 0.95);
   --accent-primary: #ff70a6;
+  --accent-color: #ff70a6;
+  --primary: #ff70a6;
   --accent-primary-rgb: 255, 112, 166;
   --accent-secondary: #a3c4f3;
   --accent-tertiary: #ffd166;
@@ -88,6 +94,8 @@
   --card-text: #d0fbe9;
   --card-border: rgba(0, 245, 160, 0.3);
   --accent-primary: #00f5a0;
+  --accent-color: #00f5a0;
+  --primary: #00f5a0;
   --accent-primary-rgb: 0, 245, 160;
   --accent-secondary: #00d9f5;
   --accent-tertiary: #05668d;
@@ -110,6 +118,8 @@
   --card-text: #fef3c7;
   --card-border: rgba(245, 158, 11, 0.35);
   --accent-primary: #f59e0b;
+  --accent-color: #f59e0b;
+  --primary: #f59e0b;
   --accent-primary-rgb: 245, 158, 11;
   --accent-secondary: #d4af37;
   --accent-tertiary: #e65c00;
@@ -132,6 +142,8 @@
   --card-text: #fdf4ff;
   --card-border: rgba(255, 42, 141, 0.35);
   --accent-primary: #ff2a8d;
+  --accent-color: #ff2a8d;
+  --primary: #ff2a8d;
   --accent-primary-rgb: 255, 42, 141;
   --accent-secondary: #8a2be2;
   --accent-tertiary: #ff758c;
@@ -155,6 +167,8 @@
   --card-text: #1F1F1F;
   --card-border: rgba(31, 31, 31, 0.12);
   --accent-primary: #1F1F1F;
+  --accent-color: #1F1F1F;
+  --primary: #1F1F1F;
   --accent-primary-rgb: 31, 31, 31;
   --accent-secondary: #3A3530;
   --accent-tertiary: #524B44;

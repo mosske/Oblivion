@@ -187,17 +187,17 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
                     onClick={() => setVisibility(opt.id)}
                     className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer select-none ${
                       isSelected
-                        ? `border-[#c89b3c] ${designConfig.isLight ? "bg-[#c89b3c]/10" : "bg-[#c89b3c]/15"} shadow-sm`
+                        ? `${designConfig.accentBorder} bg-[var(--accent-color,var(--primary))]/10 shadow-sm`
                         : `${designConfig.borderSubtle} ${designConfig.isLight ? "bg-[#f5f2eb]/60 hover:bg-[#f5f2eb]" : "bg-black/20 hover:bg-black/40"}`
                     }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      <div className={`p-2 rounded-xl shrink-0 ${isSelected ? "bg-[#c89b3c] text-white shadow-sm" : `${designConfig.inputBg} ${designConfig.textMuted}`}`}>
+                      <div className={`p-2 rounded-xl shrink-0 ${isSelected ? `${designConfig.accentBg} text-white shadow-sm` : `${designConfig.inputBg} ${designConfig.textMuted}`}`}>
                         <IconComponent className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className={`text-sm font-bold ${isSelected ? designConfig.textPrimary : designConfig.textPrimary}`}>
+                          <h4 className={`text-sm font-bold ${designConfig.textPrimary}`}>
                             {opt.label}
                           </h4>
                         </div>
@@ -208,7 +208,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
                     </div>
 
                     {isSelected && (
-                      <div className="w-6 h-6 rounded-full bg-[#c89b3c] text-white flex items-center justify-center shrink-0 ml-2 shadow-sm">
+                      <div className={`w-6 h-6 rounded-full ${designConfig.accentBg} text-white flex items-center justify-center shrink-0 ml-2 shadow-sm`}>
                         <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                       </div>
                     )}
@@ -235,7 +235,7 @@ export const PlaylistModal: React.FC<PlaylistModalProps> = ({
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" stroke="currentColor" />
                   <span>Saving...</span>
                 </>
               ) : (

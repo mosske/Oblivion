@@ -365,7 +365,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
                       {/* Play overlay button */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <div className="w-11 h-11 rounded-full bg-[#c89b3c] text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                        <div className={`w-11 h-11 rounded-full ${designConfig.accentBg} text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform`}>
                           <Play className="w-5 h-5 fill-white ml-0.5" />
                         </div>
                       </div>
@@ -374,7 +374,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                       <button
                         onClick={(e) => toggleHidePlaylist(e, pl.id)}
                         className={`absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white opacity-0 group-hover:opacity-100 hover:bg-black/80 transition-all ${
-                          isHidden ? "!opacity-100 text-[#c89b3c]" : ""
+                          isHidden ? `!opacity-100 ${designConfig.accentText} text-[var(--accent-color,var(--primary))]` : ""
                         }`}
                         title={isHidden ? "Unhide playlist" : "Hide playlist"}
                       >

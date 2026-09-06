@@ -161,7 +161,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             className={`px-4 py-2.5 rounded-xl ${designConfig.btnSecondary} font-bold text-xs flex items-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-all border ${designConfig.borderSubtle}`}
             title="Refresh Explore Feed"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${designConfig.accentText} ${isRefreshing || loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${designConfig.accentText} text-[var(--accent-color,var(--primary))] ${isRefreshing || loading ? "animate-spin" : ""}`} stroke="currentColor" />
             <span className={`${designConfig.textPrimary} font-bold`}>{isRefreshing ? "Refreshing..." : "Fresh Pull"}</span>
           </button>
         </div>
@@ -169,7 +169,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
       {loading ? (
         <div className={`p-20 text-center rounded-3xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-3`}>
-          <Loader2 className="w-8 h-8 mx-auto text-[#c89b3c] animate-spin" />
+          <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} text-[var(--accent-color,var(--primary))] animate-spin`} stroke="currentColor" />
           <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
             Pulling fresh Explore data from YouTube Music...
           </p>
