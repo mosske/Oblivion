@@ -13,7 +13,6 @@ import {
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import {
   fetchLyricsMultiSource,
-  parseLRC,
   parsePlainLyrics,
   createDualLyricLines,
   LyricsSourceType,
@@ -23,6 +22,30 @@ import { cleanTrackTitle } from "../utils/formatters";
 import { sanitizeLyricsQuery } from "../utils/lyricsSanitizer";
 import { MarqueeText } from "./MarqueeText";
 import { OblivionIntroCountdown } from "./OblivionIntroCountdown";
+
+/**
+ * Client-side LRC Timestamp Parser
+ * Extracts timestamped lines with millisecond precision and filters out empty lines
+ */
+export const parseLrc = (lrcString: string): LyricLine[] => {
+  if (!lrcString || typeof lrcString !== "string") return [];
+  const lines = lrcString.split("\n");
+  const result: LyricLine[] = [];
+  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+
+  for (const line of lines) {
+    const match = timeRegex.exec(line);
+    if (match) {
+      const minutes = parseInt(match[1], 10);
+      const seconds = parseInt(match[2], 10);
+      const millis = parseInt(match[3].padEnd(3, "0"), 10);
+      const totalSeconds = minutes * 60 + seconds + millis / 1000;
+      const text = line.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/, "").trim();
+      if (text) result.push({ time: totalSeconds, text });
+    }
+  }
+  return result;
+};
 
 interface LyricsViewProps {
   track: Track;
@@ -76,18 +99,18 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         // 1. If track already has preloaded raw LRC / plain lyrics
         if (track.lyricsRaw) {
           const raw = track.lyricsRaw;
-          const parsed = parseLRC(raw);
+          const parsed = parseLrc(raw);
           if (!isCancelled) {
             if (parsed.length > 0) {
               setOriginalLines(parsed);
               setIsSynced(true);
               setLyricsSource("lrclib");
-              setLyricsProviderName("LRCLIB Synced");
+              setLyricsProviderName("Synced (LRCLIB)");
             } else {
               setOriginalLines(parsePlainLyrics(raw));
               setIsSynced(false);
               setLyricsSource("lrclib");
-              setLyricsProviderName("LRCLIB Plain");
+              setLyricsProviderName("Plain Text (LRCLIB)");
             }
             setLrcDuration(undefined);
             setLoading(false);
@@ -95,7 +118,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           return;
         }
 
-        // 2. Query 3-Tier Multi-Source Lyrics Fallback Chain:
+        // 2. Query Multi-Source Lyrics Fallback Chain:
         //    Tier 1: LRCLIB Synced LRC / Plain Text (/api/get & /search)
         //    Tier 2: Native YouTube Music InnerTube Official Lyrics
         //    Tier 3: Tertiary Public Lyrics (Genius & Lyrics.ovh)
@@ -105,11 +128,14 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           setLyricsSource(result.source);
           setLyricsProviderName(result.provider);
           setLrcDuration(result.lrcDuration);
-          if (result.syncedLyrics && result.isSynced) {
-            const parsed = parseLRC(result.syncedLyrics);
+
+          if (result.syncedLyrics) {
+            const parsed = parseLrc(result.syncedLyrics);
             if (parsed.length > 0) {
               setOriginalLines(parsed);
               setIsSynced(true);
+              setLyricsSource("lrclib");
+              setLyricsProviderName("Synced (LRCLIB)");
             } else if (result.plainLyrics) {
               setOriginalLines(parsePlainLyrics(result.plainLyrics));
               setIsSynced(false);
