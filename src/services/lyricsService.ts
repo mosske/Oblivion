@@ -2,6 +2,8 @@ import {
   sanitizeLyricsQuery,
   sanitizeCaptionsAndLyrics,
   cleanArtistName,
+  extractPrimaryArtist,
+  getArtistSearchVariants,
   cleanTrackTitle,
   normalizeDurationSeconds,
 } from "../utils/lyricsSanitizer";
@@ -138,20 +140,120 @@ export function createDualLyricLines(
   });
 }
 
+function normalizeCompare(str: string): string {
+  return (str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function scoreLyricsCandidate(
+  candidate: {
+    trackName?: string;
+    artistName?: string;
+    duration?: number;
+    syncedLyrics?: string;
+    plainLyrics?: string;
+    instrumental?: boolean;
+  },
+  query: {
+    title: string;
+    artist: string;
+    durationSec?: number;
+  }
+): { score: number; isSynced: boolean } {
+  if (candidate.instrumental) return { score: 0, isSynced: false };
+
+  const candTitle = normalizeCompare(candidate.trackName || "");
+  const candArtist = normalizeCompare(candidate.artistName || "");
+  const qTitle = normalizeCompare(query.title);
+  const qArtist = normalizeCompare(query.artist);
+
+  if (!candTitle) return { score: 0, isSynced: false };
+
+  let score = 0;
+
+  // Title Match (0 to 50 pts)
+  if (candTitle === qTitle) {
+    score += 50;
+  } else if (candTitle.includes(qTitle) || qTitle.includes(candTitle)) {
+    score += 40;
+  } else {
+    const qTokens = qTitle.split(" ").filter((t) => t.length > 1);
+    const matchedTokens = qTokens.filter((t) => candTitle.includes(t));
+    if (qTokens.length > 0 && matchedTokens.length === qTokens.length) {
+      score += 35;
+    } else if (qTokens.length > 0 && matchedTokens.length / qTokens.length >= 0.5) {
+      score += (matchedTokens.length / qTokens.length) * 30;
+    } else {
+      return { score: 0, isSynced: false }; // No title match -> Reject
+    }
+  }
+
+  // Artist Match (0 to 30 pts)
+  if (candArtist && qArtist) {
+    if (candArtist === qArtist) {
+      score += 30;
+    } else if (candArtist.includes(qArtist) || qArtist.includes(candArtist)) {
+      score += 25;
+    } else {
+      const artTokens = qArtist.split(" ").filter((t) => t.length > 1);
+      const matchedArtTokens = artTokens.filter((t) => candArtist.includes(t));
+      if (artTokens.length > 0 && matchedArtTokens.length > 0) {
+        score += (matchedArtTokens.length / artTokens.length) * 20;
+      }
+    }
+  }
+
+  // Synced Lyrics Bonus (20 pts)
+  const hasSynced = Boolean(
+    candidate.syncedLyrics &&
+      candidate.syncedLyrics.trim().length > 0 &&
+      hasLrcTimestamps(candidate.syncedLyrics)
+  );
+
+  if (hasSynced) {
+    score += 20;
+  } else if (candidate.plainLyrics && candidate.plainLyrics.trim().length > 0) {
+    score += 5;
+  } else {
+    return { score: 0, isSynced: false };
+  }
+
+  // Duration Proximity Bonus (up to 15 pts)
+  if (query.durationSec && typeof candidate.duration === "number" && candidate.duration > 0) {
+    const delta = Math.abs(candidate.duration - query.durationSec);
+    if (delta <= 4) {
+      score += 15;
+    } else if (delta <= 10) {
+      score += 10;
+    } else if (delta <= 25) {
+      score += 5;
+    }
+  }
+
+  return { score, isSynced: hasSynced };
+}
+
 /**
- * Multi-Source Lyrics Pipeline with Title Sanitization & 3-Tier Provider Fallback:
+ * Multi-Source Lyrics Pipeline with Title Sanitization & Scored Provider Hierarchy (Glossy Engine):
  *
  * Tier 1 (LRCLIB - Primary Synced):
- *   - Query https://lrclib.net/api/get passing track_name, artist_name, album_name, and duration.
- *   - If /api/get returns syncedLyrics: null OR lacks timestamps, DO NOT settle for plain lyrics.
- *   - Fallback to /api/search and loop through results to find first entry with valid syncedLyrics within <= 4s tolerance.
- *   - Only drop to plainLyrics as an absolute last resort if NO result contains synced lyrics.
+ *   - Pass 1: Exact GET https://lrclib.net/api/get passing track_name, artist_name, and duration.
+ *   - Pass 2: Exact GET https://lrclib.net/api/get passing track_name and artist_name without duration.
+ *   - Pass 3: Parametric Search https://lrclib.net/api/search?track_name=...&artist_name=... with candidate scoring.
+ *   - Pass 4: Parametric Search with primary artist (if collaboration / features exist).
+ *   - Pass 5: Combined Query Search https://lrclib.net/api/search?q=Artist+Title with candidate scoring.
+ *   - Pass 6: Query Search with Title only https://lrclib.net/api/search?q=Title with candidate scoring.
  *
- * Tier 2 (YT InnerTube Native):
- *   - If LRCLIB fails or has no synced lyrics, call YouTube InnerTube browse endpoint on the backend.
+ * Tier 2 (YT InnerTube Native Lyrics):
+ *   - Fallback to official YouTube Music lyrics from YouTube Music backend API.
  *
- * Tier 3 (Genius / Secondary Fallback):
- *   - Fallback to tertiary APIs (Genius & Lyrics.ovh) if no synced LRC timestamps exist.
+ * Tier 3 (Public Lyrics Fallback):
+ *   - Fallback to tertiary APIs (Lyrics.ovh / Genius) if no synced LRC exists.
  */
 export async function fetchLyricsMultiSource(
   rawTitle: string,
@@ -161,183 +263,18 @@ export async function fetchLyricsMultiSource(
   albumName?: string
 ): Promise<LyricsResult> {
   const cleanArtist = cleanArtistName(rawArtist);
+  const primaryArtist = extractPrimaryArtist(rawArtist);
+  const artistVariants = getArtistSearchVariants(rawArtist);
   const cleanTitle = cleanTrackTitle(rawTitle, cleanArtist || (typeof rawArtist === "string" ? rawArtist : undefined));
-  const rawArtistStr = Array.isArray(rawArtist) ? rawArtist.join(" ") : (rawArtist || "");
   const durationSec = normalizeDurationSeconds(duration);
   const cleanVid = videoId ? videoId.split("_")[0] : "";
 
-  let lrclibPlainMatch: LyricsResult | null = null;
+  console.log("[Lyrics] Multi-source fetching for:", { cleanTitle, cleanArtist, primaryArtist, artistVariants, durationSec });
 
   // =========================================================================
-  // PASS 1 — EXACT GET (Sanitized)
-  // Target: https://lrclib.net/api/get?track_name=${cleanTitle}&artist_name=${cleanArtist}&duration=${durationSec}
-  // =========================================================================
-  if (cleanTitle && cleanArtist) {
-    try {
-      const getUrl = durationSec
-        ? `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${durationSec}`
-        : `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
-
-      const res1 = await fetch(getUrl, {
-        headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(4000),
-      });
-
-      if (res1.ok) {
-        const data = await res1.json();
-        const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
-
-        if (data.syncedLyrics && data.syncedLyrics.trim().length > 0 && hasLrcTimestamps(data.syncedLyrics)) {
-          return {
-            syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
-            plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
-            isSynced: true,
-            source: "lrclib",
-            provider: "Synced (LRCLIB)",
-            trackName: data.trackName || cleanTitle,
-            artistName: data.artistName || cleanArtist,
-            lrcDuration: lrcDur,
-          };
-        }
-        if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
-          lrclibPlainMatch = {
-            plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
-            isSynced: false,
-            source: "lrclib",
-            provider: "Plain Text (LRCLIB)",
-            trackName: data.trackName || cleanTitle,
-            artistName: data.artistName || cleanArtist,
-            lrcDuration: lrcDur,
-          };
-        }
-      }
-    } catch (_e1) {
-      // Continue to Pass 2
-    }
-  }
-
-  // =========================================================================
-  // PASS 2 — SEARCH BY TRACK & CLEAN ARTIST (/api/search)
-  // Target: https://lrclib.net/api/search?track_name=${cleanTitle}&artist_name=${cleanArtist}
-  // =========================================================================
-  if (cleanTitle && cleanArtist) {
-    try {
-      const searchUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
-      const res2 = await fetch(searchUrl, {
-        headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(4000),
-      });
-
-      if (res2.ok) {
-        const list = await res2.json();
-        if (Array.isArray(list) && list.length > 0) {
-          const match = list.find((item: any) => {
-            const hasSynced = Boolean(item.syncedLyrics && item.syncedLyrics.trim() && hasLrcTimestamps(item.syncedLyrics));
-            if (!hasSynced) return false;
-            if (durationSec && typeof item.duration === "number" && item.duration > 0) {
-              return Math.abs(item.duration - durationSec) <= 45.0;
-            }
-            return true;
-          }) || list.find((item: any) => item.syncedLyrics && hasLrcTimestamps(item.syncedLyrics)) || list[0];
-
-          if (match) {
-            const isSyncedMatch = Boolean(match.syncedLyrics && match.syncedLyrics.trim() && hasLrcTimestamps(match.syncedLyrics));
-            const lrcDur = typeof match.duration === "number" && match.duration > 0 ? match.duration : undefined;
-
-            if (isSyncedMatch) {
-              return {
-                syncedLyrics: sanitizeCaptionsAndLyrics(match.syncedLyrics),
-                plainLyrics: match.plainLyrics ? sanitizeCaptionsAndLyrics(match.plainLyrics) : undefined,
-                isSynced: true,
-                source: "lrclib",
-                provider: "Synced (LRCLIB)",
-                trackName: match.trackName || cleanTitle,
-                artistName: match.artistName || cleanArtist,
-                lrcDuration: lrcDur,
-              };
-            }
-            if (match.plainLyrics && match.plainLyrics.trim().length > 0 && !lrclibPlainMatch) {
-              lrclibPlainMatch = {
-                plainLyrics: sanitizeCaptionsAndLyrics(match.plainLyrics),
-                isSynced: false,
-                source: "lrclib",
-                provider: "Plain Text (LRCLIB)",
-                trackName: match.trackName || cleanTitle,
-                artistName: match.artistName || cleanArtist,
-                lrcDuration: lrcDur,
-              };
-            }
-          }
-        }
-      }
-    } catch (_e2) {
-      // Continue to Pass 3
-    }
-  }
-
-  // =========================================================================
-  // PASS 3 — BROAD SEARCH (Title Only)
-  // Target: https://lrclib.net/api/search?q=${cleanTitle}
-  // Find candidate where artist name contains key tokens from cleanArtist and item.syncedLyrics is present
-  // =========================================================================
-  if (cleanTitle) {
-    try {
-      const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`;
-      const res3 = await fetch(searchUrl, {
-        headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(4000),
-      });
-
-      if (res3.ok) {
-        const list = await res3.json();
-        if (Array.isArray(list) && list.length > 0) {
-          const artistTokens = (cleanArtist + " " + rawArtistStr)
-            .toLowerCase()
-            .split(/[\s,;&/]+/)
-            .filter((t) => t.length >= 3);
-
-          const match = list.find((item: any) => {
-            if (!item.syncedLyrics || !item.syncedLyrics.trim() || !hasLrcTimestamps(item.syncedLyrics)) {
-              return false;
-            }
-            const a = (item.artistName || "").toLowerCase();
-            const hasToken = artistTokens.length === 0 || artistTokens.some((tok) => a.includes(tok));
-            if (!hasToken) return false;
-            if (durationSec && typeof item.duration === "number" && item.duration > 0) {
-              return Math.abs(item.duration - durationSec) <= 45.0;
-            }
-            return true;
-          }) || list.find((item: any) => {
-            if (!item.syncedLyrics || !item.syncedLyrics.trim() || !hasLrcTimestamps(item.syncedLyrics)) {
-              return false;
-            }
-            const a = (item.artistName || "").toLowerCase();
-            return artistTokens.some((tok) => a.includes(tok));
-          });
-
-          if (match) {
-            const lrcDur = typeof match.duration === "number" && match.duration > 0 ? match.duration : undefined;
-            return {
-              syncedLyrics: sanitizeCaptionsAndLyrics(match.syncedLyrics),
-              plainLyrics: match.plainLyrics ? sanitizeCaptionsAndLyrics(match.plainLyrics) : undefined,
-              isSynced: true,
-              source: "lrclib",
-              provider: "Synced (LRCLIB)",
-              trackName: match.trackName || cleanTitle,
-              artistName: match.artistName || cleanArtist,
-              lrcDuration: lrcDur,
-            };
-          }
-        }
-      }
-    } catch (_e3) {
-      // Continue to Pass 4
-    }
-  }
-
-  // =========================================================================
-  // PASS 4 — YOUTUBE INNERTUBE / CAPTION FALLBACK
-  // Query server-side lyrics route (/api/youtube/lyrics)
+  // PRIMARY TIER — FAST SERVER PROXY (/api/youtube/lyrics)
+  // Queries server-side multi-pass engine with caching, variant expansion,
+  // LRCLIB, YouTube Music InnerTube captions & lyrics, and tertiary APIs.
   // =========================================================================
   try {
     const params = new URLSearchParams({
@@ -351,51 +288,151 @@ export async function fetchLyricsMultiSource(
     }
 
     const serverUrl = `/api/youtube/lyrics?${params.toString()}`;
-    const serverRes = await fetch(serverUrl, { signal: AbortSignal.timeout(6000) });
+    const serverRes = await fetch(serverUrl, { signal: AbortSignal.timeout(5000) });
     if (serverRes.ok) {
       const data = await serverRes.json();
-      const serverLrcDur = typeof data.lrcDuration === "number" ? data.lrcDuration : typeof data.duration === "number" ? data.duration : undefined;
+      const serverLrcDur =
+        typeof data.lrcDuration === "number"
+          ? data.lrcDuration
+          : typeof data.duration === "number"
+          ? data.duration
+          : undefined;
 
       if (data.syncedLyrics && data.isSynced) {
+        console.log("[Lyrics] Server proxy returned Synced Lyrics for:", cleanTitle, "via", data.provider);
         return {
           syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
           plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
           isSynced: true,
           source: (data.source as LyricsSourceType) || "lrclib",
           provider: data.provider || "Synced (LRCLIB)",
-          trackName: cleanTitle,
-          artistName: cleanArtist,
+          trackName: data.cleanTitle || cleanTitle,
+          artistName: data.cleanArtist || cleanArtist,
           lrcDuration: serverLrcDur,
         };
       }
-      if (data.plainLyrics && (data.source === "youtube_music" || data.source === "genius" || data.source === "lyrics_ovh" || !lrclibPlainMatch)) {
+
+      if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
+        console.log("[Lyrics] Server proxy returned Plain Lyrics for:", cleanTitle, "via", data.provider);
         return {
           plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
           isSynced: false,
           source: (data.source as LyricsSourceType) || "youtube_music",
           provider: data.provider || "YouTube Music",
-          trackName: cleanTitle,
-          artistName: cleanArtist,
+          trackName: data.cleanTitle || cleanTitle,
+          artistName: data.cleanArtist || cleanArtist,
           lrcDuration: serverLrcDur,
         };
       }
     }
-  } catch (_sErr) {}
-
-  // =========================================================================
-  // Tier 3 Plain Fallback (if LRCLIB plain text was cached earlier)
-  // =========================================================================
-  if (lrclibPlainMatch) {
-    return lrclibPlainMatch;
+  } catch (serverErr) {
+    console.warn("[Lyrics] Server lyrics proxy notice, trying direct client fallbacks:", serverErr);
   }
 
   // =========================================================================
-  // Tier 3 Direct Client-Side Fallback: Public Lyrics API (Lyrics.ovh)
+  // SECONDARY TIER — DIRECT CLIENT LRCLIB PARALLEL PASSES (Safety Net)
   // =========================================================================
+  const queryInfo = { title: cleanTitle, artist: cleanArtist, durationSec };
+
+  const fetchClientLrc = async (url: string): Promise<{ data: any; score: number; isSynced: boolean } | null> => {
+    try {
+      const resp = await fetch(url, {
+        headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
+        signal: AbortSignal.timeout(3000),
+      });
+      if (resp.status === 200) {
+        const json = await resp.json();
+        if (Array.isArray(json)) {
+          const candidates = json
+            .map((item: any) => ({ item, ...scoreLyricsCandidate(item, queryInfo) }))
+            .filter((c) => c.score >= 35)
+            .sort((a, b) => b.score - a.score);
+          if (candidates.length > 0) {
+            return { data: candidates[0].item, score: candidates[0].score, isSynced: candidates[0].isSynced };
+          }
+        } else if (json && typeof json === "object") {
+          const { score, isSynced } = scoreLyricsCandidate(json, queryInfo);
+          if (score >= 35) {
+            return { data: json, score, isSynced };
+          }
+        }
+      }
+    } catch (_) {}
+    return null;
+  };
+
+  const clientUrls: string[] = [];
+  for (const art of artistVariants) {
+    if (!cleanTitle || !art) continue;
+    if (durationSec) {
+      clientUrls.push(
+        `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}&duration=${durationSec}`
+      );
+    }
+    clientUrls.push(
+      `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}`
+    );
+    clientUrls.push(
+      `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}`
+    );
+  }
+  for (const art of artistVariants.slice(0, 3)) {
+    clientUrls.push(`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${art}`)}`);
+  }
+  if (cleanTitle) {
+    clientUrls.push(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`);
+  }
+
+  const clientResults = await Promise.allSettled(clientUrls.map(fetchClientLrc));
+  const validClientMatches = clientResults
+    .filter(
+      (r): r is PromiseFulfilledResult<{ data: any; score: number; isSynced: boolean } | null> =>
+        r.status === "fulfilled" && r.value !== null
+    )
+    .map((r) => r.value!);
+
+  const syncedClient = validClientMatches
+    .filter((m) => m.isSynced && m.data.syncedLyrics)
+    .sort((a, b) => b.score - a.score)[0];
+
+  if (syncedClient) {
+    const data = syncedClient.data;
+    const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
+    return {
+      syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
+      plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
+      isSynced: true,
+      source: "lrclib",
+      provider: "Synced (LRCLIB)",
+      trackName: data.trackName || cleanTitle,
+      artistName: data.artistName || cleanArtist,
+      lrcDuration: lrcDur,
+    };
+  }
+
+  const plainClient = validClientMatches
+    .filter((m) => m.data.plainLyrics && m.data.plainLyrics.trim().length > 0)
+    .sort((a, b) => b.score - a.score)[0];
+
+  if (plainClient) {
+    const data = plainClient.data;
+    const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
+    return {
+      plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
+      isSynced: false,
+      source: "lrclib",
+      provider: "Plain Text (LRCLIB)",
+      trackName: data.trackName || cleanTitle,
+      artistName: data.artistName || cleanArtist,
+      lrcDuration: lrcDur,
+    };
+  }
+
+  // Fallback to Lyrics.ovh
   if (cleanTitle && cleanArtist) {
     try {
       const ovhRes = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(cleanArtist)}/${encodeURIComponent(cleanTitle)}`, {
-        signal: AbortSignal.timeout(3500),
+        signal: AbortSignal.timeout(3000),
       });
       if (ovhRes.ok) {
         const ovhData = await ovhRes.json();
@@ -413,9 +450,7 @@ export async function fetchLyricsMultiSource(
     } catch (_ovhErr) {}
   }
 
-  // =========================================================================
-  // No lyrics available across all tiers
-  // =========================================================================
+  // No lyrics found across all tiers
   return {
     isSynced: false,
     source: "none",

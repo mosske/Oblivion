@@ -1106,8 +1106,9 @@ export const Player: React.FC<PlayerProps> = ({
     }
   }, [volume, isMuted]);
 
-  // Timer loop for YouTube current timestamp & progress
+  // Timer loop for YouTube current timestamp & progress (100ms when lyrics/fullscreen are visible for fluid sync)
   useEffect(() => {
+    const pollRate = (showLyrics || isFullscreen) ? 100 : 250;
     const interval = setInterval(() => {
       if (isPlaying && isYtReadyRef.current && ytPlayerRef.current) {
         try {
@@ -1128,10 +1129,10 @@ export const Player: React.FC<PlayerProps> = ({
           }
         } catch {}
       }
-    }, 250);
+    }, pollRate);
 
     return () => clearInterval(interval);
-  }, [isPlaying, currentTrack?.id, currentTrack?.duration]);
+  }, [isPlaying, showLyrics, isFullscreen, currentTrack?.id, currentTrack?.duration]);
 
   // User manual play/pause toggle handler
   const handleUserTogglePlay = (explicitPlay?: boolean) => {

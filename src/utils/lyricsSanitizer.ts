@@ -95,53 +95,120 @@ export function extractFeatures(input: string): { cleanText: string; featured: s
 }
 
 /**
- * Extracts ONLY the primary artist string:
- * - If track.artist is an array, take track.artist[0].
- * - If track.artist is a comma/ampersand separated string (e.g. "Sergio Mendes, Band" or "Sergio Mendes & Brasil '77"),
- *   splits by comma, &, feat., ft., featuring, with, ;, /, and takes the first trimmed string.
- * - Strips secondary band names, ensemble additions, or channel branding.
- * Example: "Sergio Mendes & Brasil '77" -> "Sergio Mendes".
+ * Extracts all relevant artist search variations for LRCLIB queries.
+ * Examples:
+ * - "The Sergio Mendes Band" -> ["The Sergio Mendes Band", "Sergio Mendes Band", "Sergio Mendes"]
+ * - "Sérgio Mendes & Brasil 66" -> ["Sérgio Mendes & Brasil 66", "Sergio Mendes & Brasil 66", "Sérgio Mendes", "Sergio Mendes", "Brasil 66"]
+ * - "Lady Gaga & Bruno Mars" -> ["Lady Gaga & Bruno Mars", "Lady Gaga", "Bruno Mars"]
+ */
+export function getArtistSearchVariants(rawArtistOrUploader?: string | string[] | any): string[] {
+  if (!rawArtistOrUploader) return [];
+  const full = cleanArtistName(rawArtistOrUploader);
+  if (!full) return [];
+
+  const variants = new Set<string>();
+
+  function addVariant(val?: string) {
+    if (!val) return;
+    const s = val.trim().replace(/^["'«“\(\[]+|["'»”\)\]]+$/g, "").trim();
+    if (s.length >= 2) {
+      variants.add(s);
+      const unaccented = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (unaccented && unaccented !== s && unaccented.length >= 2) {
+        variants.add(unaccented);
+      }
+    }
+  }
+
+  // 1. Full cleaned artist as-is
+  addVariant(full);
+
+  // 2. Without leading articles: "The ", "A ", "An "
+  const withoutArticles = full.replace(/^(?:the|a|an)\s+/i, "");
+  addVariant(withoutArticles);
+
+  // 3. Without trailing ensemble / group words
+  const withoutEnsemble = withoutArticles.replace(
+    /\s+(?:band|orchestra|trio|quartet|quintet|ensemble|choir|symphony|philharmonic|group|collective|sound\s+system|experience|crew|boys|girls)$/i,
+    ""
+  );
+  addVariant(withoutEnsemble);
+
+  // 4. Split by multi-artist collaboration delimiters
+  const splits = full.split(/\s*(?:,|&|\+|\/|;|\bvs\.?\b|\bx\b|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\band\b)\s*/i);
+  for (const part of splits) {
+    addVariant(part);
+    const partWithoutThe = part.replace(/^(?:the|a|an)\s+/i, "");
+    addVariant(partWithoutThe);
+    const partWithoutEnsemble = partWithoutThe.replace(
+      /\s+(?:band|orchestra|trio|quartet|quintet|ensemble|choir|symphony|philharmonic|group|collective|sound\s+system|experience|crew|boys|girls)$/i,
+      ""
+    );
+    addVariant(partWithoutEnsemble);
+  }
+
+  // Also include the primary artist
+  addVariant(extractPrimaryArtist(rawArtistOrUploader));
+
+  return Array.from(variants);
+}
+
+/**
+ * Extracts and cleans the artist string:
+ * - If track.artist is an array, joins or takes the primary entry.
+ * - Strips YouTube channel noise (e.g. " - Topic", "VEVO", "Official Artist Channel").
+ * - Strips trailing feature additions (e.g. "(feat. ...)", "[ft. ...]").
+ * - Preserves intact band names (e.g. "Simon & Garfunkel", "Earth, Wind & Fire", "AC/DC", "Sergio Mendes & Brasil '77").
  */
 export function cleanArtistName(rawArtistOrUploader?: string | string[] | any): string {
   if (!rawArtistOrUploader) return "";
   let artist = "";
   if (Array.isArray(rawArtistOrUploader)) {
-    artist = rawArtistOrUploader[0] ? String(rawArtistOrUploader[0]).trim() : "";
+    artist = rawArtistOrUploader.filter(Boolean).map(String).join(", ").trim();
   } else {
     artist = String(rawArtistOrUploader).trim();
   }
 
   if (!artist) return "";
 
-  // Split by comma, ampersand, or feature/ensemble delimiters and extract ONLY the primary artist
-  const primarySplit = artist.split(/\s*(?:,|&|\/|;|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\band\b|\bx\b|\bvs\.?\b)\s*/i);
-  if (primarySplit.length > 0 && primarySplit[0].trim()) {
-    artist = primarySplit[0].trim();
-  }
-
-  // Strip trailing channel branding (e.g. " - Topic", "VEVO", "Official")
+  // Strip trailing channel branding (e.g. " - Topic", "Topic", "VEVO", "Official")
   for (const pattern of CHANNEL_BRANDING_PATTERNS) {
     artist = artist.replace(pattern, "").trim();
   }
 
-  // Strip trailing quotes or parentheses
-  artist = artist.replace(/^["']|["']$/g, "").replace(/\s{2,}/g, " ").trim();
+  // Strip (feat. ...), [feat. ...], feat. ..., ft. ..., featuring ...
+  artist = artist.replace(/[\(\[]\s*(?:feat\.?|ft\.?|featuring|with)\s+[^()\[\]]+[\)\]]/gi, " ");
+  artist = artist.replace(/\s+(?:feat\.?|ft\.?|featuring)\s+.+$/i, " ");
+
+  // Strip trailing quotes or brackets
+  artist = artist.replace(/^["'«“]|["'»”]$/g, "").replace(/\s{2,}/g, " ").trim();
   return artist;
 }
 
 /**
+ * Extracts the single primary artist name for multi-artist collaborations,
+ * (e.g. "Lady Gaga & Bruno Mars" -> "Lady Gaga", "Dua Lipa, DaBaby" -> "Dua Lipa").
+ */
+export function extractPrimaryArtist(rawArtistOrUploader?: string | string[] | any): string {
+  const full = cleanArtistName(rawArtistOrUploader);
+  if (!full) return "";
+  const parts = full.split(/\s*(?:,|&|\/|;|\bvs\.?\b|\bx\b)\s*/i);
+  return (parts[0] || full).trim();
+}
+
+/**
  * Strips suffixes, parentheticals, and tags using regex:
- * - Removes leading artist names separated by hyphens (e.g. "Sergio Mendes & Brasil '77 - Love City" -> "Love City").
+ * - Removes leading artist names separated by hyphens (e.g. "Adele - Easy On Me" -> "Easy On Me").
  * - Removes (Official Audio), (Official Video), (Official Visualizer), (Lyric Video), (Remastered...), [Topic], (feat. ...).
- * - Strips anything following - Remastered or - Live.
- * Example: "Sergio Mendes & Brasil '77 - Love City (Official Audio)" -> "Love City"
+ * - Strips anything following - Remastered, - Live, etc.
+ * - Preserves compound track titles without blindly discarding the left-hand title.
  */
 export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
   if (!rawTitle) return "Untitled Track";
   let title = rawTitle.trim();
 
-  // Strip anything following - Remastered or - Live (e.g. "- Remastered 2011", "- Live at Wembley", etc.)
-  title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?|live|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary).*$/i, "");
+  // Strip anything following - Remastered or - Live or - Acoustic etc.
+  title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?(?:\s+\d{4})?|live(?:\s+at[^)\]]+)?|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary|radio\s+edit|single\s+version|original\s+mix|clean\s+version|explicit\s+version|extended\s+mix|club\s+mix).*$/i, "");
 
   // Strip suffixes, parentheticals, and tags using video noise patterns
   for (const pattern of VIDEO_NOISE_PATTERNS) {
@@ -156,35 +223,73 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
   title = title.replace(/\(\s*\)/g, " ").replace(/\[\s*\]/g, " ").replace(/\{\s*\}/g, " ").trim();
   title = title.replace(/\s{2,}/g, " ").trim();
 
-  // If title is "Artist - Title", isolate the title portion
+  // If title is "Artist - Title", isolate the title portion ONLY if one side matches the artist or artist is generic
   const delimiterMatch = title.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
   if (delimiterMatch) {
     const left = delimiterMatch[1].trim();
     const right = delimiterMatch[2].trim();
-    const cleanArt = artistName ? cleanArtistName(artistName).toLowerCase() : "";
-    const cleanLeft = cleanArtistName(left).toLowerCase();
 
-    if (
-      !artistName ||
-      (cleanArt && (cleanLeft === cleanArt || left.toLowerCase().includes(cleanArt) || cleanArt.includes(cleanLeft) || left.toLowerCase().startsWith(cleanArt) || cleanArt.startsWith(cleanLeft))) ||
-      left.toLowerCase().includes("brasil") ||
-      left.toLowerCase().includes("sergio") ||
-      right.length > 0
-    ) {
+    if (artistName) {
+      const cleanArt = cleanArtistName(artistName).toLowerCase();
+      const primaryArt = extractPrimaryArtist(artistName).toLowerCase();
+      const cleanLeft = cleanArtistName(left).toLowerCase();
+      const cleanRight = cleanArtistName(right).toLowerCase();
+
+      // If left side is the artist (e.g. "Adele - Easy On Me")
+      if (
+        cleanArt &&
+        (cleanLeft === cleanArt ||
+          cleanLeft === primaryArt ||
+          left.toLowerCase().includes(cleanArt) ||
+          cleanArt.includes(cleanLeft) ||
+          (primaryArt.length >= 3 && left.toLowerCase().includes(primaryArt)))
+      ) {
+        title = right;
+      }
+      // If right side is the artist (e.g. "Easy On Me - Adele")
+      else if (
+        cleanArt &&
+        (cleanRight === cleanArt ||
+          cleanRight === primaryArt ||
+          right.toLowerCase().includes(cleanArt) ||
+          cleanArt.includes(cleanRight) ||
+          (primaryArt.length >= 3 && right.toLowerCase().includes(primaryArt)))
+      ) {
+        title = left;
+      }
+      // If artist is generic (Topic, Various Artists, VEVO, etc.), assume Left is Artist and Right is Title
+      else if (
+        /topic|various\s+artists|records|vevo|official|channel/i.test(artistName) &&
+        right.length > 0
+      ) {
+        title = right;
+      }
+      // Otherwise, the delimiter is part of the song title! (Do NOT discard left!)
+    } else if (right.length > 0) {
+      // No artist provided: assume "Artist - Title" format
       title = right;
     }
   }
 
-  // If title still has artist prefix attached without delimiter
+  // If title still has artist prefix attached without delimiter (e.g. "Adele Easy On Me")
   if (artistName) {
     const cleanArt = cleanArtistName(artistName);
+    const primaryArt = extractPrimaryArtist(artistName);
     if (cleanArt && title.toLowerCase().startsWith(cleanArt.toLowerCase())) {
       const rest = title.slice(cleanArt.length).replace(/^[-\s:|~–—"']+/, "").trim();
       if (rest) {
         title = rest;
       }
+    } else if (primaryArt && primaryArt.length >= 3 && title.toLowerCase().startsWith(primaryArt.toLowerCase())) {
+      const rest = title.slice(primaryArt.length).replace(/^[-\s:|~–—"']+/, "").trim();
+      if (rest) {
+        title = rest;
+      }
     }
   }
+
+  // Clean trailing punctuation or quotes
+  title = title.replace(/^["'«“]|["'»”]$/g, "").trim();
 
   return title || rawTitle.trim();
 }
