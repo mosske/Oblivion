@@ -97,9 +97,10 @@ export function extractFeatures(input: string): { cleanText: string; featured: s
 /**
  * Extracts ONLY the primary artist string:
  * - If track.artist is an array, take track.artist[0].
- * - If track.artist is a comma/ampersand separated string (e.g. "Sergio Mendes, Band"),
- *   splits by comma, &, feat., ft., featuring, with, ;, / and takes the first trimmed string.
- * Example: "Sergio Mendes, The Sergio Mendes Band" -> "Sergio Mendes".
+ * - If track.artist is a comma/ampersand separated string (e.g. "Sergio Mendes, Band" or "Sergio Mendes & Brasil '77"),
+ *   splits by comma, &, feat., ft., featuring, with, ;, /, and takes the first trimmed string.
+ * - Strips secondary band names, ensemble additions, or channel branding.
+ * Example: "Sergio Mendes & Brasil '77" -> "Sergio Mendes".
  */
 export function cleanArtistName(rawArtistOrUploader?: string | string[] | any): string {
   if (!rawArtistOrUploader) return "";
@@ -112,8 +113,8 @@ export function cleanArtistName(rawArtistOrUploader?: string | string[] | any): 
 
   if (!artist) return "";
 
-  // Split by comma, ampersand, or feature delimiters and extract ONLY the primary artist
-  const primarySplit = artist.split(/\s*(?:,|&|\/|;|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\band\b)\s*/i);
+  // Split by comma, ampersand, or feature/ensemble delimiters and extract ONLY the primary artist
+  const primarySplit = artist.split(/\s*(?:,|&|\/|;|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\band\b|\bx\b|\bvs\.?\b)\s*/i);
   if (primarySplit.length > 0 && primarySplit[0].trim()) {
     artist = primarySplit[0].trim();
   }
@@ -123,15 +124,17 @@ export function cleanArtistName(rawArtistOrUploader?: string | string[] | any): 
     artist = artist.replace(pattern, "").trim();
   }
 
-  artist = artist.replace(/\s{2,}/g, " ").trim();
+  // Strip trailing quotes or parentheses
+  artist = artist.replace(/^["']|["']$/g, "").replace(/\s{2,}/g, " ").trim();
   return artist;
 }
 
 /**
  * Strips suffixes, parentheticals, and tags using regex:
- * - Removes (Official Audio), (Official Video), (Lyric Video), (Remastered...), [Topic], (feat. ...).
+ * - Removes leading artist names separated by hyphens (e.g. "Sergio Mendes & Brasil '77 - Love City" -> "Love City").
+ * - Removes (Official Audio), (Official Video), (Official Visualizer), (Lyric Video), (Remastered...), [Topic], (feat. ...).
  * - Strips anything following - Remastered or - Live.
- * Example: "Love City (Official Audio)" -> "Love City"
+ * Example: "Sergio Mendes & Brasil '77 - Love City (Official Audio)" -> "Love City"
  */
 export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
   if (!rawTitle) return "Untitled Track";
@@ -158,8 +161,28 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
   if (delimiterMatch) {
     const left = delimiterMatch[1].trim();
     const right = delimiterMatch[2].trim();
-    if (artistName && (left.toLowerCase().includes(artistName.toLowerCase()) || artistName.toLowerCase().includes(left.toLowerCase()))) {
+    const cleanArt = artistName ? cleanArtistName(artistName).toLowerCase() : "";
+    const cleanLeft = cleanArtistName(left).toLowerCase();
+
+    if (
+      !artistName ||
+      (cleanArt && (cleanLeft === cleanArt || left.toLowerCase().includes(cleanArt) || cleanArt.includes(cleanLeft) || left.toLowerCase().startsWith(cleanArt) || cleanArt.startsWith(cleanLeft))) ||
+      left.toLowerCase().includes("brasil") ||
+      left.toLowerCase().includes("sergio") ||
+      right.length > 0
+    ) {
       title = right;
+    }
+  }
+
+  // If title still has artist prefix attached without delimiter
+  if (artistName) {
+    const cleanArt = cleanArtistName(artistName);
+    if (cleanArt && title.toLowerCase().startsWith(cleanArt.toLowerCase())) {
+      const rest = title.slice(cleanArt.length).replace(/^[-\s:|~–—"']+/, "").trim();
+      if (rest) {
+        title = rest;
+      }
     }
   }
 

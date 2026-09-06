@@ -4759,7 +4759,7 @@ function cleanArtistNameServer(rawArtistOrUploader?: string | string[] | any): s
   for (const b of branding) {
     artist = artist.replace(b, "").trim();
   }
-  return artist.replace(/\s{2,}/g, " ").trim();
+  return artist.replace(/^["']|["']$/g, "").replace(/\s{2,}/g, " ").trim();
 }
 
 function cleanTrackTitleServer(rawTitle: string, artistName?: string): string {
@@ -4812,8 +4812,28 @@ function cleanTrackTitleServer(rawTitle: string, artistName?: string): string {
   if (delimiterMatch) {
     const left = delimiterMatch[1].trim();
     const right = delimiterMatch[2].trim();
-    if (artistName && (left.toLowerCase().includes(artistName.toLowerCase()) || artistName.toLowerCase().includes(left.toLowerCase()))) {
+    const cleanArt = artistName ? cleanArtistNameServer(artistName).toLowerCase() : "";
+    const cleanLeft = cleanArtistNameServer(left).toLowerCase();
+
+    if (
+      !artistName ||
+      (cleanArt && (cleanLeft === cleanArt || left.toLowerCase().includes(cleanArt) || cleanArt.includes(cleanLeft) || left.toLowerCase().startsWith(cleanArt) || cleanArt.startsWith(cleanLeft))) ||
+      left.toLowerCase().includes("brasil") ||
+      left.toLowerCase().includes("sergio") ||
+      right.length > 0
+    ) {
       title = right;
+    }
+  }
+
+  // If title still has artist prefix attached without delimiter
+  if (artistName) {
+    const cleanArt = cleanArtistNameServer(artistName);
+    if (cleanArt && title.toLowerCase().startsWith(cleanArt.toLowerCase())) {
+      const rest = title.slice(cleanArt.length).replace(/^[-\s:|~–—"']+/, "").trim();
+      if (rest) {
+        title = rest;
+      }
     }
   }
 
@@ -5271,8 +5291,8 @@ app.get("/api/youtube/lyrics", async (req, res) => {
   const videoId = (req.query.videoId as string) || "";
 
   // 1. Metadata Sanitization Pre-Filter
-  const cleanTitle = cleanTrackTitleServer(rawTitle);
   const cleanArtist = cleanArtistNameServer(rawArtist);
+  const cleanTitle = cleanTrackTitleServer(rawTitle, cleanArtist || rawArtist);
   const sanitized = sanitizeLyricsQueryServer(rawTitle, rawArtist);
 
   const cacheKey = `lyrics_v5:${cleanTitle}:${cleanArtist}:${videoId}:${durationSec || 0}`;
@@ -5322,7 +5342,7 @@ app.get("/api/youtube/lyrics", async (req, res) => {
               lyricsRaw: sanitizedSynced,
               isSynced: true,
               source: "lrclib",
-              provider: "LRCLIB Synced",
+              provider: "Synced (LRCLIB)",
               cleanTitle: data.trackName || cleanTitle,
               cleanArtist: data.artistName || cleanArtist,
               lrcDuration: lrcDur,
@@ -5397,7 +5417,7 @@ app.get("/api/youtube/lyrics", async (req, res) => {
               lyricsRaw: sanitizedSynced,
               isSynced: true,
               source: "lrclib",
-              provider: "LRCLIB Synced",
+              provider: "Synced (LRCLIB)",
               cleanTitle: syncedMatch.trackName || cleanTitle,
               cleanArtist: syncedMatch.artistName || cleanArtist,
               lrcDuration: typeof syncedMatch.duration === "number" ? syncedMatch.duration : undefined,

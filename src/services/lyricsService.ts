@@ -160,8 +160,8 @@ export async function fetchLyricsMultiSource(
   videoId?: string,
   albumName?: string
 ): Promise<LyricsResult> {
-  const cleanTitle = cleanTrackTitle(rawTitle);
   const cleanArtist = cleanArtistName(rawArtist);
+  const cleanTitle = cleanTrackTitle(rawTitle, cleanArtist || (typeof rawArtist === "string" ? rawArtist : undefined));
   const durationSec = normalizeDurationSeconds(duration);
   const cleanVid = videoId ? videoId.split("_")[0] : "";
 
@@ -201,7 +201,7 @@ export async function fetchLyricsMultiSource(
               plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
               isSynced: true,
               source: "lrclib",
-              provider: "LRCLIB Synced",
+              provider: "Synced (LRCLIB)",
               trackName: data.trackName || cleanTitle,
               artistName: data.artistName || cleanArtist,
               lrcDuration: lrcDur,
@@ -214,7 +214,7 @@ export async function fetchLyricsMultiSource(
               plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
               isSynced: false,
               source: "lrclib",
-              provider: "LRCLIB Plain",
+              provider: "Plain Text (LRCLIB)",
               trackName: data.trackName || cleanTitle,
               artistName: data.artistName || cleanArtist,
               lrcDuration: lrcDur,
@@ -280,7 +280,7 @@ export async function fetchLyricsMultiSource(
               plainLyrics: withSynced.plainLyrics ? sanitizeCaptionsAndLyrics(withSynced.plainLyrics) : undefined,
               isSynced: true,
               source: "lrclib",
-              provider: "LRCLIB Synced",
+              provider: "Synced (LRCLIB)",
               trackName: withSynced.trackName || cleanTitle,
               artistName: withSynced.artistName || cleanArtist,
               lrcDuration: searchLrcDur,
@@ -295,7 +295,7 @@ export async function fetchLyricsMultiSource(
               plainLyrics: sanitizeCaptionsAndLyrics(withPlain.plainLyrics),
               isSynced: false,
               source: "lrclib",
-              provider: "LRCLIB Plain",
+              provider: "Plain Text (LRCLIB)",
               trackName: withPlain.trackName || cleanTitle,
               artistName: withPlain.artistName || cleanArtist,
               lrcDuration: typeof withPlain.duration === "number" && withPlain.duration > 0 ? withPlain.duration : undefined,
