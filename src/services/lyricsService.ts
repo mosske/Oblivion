@@ -169,7 +169,8 @@ export async function fetchLyricsMultiSource(
   let lrclibPlainMatch: LyricsResult | null = null;
 
   // =========================================================================
-  // PASS 1 — EXACT GET (/api/get with track_name, artist_name, and duration)
+  // PASS 1 — EXACT GET (Sanitized)
+  // Target: https://lrclib.net/api/get?track_name=${cleanTitle}&artist_name=${cleanArtist}&duration=${durationSec}
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
@@ -177,13 +178,13 @@ export async function fetchLyricsMultiSource(
         ? `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${durationSec}`
         : `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
 
-      const res = await fetch(getUrl, {
+      const res1 = await fetch(getUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(4500),
+        signal: AbortSignal.timeout(4000),
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      if (res1.ok) {
+        const data = await res1.json();
         const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
 
         if (data.syncedLyrics && data.syncedLyrics.trim().length > 0 && hasLrcTimestamps(data.syncedLyrics)) {
@@ -210,127 +211,127 @@ export async function fetchLyricsMultiSource(
           };
         }
       }
-    } catch (_err) {
-      // Proceed to Pass 2
+    } catch (_e1) {
+      // Continue to Pass 2
     }
   }
 
   // =========================================================================
-  // PASS 2 — PARAMETRIC SEARCH (/api/search with Track & Artist)
-  // Pick the FIRST result where syncedLyrics exists AND Math.abs(item.duration - durationSec) <= 45
+  // PASS 2 — SEARCH BY TRACK & CLEAN ARTIST (/api/search)
+  // Target: https://lrclib.net/api/search?track_name=${cleanTitle}&artist_name=${cleanArtist}
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
       const searchUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
-      const res = await fetch(searchUrl, {
+      const res2 = await fetch(searchUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
         signal: AbortSignal.timeout(4000),
       });
 
-      if (res.ok) {
-        const list = await res.json();
+      if (res2.ok) {
+        const list = await res2.json();
         if (Array.isArray(list) && list.length > 0) {
-          const matched = list.find((item: any) => {
-            if (!item.syncedLyrics || !item.syncedLyrics.trim() || !hasLrcTimestamps(item.syncedLyrics)) {
-              return false;
-            }
+          const match = list.find((item: any) => {
+            const hasSynced = Boolean(item.syncedLyrics && item.syncedLyrics.trim() && hasLrcTimestamps(item.syncedLyrics));
+            if (!hasSynced) return false;
             if (durationSec && typeof item.duration === "number" && item.duration > 0) {
-              if (Math.abs(item.duration - durationSec) > 45.0) {
-                return false;
-              }
+              return Math.abs(item.duration - durationSec) <= 45.0;
             }
             return true;
-          });
+          }) || list.find((item: any) => item.syncedLyrics && hasLrcTimestamps(item.syncedLyrics)) || list[0];
 
-          if (matched) {
-            const searchLrcDur = typeof matched.duration === "number" && matched.duration > 0 ? matched.duration : undefined;
-            return {
-              syncedLyrics: sanitizeCaptionsAndLyrics(matched.syncedLyrics),
-              plainLyrics: matched.plainLyrics ? sanitizeCaptionsAndLyrics(matched.plainLyrics) : undefined,
-              isSynced: true,
-              source: "lrclib",
-              provider: "Synced (LRCLIB)",
-              trackName: matched.trackName || cleanTitle,
-              artistName: matched.artistName || cleanArtist,
-              lrcDuration: searchLrcDur,
-            };
-          }
+          if (match) {
+            const isSyncedMatch = Boolean(match.syncedLyrics && match.syncedLyrics.trim() && hasLrcTimestamps(match.syncedLyrics));
+            const lrcDur = typeof match.duration === "number" && match.duration > 0 ? match.duration : undefined;
 
-          const plainMatched = list.find((item: any) => item.plainLyrics && item.plainLyrics.trim().length > 0);
-          if (plainMatched && !lrclibPlainMatch) {
-            lrclibPlainMatch = {
-              plainLyrics: sanitizeCaptionsAndLyrics(plainMatched.plainLyrics),
-              isSynced: false,
-              source: "lrclib",
-              provider: "Plain Text (LRCLIB)",
-              trackName: plainMatched.trackName || cleanTitle,
-              artistName: plainMatched.artistName || cleanArtist,
-              lrcDuration: typeof plainMatched.duration === "number" ? plainMatched.duration : undefined,
-            };
+            if (isSyncedMatch) {
+              return {
+                syncedLyrics: sanitizeCaptionsAndLyrics(match.syncedLyrics),
+                plainLyrics: match.plainLyrics ? sanitizeCaptionsAndLyrics(match.plainLyrics) : undefined,
+                isSynced: true,
+                source: "lrclib",
+                provider: "Synced (LRCLIB)",
+                trackName: match.trackName || cleanTitle,
+                artistName: match.artistName || cleanArtist,
+                lrcDuration: lrcDur,
+              };
+            }
+            if (match.plainLyrics && match.plainLyrics.trim().length > 0 && !lrclibPlainMatch) {
+              lrclibPlainMatch = {
+                plainLyrics: sanitizeCaptionsAndLyrics(match.plainLyrics),
+                isSynced: false,
+                source: "lrclib",
+                provider: "Plain Text (LRCLIB)",
+                trackName: match.trackName || cleanTitle,
+                artistName: match.artistName || cleanArtist,
+                lrcDuration: lrcDur,
+              };
+            }
           }
         }
       }
-    } catch (_err) {
-      // Proceed to Pass 3
+    } catch (_e2) {
+      // Continue to Pass 3
     }
   }
 
   // =========================================================================
-  // PASS 3 — GENERAL QUERY SEARCH (/api/search with Title Only)
-  // Filter: item.artistName contains at least one key word from cleanArtist AND syncedLyrics is present
+  // PASS 3 — BROAD SEARCH (Title Only)
+  // Target: https://lrclib.net/api/search?q=${cleanTitle}
+  // Find candidate where artist name contains key tokens from cleanArtist and item.syncedLyrics is present
   // =========================================================================
   if (cleanTitle) {
     try {
       const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`;
-      const res = await fetch(searchUrl, {
+      const res3 = await fetch(searchUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
         signal: AbortSignal.timeout(4000),
       });
 
-      if (res.ok) {
-        const list = await res.json();
+      if (res3.ok) {
+        const list = await res3.json();
         if (Array.isArray(list) && list.length > 0) {
           const artistTokens = (cleanArtist + " " + rawArtistStr)
             .toLowerCase()
             .split(/[\s,;&/]+/)
             .filter((t) => t.length >= 3);
 
-          const matched = list.find((item: any) => {
+          const match = list.find((item: any) => {
             if (!item.syncedLyrics || !item.syncedLyrics.trim() || !hasLrcTimestamps(item.syncedLyrics)) {
               return false;
             }
-            if (artistTokens.length > 0) {
-              const itemArtistLower = (item.artistName || "").toLowerCase();
-              const hasTokenMatch = artistTokens.some((tok) => itemArtistLower.includes(tok));
-              if (!hasTokenMatch) {
-                return false;
-              }
-            }
+            const a = (item.artistName || "").toLowerCase();
+            const hasToken = artistTokens.length === 0 || artistTokens.some((tok) => a.includes(tok));
+            if (!hasToken) return false;
             if (durationSec && typeof item.duration === "number" && item.duration > 0) {
-              if (Math.abs(item.duration - durationSec) > 45.0) {
-                return false;
-              }
+              return Math.abs(item.duration - durationSec) <= 45.0;
             }
             return true;
+          }) || list.find((item: any) => {
+            if (!item.syncedLyrics || !item.syncedLyrics.trim() || !hasLrcTimestamps(item.syncedLyrics)) {
+              return false;
+            }
+            const a = (item.artistName || "").toLowerCase();
+            return artistTokens.some((tok) => a.includes(tok));
           });
 
-          if (matched) {
-            const searchLrcDur = typeof matched.duration === "number" && matched.duration > 0 ? matched.duration : undefined;
+          if (match) {
+            const lrcDur = typeof match.duration === "number" && match.duration > 0 ? match.duration : undefined;
             return {
-              syncedLyrics: sanitizeCaptionsAndLyrics(matched.syncedLyrics),
-              plainLyrics: matched.plainLyrics ? sanitizeCaptionsAndLyrics(matched.plainLyrics) : undefined,
+              syncedLyrics: sanitizeCaptionsAndLyrics(match.syncedLyrics),
+              plainLyrics: match.plainLyrics ? sanitizeCaptionsAndLyrics(match.plainLyrics) : undefined,
               isSynced: true,
               source: "lrclib",
               provider: "Synced (LRCLIB)",
-              trackName: matched.trackName || cleanTitle,
-              artistName: matched.artistName || cleanArtist,
-              lrcDuration: searchLrcDur,
+              trackName: match.trackName || cleanTitle,
+              artistName: match.artistName || cleanArtist,
+              lrcDuration: lrcDur,
             };
           }
         }
       }
-    } catch (_err) {
-      // Proceed to Pass 4
+    } catch (_e3) {
+      // Continue to Pass 4
     }
   }
 

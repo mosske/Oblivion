@@ -5392,28 +5392,29 @@ app.get("/api/youtube/lyrics", async (req, res) => {
               trackDurationSec: durationSec,
               source: "lrclib",
             }).isValid;
-          });
+          }) || list.find((it: any) => it.syncedLyrics && /\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]/.test(it.syncedLyrics)) || list[0];
 
           if (matched) {
-            const sanitizedSynced = sanitizeCaptionsAndLyricsServer(matched.syncedLyrics);
-            const payload = {
-              syncedLyrics: sanitizedSynced,
-              plainLyrics: matched.plainLyrics ? sanitizeCaptionsAndLyricsServer(matched.plainLyrics) : undefined,
-              lyricsRaw: sanitizedSynced,
-              isSynced: true,
-              source: "lrclib",
-              provider: "Synced (LRCLIB)",
-              cleanTitle: matched.trackName || cleanTitle,
-              cleanArtist: matched.artistName || cleanArtist,
-              lrcDuration: typeof matched.duration === "number" ? matched.duration : undefined,
-            };
-            setInCache(cacheKey, payload);
-            return res.json(payload);
-          }
-
-          const plainMatch = list.find((it: any) => it.plainLyrics && it.plainLyrics.trim().length > 0);
-          if (plainMatch && !lrcPlainFallback) {
-            lrcPlainFallback = sanitizeCaptionsAndLyricsServer(plainMatch.plainLyrics);
+            const isSyncedMatch = Boolean(matched.syncedLyrics && matched.syncedLyrics.trim() && /\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]/.test(matched.syncedLyrics));
+            if (isSyncedMatch) {
+              const sanitizedSynced = sanitizeCaptionsAndLyricsServer(matched.syncedLyrics);
+              const payload = {
+                syncedLyrics: sanitizedSynced,
+                plainLyrics: matched.plainLyrics ? sanitizeCaptionsAndLyricsServer(matched.plainLyrics) : undefined,
+                lyricsRaw: sanitizedSynced,
+                isSynced: true,
+                source: "lrclib",
+                provider: "Synced (LRCLIB)",
+                cleanTitle: matched.trackName || cleanTitle,
+                cleanArtist: matched.artistName || cleanArtist,
+                lrcDuration: typeof matched.duration === "number" ? matched.duration : undefined,
+              };
+              setInCache(cacheKey, payload);
+              return res.json(payload);
+            }
+            if (matched.plainLyrics && matched.plainLyrics.trim().length > 0 && !lrcPlainFallback) {
+              lrcPlainFallback = sanitizeCaptionsAndLyricsServer(matched.plainLyrics);
+            }
           }
         }
       }
