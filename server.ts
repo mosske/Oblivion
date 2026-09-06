@@ -5309,15 +5309,11 @@ app.get("/api/youtube/lyrics", async (req, res) => {
   // Strictly queries /api/get first and verifies duration match within ±4 seconds
   // =========================================================================
   try {
-    const params = new URLSearchParams({
-      track_name: cleanTitle,
-      artist_name: cleanArtist,
-    });
-    if (durationSec) {
-      params.append("duration", durationSec.toString());
-    }
+    const getUrl = durationSec
+      ? `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${durationSec}`
+      : `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
 
-    const lrcRes = await fetch(`https://lrclib.net/api/get?${params.toString()}`, {
+    const lrcRes = await fetch(getUrl, {
       headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
       signal: AbortSignal.timeout(4000),
     });
@@ -5365,42 +5361,44 @@ app.get("/api/youtube/lyrics", async (req, res) => {
       }
     }
 
-    // LRCLIB Search Fallback:
-    // Query /api/search?track_name=...&artist_name=... and filter locally with strict <= 4s tolerance
-    const searchEndpoints: string[] = [];
+    // Secondary /api/search Endpoint with Mandatory 3-Condition Filter:
+    // a) syncedLyrics not null/empty & valid timestamp tags
+    // b) Math.abs(item.duration - durationSec) <= 4
+    // c) item.artistName.toLowerCase() contains key token of cleanArtist
     if (cleanTitle && cleanArtist) {
-      searchEndpoints.push(
-        `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`
-      );
-    }
-    const searchQueries = [
-      sanitized.searchQuery,
-      ...sanitized.secondaryQueries,
-    ].filter(Boolean);
-    for (const q of searchQueries) {
-      searchEndpoints.push(`https://lrclib.net/api/search?q=${encodeURIComponent(q)}`);
-    }
-
-    for (const searchUrl of searchEndpoints) {
+      const searchUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
       const searchRes = await fetch(searchUrl, {
         headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
         signal: AbortSignal.timeout(4000),
       });
+
       if (searchRes.ok) {
         const list = await searchRes.json();
         if (Array.isArray(list) && list.length > 0) {
-          // Duration filter for search results: ONLY accept if within 4s window
-          const durationFiltered = durationSec
-            ? list.filter((it: any) => {
-                if (typeof it.duration === "number" && it.duration > 0) {
-                  return Math.abs(it.duration - durationSec) <= 4.0;
-                }
-                return false;
-              })
-            : list;
+          const artistTokens = cleanArtist
+            .toLowerCase()
+            .split(/[\s,;&/]+/)
+            .filter((t) => t.length >= 3);
 
-          const syncedMatch = durationFiltered.find((it: any) => {
-            if (!it.syncedLyrics || !it.syncedLyrics.trim() || !/\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]/.test(it.syncedLyrics)) return false;
+          const syncedMatch = list.find((it: any) => {
+            // Condition A: valid synced lyrics
+            if (!it.syncedLyrics || !it.syncedLyrics.trim() || !/\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]/.test(it.syncedLyrics)) {
+              return false;
+            }
+            // Condition B: duration within 4s tolerance
+            if (durationSec && typeof it.duration === "number" && it.duration > 0) {
+              if (Math.abs(it.duration - durationSec) > 4.0) {
+                return false;
+              }
+            }
+            // Condition C: artist name contains at least one key token of cleanArtist
+            if (artistTokens.length > 0) {
+              const itArtistLower = (it.artistName || "").toLowerCase();
+              const hasTokenMatch = artistTokens.some((tok) => itArtistLower.includes(tok));
+              if (!hasTokenMatch) {
+                return false;
+              }
+            }
             const sanitized = sanitizeCaptionsAndLyricsServer(it.syncedLyrics);
             return validateLyricsQualityServer(sanitized, {
               isSynced: true,
@@ -5425,25 +5423,11 @@ app.get("/api/youtube/lyrics", async (req, res) => {
             setInCache(cacheKey, payload);
             return res.json(payload);
           }
-
-          const plainMatch = durationFiltered.find((it: any) => {
-            if (!it.plainLyrics || !it.plainLyrics.trim()) return false;
-            const sanitized = sanitizeCaptionsAndLyricsServer(it.plainLyrics);
-            return validateLyricsQualityServer(sanitized, {
-              isSynced: false,
-              trackDurationSec: durationSec,
-              source: "lrclib",
-            }).isValid;
-          });
-
-          if (plainMatch && !lrcPlainFallback) {
-            lrcPlainFallback = sanitizeCaptionsAndLyricsServer(plainMatch.plainLyrics);
-          }
         }
       }
     }
-  } catch (err) {
-    console.warn("LRCLIB server fetch notice:", err);
+  } catch (_lrcErr) {
+    // Fall back to InnerTube native lyrics
   }
 
   // =========================================================================
