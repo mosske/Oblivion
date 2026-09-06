@@ -162,13 +162,14 @@ export async function fetchLyricsMultiSource(
 ): Promise<LyricsResult> {
   const cleanArtist = cleanArtistName(rawArtist);
   const cleanTitle = cleanTrackTitle(rawTitle, cleanArtist || (typeof rawArtist === "string" ? rawArtist : undefined));
+  const rawArtistStr = Array.isArray(rawArtist) ? rawArtist.join(" ") : (rawArtist || "");
   const durationSec = normalizeDurationSeconds(duration);
   const cleanVid = videoId ? videoId.split("_")[0] : "";
 
   let lrclibPlainMatch: LyricsResult | null = null;
 
   // =========================================================================
-  // Tier 1 (Primary Synced): LRCLIB API (/api/get with exact track_name, artist_name, duration)
+  // PASS 1 — EXACT GET (/api/get with track_name, artist_name, and duration)
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
@@ -184,44 +185,39 @@ export async function fetchLyricsMultiSource(
       if (res.ok) {
         const data = await res.json();
         const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
-        const isDurationMatch = !durationSec || !lrcDur || Math.abs(lrcDur - durationSec) <= 4.0;
 
-        if (isDurationMatch) {
-          if (data.syncedLyrics && data.syncedLyrics.trim().length > 0 && hasLrcTimestamps(data.syncedLyrics)) {
-            return {
-              syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
-              plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
-              isSynced: true,
-              source: "lrclib",
-              provider: "Synced (LRCLIB)",
-              trackName: data.trackName || cleanTitle,
-              artistName: data.artistName || cleanArtist,
-              lrcDuration: lrcDur,
-            };
-          }
-          if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
-            lrclibPlainMatch = {
-              plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
-              isSynced: false,
-              source: "lrclib",
-              provider: "Plain Text (LRCLIB)",
-              trackName: data.trackName || cleanTitle,
-              artistName: data.artistName || cleanArtist,
-              lrcDuration: lrcDur,
-            };
-          }
+        if (data.syncedLyrics && data.syncedLyrics.trim().length > 0 && hasLrcTimestamps(data.syncedLyrics)) {
+          return {
+            syncedLyrics: sanitizeCaptionsAndLyrics(data.syncedLyrics),
+            plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
+            isSynced: true,
+            source: "lrclib",
+            provider: "Synced (LRCLIB)",
+            trackName: data.trackName || cleanTitle,
+            artistName: data.artistName || cleanArtist,
+            lrcDuration: lrcDur,
+          };
+        }
+        if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
+          lrclibPlainMatch = {
+            plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
+            isSynced: false,
+            source: "lrclib",
+            provider: "Plain Text (LRCLIB)",
+            trackName: data.trackName || cleanTitle,
+            artistName: data.artistName || cleanArtist,
+            lrcDuration: lrcDur,
+          };
         }
       }
     } catch (_err) {
-      // Proceed to search fallback
+      // Proceed to Pass 2
     }
   }
 
   // =========================================================================
-  // Tier 1 Fallback: LRCLIB Search with Strict Validation
-  // 1. item.syncedLyrics is NOT null/empty and has LRC timestamps (/\[\d{2}:\d{2}\.\d{2,3}\]/)
-  // 2. Math.abs(item.duration - durationSec) <= 4
-  // 3. item.artistName.toLowerCase() contains at least one key token of cleanArtist
+  // PASS 2 — PARAMETRIC SEARCH (/api/search with Track & Artist)
+  // Pick the FIRST result where syncedLyrics exists AND Math.abs(item.duration - durationSec) <= 45
   // =========================================================================
   if (cleanTitle && cleanArtist) {
     try {
@@ -234,23 +230,75 @@ export async function fetchLyricsMultiSource(
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list) && list.length > 0) {
-          const artistTokens = cleanArtist
+          const matched = list.find((item: any) => {
+            if (!item.syncedLyrics || !item.syncedLyrics.trim() || !hasLrcTimestamps(item.syncedLyrics)) {
+              return false;
+            }
+            if (durationSec && typeof item.duration === "number" && item.duration > 0) {
+              if (Math.abs(item.duration - durationSec) > 45.0) {
+                return false;
+              }
+            }
+            return true;
+          });
+
+          if (matched) {
+            const searchLrcDur = typeof matched.duration === "number" && matched.duration > 0 ? matched.duration : undefined;
+            return {
+              syncedLyrics: sanitizeCaptionsAndLyrics(matched.syncedLyrics),
+              plainLyrics: matched.plainLyrics ? sanitizeCaptionsAndLyrics(matched.plainLyrics) : undefined,
+              isSynced: true,
+              source: "lrclib",
+              provider: "Synced (LRCLIB)",
+              trackName: matched.trackName || cleanTitle,
+              artistName: matched.artistName || cleanArtist,
+              lrcDuration: searchLrcDur,
+            };
+          }
+
+          const plainMatched = list.find((item: any) => item.plainLyrics && item.plainLyrics.trim().length > 0);
+          if (plainMatched && !lrclibPlainMatch) {
+            lrclibPlainMatch = {
+              plainLyrics: sanitizeCaptionsAndLyrics(plainMatched.plainLyrics),
+              isSynced: false,
+              source: "lrclib",
+              provider: "Plain Text (LRCLIB)",
+              trackName: plainMatched.trackName || cleanTitle,
+              artistName: plainMatched.artistName || cleanArtist,
+              lrcDuration: typeof plainMatched.duration === "number" ? plainMatched.duration : undefined,
+            };
+          }
+        }
+      }
+    } catch (_err) {
+      // Proceed to Pass 3
+    }
+  }
+
+  // =========================================================================
+  // PASS 3 — GENERAL QUERY SEARCH (/api/search with Title Only)
+  // Filter: item.artistName contains at least one key word from cleanArtist AND syncedLyrics is present
+  // =========================================================================
+  if (cleanTitle) {
+    try {
+      const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`;
+      const res = await fetch(searchUrl, {
+        headers: { "Lrclib-Client": "OblivionMusicApp v1.0 (https://ai.studio/build)" },
+        signal: AbortSignal.timeout(4000),
+      });
+
+      if (res.ok) {
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+          const artistTokens = (cleanArtist + " " + rawArtistStr)
             .toLowerCase()
             .split(/[\s,;&/]+/)
             .filter((t) => t.length >= 3);
 
-          const syncedCandidate = list.find((item: any) => {
-            // Condition A: syncedLyrics is non-empty and has LRC timestamp tags
+          const matched = list.find((item: any) => {
             if (!item.syncedLyrics || !item.syncedLyrics.trim() || !hasLrcTimestamps(item.syncedLyrics)) {
               return false;
             }
-            // Condition B: duration within 4-second tolerance
-            if (durationSec && typeof item.duration === "number" && item.duration > 0) {
-              if (Math.abs(item.duration - durationSec) > 4.0) {
-                return false;
-              }
-            }
-            // Condition C: artist name contains at least one key token of cleanArtist
             if (artistTokens.length > 0) {
               const itemArtistLower = (item.artistName || "").toLowerCase();
               const hasTokenMatch = artistTokens.some((tok) => itemArtistLower.includes(tok));
@@ -258,31 +306,36 @@ export async function fetchLyricsMultiSource(
                 return false;
               }
             }
+            if (durationSec && typeof item.duration === "number" && item.duration > 0) {
+              if (Math.abs(item.duration - durationSec) > 45.0) {
+                return false;
+              }
+            }
             return true;
           });
 
-          if (syncedCandidate) {
-            const searchLrcDur = typeof syncedCandidate.duration === "number" && syncedCandidate.duration > 0 ? syncedCandidate.duration : undefined;
+          if (matched) {
+            const searchLrcDur = typeof matched.duration === "number" && matched.duration > 0 ? matched.duration : undefined;
             return {
-              syncedLyrics: sanitizeCaptionsAndLyrics(syncedCandidate.syncedLyrics),
-              plainLyrics: syncedCandidate.plainLyrics ? sanitizeCaptionsAndLyrics(syncedCandidate.plainLyrics) : undefined,
+              syncedLyrics: sanitizeCaptionsAndLyrics(matched.syncedLyrics),
+              plainLyrics: matched.plainLyrics ? sanitizeCaptionsAndLyrics(matched.plainLyrics) : undefined,
               isSynced: true,
               source: "lrclib",
               provider: "Synced (LRCLIB)",
-              trackName: syncedCandidate.trackName || cleanTitle,
-              artistName: syncedCandidate.artistName || cleanArtist,
+              trackName: matched.trackName || cleanTitle,
+              artistName: matched.artistName || cleanArtist,
               lrcDuration: searchLrcDur,
             };
           }
         }
       }
     } catch (_err) {
-      // Proceed to InnerTube native fallback
+      // Proceed to Pass 4
     }
   }
 
   // =========================================================================
-  // Tier 2 (YT InnerTube Native) & Tier 3 (Genius / Secondary Fallback):
+  // PASS 4 — YOUTUBE INNERTUBE / CAPTION FALLBACK
   // Query server-side lyrics route (/api/youtube/lyrics)
   // =========================================================================
   try {
@@ -308,7 +361,7 @@ export async function fetchLyricsMultiSource(
           plainLyrics: data.plainLyrics ? sanitizeCaptionsAndLyrics(data.plainLyrics) : undefined,
           isSynced: true,
           source: (data.source as LyricsSourceType) || "lrclib",
-          provider: data.provider || "LRCLIB Synced",
+          provider: data.provider || "Synced (LRCLIB)",
           trackName: cleanTitle,
           artistName: cleanArtist,
           lrcDuration: serverLrcDur,
@@ -319,7 +372,7 @@ export async function fetchLyricsMultiSource(
           plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
           isSynced: false,
           source: (data.source as LyricsSourceType) || "youtube_music",
-          provider: data.provider || "YouTube Music (Official)",
+          provider: data.provider || "YouTube Music",
           trackName: cleanTitle,
           artistName: cleanArtist,
           lrcDuration: serverLrcDur,
