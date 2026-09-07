@@ -191,15 +191,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
       }
     }
 
-    // Auto-Offset Calculation (Video intro delta detection: videoDuration > lrcDuration)
-    const videoDuration = track.duration || 0;
-    if (lrcDuration && lrcDuration > 0 && videoDuration > lrcDuration) {
-      const autoOffset = Math.round((videoDuration - lrcDuration) * 10) / 10;
-      setOffset(autoOffset);
-    } else {
-      setOffset(0);
-    }
-  }, [videoId, track.id, track.duration, lrcDuration]);
+    // Default offset is 0.0s unless explicitly set or calibrated by the user
+    setOffset(0);
+  }, [videoId, track.id]);
 
   // Manual Timing Offset Adjustment Handlers
   const handleAdjustOffset = (delta: number) => {
@@ -216,6 +210,21 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     setOffset(0);
     if (key) {
       localStorage.setItem(`oblivion_lyric_offset_${key}`, "0");
+    }
+  };
+
+  // 1-Tap Instant Vocal Alignment (Sync to Current Playback Time)
+  const handleAlignVocal = () => {
+    if (!isSynced || displayedLyrics.length === 0) return;
+    const targetIdx = activeIndex >= 0 ? activeIndex : 0;
+    const targetLine = displayedLyrics[targetIdx];
+    if (targetLine && targetLine.time >= 0) {
+      const newOffset = Math.round((currentTime - targetLine.time) * 10) / 10;
+      setOffset(newOffset);
+      const key = videoId || track.id;
+      if (key) {
+        localStorage.setItem(`oblivion_lyric_offset_${key}`, newOffset.toString());
+      }
     }
   };
 
@@ -454,18 +463,34 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               {/* Manual Lyric Timing Calibration Control Bar */}
               <div
                 id="lyrics-timing-calibration-bar"
-                className={`lyrics-timing-bar flex items-center p-0.5 rounded-2xl border ${designConfig.borderSubtle} ${pillBgClass} gap-1 shadow-sm`}
+                className={`lyrics-timing-bar flex items-center p-0.5 rounded-2xl border ${designConfig.borderSubtle} ${pillBgClass} gap-0.5 sm:gap-1 shadow-sm`}
                 title="Lyric Timing Calibration (Sync Offset)"
               >
-                {/* [-0.5s] Button (Delays lyrics / shifts them back) */}
+                {/* [Earlier / Advance] Button (Shifts lyrics earlier if lyrics lag behind) */}
                 <button
                   id="lyrics-offset-minus-btn"
                   onClick={() => handleAdjustOffset(-0.5)}
                   className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
-                  title="Delay lyrics by 0.5s (Shift back)"
-                  aria-label="Delay lyrics by 0.5s"
+                  title="Advance lyrics by 0.5s (use if lyrics lag behind the song)"
+                  aria-label="Advance lyrics by 0.5s"
                 >
                   -0.5s
+                </button>
+
+                {/* 1-Tap Align Vocal Button */}
+                <button
+                  id="lyrics-align-vocal-btn"
+                  onClick={handleAlignVocal}
+                  className={`lyrics-timing-btn px-2 py-1 rounded-xl text-[10px] font-extrabold transition-all active:scale-95 cursor-pointer flex items-center gap-1 ${
+                    lyricsSource === "auto_karaoke"
+                      ? `${designConfig.accentText} bg-[var(--accent-color,var(--primary))]/10 border border-[var(--accent-color,var(--primary))]/20`
+                      : "opacity-80 hover:opacity-100"
+                  }`}
+                  title="1-Tap Align: Snaps lyric timing to current singing position"
+                  aria-label="Align lyrics to current time"
+                >
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>Sync Here</span>
                 </button>
 
                 {/* Dynamic Text Badge */}
@@ -480,16 +505,16 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                       : "Timing calibrated at default (0.0s)"
                   }
                 >
-                  Sync: {offset >= 0 ? "+" : ""}{offset.toFixed(1)}s
+                  {offset !== 0 ? `${offset >= 0 ? "+" : ""}${offset.toFixed(1)}s` : "0.0s"}
                 </div>
 
-                {/* [+0.5s] Button (Advances lyrics / shifts them forward) */}
+                {/* [Later / Delay] Button (Shifts lyrics later if lyrics start too fast) */}
                 <button
                   id="lyrics-offset-plus-btn"
                   onClick={() => handleAdjustOffset(0.5)}
                   className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
-                  title="Advance lyrics by 0.5s (Shift forward)"
-                  aria-label="Advance lyrics by 0.5s"
+                  title="Delay lyrics by 0.5s (use if lyrics start too fast/early)"
+                  aria-label="Delay lyrics by 0.5s"
                 >
                   +0.5s
                 </button>
@@ -499,7 +524,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   id="lyrics-offset-reset-btn"
                   onClick={handleResetOffset}
                   className={`lyrics-timing-btn p-1 rounded-xl text-[11px] transition-all active:scale-90 cursor-pointer ${
-                    offset !== 0 ? "opacity-100" : "opacity-40 hover:opacity-80"
+                    offset !== 0 ? "opacity-100 text-amber-400" : "opacity-40 hover:opacity-80"
                   }`}
                   title="Reset timing calibration to 0.0s"
                   aria-label="Reset timing offset to 0.0s"

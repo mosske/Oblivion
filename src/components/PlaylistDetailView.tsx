@@ -38,6 +38,11 @@ import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
 import { getInMemoryToken } from "../App";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
+import {
+  getPlaylistCustomArtwork,
+  isAuthenticCustomArtworkUrl,
+  isVideoThumbnailUrl,
+} from "../utils/customCoversStorage";
 
 interface PlaylistDetailViewProps {
   item: Playlist | Album;
@@ -119,6 +124,19 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const [openPlaylistDropdownId, setOpenPlaylistDropdownId] = useState<string | null>(null);
   const [isCustomCoverModalOpen, setIsCustomCoverModalOpen] = useState<boolean>(false);
   const [isLoadingTracks, setIsLoadingTracks] = useState<boolean>(!item.tracks || item.tracks.length === 0);
+
+  // Check if this playlist has custom cover artwork
+  const isCustomCover = React.useMemo(() => {
+    if (isAlbum) return false;
+    const pl = item as Playlist;
+    const plId = pl.id || (pl as any).playlistId || "";
+    const fromStore = getPlaylistCustomArtwork(plId);
+    if (fromStore && isAuthenticCustomArtworkUrl(fromStore)) return true;
+    if (pl.customArtwork && isAuthenticCustomArtworkUrl(pl.customArtwork)) return true;
+    if (pl.customCoverUrl && isAuthenticCustomArtworkUrl(pl.customCoverUrl)) return true;
+    if (pl.isCustomCover && pl.coverUrl && !isVideoThumbnailUrl(pl.coverUrl)) return true;
+    return Boolean(pl.isCustomCover || pl.customCoverUrl || pl.customArtwork);
+  }, [item, isAlbum]);
 
   // Always reset scroll position to the very top when opening or switching playlists/albums
   useLayoutEffect(() => {
@@ -517,6 +535,14 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                         <span>Public</span>
                       </>
                     )}
+                  </span>
+                )}
+
+                {/* Custom Artwork Badge (Shown inside Playlist View per user request) */}
+                {!isAlbum && isCustomCover && (
+                  <span className={`px-3 py-1 rounded-full ${designConfig.pillBg} text-[11px] font-mono font-bold tracking-wider flex items-center gap-1.5 shadow-sm`}>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Custom Cover</span>
                   </span>
                 )}
               </div>

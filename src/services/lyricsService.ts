@@ -178,33 +178,35 @@ export function scoreLyricsCandidate(
   const qTitle = normalizeCompare(query.title);
   const qArtist = normalizeCompare(query.artist);
 
-  if (!candTitle) return { score: 0, isSynced: false };
+  if (!candTitle || !qTitle) return { score: 0, isSynced: false };
 
   let score = 0;
 
-  // Title Match (0 to 50 pts)
+  // 1. Title Matching (0 to 60 pts)
   if (candTitle === qTitle) {
+    score += 60;
+  } else if (candTitle.startsWith(qTitle) || qTitle.startsWith(candTitle)) {
     score += 50;
   } else if (candTitle.includes(qTitle) || qTitle.includes(candTitle)) {
-    score += 40;
+    score += 45;
   } else {
+    // Non-contiguous / anagram check: only allow if artist matches
     const qTokens = qTitle.split(" ").filter((t) => t.length > 1);
     const matchedTokens = qTokens.filter((t) => candTitle.includes(t));
-    if (qTokens.length > 0 && matchedTokens.length === qTokens.length) {
-      score += 35;
-    } else if (qTokens.length > 0 && matchedTokens.length / qTokens.length >= 0.5) {
-      score += (matchedTokens.length / qTokens.length) * 30;
+    const artistMatches = qArtist && (candArtist.includes(qArtist) || qArtist.includes(candArtist));
+    if (qTokens.length > 0 && matchedTokens.length === qTokens.length && artistMatches) {
+      score += 20;
     } else {
-      return { score: 0, isSynced: false }; // No title match -> Reject
+      return { score: 0, isSynced: false }; // Scrambled words without artist match -> Reject
     }
   }
 
-  // Artist Match (0 to 30 pts)
+  // 2. Artist Matching (0 to 40 pts)
   if (candArtist && qArtist) {
     if (candArtist === qArtist) {
-      score += 30;
+      score += 40;
     } else if (candArtist.includes(qArtist) || qArtist.includes(candArtist)) {
-      score += 25;
+      score += 30;
     } else {
       const artTokens = qArtist.split(" ").filter((t) => t.length > 1);
       const matchedArtTokens = artTokens.filter((t) => candArtist.includes(t));
@@ -214,7 +216,7 @@ export function scoreLyricsCandidate(
     }
   }
 
-  // Synced Lyrics Bonus (20 pts)
+  // 3. Synced Lyrics Bonus (10 pts)
   const hasSynced = Boolean(
     candidate.syncedLyrics &&
       candidate.syncedLyrics.trim().length > 0 &&
@@ -222,14 +224,14 @@ export function scoreLyricsCandidate(
   );
 
   if (hasSynced) {
-    score += 20;
+    score += 10;
   } else if (candidate.plainLyrics && candidate.plainLyrics.trim().length > 0) {
-    score += 5;
+    score += 3;
   } else {
     return { score: 0, isSynced: false };
   }
 
-  // Duration Proximity Bonus (up to 15 pts)
+  // 4. Duration Proximity Bonus (up to 15 pts)
   if (query.durationSec && typeof candidate.duration === "number" && candidate.duration > 0) {
     const delta = Math.abs(candidate.duration - query.durationSec);
     if (delta <= 4) {

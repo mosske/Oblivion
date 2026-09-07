@@ -2401,10 +2401,11 @@ export default function App() {
               selectedPlaylist.id?.startsWith("OLAK5uy_")
             )}
             onBack={() => {
+              setSelectedPlaylist(null);
               if (window.history.state && window.history.state.view === "playlist_detail") {
-                window.history.back();
-              } else {
-                setSelectedPlaylist(null);
+                try {
+                  window.history.replaceState({ view: "main_tabs" }, "");
+                } catch {}
               }
             }}
             onBackToLibrary={() => {

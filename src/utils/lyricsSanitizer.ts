@@ -428,8 +428,9 @@ export function getTitleSearchVariants(rawTitle: string, artistName?: string): s
 /**
  * Intelligent Karaoke Auto-Sync Engine for Plain Text Lyrics:
  * Calculates musically paced, millisecond-accurate timestamps for every sentence
- * using track duration, stanza pauses, and syllable/character weights.
- * Guarantees every plain text song can be sung along to like a real Karaoke machine!
+ * using track duration, structural section cues ([Intro], [Verse], [Chorus], [Solo], [Outro]),
+ * multilingual syllable/character weights, and zero-drift time budget normalization.
+ * Guarantees every plain text song can be sung along to with tight synchronization.
  */
 export function autoSyncPlainLyrics(
   plainLyrics: string,
@@ -438,65 +439,138 @@ export function autoSyncPlainLyrics(
   if (!plainLyrics || typeof plainLyrics !== "string") return [];
 
   const rawLines = plainLyrics.split("\n").map((l) => l.trim());
-  const lines = rawLines.filter((l) => {
-    // Exclude metadata headers like [Verse 1], [Chorus], [Bridge]
-    if (/^\[(verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|instrumental)[^\]]*\]$/i.test(l)) {
-      return false;
+
+  // 1. Structural Section Analysis
+  const parsedLines: Array<{ text: string; section: string; rawIndex: number }> = [];
+  let currentSection = "verse";
+  let hasExplicitIntro = false;
+  let hasExplicitSolo = false;
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const raw = rawLines[i];
+    if (!raw) continue;
+
+    // Check for section headers [Verse 1], [Chorus], (Bridge), [Solo], etc.
+    const sectionMatch =
+      raw.match(/^\[(verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|guitar\s+solo|instrumental|interlude)[^\]]*\]$/i) ||
+      raw.match(/^\((verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|guitar\s+solo|instrumental|interlude)[^\)]*\)$/i);
+
+    if (sectionMatch) {
+      const tag = sectionMatch[1].toLowerCase();
+      currentSection = tag;
+      if (tag.includes("intro")) hasExplicitIntro = true;
+      if (tag.includes("solo") || tag.includes("instrumental") || tag.includes("interlude")) hasExplicitSolo = true;
+      continue;
     }
-    return l.length > 0;
-  });
 
-  if (lines.length === 0) return [];
-
-  // Determine estimated total track duration
-  const totalDuration = durationSec && durationSec > 25 ? durationSec : Math.max(120, lines.length * 4.8);
-
-  // Musical intro & outro buffer calculations (countdown 'O' runs during introTime!)
-  const introTime = Math.max(6.5, Math.min(18.0, Math.round(totalDuration * 0.08 * 10) / 10));
-  const outroBuffer = Math.max(8.0, Math.min(22.0, Math.round(totalDuration * 0.06 * 10) / 10));
-  const singingWindow = Math.max(30.0, totalDuration - introTime - outroBuffer);
-
-  // Measure syllable & character weights for natural human singing cadence
-  const weights = lines.map((line) => {
-    const chars = line.replace(/\s+/g, "").length;
-    const words = line.split(/\s+/).length;
-    return Math.max(1.0, chars * 0.45 + words * 1.6);
-  });
-  const totalWeight = weights.reduce((a, b) => a + b, 0);
-
-  // Detect stanza breaks from empty line spacing in original lyrics
-  const isAfterGap: boolean[] = [];
-  let prevWasEmpty = false;
-  let validIdx = 0;
-  for (const raw of rawLines) {
-    if (!raw || /^\[(verse|chorus|bridge|intro|outro)[^\]]*\]$/i.test(raw)) {
-      prevWasEmpty = true;
-    } else {
-      isAfterGap[validIdx] = validIdx > 0 && prevWasEmpty;
-      prevWasEmpty = false;
-      validIdx++;
-    }
+    parsedLines.push({
+      text: raw,
+      section: currentSection,
+      rawIndex: i,
+    });
   }
 
-  // Distribute sentence start timestamps
-  const result: Array<{ time: number; text: string }> = [];
-  let currentTime = introTime;
+  if (parsedLines.length === 0) return [];
 
-  for (let i = 0; i < lines.length; i++) {
-    // If transitioning into a new stanza/verse, add natural 2.0s breathing interlude
-    if (isAfterGap[i]) {
-      currentTime += 2.0;
+  // Determine realistic track duration
+  const totalDuration = durationSec && durationSec > 20 ? durationSec : Math.max(120, parsedLines.length * 4.8);
+
+  // 2. Musically Grounded Intro Timing
+  // Standard pop/dance/rock songs feature a 4-bar or 8-bar musical intro (~9.0s - 14.5s)
+  let introTime: number;
+  if (hasExplicitIntro) {
+    introTime = Math.max(10.0, Math.min(22.0, Math.round(totalDuration * 0.085 * 10) / 10));
+  } else if (totalDuration < 150) {
+    introTime = Math.max(7.5, Math.min(11.0, Math.round(totalDuration * 0.06 * 10) / 10));
+  } else if (totalDuration > 300) {
+    introTime = Math.max(12.0, Math.min(20.0, Math.round(totalDuration * 0.055 * 10) / 10));
+  } else {
+    // Default 8-bar intro cadence for standard 3-4 min tracks (~9.5s - 14.5s)
+    introTime = Math.max(9.0, Math.min(14.5, Math.round(totalDuration * 0.048 * 10) / 10));
+  }
+
+  // 3. Outro Buffer Calculation (5-7% of track)
+  const outroBuffer = Math.max(7.0, Math.min(18.0, Math.round(totalDuration * 0.055 * 10) / 10));
+
+  // 4. Instrumental Solo / Interlude Allocation
+  let soloDuration = 0;
+  if (hasExplicitSolo) {
+    soloDuration = Math.max(10.0, Math.min(22.0, Math.round(totalDuration * 0.07 * 10) / 10));
+  }
+
+  const availableVocalSpan = Math.max(20.0, totalDuration - introTime - outroBuffer - soloDuration);
+
+  // 5. Syllable & Linguistic Weighting per Line
+  function estimateSyllables(text: string): number {
+    const cjkMatches = text.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/g);
+    const cjkCount = cjkMatches ? cjkMatches.length : 0;
+
+    const latinClean = text.toLowerCase().replace(/[^a-z\s]/g, "");
+    const words = latinClean.split(/\s+/).filter(Boolean);
+    let latinSyllables = 0;
+    for (const w of words) {
+      const matches = w.match(/[aeiouy]+/g);
+      latinSyllables += matches ? Math.max(1, matches.length) : 1;
+    }
+
+    return Math.max(1, cjkCount + latinSyllables);
+  }
+
+  const lineWeights: Array<{ baseWeight: number; gapWeight: number }> = [];
+  for (let i = 0; i < parsedLines.length; i++) {
+    const item = parsedLines[i];
+    const text = item.text;
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const syllables = estimateSyllables(text);
+    const chars = text.replace(/\s+/g, "").length;
+
+    // Musically balanced weight: each word + syllable has breathing & vocal sustain time
+    let weight = syllables * 0.55 + words * 0.75 + chars * 0.05;
+
+    if (item.section.includes("chorus") || item.section.includes("hook")) {
+      weight *= 1.2;
+    }
+
+    if (/[,;:]$/.test(text)) weight += 0.4;
+    if (/[.?!]$/.test(text)) weight += 0.8;
+    if (/\.{3}$/.test(text)) weight += 1.2;
+
+    const isGap = i > 0 && parsedLines[i].rawIndex - parsedLines[i - 1].rawIndex > 1;
+    const isNewSection = i > 0 && parsedLines[i].section !== parsedLines[i - 1].section;
+    let gapWeight = 0;
+    if (isNewSection) {
+      gapWeight = 2.0;
+    } else if (isGap) {
+      gapWeight = 1.4;
+    }
+
+    lineWeights.push({
+      baseWeight: Math.max(1.2, weight),
+      gapWeight,
+    });
+  }
+
+  const totalWeight = lineWeights.reduce((sum, w) => sum + w.baseWeight + w.gapWeight, 0);
+
+  // 6. Zero-Drift Proportional Distribution
+  const result: Array<{ time: number; text: string }> = [];
+  let accumulatedTime = introTime;
+
+  for (let i = 0; i < parsedLines.length; i++) {
+    const w = lineWeights[i];
+
+    if (w.gapWeight > 0) {
+      const gapSec = (w.gapWeight / totalWeight) * availableVocalSpan;
+      accumulatedTime += Math.min(3.5, Math.max(1.2, gapSec));
     }
 
     result.push({
-      time: parseFloat(currentTime.toFixed(2)),
-      text: lines[i],
+      time: parseFloat(accumulatedTime.toFixed(2)),
+      text: parsedLines[i].text,
     });
 
-    const proportionalSpan = (weights[i] / totalWeight) * singingWindow;
-    // Bound each line's duration between 2.2s and 7.8s
-    const boundedSpan = Math.max(2.2, Math.min(7.8, proportionalSpan));
-    currentTime += boundedSpan;
+    const lineDuration = (w.baseWeight / totalWeight) * availableVocalSpan;
+    accumulatedTime += lineDuration;
   }
 
   return result;

@@ -5172,56 +5172,137 @@ function autoSyncPlainLyricsServer(plainLyrics: string, durationSec?: number): A
   if (!plainLyrics || typeof plainLyrics !== "string") return [];
 
   const rawLines = plainLyrics.split("\n").map((l) => l.trim());
-  const lines = rawLines.filter((l) => {
-    if (/^\[(verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|instrumental)[^\]]*\]$/i.test(l)) {
-      return false;
+
+  // 1. Structural Section Analysis
+  const parsedLines: Array<{ text: string; section: string; rawIndex: number }> = [];
+  let currentSection = "verse";
+  let hasExplicitIntro = false;
+  let hasExplicitSolo = false;
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const raw = rawLines[i];
+    if (!raw) continue;
+
+    const sectionMatch =
+      raw.match(/^\[(verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|guitar\s+solo|instrumental|interlude)[^\]]*\]$/i) ||
+      raw.match(/^\((verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|guitar\s+solo|instrumental|interlude)[^\)]*\)$/i);
+
+    if (sectionMatch) {
+      const tag = sectionMatch[1].toLowerCase();
+      currentSection = tag;
+      if (tag.includes("intro")) hasExplicitIntro = true;
+      if (tag.includes("solo") || tag.includes("instrumental") || tag.includes("interlude")) hasExplicitSolo = true;
+      continue;
     }
-    return l.length > 0;
-  });
 
-  if (lines.length === 0) return [];
-
-  const totalDuration = durationSec && durationSec > 25 ? durationSec : Math.max(120, lines.length * 4.8);
-  const introTime = Math.max(6.5, Math.min(18.0, Math.round(totalDuration * 0.08 * 10) / 10));
-  const outroBuffer = Math.max(8.0, Math.min(22.0, Math.round(totalDuration * 0.06 * 10) / 10));
-  const singingWindow = Math.max(30.0, totalDuration - introTime - outroBuffer);
-
-  const weights = lines.map((line) => {
-    const chars = line.replace(/\s+/g, "").length;
-    const words = line.split(/\s+/).length;
-    return Math.max(1.0, chars * 0.45 + words * 1.6);
-  });
-  const totalWeight = weights.reduce((a, b) => a + b, 0);
-
-  const isAfterGap: boolean[] = [];
-  let prevWasEmpty = false;
-  let validIdx = 0;
-  for (const raw of rawLines) {
-    if (!raw || /^\[(verse|chorus|bridge|intro|outro)[^\]]*\]$/i.test(raw)) {
-      prevWasEmpty = true;
-    } else {
-      isAfterGap[validIdx] = validIdx > 0 && prevWasEmpty;
-      prevWasEmpty = false;
-      validIdx++;
-    }
+    parsedLines.push({
+      text: raw,
+      section: currentSection,
+      rawIndex: i,
+    });
   }
 
-  const result: Array<{ time: number; text: string }> = [];
-  let currentTime = introTime;
+  if (parsedLines.length === 0) return [];
 
-  for (let i = 0; i < lines.length; i++) {
-    if (isAfterGap[i]) {
-      currentTime += 2.0;
+  // Determine realistic track duration
+  const totalDuration = durationSec && durationSec > 20 ? durationSec : Math.max(120, parsedLines.length * 4.8);
+
+  // 2. Musically Grounded Intro Timing
+  // Standard pop/dance/rock songs feature a 4-bar or 8-bar musical intro (~9.0s - 14.5s)
+  let introTime: number;
+  if (hasExplicitIntro) {
+    introTime = Math.max(10.0, Math.min(22.0, Math.round(totalDuration * 0.085 * 10) / 10));
+  } else if (totalDuration < 150) {
+    introTime = Math.max(7.5, Math.min(11.0, Math.round(totalDuration * 0.06 * 10) / 10));
+  } else if (totalDuration > 300) {
+    introTime = Math.max(12.0, Math.min(20.0, Math.round(totalDuration * 0.055 * 10) / 10));
+  } else {
+    // Default 8-bar intro cadence for standard 3-4 min tracks (~9.5s - 14.5s)
+    introTime = Math.max(9.0, Math.min(14.5, Math.round(totalDuration * 0.048 * 10) / 10));
+  }
+
+  // 3. Outro Buffer Calculation (5-7% of track)
+  const outroBuffer = Math.max(7.0, Math.min(18.0, Math.round(totalDuration * 0.055 * 10) / 10));
+
+  // 4. Instrumental Solo / Interlude Allocation
+  let soloDuration = 0;
+  if (hasExplicitSolo) {
+    soloDuration = Math.max(10.0, Math.min(22.0, Math.round(totalDuration * 0.07 * 10) / 10));
+  }
+
+  const availableVocalSpan = Math.max(20.0, totalDuration - introTime - outroBuffer - soloDuration);
+
+  // 5. Syllable & Linguistic Weighting per Line
+  function estimateSyllables(text: string): number {
+    const cjkMatches = text.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/g);
+    const cjkCount = cjkMatches ? cjkMatches.length : 0;
+
+    const latinClean = text.toLowerCase().replace(/[^a-z\s]/g, "");
+    const words = latinClean.split(/\s+/).filter(Boolean);
+    let latinSyllables = 0;
+    for (const w of words) {
+      const matches = w.match(/[aeiouy]+/g);
+      latinSyllables += matches ? Math.max(1, matches.length) : 1;
+    }
+
+    return Math.max(1, cjkCount + latinSyllables);
+  }
+
+  const lineWeights: Array<{ baseWeight: number; gapWeight: number }> = [];
+  for (let i = 0; i < parsedLines.length; i++) {
+    const item = parsedLines[i];
+    const text = item.text;
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const syllables = estimateSyllables(text);
+    const chars = text.replace(/\s+/g, "").length;
+
+    // Musically balanced weight: each word + syllable has breathing & vocal sustain time
+    let weight = syllables * 0.55 + words * 0.75 + chars * 0.05;
+
+    if (item.section.includes("chorus") || item.section.includes("hook")) {
+      weight *= 1.2;
+    }
+
+    if (/[,;:]$/.test(text)) weight += 0.4;
+    if (/[.?!]$/.test(text)) weight += 0.8;
+    if (/\.{3}$/.test(text)) weight += 1.2;
+
+    const isGap = i > 0 && parsedLines[i].rawIndex - parsedLines[i - 1].rawIndex > 1;
+    const isNewSection = i > 0 && parsedLines[i].section !== parsedLines[i - 1].section;
+    let gapWeight = 0;
+    if (isNewSection) {
+      gapWeight = 2.0;
+    } else if (isGap) {
+      gapWeight = 1.4;
+    }
+
+    lineWeights.push({
+      baseWeight: Math.max(1.2, weight),
+      gapWeight,
+    });
+  }
+
+  const totalWeight = lineWeights.reduce((sum, w) => sum + w.baseWeight + w.gapWeight, 0);
+
+  // 6. Zero-Drift Proportional Distribution
+  const result: Array<{ time: number; text: string }> = [];
+  let accumulatedTime = introTime;
+
+  for (let i = 0; i < parsedLines.length; i++) {
+    const w = lineWeights[i];
+
+    if (w.gapWeight > 0) {
+      const gapSec = (w.gapWeight / totalWeight) * availableVocalSpan;
+      accumulatedTime += Math.min(3.5, Math.max(1.2, gapSec));
     }
 
     result.push({
-      time: parseFloat(currentTime.toFixed(2)),
-      text: lines[i],
+      time: parseFloat(accumulatedTime.toFixed(2)),
+      text: parsedLines[i].text,
     });
 
-    const proportionalSpan = (weights[i] / totalWeight) * singingWindow;
-    const boundedSpan = Math.max(2.2, Math.min(7.8, proportionalSpan));
-    currentTime += boundedSpan;
+    const lineDuration = (w.baseWeight / totalWeight) * availableVocalSpan;
+    accumulatedTime += lineDuration;
   }
 
   return result;
@@ -5659,33 +5740,35 @@ function scoreLyricsCandidateServer(
   const qTitle = normalizeCompareServer(query.title);
   const qArtist = normalizeCompareServer(query.artist);
 
-  if (!candTitle) return { score: 0, isSynced: false };
+  if (!candTitle || !qTitle) return { score: 0, isSynced: false };
 
   let score = 0;
 
-  // Title Match (0 to 50 pts)
+  // 1. Title Matching (0 to 60 pts)
   if (candTitle === qTitle) {
+    score += 60;
+  } else if (candTitle.startsWith(qTitle) || qTitle.startsWith(candTitle)) {
     score += 50;
   } else if (candTitle.includes(qTitle) || qTitle.includes(candTitle)) {
-    score += 40;
+    score += 45;
   } else {
+    // Non-contiguous / anagram check: only allow if artist matches
     const qTokens = qTitle.split(" ").filter((t) => t.length > 1);
     const matchedTokens = qTokens.filter((t) => candTitle.includes(t));
-    if (qTokens.length > 0 && matchedTokens.length === qTokens.length) {
-      score += 35;
-    } else if (qTokens.length > 0 && matchedTokens.length / qTokens.length >= 0.5) {
-      score += (matchedTokens.length / qTokens.length) * 30;
+    const artistMatches = qArtist && (candArtist.includes(qArtist) || qArtist.includes(candArtist));
+    if (qTokens.length > 0 && matchedTokens.length === qTokens.length && artistMatches) {
+      score += 20;
     } else {
-      return { score: 0, isSynced: false }; // No title match -> Reject!
+      return { score: 0, isSynced: false }; // Scrambled words without artist match -> Reject!
     }
   }
 
-  // Artist Match (0 to 30 pts)
+  // 2. Artist Matching (0 to 40 pts)
   if (candArtist && qArtist) {
     if (candArtist === qArtist) {
-      score += 30;
+      score += 40;
     } else if (candArtist.includes(qArtist) || qArtist.includes(candArtist)) {
-      score += 25;
+      score += 30;
     } else {
       const artTokens = qArtist.split(" ").filter((t) => t.length > 1);
       const matchedArtTokens = artTokens.filter((t) => candArtist.includes(t));
@@ -5695,7 +5778,7 @@ function scoreLyricsCandidateServer(
     }
   }
 
-  // Synced Lyrics Bonus (20 pts)
+  // 3. Synced Lyrics Bonus (10 pts)
   const hasSynced = Boolean(
     candidate.syncedLyrics &&
       candidate.syncedLyrics.trim().length > 0 &&
@@ -5703,14 +5786,14 @@ function scoreLyricsCandidateServer(
   );
 
   if (hasSynced) {
-    score += 20;
+    score += 10;
   } else if (candidate.plainLyrics && candidate.plainLyrics.trim().length > 0) {
-    score += 5;
+    score += 3;
   } else {
     return { score: 0, isSynced: false };
   }
 
-  // Duration Proximity Bonus (up to 15 pts)
+  // 4. Duration Proximity Bonus (up to 15 pts)
   if (query.durationSec && typeof candidate.duration === "number" && candidate.duration > 0) {
     const delta = Math.abs(candidate.duration - query.durationSec);
     if (delta <= 4) {

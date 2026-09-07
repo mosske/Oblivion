@@ -30,7 +30,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
   isHidden = false,
   designConfig = FULL_APP_DESIGNS["designer"],
   className = "",
-  showCustomBadge = true,
+  showCustomBadge = false,
 }) => {
   const playlistId = playlist.id || (playlist as any).playlistId || "";
   const cleanId = playlistId ? playlistId.replace(/^VL/, "") : "";
@@ -159,7 +159,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
           </div>
         )}
 
-        {/* Custom Artwork Badge */}
+        {/* Custom Artwork Badge - Removed from Library/Cards per user request */}
         {showCustomBadge && isCustom && !hasImageError && (
           <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-[9px] font-mono text-white flex items-center gap-1 shadow-lg z-10 pointer-events-none">
             <Sparkles className="w-2.5 h-2.5 text-[var(--accent-color,var(--primary))]" />
@@ -167,19 +167,24 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
           </div>
         )}
 
-        {/* Play Overlay Button */}
+        {/* Play Overlay Button (Backdrop allows clicks to open playlist; inner button triggers immediate playback) */}
         <div
-          onClick={(e) => {
-            if (onPlay) {
-              e.stopPropagation();
-              onPlay(playlist, e);
-            }
-          }}
-          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none"
         >
-          <div className={`w-11 h-11 rounded-full ${designConfig.accentBg} text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform`}>
-            <Play className="w-5 h-5 fill-white ml-0.5" />
-          </div>
+          {onPlay && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlay(playlist, e);
+              }}
+              className={`pointer-events-auto w-11 h-11 rounded-full ${designConfig.accentBg} text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 hover:scale-115 active:scale-95 transition-transform cursor-pointer`}
+              title={`Play ${displayTitle}`}
+              aria-label={`Play ${displayTitle}`}
+            >
+              <Play className="w-5 h-5 fill-white ml-0.5" />
+            </button>
+          )}
         </div>
 
         {/* Hide / Unhide Quick Action Button */}
