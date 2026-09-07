@@ -2,8 +2,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Playlist, Track } from "../types";
 import { Play, Sparkles, Eye, EyeOff, Music } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
-import { getPlaylistArtwork, getCustomArtworkFromStorage } from "../services/playlistService";
+import {
+  getPlaylistArtwork,
+  resolvePlaylistCover,
+  getCustomArtworkFromStorage,
+} from "../services/playlistService";
 import { isAuthenticCustomArtworkUrl, isVideoThumbnailUrl } from "../utils/customCoversStorage";
+
+export { resolvePlaylistCover };
 
 interface PlaylistCardProps {
   playlist: Playlist;
@@ -30,7 +36,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
   const cleanId = playlistId ? playlistId.replace(/^VL/, "") : "";
 
   // 1. Initial Synchronous Artwork Resolution
-  const initialArt = useMemo(() => getPlaylistArtwork(playlist), [playlist]);
+  const initialArt = useMemo(() => resolvePlaylistCover(playlist), [playlist]);
   const [currentArtwork, setCurrentArtwork] = useState<string | null>(initialArt);
   const [hasImageError, setHasImageError] = useState<boolean>(false);
   const [hasAttemptedTrackFallback, setHasAttemptedTrackFallback] = useState<boolean>(false);
@@ -39,7 +45,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
   useEffect(() => {
     setHasImageError(false);
     setHasAttemptedTrackFallback(false);
-    const resolved = getPlaylistArtwork(playlist);
+    const resolved = resolvePlaylistCover(playlist);
     setCurrentArtwork(resolved);
 
     const handleStorageChange = (e: any) => {
@@ -51,8 +57,8 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
           detail.playlistId === cleanId ||
           detail.sync)
       ) {
-        const updated = getPlaylistArtwork(playlist);
-        setCurrentArtwork(updated);
+        const updated = resolvePlaylistCover(playlist);
+        setCurrentArtwork((prev) => (prev !== updated ? updated : prev));
         setHasImageError(false);
       }
     };
@@ -75,23 +81,41 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
 
   /**
    * 2. Image Error Handling:
-   * If a custom URL or official thumbnail fails to load (e.g., expired blob or 404),
-   * dynamically fall back to playlist.tracks[0].thumbnail / playlist.tracks[0].coverUrl
-   * before reverting to the placeholder badge.
+   * If the custom image fails to load or returns a 404/expired Blob URL,
+   * automatically fall back to playlist.tracks[0].thumbnail (or first available track thumbnail)
+   * instead of immediately dropping to the initial badge placeholder.
    */
   const handleImageError = () => {
-    // Attempt First Track Cover Fallback if not attempted yet
+    // 1. Fallback to First Track Cover Art if not attempted yet
     if (!hasAttemptedTrackFallback && playlist.tracks && playlist.tracks.length > 0) {
-      const firstTrack = playlist.tracks[0];
-      const trackThumb = firstTrack?.thumbnail || firstTrack?.coverUrl;
-      if (trackThumb && trackThumb !== currentArtwork) {
-        setHasAttemptedTrackFallback(true);
-        setCurrentArtwork(trackThumb);
-        return;
+      setHasAttemptedTrackFallback(true);
+      for (const track of playlist.tracks) {
+        const trackThumb = track.thumbnail || track.coverUrl;
+        if (trackThumb && trackThumb !== currentArtwork) {
+          setCurrentArtwork(trackThumb);
+          return;
+        }
       }
     }
 
-    // Otherwise mark as error to display placeholder badge
+    // 2. Fallback to YouTube Official Thumbnails if custom image failed
+    const officialThumbs = playlist.snippet?.thumbnails || playlist.thumbnails;
+    const officialUrl =
+      officialThumbs?.high?.url ||
+      officialThumbs?.medium?.url ||
+      officialThumbs?.default?.url;
+    if (officialUrl && officialUrl !== currentArtwork) {
+      setCurrentArtwork(officialUrl);
+      return;
+    }
+
+    // 3. Fallback to general coverUrl if not equal to current failed artwork
+    if (playlist.coverUrl && playlist.coverUrl !== currentArtwork) {
+      setCurrentArtwork(playlist.coverUrl);
+      return;
+    }
+
+    // 4. Finally drop to initial badge placeholder only when all image fallbacks are exhausted
     setHasImageError(true);
   };
 

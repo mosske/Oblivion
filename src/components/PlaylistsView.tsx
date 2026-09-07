@@ -3,9 +3,13 @@ import { Playlist, User, UserSettings } from "../types";
 import { Plus, Search, Filter, Sparkles, ListMusic, Eye, EyeOff, Shuffle } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCard } from "./PlaylistCard";
-import { getPlaylistArtwork, getCustomArtworkFromStorage } from "../services/playlistService";
+import {
+  getPlaylistArtwork,
+  resolvePlaylistCover,
+  getCustomArtworkFromStorage,
+} from "../services/playlistService";
 
-export { PlaylistCard, getPlaylistArtwork, getCustomArtworkFromStorage };
+export { PlaylistCard, getPlaylistArtwork, resolvePlaylistCover, getCustomArtworkFromStorage };
 
 interface PlaylistsViewProps {
   playlists: Playlist[];

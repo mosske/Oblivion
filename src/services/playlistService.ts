@@ -19,15 +19,14 @@ export function getCustomArtworkFromStorage(playlistId: string | undefined | nul
 }
 
 /**
- * 2. Strict Playlist Artwork Resolution Engine:
- * 
- * Order of Resolution:
- * 1. Local / Server Persistent Override (IndexedDB / LocalStorage / customArtwork property)
- * 2. YouTube Official Thumbnail (snippet.thumbnails.high -> medium -> default -> maxres -> standard -> coverUrl)
- * 3. First Track Cover Fallback (playlist.tracks[0].thumbnail / playlist.tracks[0].coverUrl)
- * 4. Default Placeholder (null)
+ * 2. Multi-Stage Cover Fallback Engine:
+ * Refactored so it NEVER shows the fallback letter badge if track thumbnails exist:
+ * 1. User-assigned custom artwork
+ * 2. YouTube Official Thumbnail (High -> Medium -> Default -> Maxres -> Standard)
+ * 3. Fallback: Mosaic or First Track Cover Art (never shows fallback letter badge if track thumbnails exist)
+ * 4. Default Initials Badge (Only if 1-3 are missing)
  */
-export function getPlaylistArtwork(playlist: Playlist | {
+export const resolvePlaylistCover = (playlist: Playlist | {
   id?: string;
   playlistId?: string;
   title?: string;
@@ -44,53 +43,42 @@ export function getPlaylistArtwork(playlist: Playlist | {
   };
   tracks?: Track[];
   tracksCount?: number;
-} | null | undefined): string | null {
+} | null | undefined): string | null => {
   if (!playlist) return null;
 
   const id = playlist.id || (playlist as any).playlistId || "";
 
-  // 1. Local Persistent Override (IndexedDB / LocalStorage / In-memory custom mappings)
+  // 1. User-assigned custom artwork
+  if (playlist.customArtwork && typeof playlist.customArtwork === "string" && playlist.customArtwork.trim().length > 0) {
+    return playlist.customArtwork;
+  }
+  if (playlist.customCoverUrl && typeof playlist.customCoverUrl === "string" && playlist.customCoverUrl.trim().length > 0) {
+    return playlist.customCoverUrl;
+  }
   if (id) {
     const customArt = getCustomArtworkFromStorage(id);
     if (customArt && isAuthenticCustomArtworkUrl(customArt)) {
       return customArt;
     }
   }
-
-  // Check explicit custom artwork fields on the playlist object
-  const customProp = playlist.customArtwork || playlist.customCoverUrl;
-  if (customProp && isAuthenticCustomArtworkUrl(customProp)) {
-    if (id) {
-      setPlaylistCustomArtwork(id, customProp);
-    }
-    return customProp;
-  }
-
   if (playlist.isCustomCover && playlist.coverUrl && !isVideoThumbnailUrl(playlist.coverUrl)) {
-    if (id) {
-      setPlaylistCustomArtwork(id, playlist.coverUrl);
-    }
     return playlist.coverUrl;
   }
 
-  // 2. YouTube Official Thumbnail Hierarchy
-  // A. Check snippet.thumbnails (standard YouTube Data API format)
-  const snippetThumbs = playlist.snippet?.thumbnails;
-  if (snippetThumbs?.high?.url) return snippetThumbs.high.url;
-  if (snippetThumbs?.medium?.url) return snippetThumbs.medium.url;
-  if (snippetThumbs?.default?.url) return snippetThumbs.default.url;
-  if (snippetThumbs?.maxres?.url) return snippetThumbs.maxres.url;
-  if (snippetThumbs?.standard?.url) return snippetThumbs.standard.url;
+  // 2. YouTube Official Thumbnail (High -> Medium -> Default)
+  if (playlist.snippet?.thumbnails?.high?.url) return playlist.snippet.thumbnails.high.url;
+  if (playlist.snippet?.thumbnails?.medium?.url) return playlist.snippet.thumbnails.medium.url;
+  if (playlist.snippet?.thumbnails?.default?.url) return playlist.snippet.thumbnails.default.url;
+  if (playlist.snippet?.thumbnails?.maxres?.url) return playlist.snippet.thumbnails.maxres.url;
+  if (playlist.snippet?.thumbnails?.standard?.url) return playlist.snippet.thumbnails.standard.url;
 
-  // B. Check playlist.thumbnails object
-  const directThumbs = playlist.thumbnails;
-  if (directThumbs?.high?.url) return directThumbs.high.url;
-  if (directThumbs?.medium?.url) return directThumbs.medium.url;
-  if (directThumbs?.default?.url) return directThumbs.default.url;
-  if (directThumbs?.maxres?.url) return directThumbs.maxres.url;
-  if (directThumbs?.standard?.url) return directThumbs.standard.url;
+  // Direct thumbnails property on playlist
+  if (playlist.thumbnails?.high?.url) return playlist.thumbnails.high.url;
+  if (playlist.thumbnails?.medium?.url) return playlist.thumbnails.medium.url;
+  if (playlist.thumbnails?.default?.url) return playlist.thumbnails.default.url;
+  if (playlist.thumbnails?.maxres?.url) return playlist.thumbnails.maxres.url;
+  if (playlist.thumbnails?.standard?.url) return playlist.thumbnails.standard.url;
 
-  // C. Direct thumbnail / coverUrl property if present and not a generic video thumbnail
   if (playlist.thumbnail && typeof playlist.thumbnail === "string" && playlist.thumbnail.trim().length > 0) {
     return playlist.thumbnail;
   }
@@ -99,13 +87,22 @@ export function getPlaylistArtwork(playlist: Playlist | {
     return playlist.coverUrl;
   }
 
-  // 3. First Track Cover Fallback
+  // 3. Fallback: Mosaic or First Track Cover Art (never show letter badge if track thumbnails exist)
   if (playlist.tracks && playlist.tracks.length > 0) {
+    // Check first track first
     const firstTrack = playlist.tracks[0];
     if (firstTrack) {
       const trackThumb = firstTrack.thumbnail || firstTrack.coverUrl;
       if (trackThumb && typeof trackThumb === "string" && trackThumb.trim().length > 0) {
         return trackThumb;
+      }
+    }
+    // If first track lacks thumbnail, check subsequent tracks
+    for (let i = 1; i < playlist.tracks.length; i++) {
+      const t = playlist.tracks[i];
+      const thumb = t?.thumbnail || t?.coverUrl;
+      if (thumb && typeof thumb === "string" && thumb.trim().length > 0) {
+        return thumb;
       }
     }
   }
@@ -115,9 +112,11 @@ export function getPlaylistArtwork(playlist: Playlist | {
     return playlist.coverUrl;
   }
 
-  // 4. Default Placeholder
+  // 4. Default Initials Badge (Only if 1-3 are missing)
   return null;
-}
+};
+
+export const getPlaylistArtwork = resolvePlaylistCover;
 
 /**
  * 3. Server Storage Sync & Resilience:

@@ -161,8 +161,15 @@ export function setPlaylistCustomArtwork(playlistId: string, artworkUrl: string 
   try {
     // 1. Update standalone map store
     const store = getCustomArtworkStore();
-    if (artworkUrl && typeof artworkUrl === "string" && artworkUrl.trim().length > 0) {
-      const trimmed = artworkUrl.trim();
+    const existingVal = store[playlistId] || store[cleanId] || null;
+    const trimmed = artworkUrl && typeof artworkUrl === "string" && artworkUrl.trim().length > 0 ? artworkUrl.trim() : null;
+
+    // Guard: If value is identical, do not re-write or re-dispatch to prevent loops
+    if (existingVal === trimmed) {
+      return;
+    }
+
+    if (trimmed) {
       store[playlistId] = trimmed;
       store[cleanId] = trimmed;
       localStorage.setItem(`custom_art_${playlistId}`, trimmed);
@@ -179,9 +186,9 @@ export function setPlaylistCustomArtwork(playlistId: string, artworkUrl: string 
     try {
       const legacyRaw = localStorage.getItem("CUSTOM_PLAYLIST_COVERS");
       const legacyStore = legacyRaw ? JSON.parse(legacyRaw) : {};
-      if (artworkUrl && typeof artworkUrl === "string" && artworkUrl.trim().length > 0) {
-        legacyStore[playlistId] = artworkUrl.trim();
-        legacyStore[cleanId] = artworkUrl.trim();
+      if (trimmed) {
+        legacyStore[playlistId] = trimmed;
+        legacyStore[cleanId] = trimmed;
       } else {
         delete legacyStore[playlistId];
         delete legacyStore[cleanId];
@@ -192,7 +199,7 @@ export function setPlaylistCustomArtwork(playlistId: string, artworkUrl: string 
     // Dispatch custom storage event for instant UI component reactivity across all views
     window.dispatchEvent(
       new CustomEvent("playlist_custom_artwork_changed", {
-        detail: { playlistId, cleanId, artworkUrl },
+        detail: { playlistId, cleanId, artworkUrl: trimmed },
       })
     );
   } catch (err) {

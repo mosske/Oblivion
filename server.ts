@@ -168,23 +168,42 @@ function writeStoredPlaylists(pls: any[]) {
   } catch {}
 }
 
-function readStoredCustomCovers(): Record<string, string> {
-  const result: Record<string, string> = {};
+// Persistent in-memory cache for custom playlist artwork
+const inMemoryCustomCovers: Record<string, string> = {};
+
+function readStoredCustomCovers(req?: any): Record<string, string> {
+  const result: Record<string, string> = { ...inMemoryCustomCovers };
+
+  // Read from user session if available (crucial for stateless environments like Vercel)
+  if (req?.session && (req.session as any).customArtwork && typeof (req.session as any).customArtwork === "object") {
+    Object.assign(result, (req.session as any).customArtwork);
+  }
+
   try {
     if (fs.existsSync(CUSTOM_COVERS_FILE)) {
       const data = fs.readFileSync(CUSTOM_COVERS_FILE, "utf-8");
       Object.assign(result, JSON.parse(data));
     }
   } catch {}
+
+  // Fallback to /tmp in case persistent directory was ephemeral or read-only
+  try {
+    const tmpCovers = "/tmp/custom_covers.json";
+    if (fs.existsSync(tmpCovers)) {
+      const data = fs.readFileSync(tmpCovers, "utf-8");
+      Object.assign(result, JSON.parse(data));
+    }
+  } catch {}
+
   try {
     if (fs.existsSync(PLAYLISTS_FILE)) {
       const pData = fs.readFileSync(PLAYLISTS_FILE, "utf-8");
       const pls = JSON.parse(pData);
       if (Array.isArray(pls)) {
         for (const pl of pls) {
-          if (pl && pl.id && (pl.isCustomCover || pl.customCoverUrl) && (pl.customCoverUrl || pl.coverUrl)) {
+          if (pl && pl.id && (pl.isCustomCover || pl.customCoverUrl || pl.customArtwork)) {
             const cleanId = pl.id.replace(/^VL/, "");
-            const customUrl = pl.customCoverUrl || pl.coverUrl;
+            const customUrl = pl.customArtwork || pl.customCoverUrl || pl.coverUrl;
             if (customUrl && typeof customUrl === "string" && !customUrl.includes("/vi/")) {
               if (!result[cleanId]) result[cleanId] = customUrl;
               if (!result[pl.id]) result[pl.id] = customUrl;
@@ -194,24 +213,68 @@ function readStoredCustomCovers(): Record<string, string> {
       }
     }
   } catch {}
+
+  // Cache back to in-memory store
+  Object.assign(inMemoryCustomCovers, result);
   return result;
 }
 
-function writeStoredCustomCovers(map: Record<string, string>) {
+function writeStoredCustomCovers(map: Record<string, string>, req?: any) {
+  Object.assign(inMemoryCustomCovers, map);
+
+  // Store in user session for stateless persistence
+  if (req?.session) {
+    (req.session as any).customArtwork = {
+      ...((req.session as any).customArtwork || {}),
+      ...map,
+    };
+  }
+
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(CUSTOM_COVERS_FILE, JSON.stringify(map, null, 2), "utf-8");
-  } catch {}
+  } catch {
+    try {
+      fs.writeFileSync("/tmp/custom_covers.json", JSON.stringify(map, null, 2), "utf-8");
+    } catch {}
+  }
 }
 
-function writeStoredCustomCover(playlistId: string, coverUrl: string) {
+function writeStoredCustomCover(playlistId: string, coverUrl: string, req?: any) {
   try {
     if (!playlistId || !coverUrl) return;
     const cleanId = playlistId.replace(/^VL/, "");
-    const map = readStoredCustomCovers();
-    map[cleanId] = coverUrl;
-    map[playlistId] = coverUrl;
-    writeStoredCustomCovers(map);
+
+    // Cloud / Base64 persistence: ensure custom uploaded cover images are stored as Base64 strings
+    // or remote hosted URLs, NOT as local filesystem paths (e.g. /public/uploads/)
+    let safeArtwork = coverUrl;
+    if (typeof safeArtwork === "string" && (safeArtwork.startsWith("/public/uploads/") || safeArtwork.startsWith("/uploads/"))) {
+      try {
+        const fullPath = path.join(process.cwd(), safeArtwork.replace(/^\//, ""));
+        if (fs.existsSync(fullPath)) {
+          const buf = fs.readFileSync(fullPath);
+          const ext = path.extname(fullPath).toLowerCase();
+          const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+          safeArtwork = `data:${mime};base64,${buf.toString("base64")}`;
+        }
+      } catch {}
+    }
+
+    inMemoryCustomCovers[cleanId] = safeArtwork;
+    inMemoryCustomCovers[playlistId] = safeArtwork;
+
+    if (req?.session) {
+      if (!(req.session as any).customArtwork) {
+        (req.session as any).customArtwork = {};
+      }
+      (req.session as any).customArtwork[cleanId] = safeArtwork;
+      (req.session as any).customArtwork[playlistId] = safeArtwork;
+    }
+
+    const map = readStoredCustomCovers(req);
+    map[cleanId] = safeArtwork;
+    map[playlistId] = safeArtwork;
+    writeStoredCustomCovers(map, req);
   } catch {}
 }
 
@@ -2541,17 +2604,18 @@ app.get(["/api/playlists", "/api/youtube/playlists"], async (req, res) => {
     const deduped = deduplicateById(combined);
     
     // Automatically stitch server-persisted custom artwork mappings into the returned playlist objects
-    const storedCustomCovers = readStoredCustomCovers();
+    const storedCustomCovers = readStoredCustomCovers(req);
     const finalized = deduped.map((pl: any) => {
       if (!pl || !pl.id) return pl;
       const cleanPlId = pl.id.replace(/^VL/, "");
-      const customImg = storedCustomCovers[cleanPlId] || storedCustomCovers[pl.id] || pl.customCoverUrl || pl.customArtwork;
+      const customImg = storedCustomCovers[cleanPlId] || storedCustomCovers[pl.id] || pl.customArtwork || pl.customCoverUrl;
       if (customImg && typeof customImg === "string" && customImg.trim().length > 5) {
         return {
           ...pl,
+          thumbnail: customImg,
+          customArtwork: customImg,
           coverUrl: customImg,
           customCoverUrl: customImg,
-          customArtwork: customImg,
           isCustomCover: true,
         };
       }
@@ -3447,8 +3511,8 @@ app.post("/api/youtube/playlists/:id/custom-cover", async (req, res) => {
 
   let syncedToYouTube = false;
   if (targetCover && isCustom !== false) {
-    writeStoredCustomCover(cleanId, targetCover);
-    writeStoredCustomCover(id, targetCover);
+    writeStoredCustomCover(cleanId, targetCover, req);
+    writeStoredCustomCover(id, targetCover, req);
     setInCache(`yt_pl_custom_img:${cleanId}`, targetCover);
     setInCache(`yt_pl_custom_img:${id}`, targetCover);
 
@@ -3475,7 +3539,7 @@ app.post("/api/youtube/playlists/:id/custom-cover", async (req, res) => {
 
 // Dedicated endpoints for custom playlist artwork persistence
 app.get(["/api/playlists/custom-artwork", "/api/youtube/playlists/custom-covers", "/api/youtube/playlists/custom-artwork"], (req, res) => {
-  const covers = readStoredCustomCovers();
+  const covers = readStoredCustomCovers(req);
   res.json({ covers, customArtwork: covers });
 });
 
@@ -3487,8 +3551,8 @@ app.post(["/api/playlists/custom-artwork", "/api/youtube/playlists/custom-artwor
 
     if (targetId && targetCover) {
       const cleanId = String(targetId).replace(/^VL/, "");
-      writeStoredCustomCover(cleanId, targetCover);
-      writeStoredCustomCover(String(targetId), targetCover);
+      writeStoredCustomCover(cleanId, targetCover, req);
+      writeStoredCustomCover(String(targetId), targetCover, req);
       setInCache(`yt_pl_custom_img:${cleanId}`, targetCover);
       setInCache(`yt_pl_custom_img:${targetId}`, targetCover);
       delFromCache("yt_playlists_auth:*");
@@ -3501,8 +3565,8 @@ app.post(["/api/playlists/custom-artwork", "/api/youtube/playlists/custom-artwor
       for (const [k, v] of Object.entries(covers)) {
         if (k && typeof v === "string" && v.length > 5) {
           const cleanK = k.replace(/^VL/, "");
-          writeStoredCustomCover(cleanK, v);
-          writeStoredCustomCover(k, v);
+          writeStoredCustomCover(cleanK, v, req);
+          writeStoredCustomCover(k, v, req);
         }
       }
       delFromCache("yt_playlists_auth:*");

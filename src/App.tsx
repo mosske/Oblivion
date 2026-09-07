@@ -1830,6 +1830,8 @@ export default function App() {
               ...p,
               coverUrl: newCoverUrl,
               customCoverUrl: isCustom ? newCoverUrl : undefined,
+              customArtwork: isCustom ? newCoverUrl : undefined,
+              thumbnail: isCustom ? newCoverUrl : p.thumbnail,
               isCustomCover: isCustom,
             }
           : p
@@ -1848,6 +1850,8 @@ export default function App() {
               ...prev,
               coverUrl: newCoverUrl,
               customCoverUrl: newCoverUrl,
+              customArtwork: isCustom ? newCoverUrl : undefined,
+              thumbnail: isCustom ? newCoverUrl : prev.thumbnail,
               isCustomCover: isCustom,
             }
           : null

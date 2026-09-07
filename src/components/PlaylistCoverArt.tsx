@@ -7,7 +7,7 @@ import {
   isAuthenticCustomArtworkUrl,
   isVideoThumbnailUrl,
 } from "../utils/customCoversStorage";
-import { getPlaylistArtwork } from "../services/playlistService";
+import { getPlaylistArtwork, resolvePlaylistCover } from "../services/playlistService";
 
 interface PlaylistCoverArtProps {
   playlist: Playlist | {
@@ -48,10 +48,8 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     const fromStore = getPlaylistCustomArtwork(playlistId);
     if (fromStore) return fromStore;
 
-    // Check if the playlist prop already has valid custom artwork and lock it in
     const candidate = playlist?.customArtwork || playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
     if (candidate && isAuthenticCustomArtworkUrl(candidate)) {
-      setPlaylistCustomArtwork(playlistId, candidate);
       return candidate;
     }
     return null;
@@ -68,7 +66,6 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     if (!resolved) {
       const candidate = playlist?.customArtwork || playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
       if (candidate && isAuthenticCustomArtworkUrl(candidate)) {
-        setPlaylistCustomArtwork(playlistId, candidate);
         resolved = candidate;
       }
     }
@@ -83,8 +80,8 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
           detail.playlistId === cleanId ||
           detail.sync)
       ) {
-        const updatedArt = getPlaylistCustomArtwork(playlistId);
-        setCustomArt(updatedArt);
+        const updatedArt = getPlaylistCustomArtwork(playlistId) || playlist?.customArtwork || playlist?.customCoverUrl || null;
+        setCustomArt((prev) => (prev !== updatedArt ? updatedArt : prev));
         setImageError(false);
         setFallbackCover(null);
       }
@@ -109,14 +106,17 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   let finalSource = fallbackCover || getPlaylistArtwork(playlist as Playlist);
 
   const handleImageError = () => {
-    // If current source failed and we haven't tried the track 0 thumbnail yet, try it!
-    const trackZero = playlist?.tracks?.[0];
-    const trackZeroCover = trackZero?.thumbnail || trackZero?.coverUrl;
-    if (trackZeroCover && trackZeroCover !== finalSource && !fallbackCover) {
-      setFallbackCover(trackZeroCover);
-    } else {
-      setImageError(true);
+    // If current source failed and we haven't tried the track thumbnails yet, try them!
+    if (!fallbackCover && playlist?.tracks && playlist.tracks.length > 0) {
+      for (const track of playlist.tracks) {
+        const trackThumb = track.thumbnail || track.coverUrl;
+        if (trackThumb && trackThumb !== finalSource) {
+          setFallbackCover(trackThumb);
+          return;
+        }
+      }
     }
+    setImageError(true);
   };
 
   if (finalSource && !imageError) {
