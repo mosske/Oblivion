@@ -2254,7 +2254,7 @@ app.get("/api/auth/google/url", (req, res) => {
 });
 
 // YouTube Music API Routes - Pulls authentic YouTube content and user playlists
-app.get("/api/youtube/playlists", async (req, res) => {
+app.get(["/api/playlists", "/api/youtube/playlists"], async (req, res) => {
   try {
     let accessToken = await getValidAccessToken(req);
     let ytPlaylists: any[] = [];
@@ -2539,15 +2539,34 @@ app.get("/api/youtube/playlists", async (req, res) => {
     }
 
     const deduped = deduplicateById(combined);
-    if (deduped.length > 0) {
-      setInCache(userCacheKey, deduped);
+    
+    // Automatically stitch server-persisted custom artwork mappings into the returned playlist objects
+    const storedCustomCovers = readStoredCustomCovers();
+    const finalized = deduped.map((pl: any) => {
+      if (!pl || !pl.id) return pl;
+      const cleanPlId = pl.id.replace(/^VL/, "");
+      const customImg = storedCustomCovers[cleanPlId] || storedCustomCovers[pl.id] || pl.customCoverUrl || pl.customArtwork;
+      if (customImg && typeof customImg === "string" && customImg.trim().length > 5) {
+        return {
+          ...pl,
+          coverUrl: customImg,
+          customCoverUrl: customImg,
+          customArtwork: customImg,
+          isCustomCover: true,
+        };
+      }
+      return pl;
+    });
+
+    if (finalized.length > 0) {
+      setInCache(userCacheKey, finalized);
       if (accessToken) {
-        writeStoredPlaylists(deduped);
+        writeStoredPlaylists(finalized);
       }
     }
 
-    console.log(`[YouTube Playlists] Returning ${deduped.length} authentic playlists (User: ${accessToken ? "Logged In" : "Anonymous"}).`);
-    res.json({ playlists: deduped, newAccessToken: accessToken || undefined });
+    console.log(`[YouTube Playlists] Returning ${finalized.length} authentic playlists with stitched custom covers (User: ${accessToken ? "Logged In" : "Anonymous"}).`);
+    res.json({ playlists: finalized, newAccessToken: accessToken || undefined });
   } catch (err: any) {
     console.error("Error in /api/youtube/playlists:", err);
     res.json({ playlists: [] });
@@ -3454,10 +3473,69 @@ app.post("/api/youtube/playlists/:id/custom-cover", async (req, res) => {
   res.json({ success: true, coverUrl: targetCover, syncedToYouTube });
 });
 
-// Dedicated endpoint to get all custom covers
-app.get("/api/youtube/playlists/custom-covers", (req, res) => {
+// Dedicated endpoints for custom playlist artwork persistence
+app.get(["/api/playlists/custom-artwork", "/api/youtube/playlists/custom-covers", "/api/youtube/playlists/custom-artwork"], (req, res) => {
   const covers = readStoredCustomCovers();
-  res.json({ covers });
+  res.json({ covers, customArtwork: covers });
+});
+
+app.post(["/api/playlists/custom-artwork", "/api/youtube/playlists/custom-artwork"], (req, res) => {
+  try {
+    const { playlistId, id, artworkUrl, coverUrl, customCoverUrl, covers } = req.body;
+    const targetId = playlistId || id;
+    const targetCover = artworkUrl || customCoverUrl || coverUrl;
+
+    if (targetId && targetCover) {
+      const cleanId = String(targetId).replace(/^VL/, "");
+      writeStoredCustomCover(cleanId, targetCover);
+      writeStoredCustomCover(String(targetId), targetCover);
+      setInCache(`yt_pl_custom_img:${cleanId}`, targetCover);
+      setInCache(`yt_pl_custom_img:${targetId}`, targetCover);
+      delFromCache("yt_playlists_auth:*");
+      delFromCache("yt_playlists_pub:*");
+      delFromCache("user_pls_*");
+      return res.json({ success: true, playlistId: cleanId, artworkUrl: targetCover });
+    }
+
+    if (covers && typeof covers === "object") {
+      for (const [k, v] of Object.entries(covers)) {
+        if (k && typeof v === "string" && v.length > 5) {
+          const cleanK = k.replace(/^VL/, "");
+          writeStoredCustomCover(cleanK, v);
+          writeStoredCustomCover(k, v);
+        }
+      }
+      delFromCache("yt_playlists_auth:*");
+      delFromCache("yt_playlists_pub:*");
+      delFromCache("user_pls_*");
+      return res.json({ success: true, count: Object.keys(covers).length });
+    }
+
+    res.status(400).json({ success: false, error: "Missing playlistId or artworkUrl" });
+  } catch (err: any) {
+    console.error("Error saving custom artwork:", err);
+    res.status(500).json({ success: false, error: err?.message || "Failed to save artwork" });
+  }
+});
+
+app.delete(["/api/playlists/custom-artwork/:id", "/api/youtube/playlists/custom-artwork/:id"], (req, res) => {
+  try {
+    const { id } = req.params;
+    const cleanId = id.replace(/^VL/, "");
+    const stored = readStoredCustomCovers();
+    delete stored[id];
+    delete stored[cleanId];
+    delete stored[`VL${cleanId}`];
+    writeStoredCustomCovers(stored);
+    delFromCache(`yt_pl_custom_img:${cleanId}`);
+    delFromCache(`yt_pl_custom_img:${id}`);
+    delFromCache("yt_playlists_auth:*");
+    delFromCache("yt_playlists_pub:*");
+    delFromCache("user_pls_*");
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to delete custom artwork" });
+  }
 });
 
 // Dedicated endpoint to clear and purge all server-side caches and stored artwork
@@ -4848,6 +4926,12 @@ function cleanTrackTitleServer(rawTitle: string, artistName?: string): string {
     title = title.replace(p, " ");
   }
 
+  // Strip bullet / pipe / slash metadata channel tags (e.g. "• TopPop", "• VEVO", "• Colors", "| Official", etc.)
+  title = title.replace(/\s*[•|~–—/\\:]\s*(?:TopPop|Vevo|Colors|BBC|Live|Sessions?|Official|Show|Studio|Acoustic|Remaster(?:ed)?|Album\s+Version|Extended|Video|Audio|4K|HD|HQ|MV|Visualizer|Pop\s+Bilik\s+Tidur).*$/i, "");
+
+  // Strip years in parentheses or brackets like (1976), [2021]
+  title = title.replace(/\s*[\(\[]\s*(?:19\d{2}|20\d{2})\s*[\)\]]/gi, " ");
+
   // Strip (feat. ...), [feat. ...], (ft. ...), [ft. ...]
   title = title.replace(/[\(\[]\s*(?:feat\.?|ft\.?|featuring|with)\s+[^()\[\]]+[\)\]]/gi, " ");
   title = title.replace(/\s+(?:feat\.?|ft\.?|featuring)\s+.+$/i, " ");
@@ -4975,6 +5059,124 @@ function sanitizeLyricsQueryServer(rawTitle: string, rawArtistOrUploader?: strin
     searchQuery: primarySearchQuery,
     secondaryQueries,
   };
+}
+
+function getTitleSearchVariantsServer(rawTitle: string, artistName?: string): string[] {
+  if (!rawTitle) return [];
+  const variants = new Set<string>();
+
+  function add(val?: string) {
+    if (!val) return;
+    const s = val.trim().replace(/^["'«“\(\[]+|["'»”\)\]]+$/g, "").trim();
+    if (s.length >= 2) {
+      variants.add(s);
+      const unaccented = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (unaccented && unaccented !== s && unaccented.length >= 2) {
+        variants.add(unaccented);
+      }
+    }
+  }
+
+  const baseClean = cleanTrackTitleServer(rawTitle, artistName);
+  add(baseClean);
+  add(rawTitle);
+
+  const beforeSep = rawTitle.split(/[•|~–—/\\:]/)[0].trim();
+  if (beforeSep) {
+    add(cleanTrackTitleServer(beforeSep, artistName));
+  }
+
+  const unbracketed = baseClean.replace(/[\(\[][^()\[\]]*[\)\]]/g, " ").replace(/\s{2,}/g, " ").trim();
+  if (unbracketed) {
+    add(unbracketed);
+  }
+
+  const words = unbracketed.split(/\s+/).filter(Boolean);
+  if (words.length === 2 && words[0].length >= 3 && words[1].length >= 3) {
+    add(`${words[1]} ${words[0]}`);
+  }
+
+  const withoutQuotes = baseClean.replace(/["'?!.,]/g, "").replace(/\s{2,}/g, " ").trim();
+  if (withoutQuotes) {
+    add(withoutQuotes);
+  }
+
+  return Array.from(variants);
+}
+
+function autoSyncPlainLyricsServer(plainLyrics: string, durationSec?: number): Array<{ time: number; text: string }> {
+  if (!plainLyrics || typeof plainLyrics !== "string") return [];
+
+  const rawLines = plainLyrics.split("\n").map((l) => l.trim());
+  const lines = rawLines.filter((l) => {
+    if (/^\[(verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|instrumental)[^\]]*\]$/i.test(l)) {
+      return false;
+    }
+    return l.length > 0;
+  });
+
+  if (lines.length === 0) return [];
+
+  const totalDuration = durationSec && durationSec > 25 ? durationSec : Math.max(120, lines.length * 4.8);
+  const introTime = Math.max(6.5, Math.min(18.0, Math.round(totalDuration * 0.08 * 10) / 10));
+  const outroBuffer = Math.max(8.0, Math.min(22.0, Math.round(totalDuration * 0.06 * 10) / 10));
+  const singingWindow = Math.max(30.0, totalDuration - introTime - outroBuffer);
+
+  const weights = lines.map((line) => {
+    const chars = line.replace(/\s+/g, "").length;
+    const words = line.split(/\s+/).length;
+    return Math.max(1.0, chars * 0.45 + words * 1.6);
+  });
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+  const isAfterGap: boolean[] = [];
+  let prevWasEmpty = false;
+  let validIdx = 0;
+  for (const raw of rawLines) {
+    if (!raw || /^\[(verse|chorus|bridge|intro|outro)[^\]]*\]$/i.test(raw)) {
+      prevWasEmpty = true;
+    } else {
+      isAfterGap[validIdx] = validIdx > 0 && prevWasEmpty;
+      prevWasEmpty = false;
+      validIdx++;
+    }
+  }
+
+  const result: Array<{ time: number; text: string }> = [];
+  let currentTime = introTime;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (isAfterGap[i]) {
+      currentTime += 2.0;
+    }
+
+    result.push({
+      time: parseFloat(currentTime.toFixed(2)),
+      text: lines[i],
+    });
+
+    const proportionalSpan = (weights[i] / totalWeight) * singingWindow;
+    const boundedSpan = Math.max(2.2, Math.min(7.8, proportionalSpan));
+    currentTime += boundedSpan;
+  }
+
+  return result;
+}
+
+function formatLRCServer(lines: Array<{ time: number; text: string }>): string {
+  if (!lines || lines.length === 0) return "";
+  return lines
+    .map((line) => {
+      const t = Math.max(0, line.time);
+      const min = Math.floor(t / 60);
+      const sec = Math.floor(t % 60);
+      const ms = Math.floor((t % 1) * 100);
+      const mm = String(min).padStart(2, "0");
+      const ss = String(sec).padStart(2, "0");
+      const xx = String(ms).padStart(2, "0");
+      return `[${mm}:${ss}.${xx}] ${line.text}`;
+    })
+    .join("\n");
 }
 
 /**
@@ -5470,12 +5672,13 @@ app.get("/api/youtube/lyrics", async (req, res) => {
   const cleanArtist = cleanArtistNameServer(rawArtist);
   const primaryArtist = extractPrimaryArtistServer(rawArtist);
   const artistVariants = getArtistSearchVariantsServer(rawArtist);
-  const cleanTitle = cleanTrackTitleServer(rawTitle, cleanArtist || rawArtist);
+  const titleVariants = getTitleSearchVariantsServer(rawTitle, cleanArtist || rawArtist);
+  const cleanTitle = titleVariants[0] || cleanTrackTitleServer(rawTitle, cleanArtist || rawArtist);
   const queryInfo = { title: cleanTitle, artist: cleanArtist, durationSec };
 
-  console.log("[Lyrics] Multi-source fetching for:", { cleanTitle, cleanArtist, primaryArtist, artistVariants, durationSec });
+  console.log("[Lyrics] Multi-source fetching for:", { cleanTitle, titleVariants, cleanArtist, primaryArtist, artistVariants, durationSec });
 
-  const cacheKey = `lyrics_v8:${cleanTitle}:${cleanArtist}:${videoId}:${durationSec || 0}`;
+  const cacheKey = `lyrics_v9:${cleanTitle}:${cleanArtist}:${videoId}:${durationSec || 0}`;
   const cached = getFromCache<any>(cacheKey);
   if (cached) {
     return res.json(cached);
@@ -5489,7 +5692,7 @@ app.get("/api/youtube/lyrics", async (req, res) => {
     try {
       const resp = await fetch(url, {
         headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(3500),
       });
       if (resp.status === 200) {
         const json = await resp.json();
@@ -5513,28 +5716,32 @@ app.get("/api/youtube/lyrics", async (req, res) => {
   };
 
   // =========================================================================
-  // PASS 1 — PARALLEL EXACT GET & SEARCH ACROSS ALL ARTIST VARIANTS
+  // PASS 1 — PARALLEL EXACT GET & SEARCH ACROSS ALL TITLE & ARTIST VARIANTS
   // =========================================================================
   const pass1Urls: string[] = [];
-  for (const art of artistVariants) {
-    if (!cleanTitle || !art) continue;
-    if (durationSec) {
+  for (const t of titleVariants.slice(0, 3)) {
+    for (const art of artistVariants.slice(0, 3)) {
+      if (!t || !art) continue;
+      if (durationSec) {
+        pass1Urls.push(
+          `https://lrclib.net/api/get?track_name=${encodeURIComponent(t)}&artist_name=${encodeURIComponent(art)}&duration=${durationSec}`
+        );
+      }
       pass1Urls.push(
-        `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}&duration=${durationSec}`
+        `https://lrclib.net/api/get?track_name=${encodeURIComponent(t)}&artist_name=${encodeURIComponent(art)}`
+      );
+      pass1Urls.push(
+        `https://lrclib.net/api/search?track_name=${encodeURIComponent(t)}&artist_name=${encodeURIComponent(art)}`
       );
     }
-    pass1Urls.push(
-      `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}`
-    );
-    pass1Urls.push(
-      `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}`
-    );
   }
 
-  for (const art of artistVariants.slice(0, 3)) {
-    pass1Urls.push(
-      `https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${art}`)}`
-    );
+  for (const t of titleVariants.slice(0, 2)) {
+    for (const art of artistVariants.slice(0, 2)) {
+      pass1Urls.push(
+        `https://lrclib.net/api/search?q=${encodeURIComponent(`${t} ${art}`)}`
+      );
+    }
   }
   if (cleanTitle) {
     pass1Urls.push(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`);
@@ -5598,23 +5805,31 @@ app.get("/api/youtube/lyrics", async (req, res) => {
       fetchYouTubeMusicNativeLyrics(targetVid, durationSec).catch(() => null)
     );
   }
-  fallbackTasks.push(
-    fetchTertiaryPublicLyrics(cleanTitle, cleanArtist, durationSec).catch(() => null)
-  );
+  for (const t of titleVariants.slice(0, 2)) {
+    fallbackTasks.push(
+      fetchTertiaryPublicLyrics(t, cleanArtist, durationSec).catch(() => null)
+    );
+  }
 
   const fallbackResults = await Promise.allSettled(fallbackTasks);
   for (const r of fallbackResults) {
     if (r.status === "fulfilled" && r.value) {
       const val = r.value;
       if (val.plainLyrics && val.plainLyrics.trim().length > 0) {
+        const cleaned = sanitizeCaptionsAndLyricsServer(val.plainLyrics);
+        const autoSynced = autoSyncPlainLyricsServer(cleaned, durationSec);
+        const autoLrc = formatLRCServer(autoSynced);
+
         const payload = {
-          plainLyrics: val.plainLyrics,
-          lyricsRaw: val.plainLyrics,
-          isSynced: false,
-          source: val.source || "youtube_music",
-          provider: val.provider || (val.source === "genius" ? "Genius" : "YouTube Music"),
+          syncedLyrics: autoLrc,
+          plainLyrics: cleaned,
+          lyricsRaw: autoLrc,
+          isSynced: true,
+          source: "auto_karaoke",
+          provider: val.provider ? `Synced (${val.provider})` : "Synced (Karaoke Machine)",
           cleanTitle,
           cleanArtist,
+          lrcDuration: durationSec,
         };
         setInCache(cacheKey, payload);
         return res.json(payload);
@@ -5623,14 +5838,19 @@ app.get("/api/youtube/lyrics", async (req, res) => {
   }
 
   if (lrcPlainFallback) {
+    const autoSynced = autoSyncPlainLyricsServer(lrcPlainFallback, durationSec);
+    const autoLrc = formatLRCServer(autoSynced);
+
     const payload = {
+      syncedLyrics: autoLrc,
       plainLyrics: lrcPlainFallback,
-      lyricsRaw: lrcPlainFallback,
-      isSynced: false,
-      source: "lrclib",
-      provider: "LRCLIB Plain",
+      lyricsRaw: autoLrc,
+      isSynced: true,
+      source: "auto_karaoke",
+      provider: "Synced (Karaoke Machine)",
       cleanTitle,
       cleanArtist,
+      lrcDuration: durationSec,
     };
     setInCache(cacheKey, payload);
     return res.json(payload);

@@ -35,6 +35,13 @@ import {
   syncCustomCoversFromServer,
   removePlaylistCustomArtwork,
 } from "./utils/customCoversStorage";
+import {
+  getPlaylistArtwork,
+  fetchServerCustomArtwork,
+  saveCustomArtwork,
+  deleteCustomArtwork,
+  stitchCustomArtworkToPlaylists,
+} from "./services/playlistService";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
@@ -832,6 +839,9 @@ export default function App() {
     };
 
     initAuth();
+
+    // Fetch server-side custom artwork mappings to survive browser cache clears
+    fetchServerCustomArtwork().catch(() => {});
 
     // Immediate local-first playlist load from IndexedDB on startup
     let isDbMounted = true;
@@ -1807,6 +1817,11 @@ export default function App() {
     // Lock custom cover in dedicated store immediately
     setCustomPlaylistCover(playlistId, isCustom ? newCoverUrl : null);
     saveCustomCoverToCache(playlistId, newCoverUrl, isCustom);
+    if (isCustom && newCoverUrl) {
+      saveCustomArtwork(playlistId, newCoverUrl).catch(() => {});
+    } else {
+      deleteCustomArtwork(playlistId).catch(() => {});
+    }
 
     setPlaylists((prev) => {
       const updated = prev.map((p) =>

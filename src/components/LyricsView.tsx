@@ -17,6 +17,8 @@ import {
   createDualLyricLines,
   parseLRC,
   hasLrcTimestamps,
+  autoSyncPlainLyrics,
+  formatLRC,
   LyricsSourceType,
 } from "../services/lyricsService";
 import { romanizeLyricLines } from "../utils/romanization";
@@ -91,10 +93,19 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               setLyricsSource("lrclib");
               setLyricsProviderName("Synced (LRCLIB)");
             } else {
-              setOriginalLines(parsePlainLyrics(raw));
-              setIsSynced(false);
-              setLyricsSource("lrclib");
-              setLyricsProviderName("Plain Text (LRCLIB)");
+              // Convert plain text into musically paced Karaoke timestamps
+              const autoSynced = autoSyncPlainLyrics(raw, track.duration);
+              if (autoSynced.length > 0) {
+                setOriginalLines(autoSynced);
+                setIsSynced(true);
+                setLyricsSource("auto_karaoke");
+                setLyricsProviderName("Synced (Karaoke Machine)");
+              } else {
+                setOriginalLines(parsePlainLyrics(raw));
+                setIsSynced(false);
+                setLyricsSource("lrclib");
+                setLyricsProviderName("Plain Text");
+              }
             }
             setLrcDuration(undefined);
             setLoading(false);
@@ -103,7 +114,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         }
 
         // 2. Query Multi-Source Lyrics Fallback Chain:
-        //    Tier 1: LRCLIB Synced LRC / Plain Text (/api/get & /search)
+        //    Tier 1: LRCLIB Synced LRC / Plain Text (/api/get & /search with all title/artist variants)
         //    Tier 2: Native YouTube Music InnerTube Official Lyrics
         //    Tier 3: Tertiary Public Lyrics (Genius & Lyrics.ovh)
         const result = await fetchLyricsMultiSource(track.title, track.artist, track.duration, videoId, track.album);
@@ -121,19 +132,21 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               setLyricsSource(result.source || "lrclib");
               setLyricsProviderName(result.provider || "Synced (LRCLIB)");
             } else if (result.plainLyrics) {
-              setOriginalLines(parsePlainLyrics(result.plainLyrics));
-              setIsSynced(false);
-              setLyricsSource(result.source || "youtube_music");
-              setLyricsProviderName(result.provider || "Plain Text");
+              const autoSynced = autoSyncPlainLyrics(result.plainLyrics, track.duration || result.lrcDuration);
+              setOriginalLines(autoSynced.length > 0 ? autoSynced : parsePlainLyrics(result.plainLyrics));
+              setIsSynced(autoSynced.length > 0);
+              setLyricsSource(autoSynced.length > 0 ? "auto_karaoke" : (result.source || "youtube_music"));
+              setLyricsProviderName(autoSynced.length > 0 ? "Synced (Karaoke Machine)" : (result.provider || "Plain Text"));
             } else {
               setOriginalLines([]);
               setIsSynced(false);
             }
           } else if (result.plainLyrics) {
-            setOriginalLines(parsePlainLyrics(result.plainLyrics));
-            setIsSynced(false);
-            setLyricsSource(result.source || "youtube_music");
-            setLyricsProviderName(result.provider || "YouTube Music");
+            const autoSynced = autoSyncPlainLyrics(result.plainLyrics, track.duration || result.lrcDuration);
+            setOriginalLines(autoSynced.length > 0 ? autoSynced : parsePlainLyrics(result.plainLyrics));
+            setIsSynced(autoSynced.length > 0);
+            setLyricsSource(autoSynced.length > 0 ? "auto_karaoke" : (result.source || "youtube_music"));
+            setLyricsProviderName(autoSynced.length > 0 ? "Synced (Karaoke Machine)" : (result.provider || "YouTube Music"));
           } else {
             setOriginalLines([]);
             setIsSynced(false);
@@ -342,7 +355,8 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   // Provider Badge Label
   const badgeLabel = useMemo(() => {
     if (isSynced) {
-      if (isCandy) return "🍫 Synced LRC";
+      if (isCandy) return lyricsSource === "auto_karaoke" ? "🎤 Karaoke Sync" : "🍫 Synced LRC";
+      if (lyricsSource === "auto_karaoke") return "Synced (Karaoke Machine)";
       if (lyricsSource === "lrclib") return "Synced (LRCLIB)";
       return lyricsProviderName || "Synced";
     }

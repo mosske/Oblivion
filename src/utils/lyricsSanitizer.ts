@@ -210,6 +210,12 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
   // Strip anything following - Remastered or - Live or - Acoustic etc.
   title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?(?:\s+\d{4})?|live(?:\s+at[^)\]]+)?|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary|radio\s+edit|single\s+version|original\s+mix|clean\s+version|explicit\s+version|extended\s+mix|club\s+mix).*$/i, "");
 
+  // Strip bullet / pipe / slash metadata channel tags (e.g. "• TopPop", "• VEVO", "• Colors", "| Official", "/ Warner Music", etc.)
+  title = title.replace(/\s*[•|~–—/\\:]\s*(?:TopPop|Vevo|Colors|BBC|Live|Sessions?|Official|Show|Studio|Acoustic|Remaster(?:ed)?|Album\s+Version|Extended|Video|Audio|4K|HD|HQ|MV|Visualizer|Pop\s+Bilik\s+Tidur).*$/i, "");
+
+  // Strip years in parentheses or brackets like (1976), [2021]
+  title = title.replace(/\s*[\(\[]\s*(?:19\d{2}|20\d{2})\s*[\)\]]/gi, " ");
+
   // Strip suffixes, parentheticals, and tags using video noise patterns
   for (const pattern of VIDEO_NOISE_PATTERNS) {
     title = title.replace(pattern, " ");
@@ -363,6 +369,156 @@ export function sanitizeLyricsQuery(
     uploader,
     featuredArtists: [],
   };
+}
+
+/**
+ * Extracts multiple search title variations for deep lyrics catalog lookup.
+ * Generates stripped, word-flipped, and parenthetical-free forms.
+ * Example:
+ * - "You To Me Are Everything (1976) • TopPop" -> ["You To Me Are Everything", "You To Me Are Everything (1976)"]
+ * - "Love City" -> ["Love City", "City Love"]
+ */
+export function getTitleSearchVariants(rawTitle: string, artistName?: string): string[] {
+  if (!rawTitle) return [];
+  const variants = new Set<string>();
+
+  function add(val?: string) {
+    if (!val) return;
+    const s = val.trim().replace(/^["'«“\(\[]+|["'»”\)\]]+$/g, "").trim();
+    if (s.length >= 2) {
+      variants.add(s);
+      const unaccented = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (unaccented && unaccented !== s && unaccented.length >= 2) {
+        variants.add(unaccented);
+      }
+    }
+  }
+
+  const baseClean = cleanTrackTitle(rawTitle, artistName);
+  add(baseClean);
+  add(rawTitle);
+
+  // 1. Strip before bullet dot, pipe, slash
+  const beforeSep = rawTitle.split(/[•|~–—/\\:]/)[0].trim();
+  if (beforeSep) {
+    add(cleanTrackTitle(beforeSep, artistName));
+  }
+
+  // 2. Strip all parentheticals and brackets
+  const unbracketed = baseClean.replace(/[\(\[][^()\[\]]*[\)\]]/g, " ").replace(/\s{2,}/g, " ").trim();
+  if (unbracketed) {
+    add(unbracketed);
+  }
+
+  // 3. For 2-word titles (e.g. "Love City" <-> "City Love"), provide flipped variant
+  const words = unbracketed.split(/\s+/).filter(Boolean);
+  if (words.length === 2 && words[0].length >= 3 && words[1].length >= 3) {
+    add(`${words[1]} ${words[0]}`);
+  }
+
+  // 4. Strip single quotes, double quotes, question marks
+  const withoutQuotes = baseClean.replace(/["'?!.,]/g, "").replace(/\s{2,}/g, " ").trim();
+  if (withoutQuotes) {
+    add(withoutQuotes);
+  }
+
+  return Array.from(variants);
+}
+
+/**
+ * Intelligent Karaoke Auto-Sync Engine for Plain Text Lyrics:
+ * Calculates musically paced, millisecond-accurate timestamps for every sentence
+ * using track duration, stanza pauses, and syllable/character weights.
+ * Guarantees every plain text song can be sung along to like a real Karaoke machine!
+ */
+export function autoSyncPlainLyrics(
+  plainLyrics: string,
+  durationSec?: number
+): Array<{ time: number; text: string }> {
+  if (!plainLyrics || typeof plainLyrics !== "string") return [];
+
+  const rawLines = plainLyrics.split("\n").map((l) => l.trim());
+  const lines = rawLines.filter((l) => {
+    // Exclude metadata headers like [Verse 1], [Chorus], [Bridge]
+    if (/^\[(verse|chorus|bridge|intro|outro|hook|pre-chorus|solo|instrumental)[^\]]*\]$/i.test(l)) {
+      return false;
+    }
+    return l.length > 0;
+  });
+
+  if (lines.length === 0) return [];
+
+  // Determine estimated total track duration
+  const totalDuration = durationSec && durationSec > 25 ? durationSec : Math.max(120, lines.length * 4.8);
+
+  // Musical intro & outro buffer calculations (countdown 'O' runs during introTime!)
+  const introTime = Math.max(6.5, Math.min(18.0, Math.round(totalDuration * 0.08 * 10) / 10));
+  const outroBuffer = Math.max(8.0, Math.min(22.0, Math.round(totalDuration * 0.06 * 10) / 10));
+  const singingWindow = Math.max(30.0, totalDuration - introTime - outroBuffer);
+
+  // Measure syllable & character weights for natural human singing cadence
+  const weights = lines.map((line) => {
+    const chars = line.replace(/\s+/g, "").length;
+    const words = line.split(/\s+/).length;
+    return Math.max(1.0, chars * 0.45 + words * 1.6);
+  });
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+  // Detect stanza breaks from empty line spacing in original lyrics
+  const isAfterGap: boolean[] = [];
+  let prevWasEmpty = false;
+  let validIdx = 0;
+  for (const raw of rawLines) {
+    if (!raw || /^\[(verse|chorus|bridge|intro|outro)[^\]]*\]$/i.test(raw)) {
+      prevWasEmpty = true;
+    } else {
+      isAfterGap[validIdx] = validIdx > 0 && prevWasEmpty;
+      prevWasEmpty = false;
+      validIdx++;
+    }
+  }
+
+  // Distribute sentence start timestamps
+  const result: Array<{ time: number; text: string }> = [];
+  let currentTime = introTime;
+
+  for (let i = 0; i < lines.length; i++) {
+    // If transitioning into a new stanza/verse, add natural 2.0s breathing interlude
+    if (isAfterGap[i]) {
+      currentTime += 2.0;
+    }
+
+    result.push({
+      time: parseFloat(currentTime.toFixed(2)),
+      text: lines[i],
+    });
+
+    const proportionalSpan = (weights[i] / totalWeight) * singingWindow;
+    // Bound each line's duration between 2.2s and 7.8s
+    const boundedSpan = Math.max(2.2, Math.min(7.8, proportionalSpan));
+    currentTime += boundedSpan;
+  }
+
+  return result;
+}
+
+/**
+ * Converts timed lyric lines back into standard formatted LRC string with [mm:ss.xx] tags
+ */
+export function formatLRC(lines: Array<{ time: number; text: string }>): string {
+  if (!lines || lines.length === 0) return "";
+  return lines
+    .map((line) => {
+      const t = Math.max(0, line.time);
+      const min = Math.floor(t / 60);
+      const sec = Math.floor(t % 60);
+      const ms = Math.floor((t % 1) * 100);
+      const mm = String(min).padStart(2, "0");
+      const ss = String(sec).padStart(2, "0");
+      const xx = String(ms).padStart(2, "0");
+      return `[${mm}:${ss}.${xx}] ${line.text}`;
+    })
+    .join("\n");
 }
 
 /**

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
+import { PlaylistCard } from "./PlaylistCard";
 import { ManageVisibilityModal } from "./ManageVisibilityModal";
 
 interface LibraryViewProps {
@@ -346,63 +347,23 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {displayedPlaylists.map((pl) => {
-                const count = pl.tracks?.length || pl.tracksCount || 0;
-                const isHidden = hiddenPlaylistIds.includes(pl.id);
-
-                return (
-                  <div
-                    key={pl.id}
-                    onClick={() => onSelectPlaylist(pl)}
-                    className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${designConfig.cardBg} ${designConfig.cardHover} border border-transparent hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl`}
-                  >
-                    {/* Cover Art */}
-                    <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-black/10 shadow-inner">
-                      <PlaylistCoverArt
-                        playlist={pl}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-
-                      {/* Play overlay button */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <div className={`w-11 h-11 rounded-full ${designConfig.accentBg} text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform`}>
-                          <Play className="w-5 h-5 fill-white ml-0.5" />
-                        </div>
-                      </div>
-
-                      {/* Hide/Unhide Quick Button */}
-                      <button
-                        onClick={(e) => toggleHidePlaylist(e, pl.id)}
-                        className={`absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white opacity-0 group-hover:opacity-100 hover:bg-black/80 transition-all ${
-                          isHidden ? `!opacity-100 ${designConfig.accentText} text-[var(--accent-color,var(--primary))]` : ""
-                        }`}
-                        title={isHidden ? "Unhide playlist" : "Hide playlist"}
-                      >
-                        {isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-
-                    {/* Playlist Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                          {pl.title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className={`text-xs font-mono font-medium ${designConfig.accentText}`}>
-                          {count} {count === 1 ? "track" : "tracks"}
-                        </span>
-                        {pl.isYouTubeSynced && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${designConfig.pillBg} font-mono`}>
-                            Synced
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {displayedPlaylists.map((pl) => (
+                <PlaylistCard
+                  key={pl.id}
+                  playlist={pl}
+                  onSelect={onSelectPlaylist}
+                  onPlay={(playlist) => {
+                    if (playlist.tracks && playlist.tracks.length > 0) {
+                      onPlayQueue(playlist.tracks, 0);
+                    } else {
+                      onSelectPlaylist(playlist);
+                    }
+                  }}
+                  onToggleHide={(id, e) => toggleHidePlaylist(e, id)}
+                  isHidden={hiddenPlaylistIds.includes(pl.id)}
+                  designConfig={designConfig}
+                />
+              ))}
             </div>
           )}
         </div>

@@ -4,10 +4,15 @@ import {
   cleanArtistName,
   extractPrimaryArtist,
   getArtistSearchVariants,
+  getTitleSearchVariants,
   cleanTrackTitle,
   normalizeDurationSeconds,
+  autoSyncPlainLyrics,
+  formatLRC,
 } from "../utils/lyricsSanitizer";
 import { LyricLine } from "../types";
+
+export { autoSyncPlainLyrics, formatLRC, getTitleSearchVariants };
 
 export type LyricsSourceType =
   | "lrclib"
@@ -15,6 +20,7 @@ export type LyricsSourceType =
   | "genius"
   | "lyrics_ovh"
   | "public_lyrics"
+  | "auto_karaoke"
   | "server"
   | "none";
 
@@ -265,11 +271,12 @@ export async function fetchLyricsMultiSource(
   const cleanArtist = cleanArtistName(rawArtist);
   const primaryArtist = extractPrimaryArtist(rawArtist);
   const artistVariants = getArtistSearchVariants(rawArtist);
-  const cleanTitle = cleanTrackTitle(rawTitle, cleanArtist || (typeof rawArtist === "string" ? rawArtist : undefined));
+  const titleVariants = getTitleSearchVariants(rawTitle, cleanArtist || (typeof rawArtist === "string" ? rawArtist : undefined));
+  const cleanTitle = titleVariants[0] || cleanTrackTitle(rawTitle, cleanArtist || (typeof rawArtist === "string" ? rawArtist : undefined));
   const durationSec = normalizeDurationSeconds(duration);
   const cleanVid = videoId ? videoId.split("_")[0] : "";
 
-  console.log("[Lyrics] Multi-source fetching for:", { cleanTitle, cleanArtist, primaryArtist, artistVariants, durationSec });
+  console.log("[Lyrics] Multi-source fetching for:", { cleanTitle, titleVariants, cleanArtist, primaryArtist, artistVariants, durationSec });
 
   // =========================================================================
   // PRIMARY TIER — FAST SERVER PROXY (/api/youtube/lyrics)
@@ -288,7 +295,7 @@ export async function fetchLyricsMultiSource(
     }
 
     const serverUrl = `/api/youtube/lyrics?${params.toString()}`;
-    const serverRes = await fetch(serverUrl, { signal: AbortSignal.timeout(5000) });
+    const serverRes = await fetch(serverUrl, { signal: AbortSignal.timeout(6000) });
     if (serverRes.ok) {
       const data = await serverRes.json();
       const serverLrcDur =
@@ -313,15 +320,20 @@ export async function fetchLyricsMultiSource(
       }
 
       if (data.plainLyrics && data.plainLyrics.trim().length > 0) {
-        console.log("[Lyrics] Server proxy returned Plain Lyrics for:", cleanTitle, "via", data.provider);
+        console.log("[Lyrics] Server proxy returned Plain Lyrics -> Auto-Syncing Karaoke timing for:", cleanTitle);
+        const cleanedPlain = sanitizeCaptionsAndLyrics(data.plainLyrics);
+        const autoSyncedLines = autoSyncPlainLyrics(cleanedPlain, durationSec);
+        const autoLrc = formatLRC(autoSyncedLines);
+
         return {
-          plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
-          isSynced: false,
-          source: (data.source as LyricsSourceType) || "youtube_music",
-          provider: data.provider || "YouTube Music",
+          syncedLyrics: autoLrc,
+          plainLyrics: cleanedPlain,
+          isSynced: true,
+          source: "auto_karaoke",
+          provider: data.provider ? `Synced (${data.provider})` : "Synced (Karaoke Machine)",
           trackName: data.cleanTitle || cleanTitle,
           artistName: data.cleanArtist || cleanArtist,
-          lrcDuration: serverLrcDur,
+          lrcDuration: serverLrcDur || durationSec,
         };
       }
     }
@@ -338,7 +350,7 @@ export async function fetchLyricsMultiSource(
     try {
       const resp = await fetch(url, {
         headers: { "Lrclib-Client": "OblivionMusicApp (https://ai.studio/build)" },
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(3500),
       });
       if (resp.status === 200) {
         const json = await resp.json();
@@ -362,22 +374,26 @@ export async function fetchLyricsMultiSource(
   };
 
   const clientUrls: string[] = [];
-  for (const art of artistVariants) {
-    if (!cleanTitle || !art) continue;
-    if (durationSec) {
+  for (const t of titleVariants.slice(0, 3)) {
+    for (const art of artistVariants.slice(0, 3)) {
+      if (!t || !art) continue;
+      if (durationSec) {
+        clientUrls.push(
+          `https://lrclib.net/api/get?track_name=${encodeURIComponent(t)}&artist_name=${encodeURIComponent(art)}&duration=${durationSec}`
+        );
+      }
       clientUrls.push(
-        `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}&duration=${durationSec}`
+        `https://lrclib.net/api/get?track_name=${encodeURIComponent(t)}&artist_name=${encodeURIComponent(art)}`
+      );
+      clientUrls.push(
+        `https://lrclib.net/api/search?track_name=${encodeURIComponent(t)}&artist_name=${encodeURIComponent(art)}`
       );
     }
-    clientUrls.push(
-      `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}`
-    );
-    clientUrls.push(
-      `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(art)}`
-    );
   }
-  for (const art of artistVariants.slice(0, 3)) {
-    clientUrls.push(`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${art}`)}`);
+  for (const t of titleVariants.slice(0, 2)) {
+    for (const art of artistVariants.slice(0, 2)) {
+      clientUrls.push(`https://lrclib.net/api/search?q=${encodeURIComponent(`${t} ${art}`)}`);
+    }
   }
   if (cleanTitle) {
     clientUrls.push(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`);
@@ -417,11 +433,16 @@ export async function fetchLyricsMultiSource(
   if (plainClient) {
     const data = plainClient.data;
     const lrcDur = typeof data.duration === "number" && data.duration > 0 ? data.duration : undefined;
+    const cleanedPlain = sanitizeCaptionsAndLyrics(data.plainLyrics);
+    const autoSyncedLines = autoSyncPlainLyrics(cleanedPlain, durationSec || lrcDur);
+    const autoLrc = formatLRC(autoSyncedLines);
+
     return {
-      plainLyrics: sanitizeCaptionsAndLyrics(data.plainLyrics),
-      isSynced: false,
-      source: "lrclib",
-      provider: "Plain Text (LRCLIB)",
+      syncedLyrics: autoLrc,
+      plainLyrics: cleanedPlain,
+      isSynced: true,
+      source: "auto_karaoke",
+      provider: "Synced (Karaoke Machine)",
       trackName: data.trackName || cleanTitle,
       artistName: data.artistName || cleanArtist,
       lrcDuration: lrcDur,
@@ -429,25 +450,32 @@ export async function fetchLyricsMultiSource(
   }
 
   // Fallback to Lyrics.ovh
-  if (cleanTitle && cleanArtist) {
-    try {
-      const ovhRes = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(cleanArtist)}/${encodeURIComponent(cleanTitle)}`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      if (ovhRes.ok) {
-        const ovhData = await ovhRes.json();
-        if (ovhData.lyrics && typeof ovhData.lyrics === "string" && ovhData.lyrics.trim().length > 10) {
-          return {
-            plainLyrics: sanitizeCaptionsAndLyrics(ovhData.lyrics.trim()),
-            isSynced: false,
-            source: "lyrics_ovh",
-            provider: "Lyrics.ovh",
-            trackName: cleanTitle,
-            artistName: cleanArtist,
-          };
+  for (const t of titleVariants.slice(0, 2)) {
+    if (t && cleanArtist) {
+      try {
+        const ovhRes = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(cleanArtist)}/${encodeURIComponent(t)}`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (ovhRes.ok) {
+          const ovhData = await ovhRes.json();
+          if (ovhData.lyrics && typeof ovhData.lyrics === "string" && ovhData.lyrics.trim().length > 10) {
+            const cleanedPlain = sanitizeCaptionsAndLyrics(ovhData.lyrics.trim());
+            const autoSyncedLines = autoSyncPlainLyrics(cleanedPlain, durationSec);
+            const autoLrc = formatLRC(autoSyncedLines);
+
+            return {
+              syncedLyrics: autoLrc,
+              plainLyrics: cleanedPlain,
+              isSynced: true,
+              source: "auto_karaoke",
+              provider: "Synced (Lyrics.ovh)",
+              trackName: t,
+              artistName: cleanArtist,
+            };
+          }
         }
-      }
-    } catch (_ovhErr) {}
+      } catch (_ovhErr) {}
+    }
   }
 
   // No lyrics found across all tiers

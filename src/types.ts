@@ -7,6 +7,7 @@ export interface Track {
   album: string;
   duration: number; // in seconds
   coverUrl: string;
+  thumbnail?: string; // Track cover/thumbnail alias
   audioUrl: string;
   genre?: string;
   playsCount?: number;
@@ -27,13 +28,24 @@ export interface YouTubeThumbnails {
   default?: YouTubeThumbnailItem;
 }
 
+export interface PlaylistSnippet {
+  title?: string;
+  description?: string;
+  thumbnails?: YouTubeThumbnails;
+  publishedAt?: string;
+  channelId?: string;
+  channelTitle?: string;
+}
+
 export interface Playlist {
   id: string;
   playlistId?: string;
   title: string;
   description: string;
   coverUrl: string;
+  thumbnail?: string; // Official thumbnail alias
   customCoverUrl?: string;
+  customArtwork?: string; // Custom artwork mapping alias
   isCustomCover?: boolean;
   isYouTubeSynced?: boolean;
   tracksCount: number;
@@ -42,6 +54,7 @@ export interface Playlist {
   artist?: string;
   isAlbum?: boolean;
   thumbnails?: YouTubeThumbnails;
+  snippet?: PlaylistSnippet;
   privacy?: "PUBLIC" | "UNLISTED" | "PRIVATE" | string;
   privacyStatus?: string;
 }

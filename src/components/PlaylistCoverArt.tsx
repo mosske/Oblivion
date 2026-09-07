@@ -7,6 +7,7 @@ import {
   isAuthenticCustomArtworkUrl,
   isVideoThumbnailUrl,
 } from "../utils/customCoversStorage";
+import { getPlaylistArtwork } from "../services/playlistService";
 
 interface PlaylistCoverArtProps {
   playlist: Playlist | {
@@ -14,9 +15,16 @@ interface PlaylistCoverArtProps {
     playlistId?: string;
     title?: string;
     coverUrl?: string;
+    thumbnail?: string;
     customCoverUrl?: string;
+    customArtwork?: string;
     isCustomCover?: boolean;
     thumbnails?: YouTubeThumbnails;
+    snippet?: {
+      thumbnails?: YouTubeThumbnails;
+      title?: string;
+      description?: string;
+    };
     tracks?: Track[];
     tracksCount?: number;
   };
@@ -41,7 +49,7 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     if (fromStore) return fromStore;
 
     // Check if the playlist prop already has valid custom artwork and lock it in
-    const candidate = playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
+    const candidate = playlist?.customArtwork || playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
     if (candidate && isAuthenticCustomArtworkUrl(candidate)) {
       setPlaylistCustomArtwork(playlistId, candidate);
       return candidate;
@@ -55,9 +63,10 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   // Sync state if playlist ID changes or custom artwork event fires
   useEffect(() => {
     setImageError(false);
+    setFallbackCover(null);
     let resolved = getPlaylistCustomArtwork(playlistId);
     if (!resolved) {
-      const candidate = playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
+      const candidate = playlist?.customArtwork || playlist?.customCoverUrl || (playlist?.isCustomCover ? playlist?.coverUrl : null);
       if (candidate && isAuthenticCustomArtworkUrl(candidate)) {
         setPlaylistCustomArtwork(playlistId, candidate);
         resolved = candidate;
@@ -77,6 +86,7 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
         const updatedArt = getPlaylistCustomArtwork(playlistId);
         setCustomArt(updatedArt);
         setImageError(false);
+        setFallbackCover(null);
       }
     };
 
@@ -84,41 +94,25 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
     return () => {
       window.removeEventListener("playlist_custom_artwork_changed", handleStorageChange);
     };
-  }, [playlistId, cleanId, playlist?.customCoverUrl, playlist?.coverUrl, playlist?.isCustomCover]);
+  }, [playlistId, cleanId, playlist?.customArtwork, playlist?.customCoverUrl, playlist?.coverUrl, playlist?.isCustomCover]);
 
   // Determine if this playlist is authentically custom
   const isExplicitCustom = Boolean(
     customArt ||
+    (playlist?.customArtwork && isAuthenticCustomArtworkUrl(playlist.customArtwork)) ||
     (playlist?.customCoverUrl && isAuthenticCustomArtworkUrl(playlist.customCoverUrl)) ||
     (playlist?.isCustomCover && playlist?.coverUrl && !isVideoThumbnailUrl(playlist.coverUrl)) ||
     (playlist?.coverUrl && isAuthenticCustomArtworkUrl(playlist.coverUrl))
   );
 
-  // 2. STRICT RESOLUTION ORDER:
-  // If this playlist has custom artwork: ONLY resolve custom artwork, NEVER tracks[0]!
-  let finalSource: string | null = null;
-  if (customArt) {
-    finalSource = customArt;
-  } else if (playlist?.customCoverUrl && isAuthenticCustomArtworkUrl(playlist.customCoverUrl)) {
-    finalSource = playlist.customCoverUrl;
-  } else if (playlist?.isCustomCover && playlist?.coverUrl && !isVideoThumbnailUrl(playlist.coverUrl)) {
-    finalSource = playlist.coverUrl;
-  } else if (playlist?.coverUrl && isAuthenticCustomArtworkUrl(playlist.coverUrl)) {
-    finalSource = playlist.coverUrl;
-  } else if (!isExplicitCustom) {
-    // Only non-custom playlists are allowed to display tracks[0] or generic coverUrl
-    finalSource = playlist?.coverUrl || playlist?.tracks?.[0]?.coverUrl || fallbackCover;
-  }
+  // 2. RESOLUTION ORDER VIA getPlaylistArtwork:
+  let finalSource = fallbackCover || getPlaylistArtwork(playlist as Playlist);
 
   const handleImageError = () => {
-    // STRICT IMMUTABILITY: If this playlist has custom artwork, DO NOT fall back to the first song!
-    if (isExplicitCustom) {
-      setImageError(true);
-      return;
-    }
+    // If current source failed and we haven't tried the track 0 thumbnail yet, try it!
     const trackZero = playlist?.tracks?.[0];
-    const trackZeroCover = trackZero?.coverUrl;
-    if (finalSource !== trackZeroCover && trackZeroCover) {
+    const trackZeroCover = trackZero?.thumbnail || trackZero?.coverUrl;
+    if (trackZeroCover && trackZeroCover !== finalSource && !fallbackCover) {
       setFallbackCover(trackZeroCover);
     } else {
       setImageError(true);

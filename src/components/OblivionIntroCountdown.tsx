@@ -5,6 +5,8 @@ interface OblivionIntroCountdownProps {
   currentPlaybackTime: number;
   firstLineTime?: number;
   vocalStartTime?: number;
+  startTime?: number;
+  label?: string;
   designConfig?: FullAppDesignConfig;
   onCountdownComplete?: () => void;
 }
@@ -13,6 +15,8 @@ export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
   currentPlaybackTime,
   firstLineTime,
   vocalStartTime,
+  startTime = 0,
+  label,
   designConfig,
   onCountdownComplete,
 }) => {
@@ -35,12 +39,14 @@ export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // Fill percentage calculation strictly: (currentPlaybackTime / targetVocalTime) * 100
+  // Fill percentage calculation: ((currentPlaybackTime - startTime) / (targetVocalTime - startTime)) * 100
   const fillPercent = useMemo(() => {
-    if (!targetVocalTime || targetVocalTime <= 0) return 0;
-    const pct = (currentPlaybackTime / targetVocalTime) * 100;
+    const totalSpan = targetVocalTime - startTime;
+    if (totalSpan <= 0) return 0;
+    const elapsed = currentPlaybackTime - startTime;
+    const pct = (elapsed / totalSpan) * 100;
     return Math.min(100, Math.max(0, pct));
-  }, [currentPlaybackTime, targetVocalTime]);
+  }, [currentPlaybackTime, targetVocalTime, startTime]);
 
   // Exit phase detection: smoothly fade out over 500ms when reaching vocalStartTime - 0.5s or 99.5%
   const isExiting = fillPercent >= 99.5 || (targetVocalTime > 0 && currentPlaybackTime >= targetVocalTime - 0.5);
