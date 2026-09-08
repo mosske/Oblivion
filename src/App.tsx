@@ -390,15 +390,16 @@ export default function App() {
         const tabToUpdate = targetTab || activeTabRef.current;
         const currentForTab = prev[tabToUpdate] || null;
         const nextVal = typeof pl === "function" ? pl(currentForTab) : pl;
+        const normalizedVal = nextVal ? { ...nextVal } : null;
         const nextStack = {
           ...prev,
-          [tabToUpdate]: nextVal,
+          [tabToUpdate]: normalizedVal,
         };
         try {
           localStorage.setItem("oblivion_tab_view_stack", JSON.stringify(nextStack));
           if (tabToUpdate === activeTabRef.current) {
-            if (nextVal) {
-              localStorage.setItem("oblivion_selected_playlist", JSON.stringify(nextVal));
+            if (normalizedVal) {
+              localStorage.setItem("oblivion_selected_playlist", JSON.stringify(normalizedVal));
             } else {
               localStorage.removeItem("oblivion_selected_playlist");
             }
@@ -409,6 +410,26 @@ export default function App() {
     },
     []
   );
+
+  const handleTabChange = useCallback((newTab: NavTab) => {
+    setActiveTab((currentTab) => {
+      if (newTab === currentTab) {
+        // If user taps the active tab while a playlist or album detail is open, pop back to the tab root
+        setTabViewStack((prev) => {
+          if (prev[newTab]) {
+            const nextStack = { ...prev, [newTab]: null };
+            try {
+              localStorage.setItem("oblivion_tab_view_stack", JSON.stringify(nextStack));
+              localStorage.removeItem("oblivion_selected_playlist");
+            } catch {}
+            return nextStack;
+          }
+          return prev;
+        });
+      }
+      return newTab;
+    });
+  }, []);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
@@ -2220,7 +2241,7 @@ export default function App() {
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         user={user}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
@@ -2592,7 +2613,7 @@ export default function App() {
       {/* Mobile Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         designConfig={activeFullDesign}
       />
 

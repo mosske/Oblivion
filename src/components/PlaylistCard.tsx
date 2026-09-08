@@ -167,25 +167,25 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
           </div>
         )}
 
-        {/* Play Overlay Button (Backdrop allows clicks to open playlist; inner button triggers immediate playback) */}
-        <div
-          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none"
-        >
-          {onPlay && (
+        {/* Play Overlay Button (Desktop hover only - Backdrop allows clicks to open playlist; inner button triggers immediate playback) */}
+        {onPlay && (
+          <div
+            className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 items-center justify-center transition-opacity pointer-events-none"
+          >
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onPlay(playlist, e);
               }}
-              className={`pointer-events-auto w-11 h-11 rounded-full ${designConfig.accentBg} text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 hover:scale-115 active:scale-95 transition-transform cursor-pointer`}
+              className="pointer-events-auto w-11 h-11 rounded-full bg-[var(--accent-color,#c89b3c)] text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 hover:scale-115 active:scale-95 transition-transform cursor-pointer"
               title={`Play ${displayTitle}`}
               aria-label={`Play ${displayTitle}`}
             >
               <Play className="w-5 h-5 fill-white ml-0.5" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Hide / Unhide Quick Action Button */}
         {onToggleHide && (
