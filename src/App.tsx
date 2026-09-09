@@ -41,6 +41,7 @@ import {
   saveCustomArtwork,
   deleteCustomArtwork,
   stitchCustomArtworkToPlaylists,
+  reorderPlaylistTracks,
 } from "./services/playlistService";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
@@ -1896,11 +1897,11 @@ export default function App() {
     }
   };
 
-  // Reorder Tracks inside Playlist
+  // Reorder Tracks inside Playlist - syncs with YouTube then pulls fresh list back
   const handleReorderPlaylistTracks = async (playlistId: string, newTracks: Track[]) => {
     const cleanPlId = playlistId.replace(/^VL/, "");
 
-    // Save tracks to IndexedDB store immediately
+    // Save tracks to IndexedDB store immediately for instant UI responsiveness
     savePlaylistTracksToDBCache(playlistId, newTracks);
 
     setPlaylists((prev) => {
@@ -1930,16 +1931,45 @@ export default function App() {
           if (saved) activeToken = JSON.parse(saved)?.accessToken;
         } catch {}
       }
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
 
-      await fetch(`/api/youtube/playlists/${playlistId}/reorder`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({ tracks: newTracks }),
+      const syncResult = await reorderPlaylistTracks(playlistId, newTracks, { token: activeToken });
+
+      const finalTracks = syncResult.tracks && syncResult.tracks.length > 0 ? syncResult.tracks : newTracks;
+
+      // Update with authoritative verified tracks from YouTube
+      setPlaylists((prev) => {
+        const updated = prev.map((p) => {
+          const pId = p.id || (p as any).playlistId;
+          if (pId === playlistId || pId?.replace(/^VL/, "") === cleanPlId) {
+            return { ...p, tracks: finalTracks, tracksCount: finalTracks.length };
+          }
+          return p;
+        });
+        try {
+          localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
+        } catch {}
+        savePlaylistsToDBCache(updated);
+        return updated;
       });
+
+      if (selectedPlaylist?.id === playlistId || (selectedPlaylist as any)?.playlistId === playlistId || selectedPlaylist?.id?.replace(/^VL/, "") === cleanPlId) {
+        setSelectedPlaylist((prev) => (prev ? { ...prev, tracks: finalTracks, tracksCount: finalTracks.length } : null));
+      }
+
+      savePlaylistTracksToDBCache(playlistId, finalTracks);
+
+      return {
+        success: syncResult.success,
+        tracks: finalTracks,
+        syncedToYouTube: syncResult.syncedToYouTube,
+      };
     } catch (err) {
       console.error("Reorder tracks error:", err);
+      return {
+        success: false,
+        tracks: newTracks,
+        syncedToYouTube: false,
+      };
     }
   };
 

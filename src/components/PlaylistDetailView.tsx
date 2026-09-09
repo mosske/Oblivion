@@ -239,73 +239,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const totalDurationSecs = safeTracks.reduce((acc, t) => acc + (t?.duration || 210), 0);
   const durationMins = isNaN(totalDurationSecs) ? 0 : Math.max(0, Math.floor(totalDurationSecs / 60));
 
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
-  // Drag and drop handlers for song reordering
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(index));
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragOverIndex !== index) {
-      setDragOverIndex(index);
-    }
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      handleDragEnd();
-      return;
-    }
-    const newTracks = [...tracks];
-    const [movedTrack] = newTracks.splice(draggedIndex, 1);
-    newTracks.splice(targetIndex, 0, movedTrack);
-    setTracks(newTracks);
-    if (!isAlbum && onReorderTracks) {
-      onReorderTracks(newTracks);
-    }
-    handleDragEnd();
-  };
-
-  // Quick arrow shift handlers for touch & click
-  const handleMoveUp = (index: number) => {
-    if (index <= 0) return;
-    const newTracks = [...tracks];
-    const temp = newTracks[index];
-    newTracks[index] = newTracks[index - 1];
-    newTracks[index - 1] = temp;
-    setTracks(newTracks);
-    if (!isAlbum && onReorderTracks) {
-      onReorderTracks(newTracks);
-    }
-  };
-
-  const handleMoveDown = (index: number) => {
-    if (index >= tracks.length - 1) return;
-    const newTracks = [...tracks];
-    const temp = newTracks[index];
-    newTracks[index] = newTracks[index + 1];
-    newTracks[index + 1] = temp;
-    setTracks(newTracks);
-    if (!isAlbum && onReorderTracks) {
-      onReorderTracks(newTracks);
-    }
-  };
+  const [isSyncingOrder, setIsSyncingOrder] = useState<boolean>(false);
+  const initialTracksBeforeReorder = useRef<Track[]>([]);
 
   // Remove track
   const handleRemoveTrackInternal = (trackId: string) => {
@@ -316,16 +251,41 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     }
   };
 
-  // When Done Reordering is clicked, exit reorder mode and save new track order locally
-  const handleToggleReorderMode = () => {
+  // Toggle Reorder Mode & Save/Sync
+  const handleToggleReorderMode = async () => {
     if (isReorderMode) {
-      setIsReorderMode(false);
-      if (!isAlbum && onReorderTracks) {
-        onReorderTracks(tracks);
-      }
+      await handleDoneReordering();
     } else {
+      initialTracksBeforeReorder.current = [...tracks];
       setIsReorderMode(true);
     }
+  };
+
+  // Save new layout and immediately push & pull from YouTube
+  const handleDoneReordering = async () => {
+    if (isSyncingOrder) return;
+    setIsSyncingOrder(true);
+    try {
+      if (!isAlbum && onReorderTracks) {
+        const result: any = await onReorderTracks(tracks);
+        if (result && Array.isArray(result.tracks) && result.tracks.length > 0) {
+          setTracks(result.tracks);
+        }
+      }
+    } catch (err) {
+      console.error("Failed saving reordered tracks to YouTube:", err);
+    } finally {
+      setIsSyncingOrder(false);
+      setIsReorderMode(false);
+    }
+  };
+
+  // Discard changes
+  const handleCancelReordering = () => {
+    if (initialTracksBeforeReorder.current.length > 0) {
+      setTracks(initialTracksBeforeReorder.current);
+    }
+    setIsReorderMode(false);
   };
 
   // Shuffle play all tracks in this playlist
@@ -573,7 +533,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
         {/* Action Controls Bar */}
         <div className={`flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} shadow-lg`}>
-          {/* Left Action Buttons: Play All, Shuffle, Repeat */}
+          {/* Left Action Buttons: Play All, Shuffle, Repeat, Reorder */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => onPlayQueue(tracks, 0)}
@@ -608,6 +568,37 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 {repeatMode === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
               </button>
             )}
+
+            {/* Reorder Songs Button */}
+            {!isAlbum && tracks.length > 1 && (
+              <button
+                onClick={handleToggleReorderMode}
+                disabled={isSyncingOrder}
+                className={`px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
+                  isReorderMode
+                    ? `${designConfig.accentBg} text-white ring-2 ${designConfig.accentBorder} shadow-lg animate-pulse`
+                    : `${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle}`
+                }`}
+                title={isReorderMode ? "Save and sync new order with YouTube" : "Reorder songs in this playlist"}
+              >
+                {isSyncingOrder ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Syncing YouTube...</span>
+                  </>
+                ) : isReorderMode ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Done Reordering</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowUpDown className="w-4 h-4" />
+                    <span>Reorder Songs</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Right Action Buttons: Edit details and Delete Playlist */}
@@ -637,6 +628,59 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
         {/* Songs List */}
         <div className="space-y-3">
+          {/* Reorder Mode Active Banner */}
+          {isReorderMode && (
+            <div className={`p-4 rounded-2xl ${designConfig.cardBg} border-2 ${designConfig.accentBorder} shadow-xl flex flex-wrap items-center justify-between gap-3 animate-fade-in`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl ${designConfig.accentBg} text-white shadow-md shrink-0 animate-bounce`}>
+                  <GripVertical className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold ${designConfig.textPrimary}`}>
+                      Reordering Active
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Live Drag
+                    </span>
+                  </div>
+                  <p className={`text-xs ${designConfig.textSecondary} mt-0.5 max-w-lg`}>
+                    Click/press and hold the handle to lift & move. On mobile, swipe/scroll with a 2nd finger; on desktop, scroll with your mouse wheel. When done, click <strong>Done Reordering</strong> to save to YouTube.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={handleCancelReordering}
+                  disabled={isSyncingOrder}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold ${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDoneReordering}
+                  disabled={isSyncingOrder}
+                  className={`px-5 py-2 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95`}
+                >
+                  {isSyncingOrder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Syncing YouTube...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Done Reordering</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* In-View Search Filter for Playlists and Albums */}
           <div className="sticky top-0 z-20 py-1">
             <div className="relative">

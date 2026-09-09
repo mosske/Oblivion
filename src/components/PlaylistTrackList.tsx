@@ -8,7 +8,8 @@ import {
   ChevronUp,
   ChevronDown,
   Music2,
-  Check,
+  Sparkles,
+  ArrowUpDown,
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -26,7 +27,7 @@ export interface PlaylistTrackListProps {
   designConfig?: FullAppDesignConfig;
   onPlayTrack?: (track: Track) => void;
   onPlayQueue: (tracks: Track[], startIndex: number) => void;
-  onReorderTracks?: (newTracks: Track[], targetPosition?: number) => void;
+  onReorderTracks?: (newTracks: Track[]) => void;
   onRemoveTrack?: (trackId: string) => void;
   onOpenAddToPlaylistModal?: (track: Track) => void;
   onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
@@ -49,18 +50,31 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
   onOpenAddToPlaylistModal,
   onAddTrackToPlaylist,
 }) => {
-  // HTML5 Drag state
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
-  // Native Touch Drag state for mobile reordering
-  const [touchDragIndex, setTouchDragIndex] = useState<number | null>(null);
-  const [touchTargetIndex, setTouchTargetIndex] = useState<number | null>(null);
-  const [touchCurrentY, setTouchCurrentY] = useState<number>(0);
-  const [touchStartY, setTouchStartY] = useState<number>(0);
+  // Lift & Drag state for reordering
+  const [liftedIndex, setLiftedIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [pointerY, setPointerY] = useState<number>(0);
+  const [dragHandleOffsetY, setDragHandleOffsetY] = useState<number>(25);
+  const [liftedItemWidth, setLiftedItemWidth] = useState<number>(0);
+  const [liftedItemLeft, setLiftedItemLeft] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const activePointerIdRef = useRef<number | null>(null);
+  const autoScrollRafRef = useRef<number | null>(null);
+  const scrollSpeedRef = useRef<number>(0);
+
+  // Keep tracks in ref for stable event handlers
+  const tracksRef = useRef<Track[]>(tracks);
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
+
+  const onReorderTracksRef = useRef(onReorderTracks);
+  useEffect(() => {
+    onReorderTracksRef.current = onReorderTracks;
+  }, [onReorderTracks]);
 
   // Filtered tracks based on in-page search
   const filteredTracks = tracks.filter((track) => {
@@ -74,48 +88,169 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
   const isSearchActive = inViewSearch.trim().length > 0;
   const canReorder = isReorderMode && !isAlbum && !isSearchActive && tracks.length > 1;
 
-  // HTML5 Drag Handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
+  // Calculate target drop index based on current pointer Y and row element bounds
+  const updateDropTarget = useCallback((currentY: number) => {
+    if (liftedIndex === null) return;
+
+    let closestIdx = liftedIndex;
+    let minDistance = Infinity;
+
+    rowRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const middleY = rect.top + rect.height / 2;
+      const distance = Math.abs(currentY - middleY);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIdx = idx;
+      }
+    });
+
+    if (closestIdx >= 0 && closestIdx < tracksRef.current.length) {
+      setDropTargetIndex(closestIdx);
+    }
+  }, [liftedIndex]);
+
+  // Auto-scroll loop when hovering near viewport edges while dragging
+  const startAutoScrollLoop = useCallback(() => {
+    if (autoScrollRafRef.current) return;
+
+    const loop = () => {
+      if (scrollSpeedRef.current !== 0) {
+        window.scrollBy({ top: scrollSpeedRef.current, behavior: "auto" });
+      }
+      autoScrollRafRef.current = requestAnimationFrame(loop);
+    };
+
+    autoScrollRafRef.current = requestAnimationFrame(loop);
+  }, []);
+
+  const stopAutoScrollLoop = useCallback(() => {
+    if (autoScrollRafRef.current) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
+    }
+    scrollSpeedRef.current = 0;
+  }, []);
+
+  // Pointer Down on Drag Handle (Initiates Lift & Drag)
+  const handlePointerDown = (e: React.PointerEvent, index: number) => {
     if (!canReorder) return;
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(index));
-  };
+    if (e.button !== 0) return; // Primary button only
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    if (!canReorder) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragOverIndex !== index) {
-      setDragOverIndex(index);
+    // Stop propagation so parent scroll or swipe handlers don't take over
+    e.stopPropagation();
+
+    const rowEl = rowRefs.current.get(index);
+    const rect = rowEl?.getBoundingClientRect();
+
+    activePointerIdRef.current = e.pointerId;
+    setLiftedIndex(index);
+    setDropTargetIndex(index);
+    setPointerY(e.clientY);
+    setDragHandleOffsetY(rect ? e.clientY - rect.top : 25);
+    setLiftedItemWidth(rect ? rect.width : 400);
+    setLiftedItemLeft(rect ? rect.left : 16);
+    setIsDragging(true);
+
+    // Haptic feedback for touch devices
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      try {
+        navigator.vibrate(25);
+      } catch {}
     }
+
+    startAutoScrollLoop();
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
+  // Global Pointer Listeners while dragging
+  useEffect(() => {
+    if (!isDragging || liftedIndex === null) return;
 
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
+    const handlePointerMove = (e: PointerEvent) => {
+      // Only process the active pointer
+      if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
+        return;
+      }
 
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (!canReorder || draggedIndex === null || draggedIndex === targetIndex) {
-      handleDragEnd();
-      return;
-    }
-    const newTracks = [...tracks];
-    const [movedTrack] = newTracks.splice(draggedIndex, 1);
-    newTracks.splice(targetIndex, 0, movedTrack);
-    if (onReorderTracks) {
-      onReorderTracks(newTracks, targetIndex);
-    }
-    handleDragEnd();
-  };
+      setPointerY(e.clientY);
+      updateDropTarget(e.clientY);
 
-  // Quick move handlers for accessible step-by-step reordering
+      // Edge proximity auto-scrolling
+      const viewHeight = window.innerHeight;
+      const topEdgeZone = 110;
+      const bottomEdgeZone = 130; // Extra room for mobile bottom navigation/player
+
+      if (e.clientY < topEdgeZone) {
+        const intensity = Math.min(1, (topEdgeZone - e.clientY) / topEdgeZone);
+        scrollSpeedRef.current = -Math.round(4 + intensity * 16);
+      } else if (e.clientY > viewHeight - bottomEdgeZone) {
+        const intensity = Math.min(1, (e.clientY - (viewHeight - bottomEdgeZone)) / bottomEdgeZone);
+        scrollSpeedRef.current = Math.round(4 + intensity * 16);
+      } else {
+        scrollSpeedRef.current = 0;
+      }
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+      if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
+        return;
+      }
+
+      // Execute drop reorder
+      if (
+        dropTargetIndex !== null &&
+        liftedIndex !== null &&
+        dropTargetIndex !== liftedIndex &&
+        dropTargetIndex >= 0 &&
+        dropTargetIndex < tracksRef.current.length
+      ) {
+        const currentList = [...tracksRef.current];
+        const [movedTrack] = currentList.splice(liftedIndex, 1);
+        currentList.splice(dropTargetIndex, 0, movedTrack);
+
+        if (onReorderTracksRef.current) {
+          onReorderTracksRef.current(currentList);
+        }
+
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          try {
+            navigator.vibrate(18);
+          } catch {}
+        }
+      }
+
+      // Cleanup
+      activePointerIdRef.current = null;
+      setIsDragging(false);
+      setLiftedIndex(null);
+      setDropTargetIndex(null);
+      stopAutoScrollLoop();
+    };
+
+    const handleScrollOrWheel = () => {
+      // Recalculate drop target index as user scrolls using mouse wheel or 2nd finger
+      updateDropTarget(pointerY);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp, { passive: true });
+    window.addEventListener("pointercancel", handlePointerUp, { passive: true });
+    window.addEventListener("scroll", handleScrollOrWheel, { passive: true });
+    window.addEventListener("wheel", handleScrollOrWheel, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+      window.removeEventListener("scroll", handleScrollOrWheel);
+      window.removeEventListener("wheel", handleScrollOrWheel);
+      stopAutoScrollLoop();
+    };
+  }, [isDragging, liftedIndex, dropTargetIndex, pointerY, updateDropTarget, startAutoScrollLoop, stopAutoScrollLoop]);
+
+  // Quick arrow shift handlers for touch & click
   const handleMoveUp = (index: number) => {
     if (!canReorder || index <= 0) return;
     const newTracks = [...tracks];
@@ -123,7 +258,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
     newTracks[index] = newTracks[index - 1];
     newTracks[index - 1] = temp;
     if (onReorderTracks) {
-      onReorderTracks(newTracks, index - 1);
+      onReorderTracks(newTracks);
     }
   };
 
@@ -134,118 +269,9 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
     newTracks[index] = newTracks[index + 1];
     newTracks[index + 1] = temp;
     if (onReorderTracks) {
-      onReorderTracks(newTracks, index + 1);
+      onReorderTracks(newTracks);
     }
   };
-
-  // Native Touch Drag Reordering Handlers (touch-action: none on drag handle)
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    if (!canReorder) return;
-    // Stop propagation so top-level swipe gestures don't intercept touch reordering
-    e.stopPropagation();
-
-    const touch = e.touches[0];
-    if (!touch) return;
-
-    setTouchDragIndex(index);
-    setTouchTargetIndex(index);
-    setTouchStartY(touch.clientY);
-    setTouchCurrentY(touch.clientY);
-
-    // Light haptic feedback if supported
-    if (typeof navigator !== "undefined" && navigator.vibrate) {
-      try {
-        navigator.vibrate(20);
-      } catch {}
-    }
-  };
-
-  const handleTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (touchDragIndex === null || !canReorder) return;
-      e.preventDefault();
-      e.stopPropagation();
-
-      const touch = e.touches[0];
-      if (!touch) return;
-      setTouchCurrentY(touch.clientY);
-
-      // Find which track row is under the touch point using element bounding boxes
-      let closestIndex = touchDragIndex;
-      let minDistance = Infinity;
-
-      rowRefs.current.forEach((el, idx) => {
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const middleY = rect.top + rect.height / 2;
-        const dist = Math.abs(touch.clientY - middleY);
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestIndex = idx;
-        }
-      });
-
-      if (closestIndex !== touchTargetIndex && closestIndex >= 0 && closestIndex < tracks.length) {
-        setTouchTargetIndex(closestIndex);
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-          try {
-            navigator.vibrate(8);
-          } catch {}
-        }
-      }
-    },
-    [touchDragIndex, touchTargetIndex, canReorder, tracks.length]
-  );
-
-  const handleTouchEnd = useCallback(
-    (e: TouchEvent) => {
-      if (touchDragIndex === null) return;
-      e.stopPropagation();
-
-      if (
-        touchTargetIndex !== null &&
-        touchDragIndex !== touchTargetIndex &&
-        touchTargetIndex >= 0 &&
-        touchTargetIndex < tracks.length
-      ) {
-        const newTracks = [...tracks];
-        const [movedTrack] = newTracks.splice(touchDragIndex, 1);
-        newTracks.splice(touchTargetIndex, 0, movedTrack);
-
-        if (onReorderTracks) {
-          onReorderTracks(newTracks, touchTargetIndex);
-        }
-
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-          try {
-            navigator.vibrate(15);
-          } catch {}
-        }
-      }
-
-      setTouchDragIndex(null);
-      setTouchTargetIndex(null);
-      setTouchStartY(0);
-      setTouchCurrentY(0);
-    },
-    [touchDragIndex, touchTargetIndex, tracks, onReorderTracks]
-  );
-
-  // Register window-level non-passive touch listeners during touch drag
-  useEffect(() => {
-    if (touchDragIndex !== null) {
-      const options = { passive: false };
-      window.addEventListener("touchmove", handleTouchMove, options);
-      window.addEventListener("touchend", handleTouchEnd, options);
-      window.addEventListener("touchcancel", handleTouchEnd, options);
-
-      return () => {
-        window.removeEventListener("touchmove", handleTouchMove);
-        window.removeEventListener("touchend", handleTouchEnd);
-        window.removeEventListener("touchcancel", handleTouchEnd);
-      };
-    }
-  }, [touchDragIndex, handleTouchMove, handleTouchEnd]);
 
   if (filteredTracks.length === 0) {
     return (
@@ -261,8 +287,64 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
     );
   }
 
+  const liftedTrack = liftedIndex !== null ? tracks[liftedIndex] : null;
+
   return (
-    <div ref={containerRef} className="space-y-1.5 w-full relative">
+    <div ref={containerRef} className="space-y-1.5 w-full relative select-none">
+      {/* Lifted Song Floating Overlay */}
+      {isDragging && liftedTrack && (
+        <div
+          style={{
+            position: "fixed",
+            left: `${liftedItemLeft}px`,
+            width: `${liftedItemWidth}px`,
+            top: `${pointerY - dragHandleOffsetY}px`,
+            zIndex: 99999,
+            pointerEvents: "none",
+          }}
+          className={`flex items-center justify-between p-3 rounded-2xl ${designConfig.cardBg} ring-2 ${designConfig.accentBorder} shadow-[0_22px_45px_rgba(0,0,0,0.65)] backdrop-blur-md opacity-95 scale-[1.03] transition-transform duration-75`}
+        >
+          {/* Left info */}
+          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+            <div className="w-6 text-center shrink-0">
+              <span className={`text-xs font-mono font-bold ${designConfig.accentText}`}>
+                {(dropTargetIndex !== null ? dropTargetIndex : liftedIndex) + 1}
+              </span>
+            </div>
+            <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md border border-amber-500/40 bg-slate-900">
+              <img
+                src={
+                  liftedTrack.coverUrl ||
+                  (liftedTrack.youtubeVideoId || liftedTrack.id
+                    ? `https://i.ytimg.com/vi/${liftedTrack.youtubeVideoId || liftedTrack.id}/hqdefault.jpg`
+                    : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")
+                }
+                alt={liftedTrack.title}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-bold ${designConfig.accentText} truncate`}>
+                {cleanTrackTitle(liftedTrack.title)}
+              </p>
+              <p className={`text-xs ${designConfig.textMuted} truncate`}>
+                {liftedTrack.artist || "Unknown Artist"}
+              </p>
+            </div>
+          </div>
+
+          {/* Right Handle */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className={`flex items-center gap-1 px-3 py-1.5 ${designConfig.accentBg} text-white rounded-xl shadow-md`}>
+              <GripVertical className="w-4 h-4" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Moving</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Track List */}
       {filteredTracks.map((track, idx) => {
         const trId = track.id || track.youtubeVideoId || `track_${idx}`;
         const isCurrent =
@@ -271,16 +353,8 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
             track.youtubeVideoId === currentTrackId ||
             (track as any).playlistItemId === currentTrackId);
 
-        const isHtml5Dragging = draggedIndex === idx;
-        const isHtml5DropTarget = dragOverIndex === idx && draggedIndex !== idx;
-
-        const isTouchDragging = touchDragIndex === idx;
-        const isTouchDropTarget = touchTargetIndex === idx && touchDragIndex !== idx;
-
-        const isBeingDragged = isHtml5Dragging || isTouchDragging;
-        const isDropTarget = isHtml5DropTarget || isTouchDropTarget;
-
-        const touchDeltaY = isTouchDragging ? touchCurrentY - touchStartY : 0;
+        const isLifted = isDragging && liftedIndex === idx;
+        const isTarget = isDragging && dropTargetIndex === idx && liftedIndex !== idx;
 
         return (
           <div
@@ -289,24 +363,10 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
               if (el) rowRefs.current.set(idx, el);
               else rowRefs.current.delete(idx);
             }}
-            draggable={canReorder}
-            onDragStart={(e) => handleDragStart(e, idx)}
-            onDragOver={(e) => handleDragOver(e, idx)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, idx)}
-            onDragEnd={handleDragEnd}
-            style={{
-              transform: isTouchDragging
-                ? `translate3d(0, ${touchDeltaY}px, 0) scale(1.02)`
-                : undefined,
-              zIndex: isTouchDragging ? 50 : undefined,
-            }}
             className={`group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all select-none border ${
-              canReorder ? "cursor-grab active:cursor-grabbing" : ""
-            } ${
-              isBeingDragged
-                ? `opacity-60 scale-[0.99] border-2 border-dashed ${designConfig.accentBorder} shadow-2xl bg-black/40`
-                : isDropTarget
+              isLifted
+                ? `opacity-25 scale-[0.98] border-2 border-dashed ${designConfig.accentBorder} bg-black/20`
+                : isTarget
                 ? `ring-2 ${designConfig.accentBorder} scale-[1.01] ${designConfig.pillBg} shadow-lg`
                 : isCurrent
                 ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
@@ -388,7 +448,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
               </div>
             </div>
 
-            {/* Right Controls: Duration, Move Arrows, Drag Handle, Add/Remove */}
+            {/* Right Controls: Duration, Move Arrows, Lift Handle, Add/Remove */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <span className={`text-[11px] sm:text-xs font-mono ${designConfig.textMuted}`}>
                 {track.duration && track.duration > 0
@@ -396,7 +456,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                   : "--:--"}
               </span>
 
-              {/* Reorder Mode Controls (Arrows + Touch-Compatible Drag Handle) */}
+              {/* Reorder Mode Controls (Arrows + Touch/Pointer Drag Handle) */}
               {canReorder && (
                 <div className="flex items-center gap-1.5">
                   <button
@@ -424,18 +484,24 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Drag Handle with touch-action: none for native touchscreen drag */}
+                  {/* Drag & Lift Handle */}
                   <div
-                    onTouchStart={(e) => handleTouchStart(e, idx)}
+                    onPointerDown={(e) => handlePointerDown(e, idx)}
                     style={{ touchAction: "none" }}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 ${designConfig.pillBg} border ${designConfig.accentBorder} ${designConfig.accentText} rounded-xl cursor-grab active:cursor-grabbing hover:opacity-90 transition-all shadow-sm select-none`}
-                    title="Drag to reorder"
+                    className={`flex items-center gap-1 px-3 py-1.5 ${
+                      isLifted
+                        ? `${designConfig.accentBg} text-white`
+                        : `${designConfig.pillBg} border ${designConfig.accentBorder} ${designConfig.accentText}`
+                    } rounded-xl cursor-grab active:cursor-grabbing hover:opacity-90 transition-all shadow-sm select-none`}
+                    title="Hold and drag to lift & reposition song"
                     role="button"
                     tabIndex={0}
-                    aria-label={`Drag to reorder song ${idx + 1}`}
+                    aria-label={`Hold to drag and reorder song ${idx + 1}`}
                   >
                     <GripVertical className="w-4 h-4 shrink-0" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Drag</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">
+                      {isLifted ? "Lifted" : "Hold"}
+                    </span>
                   </div>
                 </div>
               )}
@@ -460,7 +526,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
               )}
 
               {/* Remove Song from Playlist */}
-              {!isAlbum && onRemoveTrack && (
+              {!isAlbum && onRemoveTrack && !isReorderMode && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
