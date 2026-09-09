@@ -249,3 +249,304 @@ export function stitchCustomArtworkToPlaylists(playlists: Playlist[]): Playlist[
     };
   });
 }
+
+/**
+ * 4. Check if a track already exists in a given playlist (by video ID or track ID)
+ */
+export function checkTrackDuplicateInPlaylist(
+  playlist: Playlist | { tracks?: Track[]; id?: string } | null | undefined,
+  track: Track | null | undefined
+): { isDuplicate: boolean; existingTrack?: Track } {
+  if (!playlist || !playlist.tracks || !track) {
+    return { isDuplicate: false };
+  }
+
+  const cleanVideoId = (id?: string) => {
+    if (!id) return "";
+    let clean = id.trim();
+    if (clean.includes("watch?v=")) clean = clean.split("watch?v=")[1].split("&")[0];
+    else if (clean.includes("youtu.be/")) clean = clean.split("youtu.be/")[1].split("?")[0];
+    return clean.replace(/[^a-zA-Z0-9_-]/g, "");
+  };
+
+  const targetVid = cleanVideoId(track.youtubeVideoId || track.id);
+  if (!targetVid) return { isDuplicate: false };
+
+  const existingTrack = playlist.tracks.find((t) => {
+    const tVid = cleanVideoId(t.youtubeVideoId || t.id);
+    return tVid === targetVid || t.id === track.id;
+  });
+
+  return {
+    isDuplicate: Boolean(existingTrack),
+    existingTrack,
+  };
+}
+
+/**
+ * Helper to get active authorization header
+ */
+function getActiveAuthHeaders(tokenOverride?: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+  };
+
+  let token = tokenOverride;
+  if (!token) {
+    try {
+      const inMem = (window as any).__OBLIVION_ACCESS_TOKEN;
+      if (inMem) token = inMem;
+    } catch {}
+  }
+  if (!token) {
+    try {
+      const saved = localStorage.getItem("oblivion_saved_user");
+      if (saved) token = JSON.parse(saved)?.accessToken;
+    } catch {}
+  }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+/**
+ * 5. Authoritative Fetch Playlist Items directly from server/YouTube API
+ */
+export async function fetchPlaylistItems(
+  playlistId: string,
+  options?: { forceRefresh?: boolean; token?: string }
+): Promise<{
+  tracks: Track[];
+  coverUrl?: string;
+  customCoverUrl?: string;
+  isCustomCover?: boolean;
+  thumbnails?: YouTubeThumbnails;
+}> {
+  if (!playlistId) return { tracks: [] };
+  const cleanId = playlistId.replace(/^VL/, "");
+  const headers = getActiveAuthHeaders(options?.token);
+
+  const queryParams = new URLSearchParams({
+    refresh: "true",
+    force: "true",
+    sync: "true",
+    _t: String(Date.now()),
+  });
+
+  try {
+    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items?${queryParams}`, {
+      headers,
+    });
+    if (!res.ok) {
+      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/items?${queryParams}`, {
+        headers,
+      });
+    }
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({ tracks: [] }));
+      const tracks: Track[] = Array.isArray(data.tracks) ? data.tracks : [];
+      return {
+        tracks,
+        coverUrl: data.coverUrl || data.customCoverUrl,
+        customCoverUrl: data.customCoverUrl,
+        isCustomCover: data.isCustomCover,
+        thumbnails: data.thumbnails,
+      };
+    }
+  } catch (err) {
+    console.error(`[playlistService] fetchPlaylistItems error for ${cleanId}:`, err);
+  }
+
+  return { tracks: [] };
+}
+
+/**
+ * 6. Isolated Single-Action Handler: ADD TRACK & IMMEDIATE YOUTUBE RESYNC
+ * Disables optimistic local state mutations prior to API success.
+ * Performs single insert request -> on success, triggers immediate authoritative resync.
+ */
+export async function addTrackToPlaylist(
+  playlistId: string,
+  track: Track,
+  options?: { allowDuplicate?: boolean; token?: string }
+): Promise<{
+  success: boolean;
+  tracks: Track[];
+  syncedToYouTube: boolean;
+  newPlaylistItemId?: string;
+  error?: string;
+}> {
+  if (!playlistId || !track) {
+    return { success: false, tracks: [], syncedToYouTube: false, error: "Missing playlist or track parameter" };
+  }
+
+  const cleanId = playlistId.replace(/^VL/, "");
+  const headers = {
+    ...getActiveAuthHeaders(options?.token),
+    "Content-Type": "application/json",
+  };
+
+  try {
+    // 1. Single API request: POST /api/youtube/playlists/:id/items
+    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        track,
+        allowDuplicate: Boolean(options?.allowDuplicate),
+      }),
+    });
+
+    if (!res.ok) {
+      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/items`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          track,
+          allowDuplicate: Boolean(options?.allowDuplicate),
+        }),
+      });
+    }
+
+    if (res.ok) {
+      const resultData = await res.json().catch(() => ({ success: true }));
+      // 2. Immediate Authoritative Resync: trigger GET /api/playlists/:id/items from YouTube Music API
+      const freshData = await fetchPlaylistItems(cleanId, {
+        forceRefresh: true,
+        token: options?.token,
+      });
+
+      return {
+        success: true,
+        tracks: freshData.tracks,
+        syncedToYouTube: Boolean(resultData?.syncedToYouTube),
+        newPlaylistItemId: resultData?.track?.playlistItemId || resultData?.track?.id,
+      };
+    } else {
+      const errText = await res.text().catch(() => "Failed to add track");
+      return { success: false, tracks: [], syncedToYouTube: false, error: errText };
+    }
+  } catch (err: any) {
+    console.error(`[playlistService] addTrackToPlaylist error for ${cleanId}:`, err);
+    return { success: false, tracks: [], syncedToYouTube: false, error: err?.message || "Network error" };
+  }
+}
+
+/**
+ * 7. Isolated Single-Action Handler: REMOVE TRACK & IMMEDIATE YOUTUBE RESYNC
+ * Sends a single delete request using target playlistItemId -> immediate authoritative resync.
+ */
+export async function removeTrackFromPlaylist(
+  playlistId: string,
+  trackIdOrPlaylistItemId: string,
+  options?: { token?: string }
+): Promise<{
+  success: boolean;
+  tracks: Track[];
+  syncedToYouTube: boolean;
+  error?: string;
+}> {
+  if (!playlistId || !trackIdOrPlaylistItemId) {
+    return { success: false, tracks: [], syncedToYouTube: false, error: "Missing parameter" };
+  }
+
+  const cleanId = playlistId.replace(/^VL/, "");
+  const cleanTrackId = encodeURIComponent(trackIdOrPlaylistItemId);
+  const headers = getActiveAuthHeaders(options?.token);
+
+  try {
+    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items/${cleanTrackId}`, {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!res.ok) {
+      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/items/${cleanTrackId}`, {
+        method: "DELETE",
+        headers,
+      });
+    }
+
+    if (res.ok || res.status === 204) {
+      const resultData = await res.json().catch(() => ({ success: true, syncedToYouTube: true }));
+      // Immediate Authoritative Resync
+      const freshData = await fetchPlaylistItems(cleanId, {
+        forceRefresh: true,
+        token: options?.token,
+      });
+
+      return {
+        success: true,
+        tracks: freshData.tracks,
+        syncedToYouTube: Boolean(resultData?.syncedToYouTube ?? true),
+      };
+    } else {
+      const errText = await res.text().catch(() => "Failed to remove track");
+      return { success: false, tracks: [], syncedToYouTube: false, error: errText };
+    }
+  } catch (err: any) {
+    console.error(`[playlistService] removeTrackFromPlaylist error:`, err);
+    return { success: false, tracks: [], syncedToYouTube: false, error: err?.message || "Network error" };
+  }
+}
+
+/**
+ * 8. Reorder Playlist Tracks & IMMEDIATE YOUTUBE RESYNC
+ * Issues youtube.playlistItems.update position requests -> immediate authoritative resync.
+ */
+export async function reorderPlaylistTracks(
+  playlistId: string,
+  tracks: Track[],
+  options?: { token?: string }
+): Promise<{
+  success: boolean;
+  tracks: Track[];
+  syncedToYouTube: boolean;
+  error?: string;
+}> {
+  if (!playlistId) return { success: false, tracks: [], syncedToYouTube: false };
+  const cleanId = playlistId.replace(/^VL/, "");
+  const headers = {
+    ...getActiveAuthHeaders(options?.token),
+    "Content-Type": "application/json",
+  };
+
+  try {
+    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/reorder`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ tracks }),
+    });
+
+    if (!res.ok) {
+      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/reorder`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ tracks }),
+      });
+    }
+
+    if (res.ok) {
+      const resultData = await res.json().catch(() => ({ success: true }));
+      const freshData = await fetchPlaylistItems(cleanId, {
+        forceRefresh: true,
+        token: options?.token,
+      });
+
+      return {
+        success: true,
+        tracks: freshData.tracks.length > 0 ? freshData.tracks : tracks,
+        syncedToYouTube: Boolean(resultData?.syncedToYouTube),
+      };
+    }
+  } catch (err: any) {
+    console.error(`[playlistService] reorderPlaylistTracks error:`, err);
+  }
+
+  return { success: false, tracks, syncedToYouTube: false };
+}
+

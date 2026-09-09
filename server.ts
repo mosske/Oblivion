@@ -2731,7 +2731,7 @@ app.get("/api/youtube/playlists/:id/custom-cover", async (req, res) => {
   }
 });
 
-app.get("/api/youtube/playlists/:id/items", async (req, res) => {
+app.get(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async (req, res) => {
   const { id } = req.params;
   const title = (req.query.title as string) || "";
   const artist = (req.query.artist as string) || "";
@@ -4105,16 +4105,16 @@ async function syncPlaylistTracksToYouTube(
   };
 }
 
-app.put("/api/youtube/playlists/:id/reorder", async (req, res) => {
+app.put(["/api/youtube/playlists/:id/reorder", "/api/playlists/:id/reorder"], async (req, res) => {
   const { id } = req.params;
   const { tracks } = req.body;
   const result = await syncPlaylistTracksToYouTube(req, id, tracks || [], { allowInsert: false });
   res.json(result);
 });
 
-app.post("/api/youtube/playlists/:id/items", async (req, res) => {
+app.post(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async (req, res) => {
   const { id } = req.params;
-  const { track } = req.body;
+  const { track, allowDuplicate } = req.body;
   const cleanPlId = id.replace(/^VL/, "");
 
   if (!track) {
@@ -4138,7 +4138,7 @@ app.post("/api/youtube/playlists/:id/items", async (req, res) => {
         const tVid = extractCleanVideoId(t.youtubeVideoId || t.id);
         return tVid === vId;
       });
-      if (!exists) {
+      if (!exists || allowDuplicate) {
         foundInSession.tracks.push(cleanTrack);
         foundInSession.tracksCount = foundInSession.tracks.length;
       }
@@ -4153,7 +4153,7 @@ app.post("/api/youtube/playlists/:id/items", async (req, res) => {
         const tVid = extractCleanVideoId(t.youtubeVideoId || t.id);
         return tVid === vId;
       });
-      if (!exists) {
+      if (!exists || allowDuplicate) {
         foundInDisk.tracks.push(cleanTrack);
         foundInDisk.tracksCount = foundInDisk.tracks.length;
       }
@@ -4326,7 +4326,7 @@ app.post("/api/youtube/playlists/:id/items", async (req, res) => {
   });
 });
 
-app.delete("/api/youtube/playlists/:id/items/:trackId", async (req, res) => {
+app.delete(["/api/youtube/playlists/:id/items/:trackId", "/api/playlists/:id/items/:trackId"], async (req, res) => {
   const { id, trackId } = req.params;
   const cleanPlId = id.replace(/^VL/, "");
   const decodedTrackId = decodeURIComponent(trackId);

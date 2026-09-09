@@ -33,6 +33,7 @@ import {
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCustomCoverModal } from "./PlaylistCustomCoverModal";
+import { PlaylistTrackList } from "./PlaylistTrackList";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
@@ -375,6 +376,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isReorderMode) return;
     if (e.touches.length !== 1) return;
     // Only allow swipe down if we are at the top of the viewport
     const currentScrollY = typeof window !== "undefined" ? window.scrollY : 0;
@@ -701,186 +703,28 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               </button>
             </div>
           ) : (
-            <div className="space-y-1.5">
-              {filteredTracks.map((track, idx) => {
-                const trId = track.id || track.youtubeVideoId;
-                const isCurrent = currentTrackId === trId;
-                const isBeingDragged = draggedIndex === idx;
-                const isDropTarget = dragOverIndex === idx && draggedIndex !== idx;
-
-                return (
-                  <div
-                    key={`${trId || 'tr'}_${idx}`}
-                    draggable={isReorderMode && !inViewSearch.trim()}
-                    onDragStart={(e) => isReorderMode && !inViewSearch.trim() && handleDragStart(e, idx)}
-                    onDragOver={(e) => isReorderMode && !inViewSearch.trim() && handleDragOver(e, idx)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => isReorderMode && !inViewSearch.trim() && handleDrop(e, idx)}
-                    onDragEnd={handleDragEnd}
-                    className={`group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all ${
-                      isReorderMode ? `cursor-grab active:cursor-grabbing border ${designConfig.accentBorder}` : ""
-                    } ${
-                      isBeingDragged
-                        ? `opacity-40 scale-[0.98] border-2 border-dashed ${designConfig.accentBorder}`
-                        : isDropTarget
-                        ? `ring-2 ${designConfig.accentBorder} scale-[1.01] ${designConfig.pillBg} shadow-lg`
-                        : isCurrent
-                        ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
-                        : `${designConfig.cardBg} ${designConfig.cardHover}`
-                    }`}
-                  >
-                    {/* Left: Index / Play / Cover / Track Details */}
-                    <div
-                      onClick={() => {
-                        if (!isReorderMode) {
-                          onPlayQueue(filteredTracks, idx);
-                        }
-                      }}
-                      className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 cursor-pointer"
-                    >
-                      {/* Track number or active equalizer */}
-                      <div className="w-6 text-center shrink-0">
-                        {isCurrent && isPlaying ? (
-                          <div className="flex items-end justify-center gap-0.5 h-4" title="Currently Playing">
-                            <span className={`w-1 h-3 rounded-full animate-bounce bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
-                            <span className={`w-1 h-4 rounded-full animate-bounce delay-75 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
-                            <span className={`w-1 h-2 rounded-full animate-bounce delay-150 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`}></span>
-                          </div>
-                        ) : (
-                          <span className={`text-xs font-mono font-medium ${isCurrent ? designConfig.accentText : designConfig.textMuted}`}>
-                            {idx + 1}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Thumbnail Cover */}
-                      <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-black/10 bg-slate-800 flex items-center justify-center">
-                        <img
-                          src={track.coverUrl || (track.youtubeVideoId || track.id ? `https://i.ytimg.com/vi/${track.youtubeVideoId || track.id}/hqdefault.jpg` : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80")}
-                          alt={track.title}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                          loading="lazy"
-                          onError={(e) => {
-                            const currentSrc = e.currentTarget.src || "";
-                            const vId = track.youtubeVideoId || track.id;
-                            if (vId && (currentSrc.includes("maxresdefault.jpg") || currentSrc.includes("sddefault.jpg"))) {
-                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
-                            } else if (vId && currentSrc.includes("hqdefault.jpg")) {
-                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
-                            } else if (vId && currentSrc.includes("mqdefault.jpg")) {
-                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/default.jpg`;
-                            } else {
-                              e.currentTarget.src = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80";
-                            }
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <Play className="w-4 h-4 text-white fill-white" />
-                        </div>
-                      </div>
-
-                      {/* Title & Artist */}
-                      <div className="flex-1 min-w-0">
-                        <MarqueeText
-                          text={cleanTrackTitle(track.title)}
-                          className={`text-xs sm:text-sm font-semibold ${
-                            isCurrent ? designConfig.accentText : designConfig.textPrimary
-                          } group-hover:${designConfig.accentText} transition-colors`}
-                          containerClassName="w-full"
-                          speed={30}
-                        />
-                        <MarqueeText
-                          text={track.artist || (isAlbum ? (item as Album).artist : "Unknown Artist")}
-                          className={`text-[11px] sm:text-xs ${designConfig.textMuted}`}
-                          containerClassName="w-full"
-                          speed={26}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Right Controls: Duration, Move Arrows, Drag Handle, Add/Remove */}
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                      <span className={`text-[11px] sm:text-xs font-mono ${designConfig.textMuted}`}>
-                        {track.duration && track.duration > 0
-                          ? `${Math.floor(track.duration / 60)}:${String(Math.floor(track.duration % 60)).padStart(2, "0")}`
-                          : "--:--"}
-                      </span>
-
-                      {/* Move Up / Down and Drag Handles in Reorder Mode */}
-                      {isReorderMode && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMoveUp(idx);
-                            }}
-                            disabled={idx === 0}
-                            className="p-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 transition-colors"
-                            title="Move Up"
-                          >
-                            <ChevronUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMoveDown(idx);
-                            }}
-                            disabled={idx === tracks.length - 1}
-                            className="p-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none text-zinc-200 transition-colors"
-                            title="Move Down"
-                          >
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </button>
-                          <div
-                            className={`flex items-center gap-1 px-2 py-1 ${designConfig.pillBg} border ${designConfig.accentBorder} ${designConfig.accentText} rounded-lg cursor-grab active:cursor-grabbing hover:opacity-90 transition-all shadow-sm select-none`}
-                            title="Drag to reorder"
-                          >
-                            <GripVertical className="w-3.5 h-3.5 shrink-0" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Drag</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Add to another playlist */}
-                      {!isReorderMode && (onOpenAddToPlaylistModal || onAddTrackToPlaylist) && (
-                        <button
-                          id={`playlist-detail-add-track-btn-${trId}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onOpenAddToPlaylistModal) {
-                              onOpenAddToPlaylistModal(track);
-                            } else if (onAddTrackToPlaylist && playlists.length > 0) {
-                              onAddTrackToPlaylist(track, playlists[0].id);
-                            }
-                          }}
-                          className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:${designConfig.accentText} rounded-lg hover:bg-black/10 transition-colors`}
-                          title="Add to another playlist"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      {/* Remove Song from Playlist */}
-                      {!isAlbum && onRemoveTrack && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(`Remove "${track.title}" from this playlist?`)) {
-                              handleRemoveTrackInternal(trId);
-                            }
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
-                          title="Remove Song"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <PlaylistTrackList
+              tracks={tracks}
+              isAlbum={isAlbum}
+              item={item}
+              isReorderMode={isReorderMode}
+              inViewSearch={inViewSearch}
+              currentTrackId={currentTrackId}
+              isPlaying={isPlaying}
+              playlists={playlists}
+              designConfig={designConfig}
+              onPlayTrack={onPlayTrack}
+              onPlayQueue={onPlayQueue}
+              onReorderTracks={(newTracks) => {
+                setTracks(newTracks);
+                if (!isAlbum && onReorderTracks) {
+                  onReorderTracks(newTracks);
+                }
+              }}
+              onRemoveTrack={handleRemoveTrackInternal}
+              onOpenAddToPlaylistModal={onOpenAddToPlaylistModal}
+              onAddTrackToPlaylist={onAddTrackToPlaylist}
+            />
           )}
         </div>
       </div>
