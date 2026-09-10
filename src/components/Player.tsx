@@ -2104,7 +2104,7 @@ export const Player: React.FC<PlayerProps> = ({
                   title="Click to open Full Player"
                 >
                   <MarqueeText
-                    text={cleanTrackTitle(currentTrack.title)}
+                    text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
                     className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors text-center`}
                     containerClassName="w-full max-w-[200px] xs:max-w-[250px] sm:max-w-[320px] mx-auto text-center"
                     speed={28}

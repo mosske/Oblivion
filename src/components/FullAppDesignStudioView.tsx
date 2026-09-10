@@ -316,7 +316,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
               className="w-12 h-12 rounded-xl object-cover shadow-md border border-slate-700"
             />
             <div>
-              <h4 className="text-sm font-bold text-white truncate max-w-xs">{cleanTrackTitle(currentTrack.title)}</h4>
+              <h4 className="text-sm font-bold text-white truncate max-w-xs">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</h4>
               <p className="text-xs text-slate-400">{currentTrack.artist}</p>
             </div>
           </div>

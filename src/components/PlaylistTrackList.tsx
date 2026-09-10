@@ -501,7 +501,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <p className={`text-xs sm:text-sm font-bold ${designConfig.accentText} truncate drop-shadow-sm`}>
-                {cleanTrackTitle(liftedTrack.title)}
+                {cleanTrackTitle(liftedTrack.title, liftedTrack.artist)}
               </p>
               <p className={`text-[11px] sm:text-xs ${designConfig.textMuted} truncate`}>
                 {liftedTrack.artist || "Unknown Artist"}
@@ -657,7 +657,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
               {/* Title & Artist */}
               <div className="flex-1 min-w-0">
                 <MarqueeText
-                  text={cleanTrackTitle(track.title)}
+                  text={cleanTrackTitle(track.title, track.artist)}
                   className={`text-xs sm:text-sm font-semibold ${
                     isCurrent ? designConfig.accentText : designConfig.textPrimary
                   } group-hover:${designConfig.accentText} transition-colors`}

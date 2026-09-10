@@ -210,8 +210,8 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
   // Strip anything following - Remastered or - Live or - Acoustic etc.
   title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?(?:\s+\d{4})?|live(?:\s+at[^)\]]+)?|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary|radio\s+edit|single\s+version|original\s+mix|clean\s+version|explicit\s+version|extended\s+mix|club\s+mix).*$/i, "");
 
-  // Strip bullet / pipe / slash metadata channel tags (e.g. "• TopPop", "• VEVO", "• Colors", "| Official", "/ Warner Music", etc.)
-  title = title.replace(/\s*[•|~–—/\\:]\s*(?:TopPop|Vevo|Colors|BBC|Live|Sessions?|Official|Show|Studio|Acoustic|Remaster(?:ed)?|Album\s+Version|Extended|Video|Audio|4K|HD|HQ|MV|Visualizer|Pop\s+Bilik\s+Tidur).*$/i, "");
+  // Strip bullet / pipe channel metadata tags (e.g. "• TopPop", "• VEVO", "• Colors", "| Official", etc.) - DO NOT strip colons
+  title = title.replace(/\s+[•|~]\s*(?:TopPop|Vevo|Colors|BBC|Live|Sessions?|Official|Show|Studio|Acoustic|Remaster(?:ed)?|Album\s+Version|Extended|Video|Audio|4K|HD|HQ|MV|Visualizer|Pop\s+Bilik\s+Tidur).*$/i, "");
 
   // Strip years in parentheses or brackets like (1976), [2021]
   title = title.replace(/\s*[\(\[]\s*(?:19\d{2}|20\d{2})\s*[\)\]]/gi, " ");
@@ -221,16 +221,12 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
     title = title.replace(pattern, " ");
   }
 
-  // Strip (feat. ...), [feat. ...], (ft. ...), [ft. ...]
-  title = title.replace(/[\(\[]\s*(?:feat\.?|ft\.?|featuring|with)\s+[^()\[\]]+[\)\]]/gi, " ");
-  title = title.replace(/\s+(?:feat\.?|ft\.?|featuring)\s+.+$/i, " ");
-
   // Strip empty/dangling brackets
   title = title.replace(/\(\s*\)/g, " ").replace(/\[\s*\]/g, " ").replace(/\{\s*\}/g, " ").trim();
   title = title.replace(/\s{2,}/g, " ").trim();
 
-  // If title is "Artist - Title", isolate the title portion ONLY if one side matches the artist or artist is generic
-  const delimiterMatch = title.match(/^(.+?)\s+[-–—:|~]\s+(.+)$/);
+  // If title is "Artist - Title", isolate the title portion ONLY if one side matches the artist (ONLY match hyphens/dashes [-–—], NEVER colons ":")
+  const delimiterMatch = title.match(/^(.+?)\s+[-–—]\s+(.+)$/);
   if (delimiterMatch) {
     const left = delimiterMatch[1].trim();
     const right = delimiterMatch[2].trim();
@@ -266,14 +262,12 @@ export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
       // If artist is generic (Topic, Various Artists, VEVO, etc.), assume Left is Artist and Right is Title
       else if (
         /topic|various\s+artists|records|vevo|official|channel/i.test(artistName) &&
-        right.length > 0
+        right.length > 0 &&
+        !left.includes(":")
       ) {
         title = right;
       }
       // Otherwise, the delimiter is part of the song title! (Do NOT discard left!)
-    } else if (right.length > 0) {
-      // No artist provided: assume "Artist - Title" format
-      title = right;
     }
   }
 

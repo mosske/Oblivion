@@ -218,7 +218,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
                     <div className="flex-1 min-w-0">
                       <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                        {cleanTrackTitle(album.title)}
+                        {cleanTrackTitle(album.title, album.artist)}
                       </h3>
                       <p className={`text-xs ${designConfig.textMuted} truncate mt-0.5`}>
                         {album.artist}
@@ -315,7 +315,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                         {/* Track Info */}
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title)}
+                            {cleanTrackTitle(track.title, track.artist)}
                           </p>
                           <p className={`text-xs ${designConfig.textMuted} truncate`}>
                             {track.artist}
@@ -392,7 +392,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
                       <div className="flex-1 min-w-0">
                         <h3 className={`font-bold text-xs ${isCurrent ? designConfig.accentText : designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                          {cleanTrackTitle(video.title)}
+                          {cleanTrackTitle(video.title, video.artist)}
                         </h3>
                         <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
                           {video.artist}

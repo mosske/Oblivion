@@ -279,7 +279,7 @@ export const LayoutsTestView: React.FC<LayoutsTestViewProps> = ({
                             </div>
                           </div>
                           <div className="min-w-0">
-                            <h4 className="text-xs sm:text-sm font-bold text-white truncate">{cleanTrackTitle(currentTrack.title)}</h4>
+                            <h4 className="text-xs sm:text-sm font-bold text-white truncate">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</h4>
                             <p className="text-[11px] text-cyan-300/80 truncate">{currentTrack.artist}</p>
                           </div>
                         </div>
@@ -312,7 +312,7 @@ export const LayoutsTestView: React.FC<LayoutsTestViewProps> = ({
                           <div className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer" onClick={onOpenFullscreen}>
                             <img src={currentTrack.coverUrl} alt="" className="w-10 h-10 rounded object-cover shrink-0" />
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium text-white truncate">{cleanTrackTitle(currentTrack.title)}</p>
+                              <p className="text-xs sm:text-sm font-medium text-white truncate">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</p>
                               <p className="text-xs text-zinc-400 truncate">{currentTrack.artist}</p>
                             </div>
                           </div>
@@ -337,7 +337,7 @@ export const LayoutsTestView: React.FC<LayoutsTestViewProps> = ({
                           <div className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onClick={onOpenFullscreen}>
                             <img src={currentTrack.coverUrl} alt="" className={`w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-cyan-400 ${isPlaying ? "animate-spin-slow" : ""}`} />
                             <div className="min-w-0">
-                              <p className="text-xs font-bold text-white truncate">{cleanTrackTitle(currentTrack.title)}</p>
+                              <p className="text-xs font-bold text-white truncate">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</p>
                               <p className="text-[10px] text-slate-400 truncate">{currentTrack.artist}</p>
                             </div>
                           </div>
@@ -366,7 +366,7 @@ export const LayoutsTestView: React.FC<LayoutsTestViewProps> = ({
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-[9px] font-mono px-1 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">HQ AUDIO</span>
-                                <p className="text-xs sm:text-sm font-bold text-white truncate">{cleanTrackTitle(currentTrack.title)}</p>
+                                <p className="text-xs sm:text-sm font-bold text-white truncate">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</p>
                               </div>
                               <p className="text-xs text-indigo-200/70 truncate">{currentTrack.artist}</p>
                             </div>
@@ -410,7 +410,7 @@ export const LayoutsTestView: React.FC<LayoutsTestViewProps> = ({
                           <div className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onClick={onOpenFullscreen}>
                             <img src={currentTrack.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 border border-slate-700" />
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-semibold text-white truncate">{cleanTrackTitle(currentTrack.title)}</p>
+                              <p className="text-xs sm:text-sm font-semibold text-white truncate">{cleanTrackTitle(currentTrack.title, currentTrack.artist)}</p>
                               <p className="text-[11px] text-slate-400 truncate">{currentTrack.artist}</p>
                             </div>
                           </div>

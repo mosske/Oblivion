@@ -247,7 +247,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                         <div className="flex-1 min-w-0">
                           <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title)}
+                            {cleanTrackTitle(track.title, track.artist)}
                           </p>
                           <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
                             {track.artist}
@@ -323,7 +323,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                         <div className="flex-1 min-w-0">
                           <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title)}
+                            {cleanTrackTitle(track.title, track.artist)}
                           </p>
                           <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
                             {track.artist}
@@ -472,7 +472,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                         <div className="flex-1 min-w-0">
                           <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title)}
+                            {cleanTrackTitle(track.title, track.artist)}
                           </p>
                           <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
                             {track.artist}
@@ -529,7 +529,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                     <div className="flex-1 min-w-0">
                       <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                        {cleanTrackTitle(album.title)}
+                        {cleanTrackTitle(album.title, album.artist)}
                       </h3>
                       <p className={`text-xs ${designConfig.textMuted} truncate mt-0.5`}>
                         {album.artist}
@@ -609,7 +609,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                         <div className="flex-1 min-w-0">
                           <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title)}
+                            {cleanTrackTitle(track.title, track.artist)}
                           </p>
                           <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
                             {track.artist}
