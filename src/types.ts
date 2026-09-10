@@ -1,6 +1,7 @@
 export interface Track {
   id: string;
   youtubeVideoId?: string;
+  playlistItemId?: string;
   title: string;
   artist: string;
   uploader?: string;
@@ -48,7 +49,12 @@ export interface Playlist {
   customArtwork?: string; // Custom artwork mapping alias
   isCustomCover?: boolean;
   isYouTubeSynced?: boolean;
+  itemCount?: number;
+  trackCount?: number;
   tracksCount: number;
+  contentDetails?: {
+    itemCount?: number;
+  };
   updatedAt?: string;
   tracks: Track[];
   artist?: string;

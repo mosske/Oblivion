@@ -56,7 +56,7 @@ interface PlaylistDetailViewProps {
   onEditPlaylist?: (playlist: Playlist) => void;
   onUpdateCover?: (coverUrl: string, isCustom: boolean) => void;
   onReorderTracks?: (newTracks: Track[]) => void;
-  onRemoveTrack?: (trackId: string) => void;
+  onRemoveTrack?: (trackId: string, track?: Track) => void;
   onAddToQueue?: (track: Track) => void;
   onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
   onOpenAddToPlaylistModal?: (track: Track) => void;
@@ -100,7 +100,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         <p className="text-sm text-slate-400 mb-4">No playlist or album selected.</p>
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-[#c89b3c] hover:bg-[#b58b34] text-slate-950 font-bold rounded-xl text-xs"
+          className={`px-4 py-2 ${designConfig.btnPrimary} text-xs`}
         >
           Return to Library
         </button>
@@ -122,6 +122,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   });
 
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
+  const [localTracks, setLocalTracks] = useState<Track[]>([]);
   const [openPlaylistDropdownId, setOpenPlaylistDropdownId] = useState<string | null>(null);
   const [isCustomCoverModalOpen, setIsCustomCoverModalOpen] = useState<boolean>(false);
   const [isLoadingTracks, setIsLoadingTracks] = useState<boolean>(!item.tracks || item.tracks.length === 0);
@@ -171,6 +172,9 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
   // Execute silent background track fetch on open
   const executeSilentFetch = async () => {
+    // Freeze background polling and auto-refetches while reorder mode is active
+    if (isReorderMode) return;
+
     try {
       let activeToken = getInMemoryToken() || "";
       if (!activeToken) {
@@ -201,24 +205,22 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           .filter(Boolean)
           .map((t: any, idx: number) => {
             const vidId = t.youtubeVideoId || t.id;
+            const uniqueId = t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : `${vidId || "track"}_${idx}`);
             return {
               ...t,
-              id: t.id ? String(t.id) : (vidId ? `${vidId}_${idx}` : `track_${idx}`),
+              id: uniqueId,
+              playlistItemId: t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : undefined),
               youtubeVideoId: vidId || t.id,
             };
           });
 
-        // Merge with existing in-memory/cached tracks if any are missing from the network response
-        const liveVidIds = new Set(clean.map((t) => (t.youtubeVideoId || t.id || "").replace(/^VL/, "")));
-        const existingTrackList = tracks.length > 0 ? tracks : (item.tracks || []);
-        const missingLocalTracks = existingTrackList.filter((t) => {
-          const vId = (t.youtubeVideoId || t.id || "").replace(/^VL/, "");
-          return vId && !liveVidIds.has(vId);
-        });
-
-        const merged = missingLocalTracks.length > 0 ? [...clean, ...missingLocalTracks] : clean;
-        setTracks(merged);
-        savePlaylistTracksToDBCache(item.id, merged);
+        // Set authoritative YouTube tracks directly - preserves all songs and duplicates
+        setTracks(clean);
+        savePlaylistTracksToDBCache(item.id, clean);
+        try {
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id}`, JSON.stringify(clean));
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id.replace(/^VL/, "")}`, JSON.stringify(clean));
+        } catch {}
       }
       setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {
@@ -243,11 +245,32 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const initialTracksBeforeReorder = useRef<Track[]>([]);
 
   // Remove track
-  const handleRemoveTrackInternal = (trackId: string) => {
-    const updated = tracks.filter((t) => (t.id || t.youtubeVideoId) !== trackId);
+  const handleRemoveTrackInternal = (trackId: string, trackObj?: Track) => {
+    const targetTrack = trackObj || tracks.find((t) => (t.id || t.youtubeVideoId) === trackId || (t as any).playlistItemId === trackId);
+    const updated = tracks.filter((t) => {
+      if (targetTrack && t === targetTrack) return false;
+      const tVid = t.youtubeVideoId || t.id;
+      return t.id !== trackId && tVid !== trackId && (t as any).playlistItemId !== trackId;
+    });
     setTracks(updated);
+    savePlaylistTracksToDBCache(item.id, updated);
+    try {
+      localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id}`, JSON.stringify(updated));
+      localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id.replace(/^VL/, "")}`, JSON.stringify(updated));
+    } catch {}
+
+    if (isReorderMode) {
+      setLocalTracks((prev) =>
+        prev.filter((t) => {
+          if (targetTrack && t === targetTrack) return false;
+          const tVid = t.youtubeVideoId || t.id;
+          return t.id !== trackId && tVid !== trackId && (t as any).playlistItemId !== trackId;
+        })
+      );
+    }
     if (!isAlbum && onRemoveTrack) {
-      onRemoveTrack(trackId);
+      const bestId = (targetTrack as any)?.playlistItemId || targetTrack?.youtubeVideoId || targetTrack?.id || trackId;
+      onRemoveTrack(bestId, targetTrack);
     }
   };
 
@@ -256,27 +279,37 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     if (isReorderMode) {
       await handleDoneReordering();
     } else {
-      initialTracksBeforeReorder.current = [...tracks];
+      const currentList = safeTracks.length > 0 ? [...safeTracks] : [...(item.tracks || [])];
+      initialTracksBeforeReorder.current = currentList;
+      setLocalTracks(currentList);
       setIsReorderMode(true);
     }
   };
 
-  // Save new layout and immediately push & pull from YouTube
+  // Save new layout and immediately push single batch commit to YouTube (optimistic local persistence only)
   const handleDoneReordering = async () => {
     if (isSyncingOrder) return;
     setIsSyncingOrder(true);
+    const tracksToSave = localTracks.length > 0 ? localTracks : safeTracks;
+    
+    // 1. Commit to local UI tracks and write directly to persistent storage
+    setTracks(tracksToSave);
+    savePlaylistTracksToDBCache(item.id, tracksToSave);
+    try {
+      localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id}`, JSON.stringify(tracksToSave));
+      localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id.replace(/^VL/, "")}`, JSON.stringify(tracksToSave));
+    } catch {}
+
     try {
       if (!isAlbum && onReorderTracks) {
-        const result: any = await onReorderTracks(tracks);
-        if (result && Array.isArray(result.tracks) && result.tracks.length > 0) {
-          setTracks(result.tracks);
-        }
+        await onReorderTracks(tracksToSave);
       }
     } catch (err) {
       console.error("Failed saving reordered tracks to YouTube:", err);
     } finally {
       setIsSyncingOrder(false);
       setIsReorderMode(false);
+      setLocalTracks([]);
     }
   };
 
@@ -285,6 +318,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     if (initialTracksBeforeReorder.current.length > 0) {
       setTracks(initialTracksBeforeReorder.current);
     }
+    setLocalTracks([]);
     setIsReorderMode(false);
   };
 
@@ -350,6 +384,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (isReorderMode) return;
     if (touchStartY === null || touchStartX === null) return;
     const currentScrollY = typeof window !== "undefined" ? window.scrollY : 0;
     if (currentScrollY > 10 && !isDraggingDown) return;
@@ -376,6 +411,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (isReorderMode) return;
     if (touchStartY === null) return;
     const touch = e.changedTouches[0];
     const deltaY = touch.clientY - touchStartY;
@@ -413,47 +449,122 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       }}
       className="flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52 will-change-transform"
     >
-      {/* Top Sticky Header with Close (X) Button */}
-      <div className={`sticky top-14 sm:top-16 z-20 flex flex-col px-4 sm:px-6 py-2 sm:py-2.5 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle} shadow-sm shrink-0`}>
-        {/* Subtle pull handle for mobile gesture indicator */}
-        <div className="w-8 h-1 rounded-full bg-zinc-400/40 mx-auto mb-1.5 sm:hidden" />
+      {/* Top Sticky Header with Close (X) / Reorder Controls */}
+      <div className={`sticky top-14 sm:top-16 z-30 flex flex-col px-4 sm:px-6 py-2.5 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle} shadow-md shrink-0 transition-all`}>
+        {/* Subtle pull handle for mobile gesture indicator (only when not reordering) */}
+        {!isReorderMode && (
+          <div className="w-8 h-1 rounded-full bg-zinc-400/40 mx-auto mb-1.5 sm:hidden" />
+        )}
 
-        <div className="flex items-center justify-between">
-          <button
-            onClick={onBack}
-            aria-label="Close view"
-            className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm`}
-            title="Close and go back (or swipe down)"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        {isReorderMode ? (
+          /* Reorder Active Sticky Top Bar - Persistent at Top of Screen */
+          <div className="flex items-center justify-between gap-2 sm:gap-3 w-full animate-fade-in">
+            {/* Left: Cancel Button */}
+            <button
+              type="button"
+              onClick={handleCancelReordering}
+              disabled={isSyncingOrder}
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold ${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-all active:scale-95 shadow-sm shrink-0`}
+              title="Discard reordering changes"
+            >
+              Cancel
+            </button>
 
-          <div className="flex items-center gap-2">
-            {!isAlbum && (
+            {/* Center: Live Drag Badge & Tips */}
+            <div className="flex items-center gap-2 min-w-0 text-center px-1">
+              <div className={`p-1.5 rounded-lg ${designConfig.accentBg} text-white shrink-0 shadow-sm hidden xs:flex`}>
+                <GripVertical className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex flex-col items-center min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xs sm:text-sm font-extrabold ${designConfig.textPrimary} truncate`}>
+                    Reorder Songs
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                    Live Drag
+                  </span>
+                </div>
+                <span className={`text-[10px] ${designConfig.textMuted} hidden md:inline truncate`}>
+                  Hold handle to lift • 2nd finger or mouse wheel to fast scroll
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Done Reordering Button */}
+            <button
+              type="button"
+              onClick={handleDoneReordering}
+              disabled={isSyncingOrder}
+              className={`px-3.5 sm:px-5 py-2 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg ring-2 ${designConfig.accentBorder} transition-all active:scale-95 shrink-0`}
+              title="Save and sync new order with YouTube"
+            >
+              {isSyncingOrder ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Syncing...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Done Reordering</span>
+                </>
+              )}
+            </button>
+          </div>
+        ) : (
+          /* Standard Header Bar with Search Field and Reorder Songs Button */
+          <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3.5 w-full">
+            <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-[200px] sm:min-w-[280px]">
               <button
-                onClick={handleToggleReorderMode}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all active:scale-95 shadow-sm ${
-                  isReorderMode
-                    ? "bg-[#c89b3c] text-white border-[#c89b3c] shadow-lg ring-2 ring-[#c89b3c]/40 font-bold"
-                    : `${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle}`
-                }`}
-                title={isReorderMode ? "Done reordering tracks" : "Reorder songs in this playlist"}
+                onClick={onBack}
+                aria-label="Close view"
+                className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0`}
+                title="Close and go back (or swipe down)"
               >
-                {isReorderMode ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Done Reordering</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowUpDown className="w-3.5 h-3.5" />
-                    <span>Reorder Songs</span>
-                  </>
-                )}
+                <X className="w-5 h-5" />
               </button>
+
+              {/* In-Header Search Field */}
+              <div className="flex-1 max-w-xl relative min-w-0">
+                <Search className={`w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 ${designConfig.textMuted} pointer-events-none`} />
+                <input
+                  type="text"
+                  value={inViewSearch}
+                  onChange={(e) => setInViewSearch(e.target.value)}
+                  placeholder={isAlbum ? "Search album tracks..." : "Search playlist songs..."}
+                  className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
+                />
+                {inViewSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setInViewSearch("")}
+                    className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors`}
+                    title="Clear search filter"
+                    aria-label="Clear search filter"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Reorder Songs Button - with explicit text "Reorder Songs", drops below on narrow screens if needed */}
+            {!isAlbum && (
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleToggleReorderMode}
+                  disabled={isSyncingOrder}
+                  className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm whitespace-nowrap ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} hover:${designConfig.accentText}`}
+                  title="Reorder songs in this playlist"
+                >
+                  <ArrowUpDown className="w-4 h-4 shrink-0" />
+                  <span>Reorder Songs</span>
+                </button>
+              </div>
             )}
           </div>
-        </div>
+        )}
       </div>
 
       <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-6xl mx-auto w-full">
@@ -568,37 +679,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 {repeatMode === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
               </button>
             )}
-
-            {/* Reorder Songs Button */}
-            {!isAlbum && tracks.length > 1 && (
-              <button
-                onClick={handleToggleReorderMode}
-                disabled={isSyncingOrder}
-                className={`px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
-                  isReorderMode
-                    ? `${designConfig.accentBg} text-white ring-2 ${designConfig.accentBorder} shadow-lg animate-pulse`
-                    : `${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle}`
-                }`}
-                title={isReorderMode ? "Save and sync new order with YouTube" : "Reorder songs in this playlist"}
-              >
-                {isSyncingOrder ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Syncing YouTube...</span>
-                  </>
-                ) : isReorderMode ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>Done Reordering</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowUpDown className="w-4 h-4" />
-                    <span>Reorder Songs</span>
-                  </>
-                )}
-              </button>
-            )}
           </div>
 
           {/* Right Action Buttons: Edit details and Delete Playlist */}
@@ -628,84 +708,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
         {/* Songs List */}
         <div className="space-y-3">
-          {/* Reorder Mode Active Banner */}
-          {isReorderMode && (
-            <div className={`p-4 rounded-2xl ${designConfig.cardBg} border-2 ${designConfig.accentBorder} shadow-xl flex flex-wrap items-center justify-between gap-3 animate-fade-in`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${designConfig.accentBg} text-white shadow-md shrink-0 animate-bounce`}>
-                  <GripVertical className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-bold ${designConfig.textPrimary}`}>
-                      Reordering Active
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      Live Drag
-                    </span>
-                  </div>
-                  <p className={`text-xs ${designConfig.textSecondary} mt-0.5 max-w-lg`}>
-                    Click/press and hold the handle to lift & move. On mobile, swipe/scroll with a 2nd finger; on desktop, scroll with your mouse wheel. When done, click <strong>Done Reordering</strong> to save to YouTube.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                <button
-                  type="button"
-                  onClick={handleCancelReordering}
-                  disabled={isSyncingOrder}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold ${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-colors`}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDoneReordering}
-                  disabled={isSyncingOrder}
-                  className={`px-5 py-2 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95`}
-                >
-                  {isSyncingOrder ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Syncing YouTube...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Done Reordering</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* In-View Search Filter for Playlists and Albums */}
-          <div className="sticky top-0 z-20 py-1">
-            <div className="relative">
-              <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${designConfig.textMuted}`} />
-              <input
-                type="text"
-                value={inViewSearch}
-                onChange={(e) => setInViewSearch(e.target.value)}
-                placeholder={isAlbum ? "Filter album tracks by title or artist..." : "Filter playlist tracks by title or artist..."}
-                className={`w-full pl-10 ${inViewSearch ? "pr-10" : "pr-4"} py-2.5 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
-              />
-              {inViewSearch && (
-                <button
-                  type="button"
-                  onClick={() => setInViewSearch("")}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors`}
-                  title="Clear search filter"
-                  aria-label="Clear search filter"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-
           <div className="flex items-center justify-between px-3 py-1">
             <h3 className={`text-sm font-bold ${designConfig.headingPrimary} uppercase tracking-wider font-mono`}>
               Tracks ({filteredTracks.length}{inViewSearch.trim() && filteredTracks.length !== tracks.length ? ` of ${tracks.length}` : ""})
@@ -748,7 +750,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             </div>
           ) : (
             <PlaylistTrackList
-              tracks={tracks}
+              tracks={isReorderMode ? localTracks : safeTracks}
               isAlbum={isAlbum}
               item={item}
               isReorderMode={isReorderMode}
@@ -760,9 +762,13 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               onPlayTrack={onPlayTrack}
               onPlayQueue={onPlayQueue}
               onReorderTracks={(newTracks) => {
-                setTracks(newTracks);
-                if (!isAlbum && onReorderTracks) {
-                  onReorderTracks(newTracks);
+                if (isReorderMode) {
+                  setLocalTracks(newTracks);
+                } else {
+                  setTracks(newTracks);
+                  if (!isAlbum && onReorderTracks) {
+                    onReorderTracks(newTracks);
+                  }
                 }
               }}
               onRemoveTrack={handleRemoveTrackInternal}

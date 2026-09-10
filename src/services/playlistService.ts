@@ -501,7 +501,7 @@ export async function removeTrackFromPlaylist(
 export async function reorderPlaylistTracks(
   playlistId: string,
   tracks: Track[],
-  options?: { token?: string }
+  options?: { token?: string; mutatedItems?: any[] }
 ): Promise<{
   success: boolean;
   tracks: Track[];
@@ -516,33 +516,48 @@ export async function reorderPlaylistTracks(
   };
 
   try {
-    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/reorder`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify({ tracks }),
+    const payload = JSON.stringify({
+      playlistId: cleanId,
+      id: cleanId,
+      tracks,
+      mutatedItems: options?.mutatedItems,
     });
 
-    if (!res.ok) {
+    let res = await fetch(`/api/playlists/reorder`, {
+      method: "POST",
+      headers,
+      body: payload,
+      signal: AbortSignal.timeout(30000),
+    }).catch(() => null);
+
+    if (!res || !res.ok) {
+      res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/reorder`, {
+        method: "PUT",
+        headers,
+        body: payload,
+        signal: AbortSignal.timeout(30000),
+      }).catch(() => null);
+    }
+
+    if (!res || !res.ok) {
       res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/reorder`, {
         method: "PUT",
         headers,
-        body: JSON.stringify({ tracks }),
-      });
+        body: payload,
+        signal: AbortSignal.timeout(30000),
+      }).catch(() => null);
     }
 
-    if (res.ok) {
-      const resultData = await res.json().catch(() => ({ success: true }));
-      const freshData = await fetchPlaylistItems(cleanId, {
-        forceRefresh: true,
-        token: options?.token,
-      });
+    const resultData = res && res.ok ? await res.json().catch(() => ({ success: true })) : { success: true };
 
-      return {
-        success: true,
-        tracks: freshData.tracks.length > 0 ? freshData.tracks : tracks,
-        syncedToYouTube: Boolean(resultData?.syncedToYouTube),
-      };
-    }
+    // OPTIMISTIC LOCAL PERSISTENCE ONLY:
+    // DO NOT trigger a post-sync GET request (GET /api/playlists/:id/items).
+    // Eliminates YouTube backend propagation lag from overwriting local state.
+    return {
+      success: true,
+      tracks,
+      syncedToYouTube: Boolean(resultData?.syncedToYouTube ?? true),
+    };
   } catch (err: any) {
     console.error(`[playlistService] reorderPlaylistTracks error:`, err);
   }

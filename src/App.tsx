@@ -1157,14 +1157,19 @@ export default function App() {
 
           const finalTracks = sanitizedTracks.length > 0 ? sanitizedTracks : (existingMatch?.tracks || []);
 
+          const count = Number(pl.itemCount ?? pl.trackCount ?? pl.contentDetails?.itemCount ?? pl.tracksCount ?? finalTracks.length ?? 0);
+
           sanitizedPlaylists.push({
             ...pl,
             id: plId,
             coverUrl: resolvedCover,
             customCoverUrl: lockedCustom || (hasCustom ? resolvedCover : undefined),
             isCustomCover: hasCustom,
+            itemCount: count,
+            trackCount: count,
+            tracksCount: count,
+            contentDetails: pl.contentDetails || { itemCount: count },
             tracks: finalTracks,
-            tracksCount: pl.tracksCount || finalTracks.length || 0,
             thumbnails: pl.thumbnails,
             privacy: normalizedPlPrivacy,
             privacyStatus: normalizedPlPrivacy,
@@ -1897,12 +1902,16 @@ export default function App() {
     }
   };
 
-  // Reorder Tracks inside Playlist - syncs with YouTube then pulls fresh list back
+  // Reorder Tracks inside Playlist - optimistic local persistence without post-reorder GET resync
   const handleReorderPlaylistTracks = async (playlistId: string, newTracks: Track[]) => {
     const cleanPlId = playlistId.replace(/^VL/, "");
 
-    // Save tracks to IndexedDB store immediately for instant UI responsiveness
+    // 1. Immediately write localTracks directly to persistent storage (IndexedDB, localStorage, OBLIVION_PLAYLIST_CACHE)
     savePlaylistTracksToDBCache(playlistId, newTracks);
+    try {
+      localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`, JSON.stringify(newTracks));
+      localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanPlId}`, JSON.stringify(newTracks));
+    } catch {}
 
     setPlaylists((prev) => {
       const updated = prev.map((p) => {
@@ -1932,39 +1941,23 @@ export default function App() {
         } catch {}
       }
 
+      // Send position changes to YouTube in the background without triggering post-sync GET
       const syncResult = await reorderPlaylistTracks(playlistId, newTracks, { token: activeToken });
 
-      const finalTracks = syncResult.tracks && syncResult.tracks.length > 0 ? syncResult.tracks : newTracks;
-
-      // Update with authoritative verified tracks from YouTube
-      setPlaylists((prev) => {
-        const updated = prev.map((p) => {
-          const pId = p.id || (p as any).playlistId;
-          if (pId === playlistId || pId?.replace(/^VL/, "") === cleanPlId) {
-            return { ...p, tracks: finalTracks, tracksCount: finalTracks.length };
-          }
-          return p;
-        });
-        try {
-          localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
-        } catch {}
-        savePlaylistsToDBCache(updated);
-        return updated;
-      });
-
-      if (selectedPlaylist?.id === playlistId || (selectedPlaylist as any)?.playlistId === playlistId || selectedPlaylist?.id?.replace(/^VL/, "") === cleanPlId) {
-        setSelectedPlaylist((prev) => (prev ? { ...prev, tracks: finalTracks, tracksCount: finalTracks.length } : null));
+      if (syncResult.syncedToYouTube) {
+        showToast("Playlist reordered & synced with YouTube Music");
+      } else {
+        showToast("Playlist reordering saved");
       }
-
-      savePlaylistTracksToDBCache(playlistId, finalTracks);
 
       return {
         success: syncResult.success,
-        tracks: finalTracks,
+        tracks: newTracks,
         syncedToYouTube: syncResult.syncedToYouTube,
       };
     } catch (err) {
       console.error("Reorder tracks error:", err);
+      showToast("Playlist order saved locally");
       return {
         success: false,
         tracks: newTracks,
@@ -1974,9 +1967,11 @@ export default function App() {
   };
 
   // Remove Track from Playlist
-  const handleRemoveTrackFromPlaylist = async (playlistId: string, trackId: string) => {
+  const handleRemoveTrackFromPlaylist = async (playlistId: string, trackId: string, trackObj?: Track) => {
     const cleanPlId = playlistId.replace(/^VL/, "");
     const cleanTrId = trackId.trim();
+    const vidFromObj = trackObj?.youtubeVideoId || "";
+    const plItemFromObj = trackObj?.playlistItemId || "";
 
     setPlaylists((prev) => {
       const updated = prev.map((p) => {
@@ -1985,7 +1980,11 @@ export default function App() {
           const filtered = p.tracks.filter((t) => {
             const tId = t.id || t.youtubeVideoId || "";
             const tVid = t.youtubeVideoId || t.id || "";
-            return tId !== cleanTrId && tVid !== cleanTrId && (t as any).playlistItemId !== cleanTrId;
+            const tPlItemId = (t as any).playlistItemId || "";
+            if (cleanTrId && (tId === cleanTrId || tVid === cleanTrId || tPlItemId === cleanTrId)) return false;
+            if (plItemFromObj && tPlItemId === plItemFromObj) return false;
+            if (vidFromObj && tVid === vidFromObj && tId === (trackObj?.id || "")) return false;
+            return true;
           });
           return {
             ...p,
@@ -1998,6 +1997,7 @@ export default function App() {
       try {
         localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
       } catch {}
+      savePlaylistsToDBCache(updated);
       return updated;
     });
 
@@ -2007,7 +2007,11 @@ export default function App() {
         const filtered = prev.tracks.filter((t) => {
           const tId = t.id || t.youtubeVideoId || "";
           const tVid = t.youtubeVideoId || t.id || "";
-          return tId !== cleanTrId && tVid !== cleanTrId && (t as any).playlistItemId !== cleanTrId;
+          const tPlItemId = (t as any).playlistItemId || "";
+          if (cleanTrId && (tId === cleanTrId || tVid === cleanTrId || tPlItemId === cleanTrId)) return false;
+          if (plItemFromObj && tPlItemId === plItemFromObj) return false;
+          if (vidFromObj && tVid === vidFromObj && tId === (trackObj?.id || "")) return false;
+          return true;
         });
         return {
           ...prev,
@@ -2028,7 +2032,12 @@ export default function App() {
       const headers: Record<string, string> = {};
       if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
 
-      const res = await fetch(`/api/youtube/playlists/${playlistId}/items/${encodeURIComponent(cleanTrId)}`, {
+      const queryParams = new URLSearchParams();
+      if (vidFromObj) queryParams.set("videoId", vidFromObj);
+      if (plItemFromObj) queryParams.set("playlistItemId", plItemFromObj);
+      const qStr = queryParams.toString() ? `?${queryParams.toString()}` : "";
+
+      const res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanPlId)}/items/${encodeURIComponent(cleanTrId)}${qStr}`, {
         method: "DELETE",
         headers,
       });
@@ -2104,14 +2113,9 @@ export default function App() {
       }
 
       // -------------------------------------------------------------
-      // (2) ADD THE NEW SONG TO THE END OF THE LIST TO INCREASE THE SONG COUNT BY 1
+      // (2) ADD THE NEW SONG TO THE END OF THE LIST TO INCREASE THE SONG COUNT BY 1 (ALLOW DUPLICATES)
       // -------------------------------------------------------------
-      // Filter out previous duplicate instance of this video if already present so it appends cleanly to the end
-      const filteredExisting = currentSongs.filter((t) => {
-        const tVid = (t.youtubeVideoId || t.id || "").replace(/^VL/, "");
-        return tVid !== cleanVidId && t.id !== cleanTrack.id;
-      });
-      const updatedPlaylistTracks: Track[] = [...filteredExisting, cleanTrack];
+      const updatedPlaylistTracks: Track[] = [...currentSongs, cleanTrack];
       const newSongCount = updatedPlaylistTracks.length;
 
       // Update UI state & localStorage immediately with new song and incremented count
@@ -2492,7 +2496,7 @@ export default function App() {
               }))
             }
             onReorderTracks={(newTracks) => handleReorderPlaylistTracks(selectedPlaylist.id, newTracks)}
-            onRemoveTrack={(trackId) => handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId)}
+            onRemoveTrack={(trackId, trackObj) => handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId, trackObj)}
             designConfig={activeFullDesign}
           />
         ) : (

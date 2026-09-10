@@ -119,7 +119,6 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
     setHasImageError(true);
   };
 
-  const count = playlist.tracks?.length || playlist.tracksCount || 0;
   const displayTitle = playlist.title || "Untitled Playlist";
   const initials = displayTitle
     .split(/\s+/)
@@ -212,16 +211,13 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
             {displayTitle}
           </h3>
         </div>
-        <div className="flex items-center justify-between mt-1">
-          <span className={`text-xs font-mono font-medium ${designConfig.accentText}`}>
-            {count} {count === 1 ? "track" : "tracks"}
-          </span>
-          {playlist.isYouTubeSynced && (
+        {playlist.isYouTubeSynced && (
+          <div className="flex items-center mt-1">
             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${designConfig.pillBg} font-mono`}>
               Synced
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
