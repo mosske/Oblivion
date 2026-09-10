@@ -1343,23 +1343,13 @@ export default function App() {
           const updated = prev.map((p) => {
             const pClean = (p.id || p.playlistId || "").replace(/^VL/, "");
             if (p.id === playlistId || p.playlistId === playlistId || pClean === cleanId) {
-              const serverVidIds = new Set(
-                uniqueTracks.map((t) => t.youtubeVideoId || t.id).filter(Boolean)
-              );
-              // Preserve any locally tracked items that might not have propagated through YouTube's API cache yet
-              const localUnsynced = (p.tracks || []).filter((t) => {
-                const vid = t.youtubeVideoId || t.id;
-                return vid && !serverVidIds.has(vid);
-              });
-              const mergedTracks = [...uniqueTracks, ...localUnsynced];
-
               const hasCustom = Boolean(lockedCustom || isAuthenticCustom || p.isCustomCover);
               const finalCover = lockedCustom || p.customCoverUrl || (hasCustom ? p.coverUrl : (data.coverUrl || p.coverUrl));
 
               return {
                 ...p,
-                tracks: mergedTracks,
-                tracksCount: mergedTracks.length,
+                tracks: uniqueTracks,
+                tracksCount: uniqueTracks.length,
                 coverUrl: finalCover,
                 customCoverUrl: hasCustom ? finalCover : undefined,
                 isCustomCover: hasCustom,
@@ -1370,29 +1360,28 @@ export default function App() {
           try {
             localStorage.setItem("oblivion_saved_playlists", JSON.stringify(updated));
           } catch {}
+          savePlaylistsToDBCache(updated);
           return updated;
         });
+
+        // Update local and indexedDB caches for this specific playlist
+        savePlaylistTracksToDBCache(playlistId, uniqueTracks);
+        try {
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`, JSON.stringify(uniqueTracks));
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanId}`, JSON.stringify(uniqueTracks));
+        } catch {}
 
         setSelectedPlaylist((prev) => {
           if (!prev) return null;
           const prevClean = (prev.id || prev.playlistId || "").replace(/^VL/, "");
           if (prev.id === playlistId || prev.playlistId === playlistId || prevClean === cleanId) {
-            const serverVidIds = new Set(
-              uniqueTracks.map((t) => t.youtubeVideoId || t.id).filter(Boolean)
-            );
-            const localUnsynced = (prev.tracks || []).filter((t) => {
-              const vid = t.youtubeVideoId || t.id;
-              return vid && !serverVidIds.has(vid);
-            });
-            const mergedTracks = [...uniqueTracks, ...localUnsynced];
-
             const hasCustom = Boolean(lockedCustom || isAuthenticCustom || (prev as any).isCustomCover);
             const finalCover = lockedCustom || (prev as any).customCoverUrl || (hasCustom ? prev.coverUrl : (data.coverUrl || prev.coverUrl));
 
             return {
               ...prev,
-              tracks: mergedTracks,
-              tracksCount: mergedTracks.length,
+              tracks: uniqueTracks,
+              tracksCount: uniqueTracks.length,
               coverUrl: finalCover,
               customCoverUrl: hasCustom ? finalCover : undefined,
               isCustomCover: hasCustom,
@@ -2013,12 +2002,35 @@ export default function App() {
           if (vidFromObj && tVid === vidFromObj && tId === (trackObj?.id || "")) return false;
           return true;
         });
+        savePlaylistTracksToDBCache(playlistId, filtered);
+        try {
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`, JSON.stringify(filtered));
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanPlId}`, JSON.stringify(filtered));
+        } catch {}
         return {
           ...prev,
           tracks: filtered,
           tracksCount: filtered.length,
         };
       });
+    } else {
+      const match = playlists.find(p => (p.id || (p as any).playlistId) === playlistId || (p.id || (p as any).playlistId)?.replace(/^VL/, "") === cleanPlId);
+      if (match) {
+        const filtered = match.tracks.filter((t) => {
+          const tId = t.id || t.youtubeVideoId || "";
+          const tVid = t.youtubeVideoId || t.id || "";
+          const tPlItemId = (t as any).playlistItemId || "";
+          if (cleanTrId && (tId === cleanTrId || tVid === cleanTrId || tPlItemId === cleanTrId)) return false;
+          if (plItemFromObj && tPlItemId === plItemFromObj) return false;
+          if (vidFromObj && tVid === vidFromObj && tId === (trackObj?.id || "")) return false;
+          return true;
+        });
+        savePlaylistTracksToDBCache(playlistId, filtered);
+        try {
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`, JSON.stringify(filtered));
+          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanPlId}`, JSON.stringify(filtered));
+        } catch {}
+      }
     }
 
     try {

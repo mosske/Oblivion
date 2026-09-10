@@ -2764,19 +2764,8 @@ app.get(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async 
     }
     if (cleanPlId && !cleanPlId.startsWith("pl_custom_")) {
       const ytTracks = await getPlaylistItemsFromYouTube(accessToken, cleanPlId, forceRefresh);
-      if (ytTracks && ytTracks.length > 0) {
-        let finalTracks = ytTracks;
-        // Merge with any tracks previously stored locally in found.tracks so newly committed additions are NEVER wiped out by YouTube API propagation lag
-        if (found && found.tracks && found.tracks.length > 0) {
-          const ytVideoIds = new Set(ytTracks.map((t: any) => extractCleanVideoId(t.youtubeVideoId || t.id)));
-          const extraLocalTracks = found.tracks.filter((t: any) => {
-            const vId = extractCleanVideoId(t.youtubeVideoId || t.id);
-            return vId && !ytVideoIds.has(vId);
-          });
-          if (extraLocalTracks.length > 0) {
-            finalTracks = [...ytTracks, ...extraLocalTracks];
-          }
-        }
+      if (Array.isArray(ytTracks)) {
+        const finalTracks = ytTracks;
         if (found) {
           found.tracks = finalTracks;
           found.tracksCount = finalTracks.length;
