@@ -106,7 +106,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <OblivionLogo size={46} designId={designConfig.id} withAura className="shrink-0" />
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} uppercase`}>
+                <span
+                  className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border uppercase"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                    borderColor: "color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                    color: "var(--accent-primary)",
+                  }}
+                >
                   PWA Mobile App
                 </span>
                 {isInstalled && (
@@ -128,9 +135,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             id="install-app-android-btn"
             onClick={handleInstallClick}
-            className={`px-5 py-3 rounded-2xl ${designConfig.btnPrimary} text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shrink-0`}
+            className={`px-5 py-3 rounded-2xl ${designConfig.btnPrimary} font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shrink-0`}
           >
-            <Smartphone className="w-4 h-4 text-white" />
+            <Smartphone className="w-4 h-4" />
             <span>Install App</span>
           </button>
         </div>
@@ -143,17 +150,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
       </section>
 
-      {/* 7 FULL APP DESIGNS & THEMES SUITE */}
+      {/* 8 FULL APP DESIGNS & THEMES SUITE */}
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} text-[10px] font-mono font-bold tracking-wider mb-1`}>
-              <Sparkles className={`w-3 h-3 ${designConfig.accentText}`} />
+            <div
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold tracking-wider mb-1"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                borderColor: "color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                color: "var(--accent-primary)",
+              }}
+            >
+              <Sparkles className="w-3 h-3" style={{ color: "var(--accent-primary)" }} />
               <span>Full-App Archetypes</span>
             </div>
             <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
               <Layout className={`w-4 h-4 ${designConfig.accentText}`} />
-              <span>Full App Layout & Design Archetypes (7 Options)</span>
+              <span>Full App Layout & Design Archetypes (8 Options)</span>
             </h3>
             <p className={`text-xs ${designConfig.textSecondary} font-medium mt-0.5`}>
               Select your preferred overall design. This transforms the entire application: background canvas, headers, navigation, cards, typography, and bottom player dock.
@@ -164,7 +178,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </span>
         </div>
 
-        {/* 7 Full App Design Cards */}
+        {/* 8 Full App Design Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {FULL_APP_DESIGNS_LIST.map((design) => {
             const isSelected = (settings.fullAppDesign || "designer") === design.id;
@@ -198,7 +212,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <div
                     className="absolute top-3 right-3 px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-md"
                     style={{
-                      backgroundColor: "var(--accent-primary)",
+                      background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
                       color: "var(--accent-contrast-text)",
                     }}
                   >
@@ -212,7 +226,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-200/90 text-zinc-900 font-bold border border-zinc-300">
                       {design.badge}
                     </span>
-                    <span className="text-[10px] font-mono text-zinc-600 font-semibold">{design.num} / 07</span>
+                    <span className="text-[10px] font-mono text-zinc-600 font-semibold">{design.num} / 08</span>
                   </div>
 
                   <h4 className="text-sm font-bold text-zinc-900 mb-1">{design.name}</h4>
@@ -261,8 +275,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-5 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} text-[10px] font-mono font-bold tracking-wider mb-1`}>
-              <Eye className={`w-3 h-3 ${designConfig.accentText}`} />
+            <div
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold tracking-wider mb-1"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                borderColor: "color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                color: "var(--accent-primary)",
+              }}
+            >
+              <Eye className="w-3 h-3" style={{ color: "var(--accent-primary)" }} />
               <span>Immersive Player Canvas</span>
             </div>
             <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>
@@ -624,8 +645,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-5 shadow-md`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${designConfig.isLight ? "bg-[#c89b3c]/20 text-[#855f10] border border-[#c89b3c]/30" : `${designConfig.accentBg}/20 ${designConfig.accentText} border ${designConfig.accentBorder}`} text-[10px] font-mono font-bold tracking-wider mb-1`}>
-              <Mic2 className={`w-3 h-3 ${designConfig.accentText}`} />
+            <div
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold tracking-wider mb-1"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                borderColor: "color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                color: "var(--accent-primary)",
+              }}
+            >
+              <Mic2 className="w-3 h-3" style={{ color: "var(--accent-primary)" }} />
               <span>LRCLIB & Instant Romanization</span>
             </div>
             <h3 className={`text-base font-bold ${designConfig.textPrimary} flex items-center gap-2`}>

@@ -633,11 +633,18 @@ export default function App() {
         "audiophile-gold": "#f59e0b",
         "twilight-vaporwave": "#ff2a8d",
         "neue-editorial": "#1F1F1F",
+        "obsidian-depth": "#38bdf8",
       };
 
-      const accentHex = themeAccentColors[activeFullDesign.id] || "#c59b27";
+      const accentHex = themeAccentColors[activeFullDesign.id] || "#38bdf8";
       document.documentElement.style.setProperty("--accent-color", accentHex);
       document.documentElement.style.setProperty("--primary", accentHex);
+      document.documentElement.style.setProperty("--accent-primary", accentHex);
+      if (activeFullDesign.id === "obsidian-depth") {
+        document.documentElement.style.setProperty("--accent-secondary", "#a5f3fc");
+        document.documentElement.style.setProperty("--accent-tertiary", "#0284c7");
+        document.documentElement.style.setProperty("--accent-contrast-text", "#0f172a");
+      }
     }
   }, [activeFullDesign.id, activeFullDesign.themeColorMeta]);
 

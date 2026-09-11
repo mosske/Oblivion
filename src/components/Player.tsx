@@ -378,6 +378,44 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         mutedText: "text-[#666055] hover:text-[#1F1F1F]",
         volSlider: "bg-[#F2E8D8] accent-[#1F1F1F]",
       };
+    case "obsidian-depth":
+      return {
+        bgCanvas: "bg-[#23282f]",
+        orb1: "bg-sky-400/40",
+        orb2: "bg-cyan-300/30",
+        auroraBeam1: "bg-gradient-to-r from-[#a5f3fc]/35 via-[#38bdf8]/40 to-[#0284c7]/40",
+        auroraBeam2: "bg-gradient-to-r from-[#0284c7]/35 via-[#38bdf8]/40 to-[#a5f3fc]/35",
+        orbitalGlow1: "bg-gradient-to-tr from-[#a5f3fc]/45 via-[#38bdf8]/40 to-[#0284c7]/45",
+        orbitalGlow2: "bg-gradient-to-bl from-[#0284c7]/40 via-[#38bdf8]/40 to-[#a5f3fc]/45",
+        driftAuraGlow: "bg-gradient-to-br from-[#38bdf8]/20 via-[#a5f3fc]/15 to-transparent",
+        veil: "bg-gradient-to-b from-black/40 via-black/15 to-black/80",
+        topBar: "bg-[#2b3038]/95 border-sky-500/20 text-slate-100 shadow-[0_4px_12px_#1c2026]",
+        minimizeBtn: "bg-[#23282f] hover:bg-[#1c2026] text-sky-300 border-sky-500/30 shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a]",
+        nowPlayingDot: "bg-[#38bdf8]",
+        nowPlayingLabel: "text-[#38bdf8]",
+        nowPlayingTitle: "text-slate-100",
+        tabActive: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] text-[#0f172a] border-transparent shadow-[0_0_15px_rgba(56,189,248,0.5)] font-extrabold",
+        tabInactive: "bg-[#23282f] hover:bg-[#1c2026] text-slate-300 border-slate-700/50 shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a]",
+        artGlowRing: "from-[#a5f3fc]/50 via-[#38bdf8]/40 to-[#0284c7]/50",
+        artBorder: "border-sky-500/40 shadow-[10px_10px_25px_#191c22,-10px_-10px_25px_#3d444e]",
+        stageTitle: "text-slate-100 drop-shadow-md font-bold",
+        stageArtist: "text-[#38bdf8] font-medium",
+        stageTagAccent: "bg-[#38bdf8]/20 border-[#38bdf8]/40 text-[#a5f3fc]",
+        stageTagNeutral: "bg-[#23282f] border-slate-700 text-slate-300 shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a]",
+        bottomDeck: "bg-[#2b3038]/98 border-sky-500/25 text-slate-100 shadow-[8px_8px_20px_#191c22,-8px_-8px_20px_#3d444e] ring-1 ring-sky-400/20",
+        seekbarTrack: "bg-[#23282f] shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a]",
+        seekbarFill: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7]",
+        seekbarThumb: "bg-[#a5f3fc] border-2 border-[#0f172a] shadow-[0_0_14px_rgba(56,189,248,0.8)]",
+        seekbarGlow: "shadow-sky-500/40",
+        seekbarAccent: "accent-[#38bdf8]",
+        timeText: "text-slate-400",
+        playBtn: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] hover:brightness-110 text-[#0f172a] shadow-[0_0_30px_rgba(56,189,248,0.6)] ring-4 ring-sky-400/30",
+        playIconFill: "fill-[#0f172a]",
+        ctrlBtn: "bg-[#23282f] hover:bg-[#1c2026] text-sky-300 border-sky-500/30 shadow-[4px_4px_8px_#1c2026,-4px_-4px_8px_#3a404a] active:shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a]",
+        activeText: "text-[#38bdf8]",
+        mutedText: "text-slate-400 hover:text-white",
+        volSlider: "bg-[#23282f] accent-[#38bdf8]",
+      };
   }
 }
 
@@ -507,7 +545,7 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
         }`}
         style={{
           left: `${progressPercent}%`,
-          background: "var(--accent-primary)",
+          background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
           border: "2px solid #ffffff",
           boxShadow: "0 0 10px var(--accent-primary), 0 2px 6px rgba(0,0,0,0.5)",
         }}

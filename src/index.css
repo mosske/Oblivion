@@ -56,6 +56,13 @@ html, body {
   filter: brightness(1.2);
 }
 
+[data-theme="obsidian-depth"] ::-webkit-scrollbar-thumb,
+.theme-obsidian-depth ::-webkit-scrollbar-thumb,
+[data-theme="obsidian-depth"] .custom-scrollbar::-webkit-scrollbar-thumb,
+.theme-obsidian-depth .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #a5f3fc, #38bdf8) !important;
+}
+
 /* Dynamic theme loading spinner utilities */
 .theme-spinner-border {
   border-color: var(--accent-color, var(--accent-primary, var(--primary, #c59b27)));

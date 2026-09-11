@@ -141,6 +141,19 @@ const PALETTES: Record<string, GradientPalette> = {
     auraColor: "#1F1F1F",
     textGold: "#1F1F1F",
   },
+
+  // 8. Obsidian Depth (Matte Slate, Radiant Light Blue / Cyan Gradient)
+  "obsidian-depth": {
+    ringGrad: { c1: "#e0f2fe", c2: "#7dd3fc", c3: "#0284c7", c4: "#38bdf8" },
+    tri1Grad: { c1: "#38bdf8", c2: "#0284c7", c3: "#0369a1" },
+    tri2Grad: { c1: "#e0f2fe", c2: "#7dd3fc", c3: "#38bdf8" },
+    highlight: "#ffffff",
+    shadow: "#0f172a",
+    playCore: "#0f172a",
+    playHighlight: "#e0f2fe",
+    auraColor: "#38bdf8",
+    textGold: "#38bdf8",
+  },
 };
 
 export const OblivionLogo: React.FC<OblivionLogoProps> = ({

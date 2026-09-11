@@ -218,7 +218,7 @@ export class ThemeRegistry {
       textColor: "text-[#1F1F1F]",
       subtextColor: "text-[#666055]",
       swatchColors: ["#F2E8D8", "#FAF5ED", "#1F1F1F", "#666055"]
-    }
+    },
     "obsidian-depth": {
       id: "obsidian-depth",
       name: "Obsidian Depth",
