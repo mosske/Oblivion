@@ -73,9 +73,15 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 const TOKENS_FILE = path.join(DATA_DIR, "auth_tokens.json");
-const PLAYLISTS_FILE = path.join(DATA_DIR, "local_playlists.json");
-const CUSTOM_COVERS_FILE = path.join(DATA_DIR, "custom_covers.json");
 const OAUTH_CONFIG_FILE = path.join(DATA_DIR, "oauth_config.json");
+const LEGACY_PLAYLISTS_FILE = path.join(DATA_DIR, "local_playlists.json");
+
+// Clean up legacy global playlists file if present to eliminate cross-user leakage
+try {
+  if (fs.existsSync(LEGACY_PLAYLISTS_FILE)) {
+    fs.unlinkSync(LEGACY_PLAYLISTS_FILE);
+  }
+} catch {}
 
 function readStoredOAuthConfig(): { clientId?: string; clientSecret?: string } {
   try {
@@ -138,91 +144,117 @@ export function isValidPlaylistId(id: string | undefined | null): boolean {
   return false;
 }
 
-function readStoredPlaylists(): any[] {
-  try {
-    if (fs.existsSync(PLAYLISTS_FILE)) {
-      const list = JSON.parse(fs.readFileSync(PLAYLISTS_FILE, "utf-8"));
-      if (Array.isArray(list)) {
-        return list.filter((p: any) => p && p.id && isValidPlaylistId(p.id));
+// User-scoped data paths to guarantee complete privacy and isolation between users
+function getUserDataDir(userId?: string): string {
+  if (userId) {
+    const sanitized = userId.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const userDir = path.join(DATA_DIR, "users", sanitized);
+    if (!fs.existsSync(userDir)) {
+      try {
+        fs.mkdirSync(userDir, { recursive: true });
+      } catch {}
+    }
+    return userDir;
+  }
+  return DATA_DIR;
+}
+
+function getUserPlaylistsFile(userId?: string): string {
+  if (userId) {
+    return path.join(getUserDataDir(userId), "playlists.json");
+  }
+  return path.join(DATA_DIR, "anon_playlists.json");
+}
+
+function getUserCoversFile(userId?: string): string {
+  if (userId) {
+    return path.join(getUserDataDir(userId), "custom_covers.json");
+  }
+  return path.join(DATA_DIR, "anon_covers.json");
+}
+
+function getUserIdFromReq(req?: any): string | undefined {
+  if (!req) return undefined;
+  if (req.session?.user?.id) return String(req.session.user.id);
+  const token = req.headers?.authorization?.replace(/^Bearer\s+/, "") || (req.headers?.["x-access-token"] as string) || req.session?.tokens?.access_token;
+  if (token) {
+    const allTokens = readStoredTokens();
+    for (const [k, v] of Object.entries(allTokens)) {
+      if (v.access_token === token || v.refresh_token === token || (Array.isArray(v.previous_tokens) && v.previous_tokens.includes(token))) {
+        return v.user?.id || k;
       }
     }
-  } catch {}
+  }
+  return undefined;
+}
+
+function readStoredPlaylists(req?: any, explicitUserId?: string): any[] {
+  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
+  if (effectiveUserId) {
+    const plsFile = getUserPlaylistsFile(effectiveUserId);
+    try {
+      if (fs.existsSync(plsFile)) {
+        const list = JSON.parse(fs.readFileSync(plsFile, "utf-8"));
+        if (Array.isArray(list)) {
+          return list.filter((p: any) => p && p.id && isValidPlaylistId(p.id));
+        }
+      }
+    } catch {}
+  }
+  if (req?.session?.playlists && Array.isArray(req.session.playlists)) {
+    return req.session.playlists.filter((p: any) => p && p.id && isValidPlaylistId(p.id));
+  }
   return [];
 }
 
-function writeStoredPlaylists(pls: any[]) {
+function writeStoredPlaylists(pls: any[], req?: any, explicitUserId?: string) {
+  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
+  if (req?.session) {
+    req.session.playlists = pls;
+  }
+  if (!effectiveUserId) return;
+
+  const plsFile = getUserPlaylistsFile(effectiveUserId);
   try {
     const valid = (pls || [])
       .filter((p: any) => p && p.id && isValidPlaylistId(p.id))
       .map((p: any) => {
-        // If custom cover exists, record it in custom covers storage as well
         if (p.id && (p.customCoverUrl || (p.isCustomCover && p.coverUrl))) {
           const cover = p.customCoverUrl || p.coverUrl;
           if (cover) {
-            writeStoredCustomCover(p.id, cover);
+            writeStoredCustomCover(p.id, cover, req, effectiveUserId);
           }
         }
         return p;
       });
-    fs.writeFileSync(PLAYLISTS_FILE, JSON.stringify(valid, null, 2), "utf-8");
+    fs.writeFileSync(plsFile, JSON.stringify(valid, null, 2), "utf-8");
   } catch {}
 }
 
-// Persistent in-memory cache for custom playlist artwork
-const inMemoryCustomCovers: Record<string, string> = {};
+function readStoredCustomCovers(req?: any, explicitUserId?: string): Record<string, string> {
+  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
+  const result: Record<string, string> = {};
 
-function readStoredCustomCovers(req?: any): Record<string, string> {
-  const result: Record<string, string> = { ...inMemoryCustomCovers };
-
-  // Read from user session if available (crucial for stateless environments like Vercel)
   if (req?.session && (req.session as any).customArtwork && typeof (req.session as any).customArtwork === "object") {
     Object.assign(result, (req.session as any).customArtwork);
   }
 
-  try {
-    if (fs.existsSync(CUSTOM_COVERS_FILE)) {
-      const data = fs.readFileSync(CUSTOM_COVERS_FILE, "utf-8");
-      Object.assign(result, JSON.parse(data));
-    }
-  } catch {}
-
-  // Fallback to /tmp in case persistent directory was ephemeral or read-only
-  try {
-    const tmpCovers = "/tmp/custom_covers.json";
-    if (fs.existsSync(tmpCovers)) {
-      const data = fs.readFileSync(tmpCovers, "utf-8");
-      Object.assign(result, JSON.parse(data));
-    }
-  } catch {}
-
-  try {
-    if (fs.existsSync(PLAYLISTS_FILE)) {
-      const pData = fs.readFileSync(PLAYLISTS_FILE, "utf-8");
-      const pls = JSON.parse(pData);
-      if (Array.isArray(pls)) {
-        for (const pl of pls) {
-          if (pl && pl.id && (pl.isCustomCover || pl.customCoverUrl || pl.customArtwork)) {
-            const cleanId = pl.id.replace(/^VL/, "");
-            const customUrl = pl.customArtwork || pl.customCoverUrl || pl.coverUrl;
-            if (customUrl && typeof customUrl === "string" && !customUrl.includes("/vi/")) {
-              if (!result[cleanId]) result[cleanId] = customUrl;
-              if (!result[pl.id]) result[pl.id] = customUrl;
-            }
-          }
-        }
+  if (effectiveUserId) {
+    const coversFile = getUserCoversFile(effectiveUserId);
+    try {
+      if (fs.existsSync(coversFile)) {
+        const data = fs.readFileSync(coversFile, "utf-8");
+        Object.assign(result, JSON.parse(data));
       }
-    }
-  } catch {}
+    } catch {}
+  }
 
-  // Cache back to in-memory store
-  Object.assign(inMemoryCustomCovers, result);
   return result;
 }
 
-function writeStoredCustomCovers(map: Record<string, string>, req?: any) {
-  Object.assign(inMemoryCustomCovers, map);
+function writeStoredCustomCovers(map: Record<string, string>, req?: any, explicitUserId?: string) {
+  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
 
-  // Store in user session for stateless persistence
   if (req?.session) {
     (req.session as any).customArtwork = {
       ...((req.session as any).customArtwork || {}),
@@ -230,23 +262,21 @@ function writeStoredCustomCovers(map: Record<string, string>, req?: any) {
     };
   }
 
-  try {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(CUSTOM_COVERS_FILE, JSON.stringify(map, null, 2), "utf-8");
-  } catch {
+  if (effectiveUserId) {
+    const coversFile = getUserCoversFile(effectiveUserId);
     try {
-      fs.writeFileSync("/tmp/custom_covers.json", JSON.stringify(map, null, 2), "utf-8");
+      const dir = path.dirname(coversFile);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(coversFile, JSON.stringify(map, null, 2), "utf-8");
     } catch {}
   }
 }
 
-function writeStoredCustomCover(playlistId: string, coverUrl: string, req?: any) {
+function writeStoredCustomCover(playlistId: string, coverUrl: string, req?: any, explicitUserId?: string) {
   try {
     if (!playlistId || !coverUrl) return;
     const cleanId = playlistId.replace(/^VL/, "");
 
-    // Cloud / Base64 persistence: ensure custom uploaded cover images are stored as Base64 strings
-    // or remote hosted URLs, NOT as local filesystem paths (e.g. /public/uploads/)
     let safeArtwork = coverUrl;
     if (typeof safeArtwork === "string" && (safeArtwork.startsWith("/public/uploads/") || safeArtwork.startsWith("/uploads/"))) {
       try {
@@ -260,9 +290,6 @@ function writeStoredCustomCover(playlistId: string, coverUrl: string, req?: any)
       } catch {}
     }
 
-    inMemoryCustomCovers[cleanId] = safeArtwork;
-    inMemoryCustomCovers[playlistId] = safeArtwork;
-
     if (req?.session) {
       if (!(req.session as any).customArtwork) {
         (req.session as any).customArtwork = {};
@@ -271,10 +298,10 @@ function writeStoredCustomCover(playlistId: string, coverUrl: string, req?: any)
       (req.session as any).customArtwork[playlistId] = safeArtwork;
     }
 
-    const map = readStoredCustomCovers(req);
+    const map = readStoredCustomCovers(req, explicitUserId);
     map[cleanId] = safeArtwork;
     map[playlistId] = safeArtwork;
-    writeStoredCustomCovers(map, req);
+    writeStoredCustomCovers(map, req, explicitUserId);
   } catch {}
 }
 
@@ -2118,17 +2145,7 @@ async function refreshAccessTokenDirectly(tokenHint?: string): Promise<string | 
     }
   }
 
-  if (!refreshToken) {
-    const entries = Object.entries(allTokens);
-    if (entries.length > 0) {
-      const [k, latest] = entries[entries.length - 1] as [string, any];
-      if (latest?.refresh_token) {
-        refreshToken = latest.refresh_token;
-        matchedKey = k;
-      }
-    }
-  }
-
+  // Strict isolation: only refresh if we found a matching user/token
   if (!refreshToken) return null;
 
   const clientId = getOAuthClientId();
@@ -2174,6 +2191,7 @@ async function refreshAccessTokenDirectly(tokenHint?: string): Promise<string | 
 
 async function refreshAccessToken(req: express.Request, tokenHint?: string): Promise<string | null> {
   const hint = tokenHint || req.session?.tokens?.access_token || req.headers.authorization?.replace(/^Bearer\s+/, "");
+  if (!hint) return null;
   const newToken = await refreshAccessTokenDirectly(hint);
   if (newToken) {
     if (!req.session.tokens) req.session.tokens = { access_token: newToken };
@@ -2230,16 +2248,6 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
       return match.access_token || token;
     }
 
-    // Fallback: If token not directly found, check if disk store has a token/refresh token
-    if (entries.length > 0) {
-      const latest = entries[entries.length - 1];
-      if (latest?.refresh_token && (!latest?.expires_at || Date.now() > latest.expires_at - 10 * 60 * 1000)) {
-        const refreshed = await refreshAccessToken(req, latest.access_token);
-        if (refreshed) return refreshed;
-      } else if (latest?.access_token) {
-        return latest.access_token;
-      }
-    }
     return token;
   }
 
@@ -2252,16 +2260,7 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
     return refreshed || access_token;
   }
 
-  // Fallback to disk store
-  if (entries.length > 0) {
-    const latest = entries[entries.length - 1];
-    if (latest?.refresh_token) {
-      const refreshed = await refreshAccessToken(req, latest.access_token);
-      if (refreshed) return refreshed;
-    }
-    if (latest?.access_token) return latest.access_token;
-  }
-
+  // Strict isolation: if no token for this session/request, return null
   return null;
 }
 
@@ -2647,10 +2646,10 @@ app.get(["/api/playlists", "/api/youtube/playlists"], async (req, res) => {
       }
     }
 
-    // Merge local custom playlists from session and disk store
-    const rawSession = req.session.playlists || [];
-    const diskPlaylists = readStoredPlaylists();
-    const allCustom = [...rawSession, ...diskPlaylists, ...localPlaylistsStore];
+    // Merge local custom playlists strictly from this user's session and isolated user disk store
+    const rawSession = req.session?.playlists || [];
+    const userStoredPlaylists = readStoredPlaylists(req);
+    const allCustom = [...rawSession, ...userStoredPlaylists];
     const customLocalPlaylists = allCustom.filter((p: any) => p && typeof p.id === "string" && p.id.startsWith("pl_custom_"));
 
     if (authExpired && ytPlaylists.length === 0 && customLocalPlaylists.length === 0) {
@@ -2675,11 +2674,11 @@ app.get(["/api/playlists", "/api/youtube/playlists"], async (req, res) => {
     };
 
     if (accessToken) {
-      // Authenticated user: return authentic YouTube playlists merged with any custom local playlists
+      // Authenticated user: return authentic YouTube playlists merged with this user's custom local playlists
       combined = filterGenuinePlaylists([...ytPlaylists, ...customLocalPlaylists]);
-      // If authentic fetch returned empty but we have previously saved disk playlists, use disk playlists as resilient fallback
-      if (combined.length === 0 && diskPlaylists.length > 0 && !authExpired) {
-        combined = filterGenuinePlaylists([...diskPlaylists]);
+      // If authentic fetch returned empty but we have this user's previously saved playlists, use them as resilient fallback
+      if (combined.length === 0 && userStoredPlaylists.length > 0 && !authExpired) {
+        combined = filterGenuinePlaylists([...userStoredPlaylists]);
       }
     } else {
       // Unauthenticated user: when signed out, do not leak or return private playlists
@@ -2710,7 +2709,7 @@ app.get(["/api/playlists", "/api/youtube/playlists"], async (req, res) => {
     if (finalized.length > 0) {
       setInCache(userCacheKey, finalized);
       if (accessToken) {
-        writeStoredPlaylists(finalized);
+        writeStoredPlaylists(finalized, req);
       }
     }
 
@@ -2727,14 +2726,14 @@ app.get("/api/youtube/playlists/:id/custom-cover", async (req, res) => {
   const cleanPlId = id ? id.replace(/^VL/, "") : "";
   try {
     const accessToken = await getValidAccessToken(req);
-    const storedCustom = readStoredCustomCovers();
+    const storedCustom = readStoredCustomCovers(req);
     if (storedCustom[cleanPlId] || storedCustom[id]) {
       const cachedCover = storedCustom[cleanPlId] || storedCustom[id];
       return res.json({ customCoverUrl: cachedCover, isCustomCover: true });
     }
     const customCover = await fetchYouTubePlaylistCustomImage(id, accessToken);
     if (customCover) {
-      writeStoredCustomCover(cleanPlId, customCover);
+      writeStoredCustomCover(cleanPlId, customCover, req);
       return res.json({ customCoverUrl: customCover, isCustomCover: true });
     }
     res.json({ customCoverUrl: null, isCustomCover: false });
@@ -2754,9 +2753,9 @@ app.get(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async 
     const accessToken = await getValidAccessToken(req);
     
     const cleanPlId = id.replace(/^VL/, "");
-    // Check session or local store or disk store
-    const storedPlaylists = readStoredPlaylists();
-    const allPlaylists = [...(req.session.playlists || []), ...(localPlaylistsStore || []), ...storedPlaylists];
+    // Check session or isolated user disk store
+    const storedPlaylists = readStoredPlaylists(req);
+    const allPlaylists = [...(req.session?.playlists || []), ...storedPlaylists];
     const found = allPlaylists.find(p => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
 
     let customCover: string | null = null;
@@ -2777,17 +2776,17 @@ app.get(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async 
           }
         }
         try {
-          const diskPls = readStoredPlaylists();
-          const diskFound = diskPls.find(p => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
-          if (diskFound) {
-            diskFound.tracks = finalTracks;
-            diskFound.tracksCount = finalTracks.length;
+          const userPls = readStoredPlaylists(req);
+          const userFound = userPls.find(p => p.id === id || p.playlistId === id || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
+          if (userFound) {
+            userFound.tracks = finalTracks;
+            userFound.tracksCount = finalTracks.length;
             if (customCover) {
-              diskFound.coverUrl = customCover;
-              diskFound.customCoverUrl = customCover;
-              diskFound.isCustomCover = true;
+              userFound.coverUrl = customCover;
+              userFound.customCoverUrl = customCover;
+              userFound.isCustomCover = true;
             }
-            writeStoredPlaylists(diskPls);
+            writeStoredPlaylists(userPls, req);
           }
         } catch (dErr) {
           console.warn("[Storage] Persist tracks on items fetch notice:", dErr);
@@ -4081,24 +4080,23 @@ app.post(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async
     youtubeVideoId: vId || track.youtubeVideoId,
   };
 
-  // Update in session memory, local store, and disk store for all playlist types
+  // Update in session memory and isolated user disk store
   try {
-    if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];
+    if (!req.session.playlists) req.session.playlists = [];
     let foundInSession = req.session.playlists.find((p) => p.id === id || p.playlistId === id || p.id === cleanPlId || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
     if (foundInSession) {
       if (!foundInSession.tracks) foundInSession.tracks = [];
       foundInSession.tracks.push(cleanTrack);
       foundInSession.tracksCount = foundInSession.tracks.length;
     }
-    localPlaylistsStore = req.session.playlists;
 
-    const diskPls = readStoredPlaylists();
-    let foundInDisk = diskPls.find((p: any) => p.id === id || p.playlistId === id || p.id === cleanPlId || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
-    if (foundInDisk) {
-      if (!foundInDisk.tracks) foundInDisk.tracks = [];
-      foundInDisk.tracks.push(cleanTrack);
-      foundInDisk.tracksCount = foundInDisk.tracks.length;
-      writeStoredPlaylists(diskPls);
+    const userPls = readStoredPlaylists(req);
+    let foundInUserStore = userPls.find((p: any) => p.id === id || p.playlistId === id || p.id === cleanPlId || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
+    if (foundInUserStore) {
+      if (!foundInUserStore.tracks) foundInUserStore.tracks = [];
+      foundInUserStore.tracks.push(cleanTrack);
+      foundInUserStore.tracksCount = foundInUserStore.tracks.length;
+      writeStoredPlaylists(userPls, req);
     }
   } catch (storeErr) {
     console.warn("[Storage] Notice updating playlist item in store:", storeErr);
@@ -4275,7 +4273,7 @@ app.delete(["/api/youtube/playlists/:id/items/:trackId", "/api/playlists/:id/ite
   const queryPlItemId = (req.query.playlistItemId as string) || "";
   const candidateItemId = queryPlItemId || (decodedTrackId && !decodedTrackId.includes("_") && decodedTrackId.length > 15 ? decodedTrackId : "");
 
-  // Filter out the track from session, local store, and disk store for all playlists
+  // Filter out the track from session and isolated user disk store
   try {
     if (req.session?.playlists) {
       const found = req.session.playlists.find((p) => p.id === id || p.playlistId === id || p.id === cleanPlId || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
@@ -4287,19 +4285,18 @@ app.delete(["/api/youtube/playlists/:id/items/:trackId", "/api/playlists/:id/ite
         });
         found.tracksCount = found.tracks.length;
       }
-      localPlaylistsStore = req.session.playlists;
     }
 
-    const diskPls = readStoredPlaylists();
-    const diskFound = diskPls.find((p: any) => p.id === id || p.playlistId === id || p.id === cleanPlId || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
-    if (diskFound && diskFound.tracks) {
-      diskFound.tracks = diskFound.tracks.filter((t: any) => {
+    const userPls = readStoredPlaylists(req);
+    const userFound = userPls.find((p: any) => p.id === id || p.playlistId === id || p.id === cleanPlId || (p.id && p.id.replace(/^VL/, "") === cleanPlId));
+    if (userFound && userFound.tracks) {
+      userFound.tracks = userFound.tracks.filter((t: any) => {
         const tVid = extractCleanVideoId(t.youtubeVideoId || t.id);
         const tPlItemId = t.playlistItemId || t.id;
         return t.id !== decodedTrackId && t.youtubeVideoId !== decodedTrackId && tVid !== vId && tPlItemId !== decodedTrackId && (!candidateItemId || tPlItemId !== candidateItemId);
       });
-      diskFound.tracksCount = diskFound.tracks.length;
-      writeStoredPlaylists(diskPls);
+      userFound.tracksCount = userFound.tracks.length;
+      writeStoredPlaylists(userPls, req);
     }
   } catch (storeErr) {
     console.warn("[Storage] Remove track store notice:", storeErr);
@@ -5062,7 +5059,7 @@ app.get("/api/youtube/recommendations", async (req, res) => {
       : [];
 
     const quickPicks = (trendingTracks || []).slice(0, 6);
-    const sessionPlaylists = req.session.playlists || localPlaylistsStore || [];
+    const sessionPlaylists = req.session?.playlists || [];
 
     const responsePayload = {
       trendingTracks: deduplicateById(trendingTracks || []),
@@ -5082,7 +5079,7 @@ app.get("/api/youtube/recommendations", async (req, res) => {
     res.json({
       trendingTracks: [],
       quickPicks: [],
-      mixes: req.session.playlists || localPlaylistsStore || [],
+      mixes: req.session?.playlists || [],
       topAlbums: [],
       isPersonalized: false
     });
@@ -6467,7 +6464,7 @@ app.get("/api/auth/me", async (req, res) => {
           (req.session?.user?.id && e.user?.id === req.session.user.id) ||
           (req.session?.user?.email && e.user?.email === req.session.user.email)
       );
-      const userObj = match?.user || req.session?.user || (entries.length > 0 ? entries[entries.length - 1]?.user : null);
+      const userObj = match?.user || req.session?.user;
 
       if (userObj) {
         if (req.session) {
@@ -6487,37 +6484,19 @@ app.get("/api/auth/me", async (req, res) => {
       }
     }
 
-    if (req.session?.user) {
+    if (req.session?.user && req.session?.tokens?.access_token) {
       const u = req.session.user;
       return res.json({
         isLoggedIn: true,
         user: u,
+        accessToken: req.session.tokens.access_token,
       });
-    }
-
-    // Fallback to disk store if session was cleared on server reload
-    if (entries.length > 0) {
-      const latest = entries[entries.length - 1] as any;
-      if (latest?.user) {
-        const activeAccessToken = validToken || latest.access_token;
-        if (req.session) {
-          req.session.tokens = {
-            access_token: activeAccessToken,
-            refresh_token: latest.refresh_token,
-            expires_at: latest.expires_at,
-          };
-          req.session.user = { ...latest.user, accessToken: activeAccessToken };
-        }
-        return res.json({
-          isLoggedIn: true,
-          user: { ...latest.user, accessToken: activeAccessToken },
-        });
-      }
     }
   } catch (err) {
     console.warn("Auth check warning:", err);
   }
 
+  // Strictly return unauthenticated state when no session exists for the caller
   res.json({
     isLoggedIn: false,
     user: null,
@@ -6532,6 +6511,14 @@ app.post("/api/auth/refresh", async (req, res) => {
       req.headers.authorization?.replace(/^Bearer\s+/, "") ||
       req.session?.tokens?.access_token;
 
+    if (!hint && !req.session?.tokens?.access_token) {
+      return res.json({
+        success: false,
+        error: "NO_SESSION",
+        message: "No active session to refresh.",
+      });
+    }
+
     const newToken = await refreshAccessTokenDirectly(hint);
     if (newToken) {
       if (!req.session.tokens) req.session.tokens = { access_token: newToken };
@@ -6543,7 +6530,7 @@ app.post("/api/auth/refresh", async (req, res) => {
       const match = entries.find(
         (e: any) => e.access_token === newToken || (Array.isArray(e.previous_tokens) && e.previous_tokens.includes(newToken))
       );
-      const userObj = match?.user || req.session?.user || (entries.length > 0 ? entries[entries.length - 1]?.user : null);
+      const userObj = match?.user || req.session?.user;
 
       if (userObj) {
         req.session.user = { ...userObj, accessToken: newToken };
@@ -6576,12 +6563,16 @@ app.post("/api/auth/refresh", async (req, res) => {
 
 app.post("/api/auth/logout", (req, res) => {
   try {
-    writeStoredTokens({});
-    writeStoredPlaylists([]);
-    localPlaylistsStore = [];
-    delFromCache("yt_playlists_auth:*");
-    delFromCache("yt_playlists_pub:*");
-    delFromCache("user_pls_*");
+    const userId = req.session?.user?.id;
+    if (userId) {
+      const allTokens = readStoredTokens();
+      delete allTokens[userId];
+      writeStoredTokens(allTokens);
+    }
+    const token = req.session?.tokens?.access_token;
+    if (token) {
+      delFromCache(`user_pls_${token.slice(-20)}`);
+    }
   } catch {}
   req.session.destroy(() => {
     res.json({ success: true });
