@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
 interface MarqueeTextProps {
-  text: string;
+  text?: string | number | null;
   className?: string;
   containerClassName?: string;
   speed?: number; // pixels per second (default ~30)
@@ -12,7 +12,7 @@ interface MarqueeTextProps {
 }
 
 export const MarqueeText: React.FC<MarqueeTextProps> = ({
-  text,
+  text = "",
   className = "",
   containerClassName = "",
   speed = 32,
@@ -21,6 +21,7 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
   as: Component = "div",
   pauseOnHover = true,
 }) => {
+  const safeText = text !== undefined && text !== null ? String(text) : "";
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState<boolean>(false);
@@ -64,9 +65,13 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
       if (observer) observer.disconnect();
       window.removeEventListener("resize", checkOverflow);
     };
-  }, [text, speed]);
+  }, [safeText, speed]);
 
-  const cleanTitle = title || text;
+  const cleanTitle = title || safeText;
+
+  if (!safeText) {
+    return null;
+  }
 
   return (
     <Component
@@ -81,15 +86,15 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
           style={{ "--marquee-duration": `${duration}s` } as React.CSSProperties}
         >
           <span ref={textRef} className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`}>
-            {text}
+            {safeText}
           </span>
           <span className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`} aria-hidden="true">
-            {text}
+            {safeText}
           </span>
         </div>
       ) : (
         <span ref={textRef} className={`block truncate ${className}`}>
-          {text}
+          {safeText}
         </span>
       )}
     </Component>

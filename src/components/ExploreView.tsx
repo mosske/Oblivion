@@ -20,6 +20,7 @@ import {
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { getInMemoryToken } from "../App";
+import { MarqueeText } from "./MarqueeText";
 
 interface ExploreViewProps {
   onPlayTrack: (track: Track) => void;
@@ -216,13 +217,19 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                        {cleanTrackTitle(album.title, album.artist)}
-                      </h3>
-                      <p className={`text-xs ${designConfig.textMuted} truncate mt-0.5`}>
-                        {album.artist}
-                      </p>
+                    <div className="flex-1 min-w-0 w-full">
+                      <MarqueeText
+                        text={cleanTrackTitle(album.title, album.artist)}
+                        className={`font-bold text-sm ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                        containerClassName="w-full"
+                        speed={28}
+                      />
+                      <MarqueeText
+                        text={album.artist || "Unknown Artist"}
+                        className={`text-xs ${designConfig.textMuted}`}
+                        containerClassName="w-full mt-0.5"
+                        speed={24}
+                      />
                     </div>
                   </div>
                 ))}
@@ -313,13 +320,19 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                         </div>
 
                         {/* Track Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title, track.artist)}
-                          </p>
-                          <p className={`text-xs ${designConfig.textMuted} truncate`}>
-                            {track.artist}
-                          </p>
+                        <div className="flex-1 min-w-0 w-full">
+                          <MarqueeText
+                            text={cleanTrackTitle(track.title, track.artist)}
+                            className={`text-sm font-semibold ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                            containerClassName="w-full"
+                            speed={28}
+                          />
+                          <MarqueeText
+                            text={track.artist || "Unknown Artist"}
+                            className={`text-xs ${designConfig.textMuted}`}
+                            containerClassName="w-full"
+                            speed={24}
+                          />
                         </div>
                       </div>
 
@@ -390,13 +403,19 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                         ) : null}
                       </div>
 
-                      <div className="flex-1 min-w-0">
-                        <h3 className={`font-bold text-xs ${isCurrent ? designConfig.accentText : designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                          {cleanTrackTitle(video.title, video.artist)}
-                        </h3>
-                        <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
-                          {video.artist}
-                        </p>
+                      <div className="flex-1 min-w-0 w-full">
+                        <MarqueeText
+                          text={cleanTrackTitle(video.title, video.artist)}
+                          className={`font-bold text-xs ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                          containerClassName="w-full"
+                          speed={28}
+                        />
+                        <MarqueeText
+                          text={video.artist || "Unknown Artist"}
+                          className={`text-[11px] ${designConfig.textMuted}`}
+                          containerClassName="w-full mt-0.5"
+                          speed={24}
+                        />
                       </div>
                     </div>
                   );

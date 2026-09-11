@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { User, Track, Album, Playlist } from "../types";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
+import { MarqueeText } from "./MarqueeText";
 import {
   Play,
   Sparkles,
@@ -246,12 +247,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title, track.artist)}
-                          </p>
-                          <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
-                            {track.artist}
-                          </p>
+                          <MarqueeText
+                            text={cleanTrackTitle(track.title, track.artist)}
+                            className={`text-xs sm:text-sm font-semibold ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                            containerClassName="w-full"
+                            speed={28}
+                          />
+                          <MarqueeText
+                            text={track.artist || "Unknown Artist"}
+                            className={`text-[11px] ${designConfig.textMuted}`}
+                            containerClassName="w-full mt-0.5"
+                            speed={24}
+                          />
                         </div>
                       </div>
 
@@ -322,12 +329,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title, track.artist)}
-                          </p>
-                          <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
-                            {track.artist}
-                          </p>
+                          <MarqueeText
+                            text={cleanTrackTitle(track.title, track.artist)}
+                            className={`text-xs sm:text-sm font-semibold ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                            containerClassName="w-full"
+                            speed={28}
+                          />
+                          <MarqueeText
+                            text={track.artist || "Unknown Artist"}
+                            className={`text-[11px] ${designConfig.textMuted}`}
+                            containerClassName="w-full mt-0.5"
+                            speed={24}
+                          />
                         </div>
                       </div>
 
@@ -390,13 +403,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                        {mix.title}
-                      </h3>
-                      <p className={`text-[11px] ${designConfig.textMuted} line-clamp-2 mt-0.5 leading-snug`}>
-                        {mix.description}
-                      </p>
+                    <div className="flex-1 min-w-0 w-full">
+                      <MarqueeText
+                        text={mix.title}
+                        className={`font-bold text-sm ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                        containerClassName="w-full"
+                        speed={28}
+                      />
+                      {mix.description && (
+                        <MarqueeText
+                          text={mix.description}
+                          className={`text-[11px] ${designConfig.textMuted}`}
+                          containerClassName="w-full mt-0.5 leading-snug"
+                          speed={24}
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -471,12 +492,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title, track.artist)}
-                          </p>
-                          <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
-                            {track.artist}
-                          </p>
+                          <MarqueeText
+                            text={cleanTrackTitle(track.title, track.artist)}
+                            className={`text-xs sm:text-sm font-semibold ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                            containerClassName="w-full"
+                            speed={28}
+                          />
+                          <MarqueeText
+                            text={track.artist || "Unknown Artist"}
+                            className={`text-[11px] ${designConfig.textMuted}`}
+                            containerClassName="w-full mt-0.5"
+                            speed={24}
+                          />
                         </div>
                       </div>
 
@@ -527,13 +554,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                        {cleanTrackTitle(album.title, album.artist)}
-                      </h3>
-                      <p className={`text-xs ${designConfig.textMuted} truncate mt-0.5`}>
-                        {album.artist}
-                      </p>
+                    <div className="flex-1 min-w-0 w-full">
+                      <MarqueeText
+                        text={cleanTrackTitle(album.title, album.artist)}
+                        className={`font-bold text-sm ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                        containerClassName="w-full"
+                        speed={28}
+                      />
+                      <MarqueeText
+                        text={album.artist || "Unknown Artist"}
+                        className={`text-xs ${designConfig.textMuted}`}
+                        containerClassName="w-full mt-0.5"
+                        speed={24}
+                      />
                     </div>
                   </div>
                 ))}
@@ -608,12 +641,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs sm:text-sm font-semibold truncate ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}>
-                            {cleanTrackTitle(track.title, track.artist)}
-                          </p>
-                          <p className={`text-[11px] ${designConfig.textMuted} truncate mt-0.5`}>
-                            {track.artist}
-                          </p>
+                          <MarqueeText
+                            text={cleanTrackTitle(track.title, track.artist)}
+                            className={`text-xs sm:text-sm font-semibold ${isCurrent ? designConfig.accentText : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                            containerClassName="w-full"
+                            speed={28}
+                          />
+                          <MarqueeText
+                            text={track.artist || "Unknown Artist"}
+                            className={`text-[11px] ${designConfig.textMuted}`}
+                            containerClassName="w-full mt-0.5"
+                            speed={24}
+                          />
                         </div>
                       </div>
 
@@ -671,13 +710,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-bold text-sm ${designConfig.textPrimary} truncate group-hover:${designConfig.accentText} transition-colors`}>
-                        {pl.title}
-                      </h3>
-                      <p className={`text-[11px] ${designConfig.textMuted} line-clamp-2 mt-0.5 leading-snug`}>
-                        {pl.description}
-                      </p>
+                    <div className="flex-1 min-w-0 w-full">
+                      <MarqueeText
+                        text={pl.title}
+                        className={`font-bold text-sm ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors`}
+                        containerClassName="w-full"
+                        speed={28}
+                      />
+                      {(pl.description || pl.tracksCount) && (
+                        <MarqueeText
+                          text={pl.description || `${pl.tracksCount || 50} tracks`}
+                          className={`text-[11px] ${designConfig.textMuted}`}
+                          containerClassName="w-full mt-0.5 leading-snug"
+                          speed={24}
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
