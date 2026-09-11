@@ -219,7 +219,24 @@ export class ThemeRegistry {
       subtextColor: "text-[#666055]",
       swatchColors: ["#F2E8D8", "#FAF5ED", "#1F1F1F", "#666055"]
     },
-    "obsidian-depth": {
+        "nebula-liquid-glass": {
+      id: "nebula-liquid-glass",
+      name: "Nebula Liquid Glass",
+      description: "Vibrant shifting nebular gradient background with frosted glass UI elements.",
+      category: "Vibrant",
+      previewGradient: "from-purple-600 via-pink-500 to-cyan-500",
+      accentClass: "text-white",
+      accentText: "text-white",
+      accentBg: "bg-white/20",
+      borderAccent: "border-white/30",
+      bgCanvas: "bg-gradient-to-br from-indigo-900 via-purple-800 to-cyan-900 animate-gradient-shift",
+      cardBg: "bg-white/10 backdrop-blur-xl border-white/20 shadow-lg",
+      sidebarBg: "bg-white/5 backdrop-blur-2xl border-white/10",
+      playerBg: "bg-white/10 backdrop-blur-2xl border-white/20",
+      textColor: "text-white",
+      subtextColor: "text-white/70",
+      swatchColors: ["#4c1d95", "#db2777", "#06b6d4"]
+    },"obsidian-depth": {
       id: "obsidian-depth",
       name: "Obsidian Depth",
       description: "Soft matte dark slate with 3D-extruded elements and neon cyan accents.",
