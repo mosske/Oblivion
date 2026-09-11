@@ -90,6 +90,29 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
           trackArtist: "text-[#38bdf8] font-semibold",
           iconColor: "text-[#091524]",
         };
+      case "nebula-liquid-glass":
+        return {
+          accentHex: "#c084fc",
+          badgeBg: "bg-purple-500/20 border border-purple-400/30 text-purple-200 font-bold shadow-xs",
+          accentText: "text-[#c084fc]",
+          btnPrimary: "bg-gradient-to-r from-[#a855f7] via-[#ec4899] to-[#06b6d4] hover:brightness-110 text-white shadow-[0_0_24px_rgba(168,85,247,0.45)] font-bold active:scale-95 border border-white/30",
+          btnSecondary: "bg-white/[0.08] hover:bg-white/[0.14] text-purple-200 border border-white/[0.15] backdrop-blur-xl shadow-md font-semibold active:scale-95",
+          btnActive: "bg-gradient-to-r from-[#a855f7] via-[#ec4899] to-[#06b6d4] text-white ring-4 ring-purple-500/40",
+          glowBg: "bg-purple-500/30",
+          pulseBg: "bg-purple-500/35",
+          ringBorder: "border-purple-400/60",
+          ringColor: "ring-purple-400/40",
+          cardBorder: "border-white/[0.12]",
+          cardBg: "bg-white/[0.06] backdrop-blur-2xl border border-white/[0.12] shadow-[0_8px_32px_rgba(168,85,247,0.18)]",
+          modalBg: "bg-[#0d0b1a]/95 backdrop-blur-3xl border border-white/[0.15] shadow-[0_16px_48px_rgba(0,0,0,0.7),0_0_32px_rgba(168,85,247,0.25)]",
+          modalTitle: "text-slate-100 font-extrabold tracking-tight",
+          closeBtn: "bg-white/[0.08] hover:bg-white/[0.16] text-purple-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-xs",
+          statusTitle: "text-slate-100 font-bold",
+          statusSubtitle: "text-purple-200/70 font-medium",
+          trackTitle: "text-slate-100 font-bold",
+          trackArtist: "text-[#c084fc] font-semibold",
+          iconColor: "text-white",
+        };
       case "cyberpunk-neon":
         return {
           accentHex: "#06b6d4",

@@ -154,6 +154,19 @@ const PALETTES: Record<string, GradientPalette> = {
     auraColor: "#38bdf8",
     textGold: "#38bdf8",
   },
+
+  // 9. Nebula Liquid Glass (Ultraviolet, Magenta & Cyan Celestial Gradient)
+  "nebula-liquid-glass": {
+    ringGrad: { c1: "#fdf4ff", c2: "#c084fc", c3: "#ec4899", c4: "#06b6d4" },
+    tri1Grad: { c1: "#a855f7", c2: "#ec4899", c3: "#06b6d4" },
+    tri2Grad: { c1: "#fdf4ff", c2: "#e879f9", c3: "#c084fc" },
+    highlight: "#ffffff",
+    shadow: "#0d0b1a",
+    playCore: "#0d0b1a",
+    playHighlight: "#fdf4ff",
+    auraColor: "#a855f7",
+    textGold: "#c084fc",
+  },
 };
 
 export const OblivionLogo: React.FC<OblivionLogoProps> = ({

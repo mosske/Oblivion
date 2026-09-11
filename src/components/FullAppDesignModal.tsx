@@ -49,7 +49,7 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg sm:text-xl font-black text-white">
-                  8 Full App Layouts &amp; Designs
+                  {FULL_APP_DESIGNS_LIST.length} Full App Layouts &amp; Designs
                 </h3>
                 <span
                   className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full border font-bold"

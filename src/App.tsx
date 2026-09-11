@@ -703,6 +703,14 @@ export default function App() {
           sliderTrack: "#1c2026",
           sliderFill: "#38bdf8",
         },
+        "nebula-liquid-glass": {
+          accent: "#c084fc",
+          secondary: "#ec4899",
+          tertiary: "#06b6d4",
+          contrastText: "#ffffff",
+          sliderTrack: "#1e1338",
+          sliderFill: "#c084fc",
+        },
       };
 
       const vars = themeVariables[activeFullDesign.id] || themeVariables.designer;

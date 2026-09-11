@@ -87,13 +87,13 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
               }}
             >
               <Layout className="w-3.5 h-3.5" />
-              <span>Full-App Layouts &amp; Themes Studio (8 Options)</span>
+              <span>Full-App Layouts &amp; Themes Studio ({FULL_APP_DESIGNS_LIST.length} Options)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
               Transform the Entire App Design
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Experience 8 complete, distinct full-app design archetypes. Switching designs updates the entire visual ecosystem: the canvas atmosphere, header, sidebar navigation, content cards, color palette, and docked bottom player.
+              Experience {FULL_APP_DESIGNS_LIST.length} complete, distinct full-app design archetypes. Switching designs updates the entire visual ecosystem: the canvas atmosphere, header, sidebar navigation, content cards, color palette, and docked bottom player.
             </p>
           </div>
 
@@ -113,12 +113,12 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
         </div>
       </div>
 
-      {/* 8 Full App Designs Grid */}
+      {/* Full App Designs Grid */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5" style={{ color: "var(--accent-primary)" }} />
-            <span>Choose From 8 Full App Designs</span>
+            <span>Choose From {FULL_APP_DESIGNS_LIST.length} Full App Designs</span>
           </h2>
           <span className="text-xs text-slate-400 hidden sm:inline">
             Tap any card to instantly morph the entire app live

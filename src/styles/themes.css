@@ -225,6 +225,37 @@
   --neu-shadow-dock: 10px 10px 24px rgba(12, 14, 20, 0.85), -8px -8px 20px rgba(255, 255, 255, 0.07), inset 0 1px 1px rgba(255, 255, 255, 0.08);
 }
 
+/* Theme 09: Nebula Liquid Glass (Deep Cosmic Void, Translucent Frosted Liquid Glass, Ultraviolet & Cyan Glow) */
+[data-theme="nebula-liquid-glass"],
+.theme-nebula-liquid-glass {
+  --bg-canvas: #0d0b1a;
+  --canvas-text-primary: #f8fafc;
+  --canvas-text-secondary: #e9d5ff;
+  --canvas-text-muted: #c084fc;
+  --card-bg: rgba(255, 255, 255, 0.06);
+  --card-text: #f8fafc;
+  --card-border: rgba(255, 255, 255, 0.12);
+  --accent-primary: #c084fc;
+  --accent-color: #c084fc;
+  --primary: #c084fc;
+  --accent-primary-rgb: 192, 132, 252;
+  --accent-secondary: #ec4899;
+  --accent-tertiary: #06b6d4;
+  --accent-contrast-text: #ffffff;
+  --text-primary: #f8fafc;
+  --text-secondary: #e9d5ff;
+  --text-muted: #c084fc;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-active: var(--accent-primary);
+  --glow-color-1: rgba(168, 85, 247, 0.45);
+  --glow-color-2: rgba(236, 72, 153, 0.40);
+  --waveform-inactive: rgba(233, 213, 255, 0.25);
+  --glass-blur: blur(24px);
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.14);
+}
+
 [data-theme="neue-editorial"],
 .theme-neue-editorial {
   font-family: 'Neue Haas Grotesk Display Pro', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
