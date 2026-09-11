@@ -37,15 +37,28 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-800/90 bg-slate-900/80">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 text-white shadow-lg shadow-cyan-500/20">
-              <Layout className="w-5 h-5" />
+            <div
+              className="p-2.5 rounded-2xl text-white shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
+                boxShadow: "0 0 15px var(--accent-primary)",
+              }}
+            >
+              <Layout className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg sm:text-xl font-black text-white">
-                  7 Full App Layouts & Designs
+                  8 Full App Layouts &amp; Designs
                 </h3>
-                <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                <span
+                  className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full border font-bold"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                    borderColor: "color-mix(in srgb, var(--accent-primary) 35%, transparent)",
+                    color: "var(--accent-primary)",
+                  }}
+                >
                   Full Suite
                 </span>
               </div>
@@ -74,13 +87,23 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                   onClick={() => onSelectDesign(design.id)}
                   className={`rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer relative group ${
                     isSelected
-                      ? `bg-slate-900 border-cyan-400 ring-2 ring-cyan-400/50 shadow-2xl scale-[1.01]`
+                      ? `bg-slate-900 shadow-2xl scale-[1.01]`
                       : `bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90`
                   }`}
+                  style={{
+                    borderColor: isSelected ? "var(--accent-primary)" : undefined,
+                    boxShadow: isSelected ? "0 0 20px color-mix(in srgb, var(--accent-primary) 30%, transparent)" : undefined,
+                  }}
                 >
                   {/* Selection Badge */}
                   {isSelected && (
-                    <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-[10px] flex items-center gap-1 shadow-lg">
+                    <div
+                      className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full font-bold text-[10px] flex items-center gap-1 shadow-lg"
+                      style={{
+                        background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
+                        color: "var(--accent-contrast-text, #000000)",
+                      }}
+                    >
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
                       <span>ACTIVE ON APP</span>
                     </div>
@@ -92,7 +115,7 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/60 text-slate-200 border border-white/10">
                         {design.badge}
                       </span>
-                      <span className="text-xs font-mono text-slate-400">{design.num} / 07</span>
+                      <span className="text-xs font-mono text-slate-400">{design.num} / 08</span>
                     </div>
 
                     {/* Miniature UI Screen Wireframe */}
@@ -198,9 +221,15 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                         }}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                           isSelected
-                            ? "bg-cyan-400 text-slate-950 shadow-md shadow-cyan-400/30"
+                            ? "shadow-md"
                             : "bg-slate-800 hover:bg-slate-700 text-white"
                         }`}
+                        style={{
+                          background: isSelected
+                            ? "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))"
+                            : undefined,
+                          color: isSelected ? "var(--accent-contrast-text, #000000)" : undefined,
+                        }}
                       >
                         {isSelected ? "Applied" : "Apply Design →"}
                       </button>

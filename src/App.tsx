@@ -624,26 +624,91 @@ export default function App() {
       document.documentElement.setAttribute("data-theme", activeFullDesign.id);
       syncDocumentThemeColor(activeFullDesign);
 
-      const themeAccentColors: Record<string, string> = {
-        designer: "#c59b27",
-        "cyberpunk-neon": "#00f3ff",
-        candyland: "#ff70a6",
-        "ytmusic-red": "#ff70a6",
-        "dynamic-emerald": "#00f5a0",
-        "audiophile-gold": "#f59e0b",
-        "twilight-vaporwave": "#ff2a8d",
-        "neue-editorial": "#1F1F1F",
-        "obsidian-depth": "#38bdf8",
+      const themeVariables: Record<
+        string,
+        {
+          accent: string;
+          secondary: string;
+          tertiary: string;
+          contrastText: string;
+          sliderTrack?: string;
+          sliderFill?: string;
+        }
+      > = {
+        designer: {
+          accent: "#c59b27",
+          secondary: "#d8a846",
+          tertiary: "#9b7617",
+          contrastText: "#000000",
+        },
+        "cyberpunk-neon": {
+          accent: "#00f3ff",
+          secondary: "#ff007f",
+          tertiary: "#7928ca",
+          contrastText: "#000000",
+        },
+        candyland: {
+          accent: "#ff70a6",
+          secondary: "#ff9ebb",
+          tertiary: "#ffb4d6",
+          contrastText: "#ffffff",
+          sliderTrack: "#ffd1dc",
+          sliderFill: "#ff70a6",
+        },
+        "ytmusic-red": {
+          accent: "#ff70a6",
+          secondary: "#ff9ebb",
+          tertiary: "#ffb4d6",
+          contrastText: "#ffffff",
+          sliderTrack: "#ffd1dc",
+          sliderFill: "#ff70a6",
+        },
+        "dynamic-emerald": {
+          accent: "#00f5a0",
+          secondary: "#00d9f5",
+          tertiary: "#059669",
+          contrastText: "#000000",
+        },
+        "audiophile-gold": {
+          accent: "#f59e0b",
+          secondary: "#fbbf24",
+          tertiary: "#d97706",
+          contrastText: "#000000",
+        },
+        "twilight-vaporwave": {
+          accent: "#ff2a8d",
+          secondary: "#9d4edd",
+          tertiary: "#05d9e8",
+          contrastText: "#ffffff",
+        },
+        "neue-editorial": {
+          accent: "#1F1F1F",
+          secondary: "#3A3530",
+          tertiary: "#181816",
+          contrastText: "#F2E8D8",
+        },
+        "obsidian-depth": {
+          accent: "#38bdf8",
+          secondary: "#a5f3fc",
+          tertiary: "#0284c7",
+          contrastText: "#0f172a",
+          sliderTrack: "#1c2026",
+          sliderFill: "#38bdf8",
+        },
       };
 
-      const accentHex = themeAccentColors[activeFullDesign.id] || "#38bdf8";
-      document.documentElement.style.setProperty("--accent-color", accentHex);
-      document.documentElement.style.setProperty("--primary", accentHex);
-      document.documentElement.style.setProperty("--accent-primary", accentHex);
-      if (activeFullDesign.id === "obsidian-depth") {
-        document.documentElement.style.setProperty("--accent-secondary", "#a5f3fc");
-        document.documentElement.style.setProperty("--accent-tertiary", "#0284c7");
-        document.documentElement.style.setProperty("--accent-contrast-text", "#0f172a");
+      const vars = themeVariables[activeFullDesign.id] || themeVariables.designer;
+      document.documentElement.style.setProperty("--accent-color", vars.accent);
+      document.documentElement.style.setProperty("--primary", vars.accent);
+      document.documentElement.style.setProperty("--accent-primary", vars.accent);
+      document.documentElement.style.setProperty("--accent-secondary", vars.secondary);
+      document.documentElement.style.setProperty("--accent-tertiary", vars.tertiary);
+      document.documentElement.style.setProperty("--accent-contrast-text", vars.contrastText);
+      if (vars.sliderTrack) {
+        document.documentElement.style.setProperty("--slider-track-bg", vars.sliderTrack);
+      }
+      if (vars.sliderFill) {
+        document.documentElement.style.setProperty("--slider-fill-bg", vars.sliderFill);
       }
     }
   }, [activeFullDesign.id, activeFullDesign.themeColorMeta]);

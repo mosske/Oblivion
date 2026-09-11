@@ -78,15 +78,22 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 p-6 sm:p-8 shadow-2xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-bold tracking-wider">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider border"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                borderColor: "color-mix(in srgb, var(--accent-primary) 35%, transparent)",
+                color: "var(--accent-primary)",
+              }}
+            >
               <Layout className="w-3.5 h-3.5" />
-              <span>Full-App Layouts & Themes Studio (7 Options)</span>
+              <span>Full-App Layouts &amp; Themes Studio (8 Options)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
               Transform the Entire App Design
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Experience 7 complete, distinct full-app design archetypes. Switching designs updates the entire visual ecosystem: the canvas atmosphere, header, sidebar navigation, content cards, color palette, and docked bottom player.
+              Experience 8 complete, distinct full-app design archetypes. Switching designs updates the entire visual ecosystem: the canvas atmosphere, header, sidebar navigation, content cards, color palette, and docked bottom player.
             </p>
           </div>
 
@@ -99,19 +106,19 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
               <span className={`w-3 h-3 rounded-full ${currentDesign.accentBg} animate-pulse`} />
               <span className="text-sm font-bold text-white truncate">{currentDesign.name}</span>
             </div>
-            <div className="text-xs text-cyan-300 font-mono">
+            <div className="text-xs font-mono" style={{ color: "var(--accent-primary)" }}>
               Dock: {currentDesign.mockup?.dockStyle || currentDesign.playerLayout}
             </div>
           </div>
         </div>
       </div>
 
-      {/* 7 Full App Designs Grid */}
+      {/* 8 Full App Designs Grid */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-cyan-400" />
-            <span>Choose From 7 Full App Designs</span>
+            <Sparkles className="w-5 h-5" style={{ color: "var(--accent-primary)" }} />
+            <span>Choose From 8 Full App Designs</span>
           </h2>
           <span className="text-xs text-slate-400 hidden sm:inline">
             Tap any card to instantly morph the entire app live
@@ -128,13 +135,23 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                 onClick={() => onSelectDesign(design.id)}
                 className={`rounded-3xl border transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer relative group ${
                   isSelected
-                    ? `bg-slate-900/95 border-cyan-400 ring-4 ring-cyan-500/20 shadow-2xl scale-[1.01]`
+                    ? `bg-slate-900/95 shadow-2xl scale-[1.01]`
                     : `bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90`
                 }`}
+                style={{
+                  borderColor: isSelected ? "var(--accent-primary)" : undefined,
+                  boxShadow: isSelected ? "0 0 25px color-mix(in srgb, var(--accent-primary) 30%, transparent)" : undefined,
+                }}
               >
                 {/* Active Indicator Top Right */}
                 {isSelected && (
-                  <div className="absolute top-4 right-4 z-20 px-3 py-1 rounded-full bg-cyan-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg">
+                  <div
+                    className="absolute top-4 right-4 z-20 px-3 py-1 rounded-full font-black text-xs flex items-center gap-1.5 shadow-lg"
+                    style={{
+                      background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
+                      color: "var(--accent-contrast-text, #000000)",
+                    }}
+                  >
                     <Check className="w-4 h-4 stroke-[3]" />
                     <span>ACTIVE THEME</span>
                   </div>
@@ -146,7 +163,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                     <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-black/60 text-white border border-white/10">
                       {design.badge}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">Design {design.num} / 07</span>
+                    <span className="text-xs font-mono text-slate-400">Design {design.num} / 08</span>
                   </div>
 
                   {/* Complete App Wireframe Box */}
@@ -268,9 +285,15 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                       }}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
                         isSelected
-                          ? "bg-cyan-400 text-slate-950 shadow-cyan-400/30"
+                          ? "shadow-md"
                           : "bg-slate-800 hover:bg-slate-700 text-white"
                       }`}
+                      style={{
+                        background: isSelected
+                          ? "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))"
+                          : undefined,
+                        color: isSelected ? "var(--accent-contrast-text, #000000)" : undefined,
+                      }}
                     >
                       {isSelected ? "● Live On App" : "Apply Design →"}
                     </button>

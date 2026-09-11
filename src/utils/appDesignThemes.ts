@@ -550,30 +550,30 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
   "obsidian-depth": {
     id: "obsidian-depth",
     name: "Obsidian Depth",
-    subtitle: "Matte Slate, Soft 3D & Lighter Blue Gradient",
-    badge: "NEUMORPHIC",
+    subtitle: "Matte Slate, Realistic 3D & Radiant Lighter-Blue Gradient",
+    badge: "3D NEUMORPHIC",
     num: "08",
     themePreset: "obsidian-depth",
     playerLayout: "floating-dock",
     description:
-      "A tactile, Neumorphic music experience with soft depth-based UI elements, matte dark slate surfaces, and glowing radiant lighter-blue gradients.",
+      "A tactile, realistic 3D Neumorphic music experience featuring dual-directional light sculpting, matte slate (#2a2e38) surfaces, and glowing lighter-blue gradients.",
     features: [
-      "Soft 3D card extrusion with dual directional shadow sculpting",
-      "Matte dark slate (#23282f) backdrop & tactile elevated surfaces",
+      "True 3D card extrusion with top-left specular highlights and deep drop shadows",
+      "Matte dark slate (#2a2e38) canvas with molded polymer 3D elevated surfaces",
       "Radiant lighter-blue gradient (#a5f3fc to #38bdf8 to #0284c7) for buttons, badges, & progress",
-      "Recessed neumorphic input fields and tactile floating player dock",
+      "Recessed 3D input fields, tactile squircle controls, & floating player dock",
     ],
-    swatchColors: ["#23282f", "#2b3038", "#a5f3fc", "#38bdf8"],
+    swatchColors: ["#2a2e38", "#2e3441", "#a5f3fc", "#38bdf8"],
     multiAccentGradient: "from-[#a5f3fc] via-[#38bdf8] to-[#0284c7]",
     isLight: false,
-    themeColorMeta: "#23282f",
+    themeColorMeta: "#2a2e38",
 
-    bgCanvas: "from-[#23282f] via-[#1f2329] to-[#171a1f]",
-    cardBg: "bg-[#2b3038] shadow-[8px_8px_16px_#1c2026,-8px_-8px_16px_#3a404a]",
-    headerBg: "bg-[#23282f]/95 backdrop-blur-xl",
-    sidebarBg: "bg-[#23282f]/95 backdrop-blur-2xl",
-    bottomNavBg: "bg-[#2b3038] shadow-[0px_-4px_10px_#1c2026]",
-    borderSubtle: "border-sky-500/20",
+    bgCanvas: "from-[#2a2e38] via-[#242831] to-[#1c2027]",
+    cardBg: "bg-gradient-to-br from-[#323846] to-[#262b34] shadow-[8px_8px_18px_rgba(16,18,24,0.75),-7px_-7px_16px_rgba(255,255,255,0.07),inset_0_1px_1px_rgba(255,255,255,0.08)] border border-white/[0.04]",
+    headerBg: "bg-[#2a2e38]/95 backdrop-blur-xl border-b border-white/[0.04]",
+    sidebarBg: "bg-[#2a2e38]/95 backdrop-blur-2xl border-r border-white/[0.04]",
+    bottomNavBg: "bg-gradient-to-b from-[#303643] to-[#252932] shadow-[10px_10px_24px_rgba(12,14,20,0.85),-8px_-8px_20px_rgba(255,255,255,0.07)] border-t border-white/[0.05]",
+    borderSubtle: "border-white/[0.05]",
     borderStrong: "border-sky-400/40",
     textPrimary: "text-slate-100",
     textSecondary: "text-slate-300",
@@ -583,24 +583,24 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     accentBorder: "border-[#38bdf8]/50",
     accentContrastText: "text-[#0f172a]",
 
-    headingPrimary: "text-slate-100",
+    headingPrimary: "text-slate-100 font-bold",
     headingSecondary: "text-slate-300",
     headingMuted: "text-slate-400",
-    cardHover: "hover:shadow-[10px_10px_20px_#191c22,-10px_-10px_20px_#3d444e] transition-all",
-    modalBg: "bg-[#2b3038]",
-    pillBg: "bg-[#23282f] shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a] text-slate-300",
-    pillActive: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] text-[#0f172a] font-extrabold shadow-[0_0_12px_rgba(56,189,248,0.4)]",
-    inputBg: "bg-[#23282f] text-slate-100 shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a] border-transparent",
-    glowRing: "shadow-[0_0_25px_rgba(56,189,248,0.35)]",
+    cardHover: "hover:shadow-[11px_11px_24px_rgba(14,16,22,0.85),-9px_-9px_20px_rgba(255,255,255,0.09),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:-translate-y-0.5 transition-all duration-300",
+    modalBg: "bg-[#2a2e38]",
+    pillBg: "bg-[#242831] shadow-[inset_4px_4px_9px_rgba(13,15,21,0.85),inset_-3px_-3px_7px_rgba(255,255,255,0.06)] border border-black/20 text-slate-300",
+    pillActive: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] text-[#0f172a] font-black shadow-[4px_4px_12px_rgba(12,14,20,0.7),0_0_16px_rgba(56,189,248,0.4)] border border-white/20",
+    inputBg: "bg-[#242831] text-slate-100 shadow-[inset_4px_4px_9px_rgba(13,15,21,0.85),inset_-3px_-3px_7px_rgba(255,255,255,0.06)] border border-black/25 focus:border-sky-400/50",
+    glowRing: "shadow-[0_0_25px_rgba(56,189,248,0.4)]",
     waveformGradient: "from-[#a5f3fc] via-[#38bdf8] to-[#0284c7]",
     progressGradient: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7]",
     bannerGradient: "from-[#38bdf8]/20 via-slate-800/40 to-transparent",
     mockup: {
       bannerGradient: "from-[#a5f3fc] via-[#38bdf8] to-[#0284c7]",
-      heroTitle: "Neumorphic Tactile Audio",
-      heroSubtitle: "Depth-Extruded Acoustics",
-      chipLabels: ["Matte Slate", "Soft 3D", "Lighter Blue Gradient", "Lossless"],
-      dockStyle: "bg-[#2b3038] shadow-[6px_6px_14px_#1c2026,-6px_-6px_14px_#3a404a] border border-[#38bdf8]/30 rounded-full",
+      heroTitle: "3D Neumorphic Audio",
+      heroSubtitle: "True Depth & Light-Sculpted Surfaces",
+      chipLabels: ["Matte Slate", "3D Extrusion", "Lighter Blue Gradient", "Lossless"],
+      dockStyle: "bg-gradient-to-r from-[#303643] to-[#252932] shadow-[10px_10px_24px_rgba(12,14,20,0.85),-8px_-8px_20px_rgba(255,255,255,0.07)] border border-white/[0.06] rounded-full",
     },
 
     accentSecondaryBg: "bg-[#a5f3fc]",
@@ -608,11 +608,11 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     accentTertiaryBg: "bg-[#0284c7]",
     accentTertiaryText: "text-[#0284c7]",
 
-    btnPrimary: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] hover:brightness-110 text-[#0f172a] font-extrabold shadow-lg shadow-[#38bdf8]/25 active:scale-95 transition-all",
-    btnSecondary: "bg-[#2b3038] text-[#38bdf8] hover:text-white font-semibold border border-[#38bdf8]/30 hover:border-[#38bdf8]/60 shadow-[inset_2px_2px_4px_#1c2026,inset_-2px_-2px_4px_#3a404a] transition-all",
-    navActive: "bg-gradient-to-r from-[#38bdf8]/25 via-[#a5f3fc]/20 to-transparent text-[#38bdf8] border border-[#38bdf8]/40 shadow-[4px_4px_8px_#1c2026,-4px_-4px_8px_#3a404a] font-bold rounded-xl",
-    navInactive: "text-slate-400 hover:text-slate-200 rounded-xl",
-    trackRowHover: "hover:bg-[#343a44]",
+    btnPrimary: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] hover:brightness-105 text-[#0f172a] font-black shadow-[6px_6px_16px_rgba(12,14,20,0.75),-4px_-4px_10px_rgba(255,255,255,0.12),0_0_22px_rgba(56,189,248,0.35)] border border-white/20 active:scale-95 transition-all",
+    btnSecondary: "bg-gradient-to-br from-[#333946] to-[#262a33] text-[#38bdf8] hover:text-white font-bold border border-white/[0.05] shadow-[6px_6px_14px_rgba(15,17,23,0.7),-5px_-5px_12px_rgba(255,255,255,0.07)] active:shadow-[inset_4px_4px_8px_rgba(13,15,20,0.85),inset_-3px_-3px_7px_rgba(255,255,255,0.05)] transition-all",
+    navActive: "bg-gradient-to-r from-[#38bdf8]/20 via-[#a5f3fc]/15 to-transparent text-[#38bdf8] border border-[#38bdf8]/40 shadow-[inset_2px_2px_5px_rgba(13,15,21,0.6),0_0_12px_rgba(56,189,248,0.2)] font-bold rounded-2xl",
+    navInactive: "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] rounded-2xl",
+    trackRowHover: "hover:bg-gradient-to-r hover:from-[#323846] hover:to-[#262b34] hover:shadow-[4px_4px_10px_rgba(14,16,22,0.5),-3px_-3px_8px_rgba(255,255,255,0.04)]",
   },
 };
 
@@ -625,7 +625,7 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
  * Theme 05 (Studio Audiophile Gold / Golden Brass): #170d06
  * Theme 06 (Twilight Vaporwave): #1e0b36
  * Theme 07 (Neue Editorial): #F2E8D8
- * Theme 08 (Obsidian Depth): #23282f
+ * Theme 08 (Obsidian Depth): #2a2e38
  */
 export const THEME_CANVAS_COLORS: Record<string, string> = {
   designer: "#051911",
@@ -636,7 +636,7 @@ export const THEME_CANVAS_COLORS: Record<string, string> = {
   "audiophile-gold": "#170d06",
   "twilight-vaporwave": "#1e0b36",
   "neue-editorial": "#F2E8D8",
-  "obsidian-depth": "#23282f",
+  "obsidian-depth": "#2a2e38",
 };
 
 /**

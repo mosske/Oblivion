@@ -44,116 +44,216 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
   // Derive theme-specific colors and visual states
   const themeStyles = (() => {
     switch (designConfig.id) {
+      case "candyland":
+        return {
+          accentHex: "#ff70a6",
+          badgeBg: "bg-[#ff70a6]/15 border border-pink-200/60",
+          accentText: "text-[#ff70a6]",
+          btnPrimary: "bg-gradient-to-r from-[#ff70a6] to-[#ff9ebb] hover:brightness-105 text-white shadow-md shadow-[#ff70a6]/30 font-extrabold active:scale-95",
+          btnSecondary: "bg-white/85 hover:bg-white text-[#3b1235] border border-pink-200/80 font-semibold shadow-xs",
+          btnActive: "bg-gradient-to-r from-[#ff70a6] to-[#ff9ebb] text-white",
+          glowBg: "bg-pink-400/20",
+          pulseBg: "bg-pink-400/25",
+          ringBorder: "border-pink-300/60",
+          ringColor: "ring-[#ff70a6]/30",
+          cardBorder: "border-pink-200/80",
+          cardBg: "bg-white/90 shadow-sm",
+          modalBg: "bg-white/95 backdrop-blur-2xl border border-white/90 shadow-2xl",
+          modalTitle: "text-[#1e4a7a] font-black",
+          closeBtn: "text-[#6b2d5f] hover:text-[#3b1235] hover:bg-pink-100/60",
+          statusTitle: "text-[#3b1235]",
+          statusSubtitle: "text-[#6b2d5f]",
+          trackTitle: "text-[#1e4a7a]",
+          trackArtist: "text-[#6b2d5f]",
+          iconColor: "text-white",
+        };
+      case "obsidian-depth":
+        return {
+          accentHex: "#38bdf8",
+          badgeBg: "bg-[#242831] border border-black/25 shadow-[inset_3px_3px_6px_rgba(13,15,21,0.85),inset_-2px_-2px_5px_rgba(255,255,255,0.06)] text-[#38bdf8]",
+          accentText: "text-[#38bdf8]",
+          btnPrimary: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] hover:brightness-105 text-[#0f172a] shadow-[6px_6px_16px_rgba(12,14,20,0.75),-4px_-4px_10px_rgba(255,255,255,0.12),0_0_22px_rgba(56,189,248,0.35)] font-black active:scale-95 transition-all border border-white/20",
+          btnSecondary: "bg-gradient-to-br from-[#333946] to-[#262a33] hover:text-white text-[#38bdf8] border border-white/[0.05] shadow-[5px_5px_12px_rgba(12,14,20,0.7),-4px_-4px_10px_rgba(255,255,255,0.06)] active:shadow-[inset_3px_3px_6px_rgba(13,15,20,0.85),inset_-2px_-2px_5px_rgba(255,255,255,0.05)] font-bold transition-all",
+          btnActive: "bg-gradient-to-r from-[#a5f3fc] via-[#38bdf8] to-[#0284c7] text-[#0f172a]",
+          glowBg: "bg-sky-400/25",
+          pulseBg: "bg-sky-400/30",
+          ringBorder: "border-sky-400/60",
+          ringColor: "ring-sky-400/40",
+          cardBorder: "border-white/[0.05]",
+          cardBg: "bg-gradient-to-br from-[#323846] to-[#262b34] shadow-[8px_8px_18px_rgba(16,18,24,0.75),-7px_-7px_16px_rgba(255,255,255,0.07),inset_0_1px_1px_rgba(255,255,255,0.08)]",
+          modalBg: "bg-[#2a2e38] border border-white/[0.06] shadow-[16px_16px_36px_rgba(12,14,20,0.9),-12px_-12px_28px_rgba(255,255,255,0.06)]",
+          modalTitle: "text-slate-100 font-bold",
+          closeBtn: "bg-gradient-to-br from-[#333946] to-[#262a33] text-slate-300 hover:text-white border border-white/[0.05] shadow-[4px_4px_10px_rgba(12,14,20,0.7),-3px_-3px_8px_rgba(255,255,255,0.06)] active:shadow-[inset_3px_3px_6px_rgba(13,15,20,0.85)]",
+          statusTitle: "text-slate-100",
+          statusSubtitle: "text-slate-400",
+          trackTitle: "text-slate-100 font-bold",
+          trackArtist: "text-[#38bdf8]",
+          iconColor: "text-[#0f172a]",
+        };
       case "cyberpunk-neon":
         return {
           accentHex: "#06b6d4",
-          badgeBg: "bg-cyan-500/15",
+          badgeBg: "bg-cyan-500/15 border border-cyan-500/30",
           accentText: "text-cyan-400",
           btnPrimary: "bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-400/25 font-bold",
+          btnSecondary: "bg-slate-900/80 hover:bg-slate-800 text-cyan-300 border border-cyan-500/30 font-semibold",
           btnActive: "bg-cyan-400 text-slate-950",
           glowBg: "bg-cyan-500/20",
           pulseBg: "bg-cyan-500/20",
           ringBorder: "border-cyan-400/40",
           ringColor: "ring-cyan-400/30",
           cardBorder: "border-cyan-500/40",
-          cardBg: "bg-cyan-500/10",
+          cardBg: "bg-slate-900/90",
+          modalBg: "bg-slate-950/95 border border-cyan-500/30 shadow-2xl",
+          modalTitle: "text-white font-extrabold",
+          closeBtn: "text-slate-400 hover:text-cyan-400 hover:bg-white/10",
+          statusTitle: "text-slate-100",
+          statusSubtitle: "text-slate-400",
+          trackTitle: "text-slate-100",
+          trackArtist: "text-slate-400",
+          iconColor: "text-slate-950",
         };
       case "ytmusic-red":
         return {
           accentHex: "#dc2626",
-          badgeBg: "bg-red-600/15",
+          badgeBg: "bg-red-600/15 border border-red-500/30",
           accentText: "text-red-500",
           btnPrimary: "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/25 font-bold",
+          btnSecondary: "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-red-900/40 font-semibold",
           btnActive: "bg-red-600 text-white",
           glowBg: "bg-red-600/20",
           pulseBg: "bg-red-600/20",
           ringBorder: "border-red-500/40",
           ringColor: "ring-red-500/30",
           cardBorder: "border-red-500/40",
-          cardBg: "bg-red-600/10",
+          cardBg: "bg-zinc-900/90",
+          modalBg: "bg-zinc-950/95 border border-red-500/30 shadow-2xl",
+          modalTitle: "text-white font-extrabold",
+          closeBtn: "text-zinc-400 hover:text-red-400 hover:bg-white/10",
+          statusTitle: "text-zinc-100",
+          statusSubtitle: "text-zinc-400",
+          trackTitle: "text-zinc-100",
+          trackArtist: "text-zinc-400",
+          iconColor: "text-white",
         };
       case "dynamic-emerald":
         return {
           accentHex: "#10b981",
-          badgeBg: "bg-emerald-500/15",
+          badgeBg: "bg-emerald-500/15 border border-emerald-500/30",
           accentText: "text-emerald-400",
           btnPrimary: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 font-bold",
+          btnSecondary: "bg-slate-900/80 hover:bg-slate-800 text-emerald-300 border border-emerald-500/30 font-semibold",
           btnActive: "bg-emerald-500 text-slate-950",
           glowBg: "bg-emerald-500/20",
           pulseBg: "bg-emerald-500/20",
           ringBorder: "border-emerald-400/40",
           ringColor: "ring-emerald-400/30",
           cardBorder: "border-emerald-500/40",
-          cardBg: "bg-emerald-500/10",
+          cardBg: "bg-slate-900/90",
+          modalBg: "bg-slate-950/95 border border-emerald-500/30 shadow-2xl",
+          modalTitle: "text-slate-100 font-extrabold",
+          closeBtn: "text-slate-400 hover:text-emerald-400 hover:bg-white/10",
+          statusTitle: "text-slate-100",
+          statusSubtitle: "text-slate-400",
+          trackTitle: "text-slate-100",
+          trackArtist: "text-slate-400",
+          iconColor: "text-slate-950",
         };
       case "audiophile-gold":
         return {
           accentHex: "#f59e0b",
-          badgeBg: "bg-amber-500/15",
+          badgeBg: "bg-amber-500/15 border border-amber-800/40",
           accentText: "text-amber-400",
           btnPrimary: "bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-lg shadow-amber-500/25 font-bold",
+          btnSecondary: "bg-[#2c1a0e] hover:bg-[#382213] text-amber-200 border border-amber-800/50 font-semibold",
           btnActive: "bg-amber-500 text-stone-950",
           glowBg: "bg-amber-500/20",
           pulseBg: "bg-amber-500/20",
           ringBorder: "border-amber-400/40",
           ringColor: "ring-amber-400/30",
           cardBorder: "border-amber-500/40",
-          cardBg: "bg-amber-500/10",
+          cardBg: "bg-[#211208]/95",
+          modalBg: "bg-[#211208]/98 border border-amber-900/50 shadow-2xl",
+          modalTitle: "text-amber-50 font-extrabold",
+          closeBtn: "text-amber-300/60 hover:text-amber-100 hover:bg-amber-950/50",
+          statusTitle: "text-amber-50",
+          statusSubtitle: "text-amber-300/70",
+          trackTitle: "text-amber-100",
+          trackArtist: "text-amber-300/70",
+          iconColor: "text-stone-950",
         };
       case "twilight-vaporwave":
         return {
-          accentHex: "#a855f7",
-          badgeBg: "bg-purple-600/15",
-          accentText: "text-purple-300",
-          btnPrimary: "bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/25 font-bold",
-          btnActive: "bg-purple-600 text-white",
-          glowBg: "bg-purple-600/20",
-          pulseBg: "bg-purple-600/20",
-          ringBorder: "border-purple-400/40",
-          ringColor: "ring-purple-400/30",
-          cardBorder: "border-purple-500/40",
-          cardBg: "bg-purple-600/10",
+          accentHex: "#ff2a8d",
+          badgeBg: "bg-pink-600/15 border border-pink-500/30",
+          accentText: "text-pink-400",
+          btnPrimary: "bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white shadow-lg shadow-pink-500/30 font-bold",
+          btnSecondary: "bg-[#250d3a]/80 hover:bg-[#33134e] text-pink-200 border border-pink-500/30 font-semibold",
+          btnActive: "bg-pink-500 text-white",
+          glowBg: "bg-pink-500/20",
+          pulseBg: "bg-pink-500/20",
+          ringBorder: "border-pink-400/40",
+          ringColor: "ring-pink-400/30",
+          cardBorder: "border-pink-500/40",
+          cardBg: "bg-[#180927]/90",
+          modalBg: "bg-[#130720]/95 border border-pink-500/30 shadow-2xl",
+          modalTitle: "text-pink-50 font-extrabold",
+          closeBtn: "text-pink-300/60 hover:text-pink-100 hover:bg-pink-900/30",
+          statusTitle: "text-pink-50",
+          statusSubtitle: "text-pink-300/70",
+          trackTitle: "text-pink-100",
+          trackArtist: "text-pink-300/70",
+          iconColor: "text-white",
         };
       case "neue-editorial":
         return {
           accentHex: "#1F1F1F",
-          badgeBg: "bg-[#1F1F1F]/10",
+          badgeBg: "bg-[#1F1F1F]/10 border border-[#1F1F1F]/20",
           accentText: "text-[#1F1F1F]",
           btnPrimary: "bg-[#1F1F1F] hover:bg-[#3A3530] text-[#F2E8D8] shadow-md shadow-black/20 font-bold rounded-full",
+          btnSecondary: "bg-[#F2E8D8] hover:bg-[#E5DAC8] text-[#1F1F1F] border border-[#1F1F1F]/30 font-semibold rounded-full",
           btnActive: "bg-[#1F1F1F] text-[#F2E8D8]",
           glowBg: "bg-[#1F1F1F]/10",
           pulseBg: "bg-[#1F1F1F]/10",
           ringBorder: "border-[#1F1F1F]/30",
           ringColor: "ring-[#1F1F1F]/20",
           cardBorder: "border-[#1F1F1F]/15",
-          cardBg: "bg-[#1F1F1F]/5",
+          cardBg: "bg-[#FDFBF7]",
+          modalBg: "bg-[#FDFBF7] border border-[#1F1F1F]/20 shadow-2xl",
+          modalTitle: "text-[#1F1F1F] font-black",
+          closeBtn: "text-[#666055] hover:text-[#1F1F1F] hover:bg-black/5",
+          statusTitle: "text-[#1F1F1F]",
+          statusSubtitle: "text-[#666055]",
+          trackTitle: "text-[#1F1F1F]",
+          trackArtist: "text-[#666055]",
+          iconColor: "text-[#F2E8D8]",
         };
       case "designer":
       default:
         return {
           accentHex: "#c89b3c",
-          badgeBg: "bg-[#c89b3c]/15",
+          badgeBg: "bg-[#c89b3c]/15 border border-[#c89b3c]/30",
           accentText: "text-[#b88928]",
           btnPrimary: "bg-[#c89b3c] hover:bg-[#d8a846] text-black shadow-md shadow-[#c89b3c]/25 font-bold",
+          btnSecondary: "bg-[#ebe7dc] hover:bg-[#dfd9cb] text-[#1a201c] font-semibold border border-[#d8d2c4]",
           btnActive: "bg-[#c89b3c] text-black",
           glowBg: "bg-[#c89b3c]/20",
           pulseBg: "bg-[#c89b3c]/20",
           ringBorder: "border-[#c89b3c]/40",
           ringColor: "ring-[#c89b3c]/30",
           cardBorder: "border-[#c89b3c]/40",
-          cardBg: "bg-[#c89b3c]/5",
+          cardBg: "bg-[#f8f6f0]",
+          modalBg: "bg-[#f8f6f0] border border-[#e6e2d8] shadow-2xl",
+          modalTitle: "text-[#181816] font-black",
+          closeBtn: "text-[#666258] hover:text-[#181816] hover:bg-black/5",
+          statusTitle: "text-[#181816]",
+          statusSubtitle: "text-[#8a857b]",
+          trackTitle: "text-[#181816]",
+          trackArtist: "text-[#666258]",
+          iconColor: "text-black",
         };
     }
   })();
-
-  const modalTitleClass =
-    designConfig.isLight || designConfig.id === "designer"
-      ? "text-[#181816] font-black"
-      : designConfig.id === "audiophile-gold"
-      ? "text-amber-50 font-extrabold"
-      : designConfig.id === "twilight-vaporwave"
-      ? "text-purple-50 font-extrabold"
-      : "text-white font-extrabold";
 
   // Cleanup on unmount or modal close
   useEffect(() => {
@@ -379,7 +479,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in select-none">
       <div
-        className={`relative w-full max-w-md ${designConfig.modalBg || designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 flex flex-col items-center text-center overflow-hidden`}
+        className={`relative w-full max-w-md ${themeStyles.modalBg} rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col items-center text-center overflow-hidden`}
       >
         {/* Background glow when active */}
         {status === "listening" && (
@@ -398,17 +498,13 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
             <div className={`p-2 rounded-xl ${themeStyles.badgeBg} ${themeStyles.accentText}`}>
               <Radio className="w-5 h-5" />
             </div>
-            <h2 className={`text-lg sm:text-xl tracking-tight ${modalTitleClass}`}>
+            <h2 className={`text-lg sm:text-xl tracking-tight ${themeStyles.modalTitle}`}>
               Identify Music
             </h2>
           </div>
           <button
             onClick={onClose}
-            className={`p-2 rounded-full ${
-              designConfig.isLight
-                ? "text-[#57534a] hover:text-[#181816] hover:bg-black/5"
-                : `${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-white/10`
-            } transition-colors`}
+            className={`p-2 rounded-full ${themeStyles.closeBtn} transition-all`}
             title="Close"
           >
             <X className="w-5 h-5" />
@@ -479,25 +575,25 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
               title={status === "listening" ? "Stop Listening" : "Tap to listen"}
             >
               {status === "listening" ? (
-                <Mic className="w-9 h-9 animate-bounce" />
+                <Mic className={`w-9 h-9 animate-bounce ${themeStyles.iconColor}`} />
               ) : status === "analyzing" ? (
                 <Sparkles className="w-9 h-9 animate-spin" stroke="currentColor" />
               ) : status === "matched" ? (
-                <RotateCcw className="w-8 h-8" />
+                <RotateCcw className="w-8 h-8 text-white" />
               ) : (
-                <Mic className="w-9 h-9" />
+                <Mic className={`w-9 h-9 ${themeStyles.iconColor}`} />
               )}
             </button>
           </div>
 
           {/* Status Text Display */}
           <div className="mt-5 space-y-1">
-            <h3 className={`text-base font-bold ${designConfig.isLight ? "text-[#181816]" : designConfig.textPrimary} flex items-center justify-center gap-2`}>
+            <h3 className={`text-base font-bold ${themeStyles.statusTitle} flex items-center justify-center gap-2`}>
               {status === "matched" && <CheckCircle2 className="w-5 h-5 text-emerald-500 inline" />}
               {status === "error" && <AlertCircle className="w-5 h-5 text-rose-500 inline" />}
               <span>{statusMessage}</span>
             </h3>
-            <p className={`text-xs ${designConfig.textMuted} max-w-xs mx-auto`}>
+            <p className={`text-xs ${themeStyles.statusSubtitle} max-w-xs mx-auto`}>
               {status === "idle" && "Play music from another device or hum into your microphone."}
               {status === "listening" && `Listening... ${Math.ceil((RECORDING_DURATION_MS * (1 - progress / 100)) / 1000)}s`}
               {status === "analyzing" && "Matching acoustic fingerprint against music database..."}
@@ -510,7 +606,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
 
         {/* Matched Result Card (Hidden until match is found) */}
         {matchedSong && (
-          <div className={`w-full p-4 rounded-2xl ${designConfig.cardBg} border ${themeStyles.cardBorder} ${themeStyles.cardBg} flex items-center gap-4 text-left shadow-lg animate-fade-in z-10`}>
+          <div className={`w-full p-4 rounded-2xl ${themeStyles.cardBg} border ${themeStyles.cardBorder} flex items-center gap-4 text-left shadow-lg animate-fade-in z-10`}>
             <div className={`relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border ${themeStyles.cardBorder} shadow-md bg-slate-800 flex items-center justify-center`}>
               {matchedSong.artwork ? (
                 <img
@@ -531,10 +627,10 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
               <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${themeStyles.accentText}`}>
                 Identified Track
               </span>
-              <h4 className={`text-sm sm:text-base font-bold ${designConfig.isLight ? "text-[#181816]" : designConfig.textPrimary} truncate`} title={matchedSong.title}>
+              <h4 className={`text-sm sm:text-base font-bold ${themeStyles.trackTitle} truncate`} title={matchedSong.title}>
                 {matchedSong.title}
               </h4>
-              <p className={`text-xs ${designConfig.textMuted} truncate`}>
+              <p className={`text-xs ${themeStyles.trackArtist} truncate`}>
                 {matchedSong.artist}
                 {matchedSong.album ? ` • ${matchedSong.album}` : ""}
               </p>
@@ -546,9 +642,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
         <div className="w-full flex items-center gap-3 pt-2 z-10">
           <button
             onClick={onClose}
-            className={`flex-1 py-3 px-4 rounded-2xl text-xs font-semibold ${
-              designConfig.btnSecondary || `${designConfig.pillBg} ${designConfig.textPrimary}`
-            } hover:opacity-90 transition-all`}
+            className={`flex-1 py-3 px-4 rounded-2xl text-xs font-semibold ${themeStyles.btnSecondary} hover:opacity-90 transition-all`}
           >
             Cancel
           </button>
