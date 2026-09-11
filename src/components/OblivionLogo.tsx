@@ -155,17 +155,17 @@ const PALETTES: Record<string, GradientPalette> = {
     textGold: "#38bdf8",
   },
 
-  // 9. Nebula Liquid Glass (Ultraviolet, Magenta & Cyan Celestial Gradient)
+  // 9. Nebula Liquid Glass (Hot Magenta, Sunset Gold & Electric Cyan Gradient)
   "nebula-liquid-glass": {
-    ringGrad: { c1: "#fdf4ff", c2: "#c084fc", c3: "#ec4899", c4: "#06b6d4" },
-    tri1Grad: { c1: "#a855f7", c2: "#ec4899", c3: "#06b6d4" },
-    tri2Grad: { c1: "#fdf4ff", c2: "#e879f9", c3: "#c084fc" },
+    ringGrad: { c1: "#ffffff", c2: "#ff007f", c3: "#ff7b00", c4: "#00f0ff" },
+    tri1Grad: { c1: "#ff007f", c2: "#ec4899", c3: "#ff7b00" },
+    tri2Grad: { c1: "#ffffff", c2: "#ff2a85", c3: "#00f0ff" },
     highlight: "#ffffff",
-    shadow: "#0d0b1a",
-    playCore: "#0d0b1a",
-    playHighlight: "#fdf4ff",
-    auraColor: "#a855f7",
-    textGold: "#c084fc",
+    shadow: "#0c071e",
+    playCore: "#0c071e",
+    playHighlight: "#ffffff",
+    auraColor: "#ff007f",
+    textGold: "#ff2a85",
   },
 };
 

@@ -15,6 +15,7 @@ import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
+import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";
 import { EqualizerProvider } from "./context/EqualizerContext";
 import {
   getCachedPlaylistsFromDB,
@@ -704,12 +705,12 @@ export default function App() {
           sliderFill: "#38bdf8",
         },
         "nebula-liquid-glass": {
-          accent: "#c084fc",
-          secondary: "#ec4899",
-          tertiary: "#06b6d4",
+          accent: "#ff007f",
+          secondary: "#ff7b00",
+          tertiary: "#00f0ff",
           contrastText: "#ffffff",
-          sliderTrack: "#1e1338",
-          sliderFill: "#c084fc",
+          sliderTrack: "rgba(255, 255, 255, 0.14)",
+          sliderFill: "#ff007f",
         },
       };
 
@@ -2368,9 +2369,12 @@ export default function App() {
 
   return (
     <EqualizerProvider>
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none`}>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-hidden`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean(activeFullDesign.isCandy || activeFullDesign.id === "candyland")} />
+
+      {/* Animated Glowing Nebula Gradient & Fluid Aurora Canvas for Theme 09 (Nebula Liquid Glass) */}
+      <NebulaLiquidBackground isActive={Boolean(activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass")} />
 
       {/* Sidebar Navigation */}
       <Sidebar
@@ -2395,7 +2399,7 @@ export default function App() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative ${activeFullDesign.isCandy ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
+      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
         {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
         <header className={`sticky top-0 h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-30 shadow-xs`}>
           <div

@@ -225,35 +225,39 @@
   --neu-shadow-dock: 10px 10px 24px rgba(12, 14, 20, 0.85), -8px -8px 20px rgba(255, 255, 255, 0.07), inset 0 1px 1px rgba(255, 255, 255, 0.08);
 }
 
-/* Theme 09: Nebula Liquid Glass (Deep Cosmic Void, Translucent Frosted Liquid Glass, Ultraviolet & Cyan Glow) */
+/* Theme 09: Nebula Liquid Glass (Deep Cosmic Void, Animated Saturated Gradient Mesh, Frosted Liquid Glass & Glowing Accents) */
 [data-theme="nebula-liquid-glass"],
 .theme-nebula-liquid-glass {
-  --bg-canvas: #0d0b1a;
-  --canvas-text-primary: #f8fafc;
-  --canvas-text-secondary: #e9d5ff;
+  --bg-canvas: #0c071e;
+  --canvas-text-primary: #ffffff;
+  --canvas-text-secondary: #f1e4ff;
   --canvas-text-muted: #c084fc;
-  --card-bg: rgba(255, 255, 255, 0.06);
-  --card-text: #f8fafc;
-  --card-border: rgba(255, 255, 255, 0.12);
-  --accent-primary: #c084fc;
-  --accent-color: #c084fc;
-  --primary: #c084fc;
-  --accent-primary-rgb: 192, 132, 252;
-  --accent-secondary: #ec4899;
-  --accent-tertiary: #06b6d4;
+  --card-bg: rgba(255, 255, 255, 0.035);
+  --card-text: #ffffff;
+  --card-border: rgba(255, 255, 255, 0.18);
+  --accent-primary: #ff007f;
+  --accent-color: #ff007f;
+  --primary: #ff007f;
+  --accent-primary-rgb: 255, 0, 127;
+  --accent-secondary: #ff7b00;
+  --accent-tertiary: #00f0ff;
+  --accent-violet: #8b5cf6;
   --accent-contrast-text: #ffffff;
-  --text-primary: #f8fafc;
-  --text-secondary: #e9d5ff;
+  --text-primary: #ffffff;
+  --text-secondary: #ebd6ff;
   --text-muted: #c084fc;
-  --border-color: rgba(255, 255, 255, 0.12);
-  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-color: rgba(255, 255, 255, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.12);
   --border-active: var(--accent-primary);
-  --glow-color-1: rgba(168, 85, 247, 0.45);
-  --glow-color-2: rgba(236, 72, 153, 0.40);
-  --waveform-inactive: rgba(233, 213, 255, 0.25);
-  --glass-blur: blur(24px);
-  --glass-bg: rgba(255, 255, 255, 0.07);
-  --glass-border: rgba(255, 255, 255, 0.14);
+  --glow-color-1: rgba(255, 0, 127, 0.6);
+  --glow-color-2: rgba(255, 123, 0, 0.5);
+  --glow-color-3: rgba(0, 240, 255, 0.5);
+  --glow-color-4: rgba(139, 92, 246, 0.5);
+  --waveform-inactive: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(32px);
+  --glass-bg: rgba(255, 255, 255, 0.035);
+  --glass-border: rgba(255, 255, 255, 0.20);
+  --glass-shadow: 0 14px 40px -6px rgba(0, 0, 0, 0.65), inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35), 0 0 24px rgba(255, 0, 127, 0.18);
 }
 
 [data-theme="neue-editorial"],
@@ -770,4 +774,179 @@ input[type="checkbox"] {
 .animate-gradient-shift {
   animation: gradient-shift 15s ease infinite;
   background-size: 200% 200%;
+}
+
+/* ========================================================
+   NEBULA LIQUID GLASS (Theme 09) SPECIALIZED STYLING & FX
+   ======================================================== */
+@keyframes nebula-orb-drift-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(80px, -60px) scale(1.15);
+  }
+  66% {
+    transform: translate(-50px, 70px) scale(0.9);
+  }
+}
+
+@keyframes nebula-orb-drift-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-90px, 50px) scale(0.95);
+  }
+  66% {
+    transform: translate(60px, -70px) scale(1.2);
+  }
+}
+
+@keyframes nebula-orb-drift-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1.05);
+  }
+  50% {
+    transform: translate(70px, 80px) scale(0.85);
+  }
+}
+
+@keyframes nebula-orb-drift-4 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-70px, -80px) scale(1.15);
+  }
+  66% {
+    transform: translate(80px, 40px) scale(0.9);
+  }
+}
+
+@keyframes nebula-aurora-sweep {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(25deg);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+}
+
+.animate-nebula-orb-1 {
+  animation: nebula-orb-drift-1 6s ease-in-out infinite;
+}
+
+.animate-nebula-orb-2 {
+  animation: nebula-orb-drift-2 6s ease-in-out infinite;
+}
+
+.animate-nebula-orb-3 {
+  animation: nebula-orb-drift-3 6s ease-in-out infinite;
+}
+
+.animate-nebula-orb-4 {
+  animation: nebula-orb-drift-4 6s ease-in-out infinite;
+}
+
+.animate-nebula-aurora {
+  animation: nebula-aurora-sweep 6s ease infinite;
+  background-size: 300% 300%;
+}
+
+/* Liquid Glass Frosted Card Surfacing with 3D Edge Highlights */
+[data-theme="nebula-liquid-glass"] .liquid-glass-card,
+.theme-nebula-liquid-glass .liquid-glass-card {
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.35);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+  box-shadow: 
+    0 14px 40px -6px rgba(0, 0, 0, 0.65), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35), 
+    0 0 22px rgba(255, 0, 127, 0.14);
+}
+
+[data-theme="nebula-liquid-glass"] .liquid-glass-card:hover,
+.theme-nebula-liquid-glass .liquid-glass-card:hover {
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(255, 255, 255, 0.28);
+  border-top-color: rgba(255, 255, 255, 0.55);
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    0 20px 48px -6px rgba(0, 0, 0, 0.75), 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.7), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.45), 
+    0 0 32px rgba(255, 0, 127, 0.28);
+}
+
+/* Transparent Liquid Frosted Modal Overlay with 3D Bevel Edge */
+[data-theme="nebula-liquid-glass"] .liquid-glass-modal,
+.theme-nebula-liquid-glass .liquid-glass-modal {
+  background: rgba(12, 7, 30, 0.65);
+  backdrop-filter: blur(40px) saturate(220%);
+  -webkit-backdrop-filter: blur(40px) saturate(220%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-top-color: rgba(255, 255, 255, 0.45);
+  border-bottom-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 
+    0 30px 80px -10px rgba(0, 0, 0, 0.85), 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.6), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.5), 
+    0 0 45px rgba(255, 0, 127, 0.35);
+}
+
+/* 3D Liquid Glass Buttons, Badges & Interactive Blocks */
+[data-theme="nebula-liquid-glass"] .theme-badge-active,
+.theme-nebula-liquid-glass .theme-badge-active {
+  background: linear-gradient(135deg, #ff007f 0%, #ec4899 45%, #ff7b00 100%) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 
+    0 8px 24px -2px rgba(255, 0, 127, 0.6), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.65), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="nebula-liquid-glass"] .theme-card-active,
+.theme-nebula-liquid-glass .theme-card-active {
+  border: 2px solid #ff007f !important;
+  border-top-color: #ff5eb0 !important;
+  box-shadow: 
+    0 16px 45px rgba(0, 0, 0, 0.7), 
+    inset 0 2px 2px rgba(255, 255, 255, 0.6), 
+    inset 0 -2px 3px rgba(0, 0, 0, 0.4), 
+    0 0 36px rgba(255, 0, 127, 0.45) !important;
+}
+
+[data-theme="nebula-liquid-glass"] .user-avatar-ring,
+.theme-nebula-liquid-glass .user-avatar-ring {
+  border: 2px solid #ff007f !important;
+  border-top-color: #ffffff !important;
+  box-shadow: 
+    0 0 20px rgba(255, 0, 127, 0.8), 
+    0 0 32px rgba(255, 123, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Custom Scrollbar for Nebula Liquid Glass */
+[data-theme="nebula-liquid-glass"] ::-webkit-scrollbar-thumb,
+.theme-nebula-liquid-glass ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 0, 127, 0.6), rgba(255, 123, 0, 0.5), rgba(0, 240, 255, 0.5)) !important;
+  border-radius: 9999px !important;
+  border: 2px solid rgba(12, 7, 30, 0.8) !important;
 }
