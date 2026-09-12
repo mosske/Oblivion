@@ -91,6 +91,8 @@ export interface User {
   picture: string;
   isLoggedIn: boolean;
   accessToken?: string;
+  refreshToken?: string;
+  refresh_token?: string;
 }
 
 export interface LyricLine {

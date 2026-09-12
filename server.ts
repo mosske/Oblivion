@@ -99,18 +99,11 @@ function writeStoredOAuthConfig(cfg: { clientId?: string; clientSecret?: string 
 }
 
 function readStoredTokens(): Record<string, any> {
-  try {
-    if (fs.existsSync(TOKENS_FILE)) {
-      return JSON.parse(fs.readFileSync(TOKENS_FILE, "utf-8"));
-    }
-  } catch {}
   return {};
 }
 
 function writeStoredTokens(tokens: Record<string, any>) {
-  try {
-    fs.writeFileSync(TOKENS_FILE, JSON.stringify(tokens, null, 2), "utf-8");
-  } catch {}
+  // 100% stateless - zero server file writing
 }
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
@@ -144,63 +137,13 @@ export function isValidPlaylistId(id: string | undefined | null): boolean {
   return false;
 }
 
-// User-scoped data paths to guarantee complete privacy and isolation between users
-function getUserDataDir(userId?: string): string {
-  if (userId) {
-    const sanitized = userId.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const userDir = path.join(DATA_DIR, "users", sanitized);
-    if (!fs.existsSync(userDir)) {
-      try {
-        fs.mkdirSync(userDir, { recursive: true });
-      } catch {}
-    }
-    return userDir;
-  }
-  return DATA_DIR;
-}
-
-function getUserPlaylistsFile(userId?: string): string {
-  if (userId) {
-    return path.join(getUserDataDir(userId), "playlists.json");
-  }
-  return path.join(DATA_DIR, "anon_playlists.json");
-}
-
-function getUserCoversFile(userId?: string): string {
-  if (userId) {
-    return path.join(getUserDataDir(userId), "custom_covers.json");
-  }
-  return path.join(DATA_DIR, "anon_covers.json");
-}
-
 function getUserIdFromReq(req?: any): string | undefined {
   if (!req) return undefined;
   if (req.session?.user?.id) return String(req.session.user.id);
-  const token = req.headers?.authorization?.replace(/^Bearer\s+/, "") || (req.headers?.["x-access-token"] as string) || req.session?.tokens?.access_token;
-  if (token) {
-    const allTokens = readStoredTokens();
-    for (const [k, v] of Object.entries(allTokens)) {
-      if (v.access_token === token || v.refresh_token === token || (Array.isArray(v.previous_tokens) && v.previous_tokens.includes(token))) {
-        return v.user?.id || k;
-      }
-    }
-  }
   return undefined;
 }
 
 function readStoredPlaylists(req?: any, explicitUserId?: string): any[] {
-  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
-  if (effectiveUserId) {
-    const plsFile = getUserPlaylistsFile(effectiveUserId);
-    try {
-      if (fs.existsSync(plsFile)) {
-        const list = JSON.parse(fs.readFileSync(plsFile, "utf-8"));
-        if (Array.isArray(list)) {
-          return list.filter((p: any) => p && p.id && isValidPlaylistId(p.id));
-        }
-      }
-    } catch {}
-  }
   if (req?.session?.playlists && Array.isArray(req.session.playlists)) {
     return req.session.playlists.filter((p: any) => p && p.id && isValidPlaylistId(p.id));
   }
@@ -208,67 +151,25 @@ function readStoredPlaylists(req?: any, explicitUserId?: string): any[] {
 }
 
 function writeStoredPlaylists(pls: any[], req?: any, explicitUserId?: string) {
-  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
   if (req?.session) {
-    req.session.playlists = pls;
+    req.session.playlists = (pls || []).filter((p: any) => p && p.id && isValidPlaylistId(p.id));
   }
-  if (!effectiveUserId) return;
-
-  const plsFile = getUserPlaylistsFile(effectiveUserId);
-  try {
-    const valid = (pls || [])
-      .filter((p: any) => p && p.id && isValidPlaylistId(p.id))
-      .map((p: any) => {
-        if (p.id && (p.customCoverUrl || (p.isCustomCover && p.coverUrl))) {
-          const cover = p.customCoverUrl || p.coverUrl;
-          if (cover) {
-            writeStoredCustomCover(p.id, cover, req, effectiveUserId);
-          }
-        }
-        return p;
-      });
-    fs.writeFileSync(plsFile, JSON.stringify(valid, null, 2), "utf-8");
-  } catch {}
 }
 
 function readStoredCustomCovers(req?: any, explicitUserId?: string): Record<string, string> {
-  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
   const result: Record<string, string> = {};
-
   if (req?.session && (req.session as any).customArtwork && typeof (req.session as any).customArtwork === "object") {
     Object.assign(result, (req.session as any).customArtwork);
   }
-
-  if (effectiveUserId) {
-    const coversFile = getUserCoversFile(effectiveUserId);
-    try {
-      if (fs.existsSync(coversFile)) {
-        const data = fs.readFileSync(coversFile, "utf-8");
-        Object.assign(result, JSON.parse(data));
-      }
-    } catch {}
-  }
-
   return result;
 }
 
 function writeStoredCustomCovers(map: Record<string, string>, req?: any, explicitUserId?: string) {
-  const effectiveUserId = explicitUserId || getUserIdFromReq(req);
-
   if (req?.session) {
     (req.session as any).customArtwork = {
       ...((req.session as any).customArtwork || {}),
       ...map,
     };
-  }
-
-  if (effectiveUserId) {
-    const coversFile = getUserCoversFile(effectiveUserId);
-    try {
-      const dir = path.dirname(coversFile);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(coversFile, JSON.stringify(map, null, 2), "utf-8");
-    } catch {}
   }
 }
 
@@ -297,11 +198,6 @@ function writeStoredCustomCover(playlistId: string, coverUrl: string, req?: any,
       (req.session as any).customArtwork[cleanId] = safeArtwork;
       (req.session as any).customArtwork[playlistId] = safeArtwork;
     }
-
-    const map = readStoredCustomCovers(req, explicitUserId);
-    map[cleanId] = safeArtwork;
-    map[playlistId] = safeArtwork;
-    writeStoredCustomCovers(map, req, explicitUserId);
   } catch {}
 }
 
@@ -518,10 +414,6 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
 
   const allTracks: any[] = [];
   let currentToken = accessToken;
-  if (!currentToken) {
-    // Try to retrieve latest valid access token from disk
-    currentToken = await refreshAccessTokenDirectly();
-  }
 
   // Helper to find continuation tokens recursively in any YouTube JSON object
   const findContinuations = (obj: any, d = 0, found: string[] = []): string[] => {
@@ -570,8 +462,8 @@ async function getPlaylistItemsFromYouTube(accessToken: string | null, playlistI
         if (response.status === 401) {
           // Token expired, attempt direct refresh with token hint
           const refreshed = await refreshAccessTokenDirectly(currentToken || undefined);
-          if (refreshed) {
-            currentToken = refreshed;
+          if (refreshed?.accessToken) {
+            currentToken = refreshed.accessToken;
             response = await fetch(`${url}?${params}`, {
               signal: AbortSignal.timeout(8000),
               headers: {
@@ -2120,34 +2012,8 @@ function getBaseUrl(req: express.Request) {
   return "https://oblivion-rho.vercel.app";
 }
 
-async function refreshAccessTokenDirectly(tokenHint?: string): Promise<string | null> {
-  const allTokens = readStoredTokens();
-  let refreshToken: string | undefined = undefined;
-  let matchedKey: string | null = null;
-
-  if (tokenHint) {
-    for (const k of Object.keys(allTokens)) {
-      const entry = allTokens[k];
-      if (
-        entry.access_token === tokenHint ||
-        k === tokenHint ||
-        entry.user?.email === tokenHint ||
-        entry.user?.id === tokenHint ||
-        entry.refresh_token === tokenHint ||
-        (Array.isArray(entry.previous_tokens) && entry.previous_tokens.includes(tokenHint))
-      ) {
-        if (entry.refresh_token) {
-          refreshToken = entry.refresh_token;
-          matchedKey = k;
-          break;
-        }
-      }
-    }
-  }
-
-  // Strict isolation: only refresh if we found a matching user/token
+async function refreshAccessTokenDirectly(refreshToken?: string): Promise<{ accessToken: string; expiresIn: number } | null> {
   if (!refreshToken) return null;
-
   const clientId = getOAuthClientId();
   const clientSecret = getOAuthClientSecret();
   if (!clientId || !clientSecret) return null;
@@ -2166,22 +2032,10 @@ async function refreshAccessTokenDirectly(tokenHint?: string): Promise<string | 
 
     const data = await res.json();
     if (data.access_token) {
-      const keyToUpdate = matchedKey || "default_user";
-      const existing = allTokens[keyToUpdate] || {};
-      const prevTokens = Array.isArray(existing.previous_tokens) ? existing.previous_tokens : [];
-      if (existing.access_token && !prevTokens.includes(existing.access_token)) {
-        prevTokens.push(existing.access_token);
-      }
-      allTokens[keyToUpdate] = {
-        ...existing,
-        access_token: data.access_token,
-        refresh_token: data.refresh_token || refreshToken,
-        expires_at: Date.now() + (data.expires_in || 3600) * 1000,
-        previous_tokens: prevTokens.slice(-10),
-        updated_at: Date.now(),
+      return {
+        accessToken: data.access_token,
+        expiresIn: data.expires_in || 3600,
       };
-      writeStoredTokens(allTokens);
-      return data.access_token;
     }
   } catch (err) {
     console.error("Direct token refresh error:", err);
@@ -2190,17 +2044,19 @@ async function refreshAccessTokenDirectly(tokenHint?: string): Promise<string | 
 }
 
 async function refreshAccessToken(req: express.Request, tokenHint?: string): Promise<string | null> {
-  const hint = tokenHint || req.session?.tokens?.access_token || req.headers.authorization?.replace(/^Bearer\s+/, "");
-  if (!hint) return null;
-  const newToken = await refreshAccessTokenDirectly(hint);
-  if (newToken) {
-    if (!req.session.tokens) req.session.tokens = { access_token: newToken };
-    req.session.tokens.access_token = newToken;
-    req.session.tokens.expires_at = Date.now() + 3600 * 1000;
-    if (req.session.user) {
-      req.session.user.accessToken = newToken;
+  const refreshToken = (req.body?.refreshToken || req.body?.refresh_token || req.query?.refreshToken || (req.session?.tokens as any)?.refresh_token) as string;
+  if (!refreshToken) return null;
+  const result = await refreshAccessTokenDirectly(refreshToken);
+  if (result?.accessToken) {
+    if (req.session) {
+      if (!req.session.tokens) req.session.tokens = { access_token: result.accessToken };
+      req.session.tokens.access_token = result.accessToken;
+      req.session.tokens.expires_at = Date.now() + result.expiresIn * 1000;
+      if (req.session.user) {
+        req.session.user.accessToken = result.accessToken;
+      }
     }
-    return newToken;
+    return result.accessToken;
   }
   return null;
 }
@@ -2220,48 +2076,10 @@ async function getValidAccessToken(req: express.Request): Promise<string | null>
     const qToken = String(req.query.access_token).trim();
     if (qToken && qToken !== "undefined" && qToken !== "null") token = qToken;
   }
-
-  const allTokens = readStoredTokens();
-  const entries = Object.values(allTokens) as any[];
-
-  if (token) {
-    const match = entries.find((entry: any) => 
-      entry.access_token === token || 
-      entry.refresh_token === token ||
-      (Array.isArray(entry.previous_tokens) && entry.previous_tokens.includes(token))
-    );
-    if (match) {
-      if (!req.session?.tokens) {
-        req.session.tokens = {
-          access_token: match.access_token,
-          refresh_token: match.refresh_token,
-          expires_at: match.expires_at,
-        };
-      }
-      if (match.user && !req.session.user) req.session.user = match.user;
-
-      // If token is expiring within 10 minutes or expired, proactively refresh
-      if (!match.expires_at || Date.now() > match.expires_at - 10 * 60 * 1000) {
-        const refreshed = await refreshAccessToken(req, token);
-        if (refreshed) return refreshed;
-      }
-      return match.access_token || token;
-    }
-
-    return token;
+  if (!token && req.session?.tokens?.access_token) {
+    token = req.session.tokens.access_token;
   }
-
-  if (req.session?.tokens?.access_token) {
-    const { access_token, expires_at } = req.session.tokens;
-    if (expires_at && Date.now() < expires_at - 10 * 60 * 1000) {
-      return access_token;
-    }
-    const refreshed = await refreshAccessToken(req, access_token);
-    return refreshed || access_token;
-  }
-
-  // Strict isolation: if no token for this session/request, return null
-  return null;
+  return token;
 }
 
 function sanitizeCredential(val: string | undefined | null): string {
@@ -6366,39 +6184,21 @@ app.get("/api/auth/google/callback", async (req, res) => {
       });
       const userData = await userRes.json();
 
-      req.session.user = {
+      const userPayload = {
         id: userData.id,
         name: userData.name || userData.email?.split("@")[0] || "User",
         email: userData.email || "",
         picture: userData.picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
         accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        refresh_token: tokenData.refresh_token,
       };
 
-      // Persist to server disk store so restarts never lose the refresh_token and user info
-      const allTokens = readStoredTokens();
-      const userKey = userData.id || userData.email || "default_user";
-      allTokens[userKey] = {
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token || allTokens[userKey]?.refresh_token,
-        expires_at: Date.now() + tokenData.expires_in * 1000,
-        user: req.session.user,
-        updated_at: Date.now(),
-      };
-      writeStoredTokens(allTokens);
+      req.session.user = userPayload;
 
       req.session.save((saveErr) => {
         if (saveErr) {
           console.error("Session save error:", saveErr);
-          return res.send(
-            renderCallbackHtml(`
-              if (window.opener) {
-                window.opener.postMessage({ type: 'OAUTH_ERROR', error: 'Session save failed' }, '*');
-                window.close();
-              } else {
-                window.location.href = '/?oauth_error=' + encodeURIComponent('Session save failed');
-              }
-            `)
-          );
         }
 
         return res.send(
@@ -6406,11 +6206,11 @@ app.get("/api/auth/google/callback", async (req, res) => {
             if (window.opener) {
               window.opener.postMessage({
                 type: 'OAUTH_SUCCESS',
-                user: ${JSON.stringify(req.session.user)}
+                user: ${JSON.stringify(userPayload)}
               }, '*');
               window.close();
             } else {
-              window.location.href = '/?oauth_success=true&user=' + encodeURIComponent(JSON.stringify(${JSON.stringify(req.session.user)}));
+              window.location.href = '/?oauth_success=true&user=' + encodeURIComponent(JSON.stringify(${JSON.stringify(userPayload)}));
             }
           `)
         );
@@ -6452,33 +6252,42 @@ app.get("/api/auth/google/callback", async (req, res) => {
 app.get("/api/auth/me", async (req, res) => {
   try {
     const validToken = await getValidAccessToken(req);
-    const allTokens = readStoredTokens();
-    const entries = Object.values(allTokens) as any[];
 
     if (validToken) {
-      const match = entries.find(
-        (e: any) =>
-          e.access_token === validToken ||
-          e.refresh_token === validToken ||
-          (Array.isArray(e.previous_tokens) && e.previous_tokens.includes(validToken)) ||
-          (req.session?.user?.id && e.user?.id === req.session.user.id) ||
-          (req.session?.user?.email && e.user?.email === req.session.user.email)
-      );
-      const userObj = match?.user || req.session?.user;
-
-      if (userObj) {
-        if (req.session) {
-          req.session.tokens = {
-            access_token: validToken,
-            refresh_token: match?.refresh_token || req.session.tokens?.refresh_token,
-            expires_at: match?.expires_at || Date.now() + 3600 * 1000,
+      // Validate or query Google userinfo if token provided
+      try {
+        const uRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+          headers: { Authorization: `Bearer ${validToken}` },
+          signal: AbortSignal.timeout(4000),
+        });
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          const userObj = {
+            id: uData.id,
+            name: uData.name || uData.email?.split("@")[0] || "User",
+            email: uData.email || "",
+            picture: uData.picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+            accessToken: validToken,
+            isLoggedIn: true,
           };
-          req.session.user = { ...userObj, accessToken: validToken };
+          if (req.session) {
+            req.session.user = userObj;
+          }
+          res.setHeader("X-New-Access-Token", validToken);
+          return res.json({
+            isLoggedIn: true,
+            user: userObj,
+            accessToken: validToken,
+          });
         }
-        res.setHeader("X-New-Access-Token", validToken);
+      } catch (uErr) {
+        console.warn("Google userinfo check notice:", uErr);
+      }
+
+      if (req.session?.user) {
         return res.json({
           isLoggedIn: true,
-          user: { ...userObj, accessToken: validToken },
+          user: { ...req.session.user, accessToken: validToken },
           accessToken: validToken,
         });
       }
@@ -6505,51 +6314,39 @@ app.get("/api/auth/me", async (req, res) => {
 
 app.post("/api/auth/refresh", async (req, res) => {
   try {
-    const hint =
-      req.body?.token ||
-      req.body?.accessToken ||
-      req.headers.authorization?.replace(/^Bearer\s+/, "") ||
-      req.session?.tokens?.access_token;
+    const refreshToken = (req.body?.refreshToken || req.body?.refresh_token || (req.session?.tokens as any)?.refresh_token) as string;
 
-    if (!hint && !req.session?.tokens?.access_token) {
+    if (!refreshToken) {
       return res.json({
         success: false,
-        error: "NO_SESSION",
-        message: "No active session to refresh.",
+        error: "NO_REFRESH_TOKEN",
+        message: "No refresh token provided in payload.",
       });
     }
 
-    const newToken = await refreshAccessTokenDirectly(hint);
-    if (newToken) {
-      if (!req.session.tokens) req.session.tokens = { access_token: newToken };
-      req.session.tokens.access_token = newToken;
-      req.session.tokens.expires_at = Date.now() + 3600 * 1000;
-
-      const allTokens = readStoredTokens();
-      const entries = Object.values(allTokens) as any[];
-      const match = entries.find(
-        (e: any) => e.access_token === newToken || (Array.isArray(e.previous_tokens) && e.previous_tokens.includes(newToken))
-      );
-      const userObj = match?.user || req.session?.user;
-
-      if (userObj) {
-        req.session.user = { ...userObj, accessToken: newToken };
+    const result = await refreshAccessTokenDirectly(refreshToken);
+    if (result && result.accessToken) {
+      if (req.session) {
+        if (!req.session.tokens) req.session.tokens = { access_token: result.accessToken };
+        req.session.tokens.access_token = result.accessToken;
+        req.session.tokens.expires_at = Date.now() + result.expiresIn * 1000;
+        if (req.session.user) {
+          req.session.user.accessToken = result.accessToken;
+        }
       }
 
-      res.setHeader("X-New-Access-Token", newToken);
+      res.setHeader("X-New-Access-Token", result.accessToken);
       return res.json({
         success: true,
-        accessToken: newToken,
-        user: req.session.user || userObj,
-        expiresIn: 3600,
+        accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
       });
     }
 
-    // If no new token was produced, return soft status instead of 401 to prevent false signout loops
     return res.json({
       success: false,
-      error: "REFRESH_UNAVAILABLE",
-      message: "Session token is unchanged or offline refresh token unavailable.",
+      error: "REFRESH_FAILED",
+      message: "Could not refresh token with Google OAuth provider.",
     });
   } catch (err: any) {
     console.error("Auth refresh endpoint error:", err);
@@ -6563,18 +6360,12 @@ app.post("/api/auth/refresh", async (req, res) => {
 
 app.post("/api/auth/logout", (req, res) => {
   try {
-    const userId = req.session?.user?.id;
-    if (userId) {
-      const allTokens = readStoredTokens();
-      delete allTokens[userId];
-      writeStoredTokens(allTokens);
-    }
     const token = req.session?.tokens?.access_token;
     if (token) {
       delFromCache(`user_pls_${token.slice(-20)}`);
     }
   } catch {}
-  req.session.destroy(() => {
+  req.session?.destroy(() => {
     res.json({ success: true });
   });
 });

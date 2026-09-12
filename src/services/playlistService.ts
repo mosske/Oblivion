@@ -10,6 +10,7 @@ import {
   PLAYLIST_CUSTOM_ARTWORK_KEY,
 } from "../utils/customCoversStorage";
 import { getStoredAuthToken, getStoredUserSession } from "./authService";
+import { apiFetch } from "./apiClient";
 
 export const OBLIVION_PLAYLIST_CACHE_KEY = "OBLIVION_PLAYLIST_CACHE";
 const LEGACY_PLAYLIST_CACHE_KEY = "oblivion_saved_playlists";
@@ -48,13 +49,15 @@ export function setCachedPlaylists(playlists: Playlist[]): void {
 }
 
 /**
- * Read tracks for a specific playlist from local cache
+ * Read tracks for a specific playlist from local cache (OBLIVION_TRACKS_CACHE_[PLAYLIST_ID])
  */
 export function getCachedPlaylistTracks(playlistId: string): Track[] {
   if (!playlistId) return [];
   const cleanId = playlistId.replace(/^VL/, "");
   try {
     const raw =
+      localStorage.getItem(`OBLIVION_TRACKS_CACHE_${playlistId}`) ||
+      localStorage.getItem(`OBLIVION_TRACKS_CACHE_${cleanId}`) ||
       localStorage.getItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`) ||
       localStorage.getItem(`OBLIVION_PLAYLIST_CACHE_${cleanId}`) ||
       localStorage.getItem(`oblivion_tracks_${cleanId}`) ||
@@ -70,7 +73,7 @@ export function getCachedPlaylistTracks(playlistId: string): Track[] {
 }
 
 /**
- * Save tracks for a specific playlist to local cache and update parent playlist count
+ * Save tracks for a specific playlist to local cache (OBLIVION_TRACKS_CACHE_[PLAYLIST_ID])
  */
 export function setCachedPlaylistTracks(playlistId: string, tracks: Track[]): void {
   if (!playlistId || !Array.isArray(tracks)) return;
@@ -78,6 +81,8 @@ export function setCachedPlaylistTracks(playlistId: string, tracks: Track[]): vo
   const cleanTracks = tracks.filter(Boolean);
   try {
     const serialized = JSON.stringify(cleanTracks);
+    localStorage.setItem(`OBLIVION_TRACKS_CACHE_${playlistId}`, serialized);
+    localStorage.setItem(`OBLIVION_TRACKS_CACHE_${cleanId}`, serialized);
     localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`, serialized);
     localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanId}`, serialized);
     localStorage.setItem(`oblivion_tracks_${cleanId}`, serialized);
@@ -489,11 +494,11 @@ export async function fetchPlaylistItems(
   });
 
   try {
-    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items?${queryParams}`, {
+    let res = await apiFetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items?${queryParams}`, {
       headers,
     });
     if (!res.ok) {
-      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/items?${queryParams}`, {
+      res = await apiFetch(`/api/playlists/${encodeURIComponent(cleanId)}/items?${queryParams}`, {
         headers,
       });
     }
@@ -544,7 +549,7 @@ export async function addTrackToPlaylist(
 
   try {
     // 1. Single API request: POST /api/youtube/playlists/:id/items
-    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items`, {
+    let res = await apiFetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -554,7 +559,7 @@ export async function addTrackToPlaylist(
     });
 
     if (!res.ok) {
-      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/items`, {
+      res = await apiFetch(`/api/playlists/${encodeURIComponent(cleanId)}/items`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -611,13 +616,13 @@ export async function removeTrackFromPlaylist(
   const headers = getActiveAuthHeaders(options?.token);
 
   try {
-    let res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items/${cleanTrackId}`, {
+    let res = await apiFetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items/${cleanTrackId}`, {
       method: "DELETE",
       headers,
     });
 
     if (!res.ok) {
-      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/items/${cleanTrackId}`, {
+      res = await apiFetch(`/api/playlists/${encodeURIComponent(cleanId)}/items/${cleanTrackId}`, {
         method: "DELETE",
         headers,
       });
@@ -675,28 +680,25 @@ export async function reorderPlaylistTracks(
       mutatedItems: options?.mutatedItems,
     });
 
-    let res = await fetch(`/api/playlists/reorder`, {
+    let res = await apiFetch(`/api/playlists/reorder`, {
       method: "POST",
       headers,
       body: payload,
-      signal: AbortSignal.timeout(30000),
     }).catch(() => null);
 
     if (!res || !res.ok) {
-      res = await fetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/reorder`, {
+      res = await apiFetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/reorder`, {
         method: "PUT",
         headers,
         body: payload,
-        signal: AbortSignal.timeout(30000),
       }).catch(() => null);
     }
 
     if (!res || !res.ok) {
-      res = await fetch(`/api/playlists/${encodeURIComponent(cleanId)}/reorder`, {
+      res = await apiFetch(`/api/playlists/${encodeURIComponent(cleanId)}/reorder`, {
         method: "PUT",
         headers,
         body: payload,
-        signal: AbortSignal.timeout(30000),
       }).catch(() => null);
     }
 

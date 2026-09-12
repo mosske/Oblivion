@@ -40,6 +40,7 @@ import { MarqueeText } from "./MarqueeText";
 import { getInMemoryToken, getStoredAuthToken } from "../services/authService";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
 import { getCachedPlaylistTracks, setCachedPlaylistTracks } from "../services/playlistService";
+import { apiFetch } from "../services/apiClient";
 import {
   getPlaylistCustomArtwork,
   isAuthenticCustomArtworkUrl,
@@ -109,7 +110,14 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     );
   }
 
-  const [tracks, setTracks] = useState<Track[]>(Array.isArray(item.tracks) ? item.tracks.filter(Boolean) : []);
+  const initialCachedTracks = React.useMemo(() => {
+    const fromStorage = getCachedPlaylistTracks(item.id);
+    if (fromStorage && fromStorage.length > 0) return fromStorage;
+    if (Array.isArray(item.tracks) && item.tracks.length > 0) return item.tracks.filter(Boolean);
+    return [];
+  }, [item.id]);
+
+  const [tracks, setTracks] = useState<Track[]>(initialCachedTracks);
   const [inViewSearch, setInViewSearch] = useState<string>("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
@@ -126,7 +134,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const [localTracks, setLocalTracks] = useState<Track[]>([]);
   const [openPlaylistDropdownId, setOpenPlaylistDropdownId] = useState<string | null>(null);
   const [isCustomCoverModalOpen, setIsCustomCoverModalOpen] = useState<boolean>(false);
-  const [isLoadingTracks, setIsLoadingTracks] = useState<boolean>(!item.tracks || item.tracks.length === 0);
+  const [isLoadingTracks, setIsLoadingTracks] = useState<boolean>(initialCachedTracks.length === 0);
 
   // Check if this playlist has custom cover artwork
   const isCustomCover = React.useMemo(() => {
@@ -181,46 +189,40 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     if (isReorderMode) return;
 
     try {
-      let activeToken = getStoredAuthToken() || getInMemoryToken() || "";
-
-      const headers: Record<string, string> = {};
-      if (activeToken) {
-        headers["Authorization"] = `Bearer ${activeToken}`;
-        headers["X-Access-Token"] = activeToken;
-      }
-
       const titleParam = encodeURIComponent(item.title || "");
       const artistParam = encodeURIComponent((item as any).artist || (item as any).description || "");
       const typeParam = isAlbum ? "album" : "playlist";
-      let res = await fetch(
-        `/api/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`,
-        { headers }
+      
+      let res = await apiFetch(
+        `/api/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`
       );
       if (!res.ok) {
-        res = await fetch(
-          `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`,
-          { headers }
+        res = await apiFetch(
+          `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`
         );
       }
-      const data = await res.json().catch(() => ({ tracks: [] }));
-      if (data?.tracks && Array.isArray(data.tracks)) {
-        const clean: Track[] = data.tracks
-          .filter(Boolean)
-          .map((t: any, idx: number) => {
-            const vidId = t.youtubeVideoId || t.id;
-            const uniqueId = t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : `${vidId || "track"}_${idx}`);
-            return {
-              ...t,
-              id: uniqueId,
-              playlistItemId: t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : undefined),
-              youtubeVideoId: vidId || t.id,
-            };
-          });
+      
+      if (res.ok) {
+        const data = await res.json().catch(() => ({ tracks: [] }));
+        if (data?.tracks && Array.isArray(data.tracks) && data.tracks.length > 0) {
+          const clean: Track[] = data.tracks
+            .filter(Boolean)
+            .map((t: any, idx: number) => {
+              const vidId = t.youtubeVideoId || t.id;
+              const uniqueId = t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : `${vidId || "track"}_${idx}`);
+              return {
+                ...t,
+                id: uniqueId,
+                playlistItemId: t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : undefined),
+                youtubeVideoId: vidId || t.id,
+              };
+            });
 
-        // Set authoritative YouTube tracks directly - preserves all songs and duplicates
-        setTracks(clean);
-        setCachedPlaylistTracks(item.id, clean);
-        savePlaylistTracksToDBCache(item.id, clean);
+          // Set authoritative YouTube tracks directly - preserves all songs and duplicates
+          setTracks(clean);
+          setCachedPlaylistTracks(item.id, clean);
+          savePlaylistTracksToDBCache(item.id, clean);
+        }
       }
       setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {

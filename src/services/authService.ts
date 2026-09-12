@@ -114,25 +114,31 @@ export function getStoredUserSession(): User | null {
 
 /**
  * Perpetual authentication persistence.
- * Stores OAuth tokens and user profiles strictly under OBLIVION_AUTH_TOKEN and OBLIVION_USER_SESSION.
+ * Stores OAuth tokens (including refresh tokens) and user profiles strictly under OBLIVION_USER_SESSION.
  * DO NOT automatically expire or wipe these keys.
  */
-export function setStoredAuth(token?: string | null, user?: User | null): void {
+export function setStoredAuth(token?: string | null, user?: (User & { refreshToken?: string; refresh_token?: string }) | null): void {
   try {
-    if (token && typeof token === "string" && token.trim().length > 0) {
-      const cleanToken = token.trim();
+    const existingSession = getStoredUserSession();
+    const cleanToken = token ? token.trim() : existingSession?.accessToken;
+
+    if (cleanToken) {
       localStorage.setItem(OBLIVION_AUTH_TOKEN_KEY, cleanToken);
       (window as any).__OBLIVION_ACCESS_TOKEN = cleanToken;
     }
 
     if (user && typeof user === "object") {
-      const sessionUser: User = {
+      const refreshToken = user.refreshToken || (user as any).refresh_token || (existingSession as any)?.refreshToken || (existingSession as any)?.refresh_token;
+      const sessionUser = {
+        ...existingSession,
         ...user,
         isLoggedIn: true,
-        accessToken: token || user.accessToken || getStoredAuthToken() || undefined,
+        accessToken: cleanToken || user.accessToken || undefined,
+        access_token: cleanToken || user.accessToken || undefined,
+        refreshToken: refreshToken || undefined,
+        refresh_token: refreshToken || undefined,
       };
       localStorage.setItem(OBLIVION_USER_SESSION_KEY, JSON.stringify(sessionUser));
-      // Maintain legacy key for cross-module compatibility
       localStorage.setItem(LEGACY_USER_KEY, JSON.stringify(sessionUser));
       if (sessionUser.accessToken) {
         localStorage.setItem(OBLIVION_AUTH_TOKEN_KEY, sessionUser.accessToken);
@@ -149,19 +155,25 @@ export function setStoredAuth(token?: string | null, user?: User | null): void {
 /**
  * Updates only the OAuth access token without modifying other user profile fields.
  */
-export function updateStoredAuthToken(newToken: string): void {
+export function updateStoredAuthToken(newToken: string, updatedUser?: any): void {
   if (!newToken) return;
   try {
     const clean = newToken.trim();
     localStorage.setItem(OBLIVION_AUTH_TOKEN_KEY, clean);
     (window as any).__OBLIVION_ACCESS_TOKEN = clean;
 
-    const currentSession = getStoredUserSession();
-    if (currentSession) {
-      currentSession.accessToken = clean;
-      localStorage.setItem(OBLIVION_USER_SESSION_KEY, JSON.stringify(currentSession));
-      localStorage.setItem(LEGACY_USER_KEY, JSON.stringify(currentSession));
-    }
+    const currentSession = getStoredUserSession() || {};
+    const merged = {
+      ...currentSession,
+      ...(updatedUser || {}),
+      accessToken: clean,
+      access_token: clean,
+      isLoggedIn: true,
+    };
+    localStorage.setItem(OBLIVION_USER_SESSION_KEY, JSON.stringify(merged));
+    localStorage.setItem(LEGACY_USER_KEY, JSON.stringify(merged));
+    setInMemoryAuth(clean, merged);
+    window.dispatchEvent(new CustomEvent("oblivion_auth_changed", { detail: { isLoggedIn: true, token: clean } }));
   } catch (err) {
     console.warn("[authService] Failed updating stored auth token:", err);
   }
@@ -169,6 +181,7 @@ export function updateStoredAuthToken(newToken: string): void {
 
 /**
  * Clears authentication ONLY when user manually clicks "Sign Out".
+ * Clears OBLIVION_USER_SESSION and all OBLIVION_TRACKS_CACHE_* entries from localStorage.
  */
 export function clearStoredAuth(): void {
   try {
@@ -176,6 +189,28 @@ export function clearStoredAuth(): void {
     localStorage.removeItem(OBLIVION_USER_SESSION_KEY);
     localStorage.removeItem(LEGACY_USER_KEY);
     (window as any).__OBLIVION_ACCESS_TOKEN = null;
+    setInMemoryAuth(null, null);
+
+    // Remove all OBLIVION_TRACKS_CACHE_* and playlist tracks caches
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (
+          key &&
+          (key.startsWith("OBLIVION_TRACKS_CACHE_") ||
+            key.startsWith("OBLIVION_PLAYLIST_CACHE") ||
+            key.startsWith("oblivion_tracks_") ||
+            key.startsWith("custom_art_"))
+        ) {
+          keysToRemove.push(key);
+        }
+      }
+      for (const k of keysToRemove) {
+        localStorage.removeItem(k);
+      }
+    } catch {}
+
     window.dispatchEvent(new CustomEvent("oblivion_auth_changed", { detail: { isLoggedIn: false } }));
   } catch (err) {
     console.warn("[authService] Failed clearing auth state:", err);
