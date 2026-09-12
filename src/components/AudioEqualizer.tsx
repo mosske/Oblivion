@@ -97,23 +97,41 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
   };
 
   // 3. Live Slider Gain Updates:
-  // In the slider onChange handler, directly update the target BiquadFilterNode gain:
-  // filtersRef.current[index].gain.value = newGainValue;
+  // In the slider onChange handler, dynamically update the gain property of the respective filter node in real-time
+  // filters[bandIndex].gain.setTargetAtTime(newGainValue, audioCtx.currentTime, 0.01);
   const handleSliderChange = (index: number, valStr: string) => {
     const newGainValue = parseFloat(valStr);
     if (filtersRef.current && filtersRef.current[index]) {
-      filtersRef.current[index].gain.value = newGainValue;
+      const audioCtx = audioCtxRef.current;
+      if (audioCtx) {
+        try {
+          filtersRef.current[index].gain.setTargetAtTime(newGainValue, audioCtx.currentTime, 0.01);
+        } catch {
+          filtersRef.current[index].gain.value = newGainValue;
+        }
+      } else {
+        filtersRef.current[index].gain.value = newGainValue;
+      }
     }
     setGain(index, newGainValue);
   };
 
-  // 3. Ensure changing presets updates all 7 filterNode.gain.value properties in real time
+  // 3. Ensure changing presets updates all 7 filterNode.gain.setTargetAtTime properties in real time
   const handlePresetSelect = (presetName: string) => {
     const presetGains = EQ_PRESETS[presetName];
     if (presetGains) {
+      const audioCtx = audioCtxRef.current;
       presetGains.forEach((gain, i) => {
         if (filtersRef.current && filtersRef.current[i]) {
-          filtersRef.current[i].gain.value = gain;
+          if (audioCtx) {
+            try {
+              filtersRef.current[i].gain.setTargetAtTime(gain, audioCtx.currentTime, 0.01);
+            } catch {
+              filtersRef.current[i].gain.value = gain;
+            }
+          } else {
+            filtersRef.current[i].gain.value = gain;
+          }
         }
       });
       setPreset(presetName);
@@ -122,9 +140,18 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
 
   const handleReset = () => {
     const flatGains = EQ_PRESETS["Flat"];
+    const audioCtx = audioCtxRef.current;
     flatGains.forEach((gain, i) => {
       if (filtersRef.current && filtersRef.current[i]) {
-        filtersRef.current[i].gain.value = gain;
+        if (audioCtx) {
+          try {
+            filtersRef.current[i].gain.setTargetAtTime(gain, audioCtx.currentTime, 0.01);
+          } catch {
+            filtersRef.current[i].gain.value = gain;
+          }
+        } else {
+          filtersRef.current[i].gain.value = gain;
+        }
       }
     });
     resetEQ();

@@ -76,15 +76,21 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
       const audioCtx = audioCtxRef.current;
 
       // 4. AudioContext State Management:
-      // Handle browser autoplay restrictions by adding an event listener to automatically
-      // call audioCtx.resume() whenever playback starts (onPlay or play() action) if audioCtx.state === 'suspended'.
-      const handlePlay = () => {
+      // Handle browser autoplay restrictions by adding event listeners on play/seek actions
+      // to automatically call audioCtx.resume() if audioCtx.state === 'suspended'.
+      const handleResume = () => {
         if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
           audioCtxRef.current.resume().catch(() => {});
         }
       };
-      audioElement.removeEventListener("play", handlePlay);
-      audioElement.addEventListener("play", handlePlay);
+      audioElement.removeEventListener("play", handleResume);
+      audioElement.removeEventListener("playing", handleResume);
+      audioElement.removeEventListener("seeking", handleResume);
+      audioElement.removeEventListener("seeked", handleResume);
+      audioElement.addEventListener("play", handleResume);
+      audioElement.addEventListener("playing", handleResume);
+      audioElement.addEventListener("seeking", handleResume);
+      audioElement.addEventListener("seeked", handleResume);
 
       // Create MediaElementSourceNode once if not already created
       if (!sourceNodeRef.current) {
@@ -127,7 +133,16 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Direct update on BiquadFilterNode gain for real-time responsiveness
     if (filtersRef.current[index]) {
-      filtersRef.current[index].gain.value = clamped;
+      const audioCtx = audioCtxRef.current;
+      if (audioCtx) {
+        try {
+          filtersRef.current[index].gain.setTargetAtTime(clamped, audioCtx.currentTime, 0.01);
+        } catch {
+          filtersRef.current[index].gain.value = clamped;
+        }
+      } else {
+        filtersRef.current[index].gain.value = clamped;
+      }
     }
 
     setEqState((prev) => {
@@ -158,7 +173,16 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     presetGains.forEach((gain, idx) => {
       if (filtersRef.current[idx]) {
-        filtersRef.current[idx].gain.value = gain;
+        const audioCtx = audioCtxRef.current;
+        if (audioCtx) {
+          try {
+            filtersRef.current[idx].gain.setTargetAtTime(gain, audioCtx.currentTime, 0.01);
+          } catch {
+            filtersRef.current[idx].gain.value = gain;
+          }
+        } else {
+          filtersRef.current[idx].gain.value = gain;
+        }
       }
     });
 

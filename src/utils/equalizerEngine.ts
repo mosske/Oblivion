@@ -104,14 +104,22 @@ class EqualizerManager {
       }
 
       // 4. Handle browser autoplay restrictions by automatically calling audioCtx.resume()
-      // whenever playback starts (onPlay or play() action) if audioCtx.state === 'suspended'.
-      const handlePlay = () => {
+      // whenever playback starts (play/seeking/seeked actions) if audioCtx.state === 'suspended'.
+      const handleResume = async () => {
         if (this.audioContext && this.audioContext.state === "suspended") {
-          this.audioContext.resume().catch(() => {});
+          try {
+            await this.audioContext.resume();
+          } catch {}
         }
       };
-      audioElement.removeEventListener("play", handlePlay);
-      audioElement.addEventListener("play", handlePlay);
+      audioElement.removeEventListener("play", handleResume);
+      audioElement.removeEventListener("playing", handleResume);
+      audioElement.removeEventListener("seeking", handleResume);
+      audioElement.removeEventListener("seeked", handleResume);
+      audioElement.addEventListener("play", handleResume);
+      audioElement.addEventListener("playing", handleResume);
+      audioElement.addEventListener("seeking", handleResume);
+      audioElement.addEventListener("seeked", handleResume);
 
       // Check if element is already bound or create media element source once
       if (!this.sourceNode) {
@@ -155,7 +163,15 @@ class EqualizerManager {
     this.currentGains[index] = clamped;
 
     if (this.filterNodes[index]) {
-      this.filterNodes[index].gain.value = clamped;
+      if (this.audioContext) {
+        try {
+          this.filterNodes[index].gain.setTargetAtTime(clamped, this.audioContext.currentTime, 0.01);
+        } catch {
+          this.filterNodes[index].gain.value = clamped;
+        }
+      } else {
+        this.filterNodes[index].gain.value = clamped;
+      }
     }
 
     // Determine if preset still matches
@@ -182,7 +198,15 @@ class EqualizerManager {
 
     this.currentGains.forEach((gain, index) => {
       if (this.filterNodes[index]) {
-        this.filterNodes[index].gain.value = gain;
+        if (this.audioContext) {
+          try {
+            this.filterNodes[index].gain.setTargetAtTime(gain, this.audioContext.currentTime, 0.01);
+          } catch {
+            this.filterNodes[index].gain.value = gain;
+          }
+        } else {
+          this.filterNodes[index].gain.value = gain;
+        }
       }
     });
 

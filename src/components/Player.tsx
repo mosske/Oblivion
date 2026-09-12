@@ -1155,12 +1155,16 @@ export const Player: React.FC<PlayerProps> = ({
     }
 
     if (audioRef.current) {
+      if (audioRef.current.crossOrigin !== "anonymous") {
+        audioRef.current.crossOrigin = "anonymous";
+      }
       attachAudioElement(audioRef.current);
       if (isPlaying) {
         resumeAudioContext();
         // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
         const silentUrl = getSilentAudioUrl();
         if (audioRef.current.src !== silentUrl) {
+          audioRef.current.crossOrigin = "anonymous";
           audioRef.current.src = silentUrl;
           audioRef.current.loop = true;
           audioRef.current.volume = 0.001;
@@ -1384,6 +1388,7 @@ export const Player: React.FC<PlayerProps> = ({
 
   // Custom seek forward/back
   const handleSeekInternal = (time: number) => {
+    resumeAudioContext();
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
         ytPlayerRef.current.seekTo?.(time, true);
@@ -1537,6 +1542,15 @@ export const Player: React.FC<PlayerProps> = ({
         playsInline
         autoPlay
         onPlay={() => {
+          resumeAudioContext();
+        }}
+        onPlaying={() => {
+          resumeAudioContext();
+        }}
+        onSeeking={() => {
+          resumeAudioContext();
+        }}
+        onSeeked={() => {
           resumeAudioContext();
         }}
         onTimeUpdate={handleTimeUpdate}
