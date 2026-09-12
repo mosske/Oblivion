@@ -444,127 +444,134 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       }}
       style={{
         transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
+        willChange: dragOffsetY > 0 ? "transform" : undefined,
         opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
         transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
       }}
-      className="flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52 will-change-transform"
+      className="flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52"
     >
-      {/* Top Sticky Header with Close (X) / Reorder Controls */}
-      <div className={`playlist-action-toolbar flex flex-col shrink-0 transition-all`}>
-        {/* Subtle pull handle for mobile gesture indicator (only when not reordering) */}
-        {!isReorderMode && (
-          <div className="w-8 h-1 rounded-full bg-zinc-400/40 mx-auto mb-1.5 sm:hidden" />
-        )}
+      {/* Top Sticky Header with Close (X) / Reorder Controls - Fixed directly below main header */}
+      <div
+        className={`playlist-action-toolbar sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 backdrop-blur-2xl ${
+          designConfig.headerBg || "bg-[#141216]/85 backdrop-blur-2xl"
+        } border-b ${designConfig.borderSubtle} shadow-sm transition-all`}
+      >
+        <div className="max-w-6xl mx-auto w-full flex flex-col">
+          {/* Subtle pull handle for mobile gesture indicator (only when not reordering) */}
+          {!isReorderMode && (
+            <div className="w-8 h-1 rounded-full bg-zinc-400/40 mx-auto mb-1.5 sm:hidden" />
+          )}
 
-        {isReorderMode ? (
-          /* Reorder Active Sticky Top Bar - Persistent at Top of Screen */
-          <div className="flex items-center justify-between gap-2 sm:gap-3 w-full animate-fade-in">
-            {/* Left: Cancel Button */}
-            <button
-              type="button"
-              onClick={handleCancelReordering}
-              disabled={isSyncingOrder}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold ${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-all active:scale-95 shadow-sm shrink-0`}
-              title="Discard reordering changes"
-            >
-              Cancel
-            </button>
-
-            {/* Center: Live Drag Badge & Tips */}
-            <div className="flex items-center gap-2 min-w-0 text-center px-1">
-              <div className={`p-1.5 rounded-lg ${designConfig.accentBg} text-white shrink-0 shadow-sm hidden xs:flex`}>
-                <GripVertical className="w-3.5 h-3.5" />
-              </div>
-              <div className="flex flex-col items-center min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className={`text-xs sm:text-sm font-extrabold ${designConfig.textPrimary} truncate`}>
-                    Reorder Songs
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
-                    Live Drag
-                  </span>
-                </div>
-                <span className={`text-[10px] ${designConfig.textMuted} hidden md:inline truncate`}>
-                  Hold handle to lift • 2nd finger or mouse wheel to fast scroll
-                </span>
-              </div>
-            </div>
-
-            {/* Right: Done Reordering Button */}
-            <button
-              type="button"
-              onClick={handleDoneReordering}
-              disabled={isSyncingOrder}
-              className={`px-3.5 sm:px-5 py-2 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg ring-2 ${designConfig.accentBorder} transition-all active:scale-95 shrink-0`}
-              title="Save and sync new order with YouTube"
-            >
-              {isSyncingOrder ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Syncing...</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Done Reordering</span>
-                </>
-              )}
-            </button>
-          </div>
-        ) : (
-          /* Standard Header Bar with Search Field and Reorder Songs Button */
-          <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3.5 w-full">
-            <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-[200px] sm:min-w-[280px]">
+          {isReorderMode ? (
+            /* Reorder Active Sticky Top Bar - Persistent at Top of Screen */
+            <div className="flex items-center justify-between gap-2 sm:gap-3 w-full animate-fade-in">
+              {/* Left: Cancel Button */}
               <button
-                onClick={onBack}
-                aria-label="Close view"
-                className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0`}
-                title="Close and go back (or swipe down)"
+                type="button"
+                onClick={handleCancelReordering}
+                disabled={isSyncingOrder}
+                className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold ${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle} transition-all active:scale-95 shadow-sm shrink-0`}
+                title="Discard reordering changes"
               >
-                <X className="w-5 h-5" />
+                Cancel
               </button>
 
-              {/* In-Header Search Field */}
-              <div className="flex-1 max-w-xl relative min-w-0">
-                <Search className={`w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 ${designConfig.textMuted} pointer-events-none`} />
-                <input
-                  type="text"
-                  value={inViewSearch}
-                  onChange={(e) => setInViewSearch(e.target.value)}
-                  placeholder={isAlbum ? "Search album tracks..." : "Search playlist songs..."}
-                  className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
-                />
-                {inViewSearch && (
+              {/* Center: Live Drag Badge & Tips */}
+              <div className="flex items-center gap-2 min-w-0 text-center px-1">
+                <div className={`p-1.5 rounded-lg ${designConfig.accentBg} text-white shrink-0 shadow-sm hidden xs:flex`}>
+                  <GripVertical className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex flex-col items-center min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xs sm:text-sm font-extrabold ${designConfig.textPrimary} truncate`}>
+                      Reorder Songs
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                      Live Drag
+                    </span>
+                  </div>
+                  <span className={`text-[10px] ${designConfig.textMuted} hidden md:inline truncate`}>
+                    Hold handle to lift • 2nd finger or mouse wheel to fast scroll
+                  </span>
+                </div>
+              </div>
+
+              {/* Right: Done Reordering Button */}
+              <button
+                type="button"
+                onClick={handleDoneReordering}
+                disabled={isSyncingOrder}
+                className={`px-3.5 sm:px-5 py-2 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg ring-2 ${designConfig.accentBorder} transition-all active:scale-95 shrink-0`}
+                title="Save and sync new order with YouTube"
+              >
+                {isSyncingOrder ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Syncing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Done Reordering</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            /* Standard Header Bar with Search Field and Reorder Songs Button */
+            <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3.5 w-full">
+              <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-[200px] sm:min-w-[280px]">
+                <button
+                  onClick={onBack}
+                  aria-label="Close view"
+                  className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0`}
+                  title="Close and go back (or swipe down)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* In-Header Search Field */}
+                <div className="flex-1 max-w-xl relative min-w-0">
+                  <Search className={`w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 ${designConfig.textMuted} pointer-events-none`} />
+                  <input
+                    type="text"
+                    value={inViewSearch}
+                    onChange={(e) => setInViewSearch(e.target.value)}
+                    placeholder={isAlbum ? "Search album tracks..." : "Search playlist songs..."}
+                    className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
+                  />
+                  {inViewSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setInViewSearch("")}
+                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors`}
+                      title="Clear search filter"
+                      aria-label="Clear search filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Reorder Songs Button - with explicit text "Reorder Songs", drops below on narrow screens if needed */}
+              {!isAlbum && (
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={() => setInViewSearch("")}
-                    className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors`}
-                    title="Clear search filter"
-                    aria-label="Clear search filter"
+                    onClick={handleToggleReorderMode}
+                    disabled={isSyncingOrder}
+                    className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm whitespace-nowrap ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} hover:${designConfig.accentText}`}
+                    title="Reorder songs in this playlist"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <ArrowUpDown className="w-4 h-4 shrink-0" />
+                    <span>Reorder Songs</span>
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-
-            {/* Reorder Songs Button - with explicit text "Reorder Songs", drops below on narrow screens if needed */}
-            {!isAlbum && (
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleToggleReorderMode}
-                  disabled={isSyncingOrder}
-                  className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm whitespace-nowrap ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} hover:${designConfig.accentText}`}
-                  title="Reorder songs in this playlist"
-                >
-                  <ArrowUpDown className="w-4 h-4 shrink-0" />
-                  <span>Reorder Songs</span>
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-6xl mx-auto w-full">

@@ -2308,7 +2308,7 @@ export default function App() {
 
   return (
     <EqualizerProvider>
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-hidden`}>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean(activeFullDesign.isCandy || activeFullDesign.id === "candyland")} />
 
