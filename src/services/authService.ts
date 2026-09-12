@@ -37,26 +37,25 @@ export function getIsAuthenticatingGlobal(): boolean {
 }
 
 /**
- * Retrieves the permanent Google OAuth refresh_token from localStorage.
+ * Retrieves the permanent Google OAuth refresh_token from localStorage under key OBLIVION_USER_SESSION.
  * NEVER cleared unless the user explicitly signs out in Settings.
  */
 export function getStoredRefreshToken(): string | null {
   try {
-    const directRefresh = localStorage.getItem(OBLIVION_REFRESH_TOKEN_KEY);
-    if (directRefresh && directRefresh.trim().length > 0) {
-      return directRefresh.trim();
-    }
-
-    // Secondary fallback: check perpetual session user object
+    // 1. Primary permanent browser credential storage: OBLIVION_USER_SESSION
     const sessionStr = localStorage.getItem(OBLIVION_USER_SESSION_KEY);
     if (sessionStr) {
       const parsed = JSON.parse(sessionStr);
-      const rt = parsed?.refreshToken || parsed?.refresh_token;
+      const rt = parsed?.refresh_token || parsed?.refreshToken;
       if (rt && typeof rt === "string" && rt.trim().length > 0) {
-        const cleanRt = rt.trim();
-        localStorage.setItem(OBLIVION_REFRESH_TOKEN_KEY, cleanRt);
-        return cleanRt;
+        return rt.trim();
       }
+    }
+
+    // 2. Direct key fallback: OBLIVION_REFRESH_TOKEN
+    const directRefresh = localStorage.getItem(OBLIVION_REFRESH_TOKEN_KEY);
+    if (directRefresh && directRefresh.trim().length > 0) {
+      return directRefresh.trim();
     }
   } catch (err) {
     console.warn("[authService] Failed reading refresh token from localStorage:", err);
@@ -106,33 +105,34 @@ export function setStoredTokenExpiresAt(timestampMs: number): void {
 }
 
 /**
- * Retrieves the perpetual OAuth access token from localStorage.
+ * Retrieves the perpetual OAuth access token from localStorage under OBLIVION_USER_SESSION.
  */
 export function getStoredAuthToken(): string | null {
   try {
-    const directToken = localStorage.getItem(OBLIVION_AUTH_TOKEN_KEY);
-    if (directToken && directToken.trim().length > 0) {
-      return directToken.trim();
-    }
-
-    // Check user session
+    // 1. Primary permanent browser credential storage: OBLIVION_USER_SESSION
     const sessionStr = localStorage.getItem(OBLIVION_USER_SESSION_KEY);
     if (sessionStr) {
       const parsed = JSON.parse(sessionStr);
-      if (parsed?.accessToken && typeof parsed.accessToken === "string") {
-        const tok = parsed.accessToken.trim();
-        localStorage.setItem(OBLIVION_AUTH_TOKEN_KEY, tok);
+      const at = parsed?.access_token || parsed?.accessToken;
+      if (at && typeof at === "string" && at.trim().length > 0) {
+        const tok = at.trim();
         return tok;
       }
+    }
+
+    // 2. Direct key fallback: OBLIVION_AUTH_TOKEN
+    const directToken = localStorage.getItem(OBLIVION_AUTH_TOKEN_KEY);
+    if (directToken && directToken.trim().length > 0) {
+      return directToken.trim();
     }
 
     // Legacy fallback migration
     const legacyStr = localStorage.getItem(LEGACY_USER_KEY);
     if (legacyStr) {
       const parsed = JSON.parse(legacyStr);
-      if (parsed?.accessToken && typeof parsed.accessToken === "string") {
-        const tok = parsed.accessToken.trim();
-        localStorage.setItem(OBLIVION_AUTH_TOKEN_KEY, tok);
+      const at = parsed?.access_token || parsed?.accessToken;
+      if (at && typeof at === "string" && at.trim().length > 0) {
+        const tok = at.trim();
         localStorage.setItem(OBLIVION_USER_SESSION_KEY, JSON.stringify(parsed));
         return tok;
       }
@@ -255,7 +255,8 @@ export function updateStoredAuthToken(newToken: string, updatedUser?: any, expir
       updatedUser?.refreshToken ||
       updatedUser?.refresh_token ||
       getStoredRefreshToken() ||
-      (currentSession as any)?.refreshToken;
+      (currentSession as any)?.refreshToken ||
+      (currentSession as any)?.refresh_token;
 
     if (refreshToken) {
       setStoredRefreshToken(refreshToken);

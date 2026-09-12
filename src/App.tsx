@@ -93,7 +93,6 @@ export function isValidPlaylistId(id: string | undefined | null): boolean {
 // Global auth expiry and token update handler callback registrations
 let globalAuthExpiryHandler: (() => void) | null = null;
 let globalTokenUpdateHandler: ((newToken: string, userObj?: any) => void) | null = null;
-let activeRefreshPromise: Promise<string | null> | null = null;
 
 // In-Memory Auth & Interceptor Guard State imported from authService to prevent circular dependencies
 import {
@@ -102,7 +101,9 @@ import {
   getInMemoryUser,
   setIsAuthenticatingGlobal,
   getIsAuthenticatingGlobal,
+  updateStoredAuthToken,
 } from "./services/authService";
+import { performSilentRefresh as clientPerformSilentRefresh } from "./services/apiClient";
 
 export {
   setInMemoryAuth,
@@ -110,74 +111,17 @@ export {
   getInMemoryUser,
   setIsAuthenticatingGlobal,
   getIsAuthenticatingGlobal,
+  updateStoredAuthToken,
 };
 
 // Silent background token refresh mechanism
 export async function performSilentRefresh(): Promise<string | null> {
-  if (activeRefreshPromise) {
-    return activeRefreshPromise;
+  const token = await clientPerformSilentRefresh();
+  if (token && globalTokenUpdateHandler) {
+    const user = getInMemoryUser();
+    globalTokenUpdateHandler(token, user);
   }
-
-  activeRefreshPromise = (async () => {
-    try {
-      let activeToken = getInMemoryToken() || "";
-      if (!activeToken) {
-        try {
-          const savedUser = localStorage.getItem("oblivion_saved_user");
-          if (savedUser) {
-            const parsed = JSON.parse(savedUser);
-            activeToken = parsed?.accessToken || "";
-          }
-        } catch {}
-      }
-
-      const res = await fetch("/api/auth/refresh", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
-        },
-        body: JSON.stringify({ token: activeToken }),
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data?.success && data?.accessToken) {
-          const newToken = data.accessToken;
-          setInMemoryAuth(newToken, data.user || null);
-          try {
-            const savedUser = localStorage.getItem("oblivion_saved_user");
-            if (savedUser) {
-              const parsed = JSON.parse(savedUser);
-              const updated = {
-                ...parsed,
-                ...(data.user || {}),
-                accessToken: newToken,
-                isLoggedIn: true,
-                tokenRefreshedAt: Date.now(),
-              };
-              localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
-            }
-          } catch {}
-
-          if (globalTokenUpdateHandler) {
-            globalTokenUpdateHandler(newToken, data.user);
-          }
-          return newToken;
-        }
-      }
-      // If refresh could not generate a new token, preserve the user's active session without disruption
-      return null;
-    } catch (err) {
-      console.log("[Auth] Silent refresh network notice (session preserved):", err);
-      return null;
-    } finally {
-      activeRefreshPromise = null;
-    }
-  })();
-
-  return activeRefreshPromise;
+  return token;
 }
 
 // Resilient client fetch helper with automatic retry, silent refresh, and selective auth interceptor
@@ -210,15 +154,8 @@ async function safeClientFetch(
       if (res && res.headers) {
         const newServerToken = res.headers.get("x-new-access-token");
         if (newServerToken && newServerToken !== activeToken) {
+          updateStoredAuthToken(newServerToken);
           setInMemoryAuth(newServerToken);
-          try {
-            const saved = localStorage.getItem("oblivion_saved_user");
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              const updated = { ...parsed, accessToken: newServerToken };
-              localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
-            }
-          } catch {}
           if (globalTokenUpdateHandler) {
             globalTokenUpdateHandler(newServerToken);
           }

@@ -279,6 +279,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     });
     setTracks(updated);
     savePlaylistTracksToDBCache(item.id, updated);
+    setCachedPlaylistTracks(item.id, updated);
     try {
       localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id}`, JSON.stringify(updated));
       localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id.replace(/^VL/, "")}`, JSON.stringify(updated));
@@ -320,6 +321,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     // 1. Commit to local UI tracks and write directly to persistent storage
     setTracks(tracksToSave);
     savePlaylistTracksToDBCache(item.id, tracksToSave);
+    setCachedPlaylistTracks(item.id, tracksToSave);
     try {
       localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id}`, JSON.stringify(tracksToSave));
       localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id.replace(/^VL/, "")}`, JSON.stringify(tracksToSave));
