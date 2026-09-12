@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Search, LogIn, LogOut, X, Check } from "lucide-react";
 import { User, NavTab } from "../types";
-import { FullAppDesignConfig } from "../utils/appDesignThemes";
+import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { OblivionLogo } from "./OblivionLogo";
 
 export interface NavbarProps {
@@ -20,7 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   user,
   onOpenAuthModal,
   onLogout,
-  designConfig,
+  designConfig = FULL_APP_DESIGNS["designer"],
   onLogoClick,
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);

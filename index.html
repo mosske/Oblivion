@@ -17,6 +17,9 @@
     <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
     <title>Oblivion Music</title>
+    <meta name="description" content="Oblivion Music client player with Google and YouTube account sync, dynamic Home & Explore feeds, background playback, real-time playlist management, synchronized lyrics, and smart recommendations." />
+    <meta property="og:title" content="Oblivion Music" />
+    <meta property="og:description" content="Oblivion Music client player with Google and YouTube account sync, dynamic Home & Explore feeds, background playback, real-time playlist management, synchronized lyrics, and smart recommendations." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -26,16 +29,26 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for (let registration of registrations) {
-            registration.update();
-          }
-        });
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch((err) => {
-            console.log('SW registration failed: ', err);
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (let registration of registrations) {
+              registration.unregister();
+            }
           });
-        });
+        } else {
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (let registration of registrations) {
+              registration.update();
+            }
+          });
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then((reg) => {
+              reg.update();
+            }).catch((err) => {
+              console.log('SW notice: ', err);
+            });
+          });
+        }
       }
     </script>
   </body>

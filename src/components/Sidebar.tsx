@@ -153,13 +153,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {user?.isLoggedIn ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <img
-                src={user.picture}
-                alt={user.name}
-                className="w-9 h-9 rounded-full object-cover user-avatar-ring"
-              />
+              {user.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name || "User"}
+                  className="w-9 h-9 rounded-full object-cover user-avatar-ring"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center user-avatar-ring">
+                  <span className="text-xs font-bold text-white">
+                    {(user.name || user.email || "U")[0]?.toUpperCase() || "U"}
+                  </span>
+                </div>
+              )}
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-semibold ${designConfig.textPrimary} truncate`}>{user.name}</p>
+                <p className={`text-xs font-semibold ${designConfig.textPrimary} truncate`}>
+                  {user.name || user.email || "Account"}
+                </p>
                 <p className="text-[10px] text-emerald-500 flex items-center gap-1 font-mono">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   YouTube Synced

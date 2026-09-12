@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
-import { getInMemoryToken } from "../App";
+import { getInMemoryToken } from "../services/authService";
 import { MarqueeText } from "./MarqueeText";
 
 interface ExploreViewProps {

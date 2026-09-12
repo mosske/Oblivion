@@ -93,40 +93,22 @@ let globalAuthExpiryHandler: (() => void) | null = null;
 let globalTokenUpdateHandler: ((newToken: string, userObj?: any) => void) | null = null;
 let activeRefreshPromise: Promise<string | null> | null = null;
 
-// Synchronous In-Memory Auth & Interceptor Guard State
-let currentInMemoryToken: string | null = null;
-let currentInMemoryUser: any | null = null;
-let isAuthenticatingGlobal = false;
+// In-Memory Auth & Interceptor Guard State imported from authService to prevent circular dependencies
+import {
+  setInMemoryAuth,
+  getInMemoryToken,
+  getInMemoryUser,
+  setIsAuthenticatingGlobal,
+  getIsAuthenticatingGlobal,
+} from "./services/authService";
 
-export function setInMemoryAuth(token: string | null, userObj?: any | null) {
-  currentInMemoryToken = token;
-  if (userObj !== undefined) {
-    currentInMemoryUser = userObj;
-  }
-}
-
-export function getInMemoryToken(): string | null {
-  if (currentInMemoryToken) return currentInMemoryToken;
-  try {
-    const saved = localStorage.getItem("oblivion_saved_user");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed?.accessToken) {
-        currentInMemoryToken = parsed.accessToken;
-        return parsed.accessToken;
-      }
-    }
-  } catch {}
-  return null;
-}
-
-export function setIsAuthenticatingGlobal(val: boolean) {
-  isAuthenticatingGlobal = val;
-}
-
-export function getIsAuthenticatingGlobal(): boolean {
-  return isAuthenticatingGlobal;
-}
+export {
+  setInMemoryAuth,
+  getInMemoryToken,
+  getInMemoryUser,
+  setIsAuthenticatingGlobal,
+  getIsAuthenticatingGlobal,
+};
 
 // Silent background token refresh mechanism
 export async function performSilentRefresh(): Promise<string | null> {
@@ -244,7 +226,7 @@ async function safeClientFetch(
       // Only 401 Unauthorized or 403 Forbidden trigger auth consideration
       if (res && (res.status === 401 || res.status === 403)) {
         // If authentication is in progress, do not trigger false auth expiry popups
-        if (isAuthenticatingGlobal) {
+        if (getIsAuthenticatingGlobal()) {
           return res;
         }
 

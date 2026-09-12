@@ -4,7 +4,7 @@ import { Trash2, AlertTriangle, Loader2, X } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { deletePlaylistFromDb } from "../utils/playlistDb";
 import { removePlaylistCustomArtwork } from "../utils/customCoversStorage";
-import { getInMemoryToken } from "../App";
+import { getInMemoryToken } from "../services/authService";
 
 interface DeletePlaylistModalProps {
   isOpen: boolean;

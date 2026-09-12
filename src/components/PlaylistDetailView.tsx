@@ -37,9 +37,8 @@ import { PlaylistTrackList } from "./PlaylistTrackList";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
-import { getInMemoryToken } from "../App";
+import { getInMemoryToken, getStoredAuthToken } from "../services/authService";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
-import { getStoredAuthToken } from "../services/authService";
 import { getCachedPlaylistTracks, setCachedPlaylistTracks } from "../services/playlistService";
 import {
   getPlaylistCustomArtwork,

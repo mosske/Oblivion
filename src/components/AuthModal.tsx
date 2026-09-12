@@ -8,7 +8,7 @@ import {
   getThemeCanvasColor,
 } from "../utils/appDesignThemes";
 import { OblivionLogo } from "./OblivionLogo";
-import { setInMemoryAuth, setIsAuthenticatingGlobal } from "../App";
+import { setInMemoryAuth, setIsAuthenticatingGlobal } from "../services/authService";
 
 interface AuthModalProps {
   isOpen: boolean;

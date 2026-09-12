@@ -5,7 +5,7 @@ import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { IdentifyMusicModal } from "./IdentifyMusicModal";
 import { MarqueeText } from "./MarqueeText";
-import { getInMemoryToken } from "../App";
+import { getInMemoryToken } from "../services/authService";
 
 interface SearchViewProps {
   initialQuery?: string;

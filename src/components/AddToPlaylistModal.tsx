@@ -17,7 +17,7 @@ import {
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { YOUTUBE_ARTWORK_PRESETS } from "./PlaylistModal";
-import { getInMemoryToken } from "../App";
+import { getInMemoryToken } from "../services/authService";
 
 export interface AddToPlaylistModalProps {
   isOpen: boolean;

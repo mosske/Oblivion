@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
-import { getInMemoryToken } from "../App";
+import { getInMemoryToken } from "../services/authService";
 
 interface HomeViewProps {
   onPlayTrack: (track: Track) => void;
@@ -143,7 +143,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight`}>
-            {timeGreeting}{user?.isLoggedIn && user?.name ? `, ${user.name.split(" ")[0]}` : ""}
+            {timeGreeting}{user?.isLoggedIn && typeof user?.name === "string" && user.name.trim().length > 0 ? `, ${user.name.trim().split(" ")[0]}` : ""}
           </h1>
           <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
             Your fresh YouTube Music dashboard • Live lossless streaming

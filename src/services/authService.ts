@@ -6,6 +6,34 @@ export const OBLIVION_USER_SESSION_KEY = "OBLIVION_USER_SESSION";
 // Fallback legacy keys for migration
 const LEGACY_USER_KEY = "oblivion_saved_user";
 
+// Synchronous In-Memory Auth & Interceptor Guard State
+let currentInMemoryToken: string | null = null;
+let currentInMemoryUser: any | null = null;
+let isAuthenticatingGlobal = false;
+
+export function setInMemoryAuth(token: string | null, userObj?: any | null) {
+  currentInMemoryToken = token;
+  if (userObj !== undefined) {
+    currentInMemoryUser = userObj;
+  }
+}
+
+export function getInMemoryToken(): string | null {
+  return currentInMemoryToken || getStoredAuthToken();
+}
+
+export function getInMemoryUser(): any | null {
+  return currentInMemoryUser || getStoredUserSession();
+}
+
+export function setIsAuthenticatingGlobal(val: boolean) {
+  isAuthenticatingGlobal = val;
+}
+
+export function getIsAuthenticatingGlobal(): boolean {
+  return isAuthenticatingGlobal;
+}
+
 /**
  * Retrieves the perpetual OAuth access token from localStorage.
  */
