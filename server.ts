@@ -6314,24 +6314,54 @@ app.get("/api/auth/me", async (req, res) => {
 
 app.post("/api/auth/refresh", async (req, res) => {
   try {
-    const refreshToken = (req.body?.refreshToken || req.body?.refresh_token || (req.session?.tokens as any)?.refresh_token) as string;
+    const refreshToken = (
+      req.body?.refreshToken ||
+      req.body?.refresh_token ||
+      req.headers["x-refresh-token"] ||
+      (req.session?.tokens as any)?.refresh_token
+    ) as string;
 
     if (!refreshToken) {
       return res.json({
         success: false,
         error: "NO_REFRESH_TOKEN",
-        message: "No refresh token provided in payload.",
+        message: "No refresh token provided in payload or headers.",
       });
     }
 
     const result = await refreshAccessTokenDirectly(refreshToken);
     if (result && result.accessToken) {
+      let userData: any = null;
+      try {
+        const uRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+          headers: { Authorization: `Bearer ${result.accessToken}` },
+          signal: AbortSignal.timeout(3500),
+        });
+        if (uRes.ok) {
+          const uInfo = await uRes.json();
+          userData = {
+            id: uInfo.id,
+            name: uInfo.name || uInfo.email?.split("@")[0] || "User",
+            email: uInfo.email || "",
+            picture: uInfo.picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+            accessToken: result.accessToken,
+            refreshToken,
+            refresh_token: refreshToken,
+            isLoggedIn: true,
+          };
+        }
+      } catch {}
+
       if (req.session) {
         if (!req.session.tokens) req.session.tokens = { access_token: result.accessToken };
         req.session.tokens.access_token = result.accessToken;
+        req.session.tokens.refresh_token = refreshToken;
         req.session.tokens.expires_at = Date.now() + result.expiresIn * 1000;
-        if (req.session.user) {
-          req.session.user.accessToken = result.accessToken;
+        if (userData) {
+          req.session.user = userData;
+        } else if (req.session.user) {
+          (req.session.user as any).accessToken = result.accessToken;
+          (req.session.user as any).refreshToken = refreshToken;
         }
       }
 
@@ -6340,6 +6370,7 @@ app.post("/api/auth/refresh", async (req, res) => {
         success: true,
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
+        user: userData || req.session?.user || null,
       });
     }
 

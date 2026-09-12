@@ -106,7 +106,25 @@ export const PlaylistCoverArt: React.FC<PlaylistCoverArtProps> = ({
   let finalSource = fallbackCover || getPlaylistArtwork(playlist as Playlist);
 
   const handleImageError = () => {
-    // If current source failed and we haven't tried the track thumbnails yet, try them!
+    // 1. Dedicated Artwork Fallback: Always fall back to official snippet thumbnail or cached coverUrl first
+    const officialThumbs = playlist?.snippet?.thumbnails || playlist?.thumbnails;
+    const officialUrl =
+      officialThumbs?.high?.url ||
+      officialThumbs?.medium?.url ||
+      officialThumbs?.default?.url ||
+      officialThumbs?.maxres?.url ||
+      officialThumbs?.standard?.url;
+    if (officialUrl && officialUrl !== finalSource && officialUrl !== fallbackCover) {
+      setFallbackCover(officialUrl);
+      return;
+    }
+
+    if (playlist?.coverUrl && playlist.coverUrl !== finalSource && playlist.coverUrl !== fallbackCover) {
+      setFallbackCover(playlist.coverUrl);
+      return;
+    }
+
+    // 2. If no official thumbnail or cached cover exists: check track thumbnail as last visual resort
     if (!fallbackCover && playlist?.tracks && playlist.tracks.length > 0) {
       for (const track of playlist.tracks) {
         const trackThumb = track.thumbnail || track.coverUrl;

@@ -202,31 +202,46 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         );
       }
       
-      if (res.ok) {
-        const data = await res.json().catch(() => ({ tracks: [] }));
-        if (data?.tracks && Array.isArray(data.tracks) && data.tracks.length > 0) {
-          const clean: Track[] = data.tracks
-            .filter(Boolean)
-            .map((t: any, idx: number) => {
-              const vidId = t.youtubeVideoId || t.id;
-              const uniqueId = t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : `${vidId || "track"}_${idx}`);
-              return {
-                ...t,
-                id: uniqueId,
-                playlistItemId: t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : undefined),
-                youtubeVideoId: vidId || t.id,
-              };
-            });
-
-          // Set authoritative YouTube tracks directly - preserves all songs and duplicates
-          setTracks(clean);
-          setCachedPlaylistTracks(item.id, clean);
-          savePlaylistTracksToDBCache(item.id, clean);
-        }
+      // ZERO-OVERWRITE GUARD: If network request failed or timed out, reject update completely
+      if (!res || !res.ok) {
+        console.warn(`[PlaylistDetailView] ZERO-OVERWRITE GUARD: Network request failed with status ${res?.status}. Preserving cached tracks.`);
+        return;
       }
-      setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+
+      const data = await res.json().catch(() => null);
+      const incomingTracks = data?.tracks;
+
+      // ZERO-OVERWRITE GUARD: If empty array or null, REJECT update completely
+      if (!incomingTracks || !Array.isArray(incomingTracks) || incomingTracks.length === 0) {
+        console.warn(`[PlaylistDetailView] ZERO-OVERWRITE GUARD: Empty or invalid tracks array returned from YouTube API. Preserving cached tracks.`);
+        return;
+      }
+
+      const clean: Track[] = incomingTracks
+        .filter(Boolean)
+        .filter((t: any) => Boolean(t && (t.id || t.youtubeVideoId || t.title)))
+        .map((t: any, idx: number) => {
+          const vidId = t.youtubeVideoId || t.id;
+          const uniqueId = t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : `${vidId || "track"}_${idx}`);
+          return {
+            ...t,
+            id: uniqueId,
+            playlistItemId: t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : undefined),
+            youtubeVideoId: vidId || t.id,
+          };
+        });
+
+      // ONLY update state and local cache if YouTube returns a valid array containing actual track objects
+      if (clean.length > 0) {
+        setTracks(clean);
+        setCachedPlaylistTracks(item.id, clean);
+        savePlaylistTracksToDBCache(item.id, clean);
+        setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      } else {
+        console.warn(`[PlaylistDetailView] ZERO-OVERWRITE GUARD: Clean tracks array was empty. Preserving cached tracks.`);
+      }
     } catch (err) {
-      console.warn("Background tracks fetch warning:", err);
+      console.warn("[PlaylistDetailView] ZERO-OVERWRITE GUARD: Background tracks fetch error:", err);
     } finally {
       setIsLoadingTracks(false);
     }
@@ -238,6 +253,14 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   }, [item.id]);
 
   const safeTracks = React.useMemo(() => (Array.isArray(tracks) ? tracks.filter(Boolean) : []), [tracks]);
+  const displayTrackCount =
+    safeTracks.length > 0
+      ? safeTracks.length
+      : (item as any).trackCount ||
+        (item as any).tracksCount ||
+        (item as any).itemCount ||
+        (item as any).tracks?.length ||
+        0;
 
   // Calculate total duration in minutes safely
   const totalDurationSecs = safeTracks.reduce((acc, t) => acc + (t?.duration || 210), 0);
@@ -638,7 +661,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               </p>
 
               <div className={`flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs ${designConfig.textSecondary} pt-1 font-mono`}>
-                <span className={`font-semibold ${designConfig.accentText}`}>{tracks.length} Tracks</span>
+                <span className={`font-semibold ${designConfig.accentText}`}>{displayTrackCount} Tracks</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />

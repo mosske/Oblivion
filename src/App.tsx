@@ -53,10 +53,12 @@ import {
 } from "./services/playlistService";
 import {
   getStoredAuthToken,
+  getStoredRefreshToken,
   getStoredUserSession,
   setStoredAuth,
   clearStoredAuth,
   OBLIVION_AUTH_TOKEN_KEY,
+  OBLIVION_REFRESH_TOKEN_KEY,
   OBLIVION_USER_SESSION_KEY,
 } from "./services/authService";
 import { Navbar } from "./components/Navbar";
@@ -865,11 +867,24 @@ export default function App() {
         }, 1200);
       }
 
-      const localToken = getStoredAuthToken();
+      let localToken = getStoredAuthToken();
       const localUser = getStoredUserSession();
+      const storedRefreshToken = getStoredRefreshToken();
+
+      if (!localToken && storedRefreshToken) {
+        try {
+          const renewed = await performSilentRefresh();
+          if (renewed) {
+            localToken = renewed;
+          }
+        } catch (e) {
+          console.warn("Initial silent refresh notice:", e);
+        }
+      }
+
       if (localUser && localUser.isLoggedIn && isMounted) {
         setUser(localUser);
-        setInMemoryAuth(localUser.accessToken || null, localUser);
+        setInMemoryAuth(localUser.accessToken || localToken || null, localUser);
       }
 
       try {

@@ -86,7 +86,26 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
    * instead of immediately dropping to the initial badge placeholder.
    */
   const handleImageError = () => {
-    // 1. Fallback to First Track Cover Art if not attempted yet
+    // 1. Dedicated Artwork Fallback: Always fall back to official snippet thumbnail or cached coverUrl first
+    const officialThumbs = playlist.snippet?.thumbnails || playlist.thumbnails;
+    const officialUrl =
+      officialThumbs?.high?.url ||
+      officialThumbs?.medium?.url ||
+      officialThumbs?.default?.url ||
+      officialThumbs?.maxres?.url ||
+      officialThumbs?.standard?.url;
+
+    if (officialUrl && officialUrl !== currentArtwork) {
+      setCurrentArtwork(officialUrl);
+      return;
+    }
+
+    if (playlist.coverUrl && playlist.coverUrl !== currentArtwork) {
+      setCurrentArtwork(playlist.coverUrl);
+      return;
+    }
+
+    // 2. Only if no playlist cover or snippet thumbnail exists, check track thumbnail
     if (!hasAttemptedTrackFallback && playlist.tracks && playlist.tracks.length > 0) {
       setHasAttemptedTrackFallback(true);
       for (const track of playlist.tracks) {
@@ -98,24 +117,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
       }
     }
 
-    // 2. Fallback to YouTube Official Thumbnails if custom image failed
-    const officialThumbs = playlist.snippet?.thumbnails || playlist.thumbnails;
-    const officialUrl =
-      officialThumbs?.high?.url ||
-      officialThumbs?.medium?.url ||
-      officialThumbs?.default?.url;
-    if (officialUrl && officialUrl !== currentArtwork) {
-      setCurrentArtwork(officialUrl);
-      return;
-    }
-
-    // 3. Fallback to general coverUrl if not equal to current failed artwork
-    if (playlist.coverUrl && playlist.coverUrl !== currentArtwork) {
-      setCurrentArtwork(playlist.coverUrl);
-      return;
-    }
-
-    // 4. Finally drop to initial badge placeholder only when all image fallbacks are exhausted
+    // 3. Finally drop to initial badge placeholder only when all image fallbacks are exhausted
     setHasImageError(true);
   };
 

@@ -34,12 +34,38 @@ export function getCachedPlaylists(): Playlist[] {
 }
 
 /**
- * Save playlists strictly into OBLIVION_PLAYLIST_CACHE and legacy key for resilience
+ * Save playlists strictly into OBLIVION_PLAYLIST_CACHE and legacy key for resilience.
+ * Stores explicit cover image URLs directly in OBLIVION_PLAYLIST_CACHE.
  */
 export function setCachedPlaylists(playlists: Playlist[]): void {
   if (!Array.isArray(playlists)) return;
   try {
-    const serialized = JSON.stringify(playlists);
+    // Dedicated Artwork Caching: Ensure every playlist has an explicit coverUrl stored directly
+    const playlistsWithExplicitArtwork = playlists.map((pl) => {
+      if (!pl || !pl.id) return pl;
+      const customArt = getPlaylistCustomArtwork(pl.id);
+      const explicitCover =
+        customArt ||
+        pl.customCoverUrl ||
+        pl.customArtwork ||
+        pl.coverUrl ||
+        pl.snippet?.thumbnails?.high?.url ||
+        pl.snippet?.thumbnails?.medium?.url ||
+        pl.snippet?.thumbnails?.default?.url ||
+        pl.thumbnails?.high?.url ||
+        pl.thumbnails?.medium?.url ||
+        pl.thumbnails?.default?.url ||
+        pl.thumbnail ||
+        "";
+
+      return {
+        ...pl,
+        coverUrl: explicitCover || pl.coverUrl || "",
+        customCoverUrl: customArt || pl.customCoverUrl || pl.customArtwork,
+      };
+    });
+
+    const serialized = JSON.stringify(playlistsWithExplicitArtwork);
     localStorage.setItem(OBLIVION_PLAYLIST_CACHE_KEY, serialized);
     localStorage.setItem(LEGACY_PLAYLIST_CACHE_KEY, serialized);
     localStorage.setItem("oblivion_playlist_sync_time", String(Date.now()));
@@ -64,7 +90,7 @@ export function getCachedPlaylistTracks(playlistId: string): Track[] {
       localStorage.getItem(`oblivion_tracks_${playlistId}`);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed.filter(Boolean);
       }
     }
@@ -74,11 +100,24 @@ export function getCachedPlaylistTracks(playlistId: string): Track[] {
 
 /**
  * Save tracks for a specific playlist to local cache (OBLIVION_TRACKS_CACHE_[PLAYLIST_ID])
+ * ZERO-OVERWRITE GUARD: Rejects empty or invalid arrays if previous cached tracks exist.
  */
 export function setCachedPlaylistTracks(playlistId: string, tracks: Track[]): void {
   if (!playlistId || !Array.isArray(tracks)) return;
   const cleanId = playlistId.replace(/^VL/, "");
-  const cleanTracks = tracks.filter(Boolean);
+  const cleanTracks = tracks.filter(Boolean).filter((t: any) => Boolean(t && (t.id || t.youtubeVideoId || t.title)));
+
+  // ZERO-OVERWRITE GUARD:
+  // If the incoming tracks array is empty, check if we already have valid cached tracks for this playlist.
+  // If so, REJECT the update completely! DO NOT overwrite or clear localStorage key OBLIVION_TRACKS_CACHE_[PLAYLIST_ID]!
+  if (cleanTracks.length === 0) {
+    const existing = getCachedPlaylistTracks(playlistId);
+    if (existing && existing.length > 0) {
+      console.warn(`[playlistService] ZERO-OVERWRITE GUARD: rejected overwriting ${existing.length} cached tracks with 0 tracks for ${playlistId}`);
+      return;
+    }
+  }
+
   try {
     const serialized = JSON.stringify(cleanTracks);
     localStorage.setItem(`OBLIVION_TRACKS_CACHE_${playlistId}`, serialized);
@@ -87,20 +126,21 @@ export function setCachedPlaylistTracks(playlistId: string, tracks: Track[]): vo
     localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanId}`, serialized);
     localStorage.setItem(`oblivion_tracks_${cleanId}`, serialized);
 
-    // Concurrently update track count in OBLIVION_PLAYLIST_CACHE
+    // Concurrently update track count in OBLIVION_PLAYLIST_CACHE while preserving explicit coverUrl
     const currentPlaylists = getCachedPlaylists();
     if (currentPlaylists.length > 0) {
       const updated = currentPlaylists.map((pl) => {
         if (pl.id === playlistId || pl.id.replace(/^VL/, "") === cleanId || (pl as any).playlistId === playlistId) {
+          const finalCount = cleanTracks.length > 0 ? cleanTracks.length : (pl.itemCount ?? pl.trackCount ?? 0);
           return {
             ...pl,
-            tracks: cleanTracks,
-            itemCount: cleanTracks.length,
-            trackCount: cleanTracks.length,
-            tracksCount: cleanTracks.length,
+            tracks: cleanTracks.length > 0 ? cleanTracks : (pl.tracks || []),
+            itemCount: finalCount,
+            trackCount: finalCount,
+            tracksCount: finalCount,
             contentDetails: {
               ...(pl.contentDetails || {}),
-              itemCount: cleanTracks.length,
+              itemCount: finalCount,
             },
           };
         }
@@ -245,11 +285,11 @@ export const resolvePlaylistCover = (playlist: Playlist | {
     return playlist.thumbnail;
   }
 
-  if (playlist.coverUrl && typeof playlist.coverUrl === "string" && playlist.coverUrl.trim().length > 0 && !isVideoThumbnailUrl(playlist.coverUrl)) {
+  if (playlist.coverUrl && typeof playlist.coverUrl === "string" && playlist.coverUrl.trim().length > 0) {
     return playlist.coverUrl;
   }
 
-  // 3. Fallback: Mosaic or First Track Cover Art (never show letter badge if track thumbnails exist)
+  // 3. Fallback: First Track Cover Art only if no playlist cover or snippet thumbnail exists
   if (playlist.tracks && playlist.tracks.length > 0) {
     // Check first track first
     const firstTrack = playlist.tracks[0];
@@ -267,11 +307,6 @@ export const resolvePlaylistCover = (playlist: Playlist | {
         return thumb;
       }
     }
-  }
-
-  // Fallback to playlist.coverUrl even if it contains /vi/ (if nothing else matched)
-  if (playlist.coverUrl && typeof playlist.coverUrl === "string" && playlist.coverUrl.trim().length > 0) {
-    return playlist.coverUrl;
   }
 
   // 4. Default Initials Badge (Only if 1-3 are missing)

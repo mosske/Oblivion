@@ -1,7 +1,9 @@
 import { User } from "../types";
 
 export const OBLIVION_AUTH_TOKEN_KEY = "OBLIVION_AUTH_TOKEN";
+export const OBLIVION_REFRESH_TOKEN_KEY = "OBLIVION_REFRESH_TOKEN";
 export const OBLIVION_USER_SESSION_KEY = "OBLIVION_USER_SESSION";
+export const OBLIVION_TOKEN_EXPIRES_AT_KEY = "OBLIVION_TOKEN_EXPIRES_AT";
 
 // Fallback legacy keys for migration
 const LEGACY_USER_KEY = "oblivion_saved_user";
@@ -32,6 +34,75 @@ export function setIsAuthenticatingGlobal(val: boolean) {
 
 export function getIsAuthenticatingGlobal(): boolean {
   return isAuthenticatingGlobal;
+}
+
+/**
+ * Retrieves the permanent Google OAuth refresh_token from localStorage.
+ * NEVER cleared unless the user explicitly signs out in Settings.
+ */
+export function getStoredRefreshToken(): string | null {
+  try {
+    const directRefresh = localStorage.getItem(OBLIVION_REFRESH_TOKEN_KEY);
+    if (directRefresh && directRefresh.trim().length > 0) {
+      return directRefresh.trim();
+    }
+
+    // Secondary fallback: check perpetual session user object
+    const sessionStr = localStorage.getItem(OBLIVION_USER_SESSION_KEY);
+    if (sessionStr) {
+      const parsed = JSON.parse(sessionStr);
+      const rt = parsed?.refreshToken || parsed?.refresh_token;
+      if (rt && typeof rt === "string" && rt.trim().length > 0) {
+        const cleanRt = rt.trim();
+        localStorage.setItem(OBLIVION_REFRESH_TOKEN_KEY, cleanRt);
+        return cleanRt;
+      }
+    }
+  } catch (err) {
+    console.warn("[authService] Failed reading refresh token from localStorage:", err);
+  }
+  return null;
+}
+
+/**
+ * Permanently saves the Google OAuth refresh_token in browser localStorage.
+ */
+export function setStoredRefreshToken(refreshToken: string): void {
+  if (!refreshToken || typeof refreshToken !== "string") return;
+  try {
+    const clean = refreshToken.trim();
+    if (clean.length > 0) {
+      localStorage.setItem(OBLIVION_REFRESH_TOKEN_KEY, clean);
+    }
+  } catch (err) {
+    console.warn("[authService] Failed saving refresh token to localStorage:", err);
+  }
+}
+
+/**
+ * Checks whether the stored access token is missing or expired.
+ */
+export function isTokenExpired(): boolean {
+  const token = getStoredAuthToken();
+  if (!token) return true;
+
+  try {
+    const expiresAtStr = localStorage.getItem(OBLIVION_TOKEN_EXPIRES_AT_KEY);
+    if (expiresAtStr) {
+      const expiresAt = Number(expiresAtStr);
+      if (!isNaN(expiresAt) && expiresAt > 0) {
+        // Expired if current time is within 60 seconds of expiry
+        return Date.now() >= expiresAt - 60000;
+      }
+    }
+  } catch {}
+  return false;
+}
+
+export function setStoredTokenExpiresAt(timestampMs: number): void {
+  try {
+    localStorage.setItem(OBLIVION_TOKEN_EXPIRES_AT_KEY, String(timestampMs));
+  } catch {}
 }
 
 /**
@@ -114,10 +185,13 @@ export function getStoredUserSession(): User | null {
 
 /**
  * Perpetual authentication persistence.
- * Stores OAuth tokens (including refresh tokens) and user profiles strictly under OBLIVION_USER_SESSION.
+ * Stores OAuth tokens (including refresh tokens) and user profiles strictly under OBLIVION_USER_SESSION and OBLIVION_REFRESH_TOKEN.
  * DO NOT automatically expire or wipe these keys.
  */
-export function setStoredAuth(token?: string | null, user?: (User & { refreshToken?: string; refresh_token?: string }) | null): void {
+export function setStoredAuth(
+  token?: string | null,
+  user?: (User & { refreshToken?: string; refresh_token?: string; expiresIn?: number; expires_in?: number }) | null
+): void {
   try {
     const existingSession = getStoredUserSession();
     const cleanToken = token ? token.trim() : existingSession?.accessToken;
@@ -128,7 +202,20 @@ export function setStoredAuth(token?: string | null, user?: (User & { refreshTok
     }
 
     if (user && typeof user === "object") {
-      const refreshToken = user.refreshToken || (user as any).refresh_token || (existingSession as any)?.refreshToken || (existingSession as any)?.refresh_token;
+      const refreshToken =
+        user.refreshToken ||
+        (user as any).refresh_token ||
+        getStoredRefreshToken() ||
+        (existingSession as any)?.refreshToken ||
+        (existingSession as any)?.refresh_token;
+
+      if (refreshToken) {
+        setStoredRefreshToken(refreshToken);
+      }
+
+      const expiresInSec = user.expiresIn || user.expires_in || 3600;
+      setStoredTokenExpiresAt(Date.now() + expiresInSec * 1000);
+
       const sessionUser = {
         ...existingSession,
         ...user,
@@ -153,21 +240,34 @@ export function setStoredAuth(token?: string | null, user?: (User & { refreshTok
 }
 
 /**
- * Updates only the OAuth access token without modifying other user profile fields.
+ * Updates the OAuth access token without modifying other user profile fields.
  */
-export function updateStoredAuthToken(newToken: string, updatedUser?: any): void {
+export function updateStoredAuthToken(newToken: string, updatedUser?: any, expiresIn: number = 3600): void {
   if (!newToken) return;
   try {
     const clean = newToken.trim();
     localStorage.setItem(OBLIVION_AUTH_TOKEN_KEY, clean);
     (window as any).__OBLIVION_ACCESS_TOKEN = clean;
+    setStoredTokenExpiresAt(Date.now() + expiresIn * 1000);
 
     const currentSession = getStoredUserSession() || {};
+    const refreshToken =
+      updatedUser?.refreshToken ||
+      updatedUser?.refresh_token ||
+      getStoredRefreshToken() ||
+      (currentSession as any)?.refreshToken;
+
+    if (refreshToken) {
+      setStoredRefreshToken(refreshToken);
+    }
+
     const merged = {
       ...currentSession,
       ...(updatedUser || {}),
       accessToken: clean,
       access_token: clean,
+      refreshToken: refreshToken || undefined,
+      refresh_token: refreshToken || undefined,
       isLoggedIn: true,
     };
     localStorage.setItem(OBLIVION_USER_SESSION_KEY, JSON.stringify(merged));
@@ -181,10 +281,12 @@ export function updateStoredAuthToken(newToken: string, updatedUser?: any): void
 
 /**
  * Clears authentication ONLY when user manually clicks "Sign Out".
- * Clears OBLIVION_USER_SESSION and all OBLIVION_TRACKS_CACHE_* entries from localStorage.
+ * Clears OBLIVION_REFRESH_TOKEN, OBLIVION_USER_SESSION, OBLIVION_AUTH_TOKEN, and all OBLIVION_TRACKS_CACHE_* entries.
  */
 export function clearStoredAuth(): void {
   try {
+    localStorage.removeItem(OBLIVION_REFRESH_TOKEN_KEY);
+    localStorage.removeItem(OBLIVION_TOKEN_EXPIRES_AT_KEY);
     localStorage.removeItem(OBLIVION_AUTH_TOKEN_KEY);
     localStorage.removeItem(OBLIVION_USER_SESSION_KEY);
     localStorage.removeItem(LEGACY_USER_KEY);

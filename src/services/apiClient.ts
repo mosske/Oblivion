@@ -1,4 +1,11 @@
-import { getStoredAuthToken, getStoredUserSession, updateStoredAuthToken, getIsAuthenticatingGlobal } from "./authService";
+import {
+  getStoredAuthToken,
+  getStoredRefreshToken,
+  getStoredUserSession,
+  updateStoredAuthToken,
+  isTokenExpired,
+  getIsAuthenticatingGlobal,
+} from "./authService";
 
 let activeRefreshPromise: Promise<string | null> | null = null;
 
@@ -13,8 +20,13 @@ export async function performSilentRefresh(): Promise<string | null> {
 
   activeRefreshPromise = (async () => {
     try {
+      const storedRefreshToken = getStoredRefreshToken();
       const session = getStoredUserSession();
-      const refreshToken = session?.refreshToken || (session as any)?.refresh_token || "";
+      const refreshToken =
+        storedRefreshToken ||
+        session?.refreshToken ||
+        (session as any)?.refresh_token ||
+        "";
       const currentAccessToken = getStoredAuthToken() || session?.accessToken || "";
 
       if (!refreshToken && !currentAccessToken) {
@@ -26,6 +38,7 @@ export async function performSilentRefresh(): Promise<string | null> {
         headers: {
           "Content-Type": "application/json",
           ...(currentAccessToken ? { Authorization: `Bearer ${currentAccessToken}` } : {}),
+          ...(refreshToken ? { "X-Refresh-Token": refreshToken } : {}),
         },
         body: JSON.stringify({
           refreshToken: refreshToken || undefined,
@@ -39,7 +52,7 @@ export async function performSilentRefresh(): Promise<string | null> {
         const data = await res.json().catch(() => ({}));
         const newAccessToken = data?.accessToken || data?.access_token;
         if (data?.success && newAccessToken) {
-          updateStoredAuthToken(newAccessToken, data.user);
+          updateStoredAuthToken(newAccessToken, data.user, data.expiresIn || 3600);
           return newAccessToken;
         }
       }
@@ -57,25 +70,55 @@ export async function performSilentRefresh(): Promise<string | null> {
 
 /**
  * Intercepted client-side fetch helper.
+ * - Checks if access token is missing or expired before executing YouTube Data API requests.
+ * - Automatically exchanges OBLIVION_REFRESH_TOKEN via POST /api/auth/refresh to retrieve a fresh access token in the background.
+ * - Retains full UI rendering state while this swap occurs seamlessly.
  * - Dynamically injects Authorization: Bearer <token> from perpetual client-side storage.
- * - Intercepts HTTP 401 / 403 responses and silently refreshes the access token using refresh_token.
- * - Seamlessly retries the original request without resetting application or UI state.
+ * - Intercepts HTTP 401 / 403 responses and silently retries the original request.
  */
 export async function apiFetch(
   input: RequestInfo | URL,
   init?: RequestInit,
   retries = 1
 ): Promise<Response> {
-  const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-  const isAuthEndpoint = url.includes("/api/auth/refresh") || url.includes("/api/auth/google/url") || url.includes("/api/auth/logout");
+  let url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+  const isAuthEndpoint =
+    url.includes("/api/auth/refresh") ||
+    url.includes("/api/auth/google/url") ||
+    url.includes("/api/auth/logout");
 
-  // Retrieve current active token from perpetual localStorage
-  const activeToken = getStoredAuthToken();
+  // 1. PROACTIVE BACKGROUND TOKEN RENEWAL
+  // Before executing any YouTube Data API or playlist request, check if access token is missing or expired
+  let activeToken = getStoredAuthToken();
+  const storedRefreshToken = getStoredRefreshToken();
+
+  if (!isAuthEndpoint && storedRefreshToken && (!activeToken || isTokenExpired())) {
+    try {
+      const refreshedToken = await performSilentRefresh();
+      if (refreshedToken) {
+        activeToken = refreshedToken;
+        // If the URL had an access_token query param, update it with the renewed token
+        if (url.includes("access_token=")) {
+          url = url.replace(/access_token=[^&]+/, `access_token=${encodeURIComponent(refreshedToken)}`);
+          if (typeof input === "string") {
+            input = url;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[apiClient] Proactive token renewal notice:", e);
+    }
+  }
+
   const headers = new Headers(init?.headers || {});
 
   if (activeToken && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${activeToken}`);
     headers.set("X-Access-Token", activeToken);
+  }
+
+  if (storedRefreshToken && !headers.has("X-Refresh-Token")) {
+    headers.set("X-Refresh-Token", storedRefreshToken);
   }
 
   const mergedInit: RequestInit = {
