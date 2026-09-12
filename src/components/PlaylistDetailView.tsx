@@ -39,6 +39,8 @@ import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
 import { getInMemoryToken } from "../App";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
+import { getStoredAuthToken } from "../services/authService";
+import { getCachedPlaylistTracks, setCachedPlaylistTracks } from "../services/playlistService";
 import {
   getPlaylistCustomArtwork,
   isAuthenticCustomArtworkUrl,
@@ -154,7 +156,11 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   // Immediate local-first cache loading on mount or item change
   useEffect(() => {
     let isCurrent = true;
-    if (item.tracks && item.tracks.length > 0) {
+    const localCached = getCachedPlaylistTracks(item.id);
+    if (localCached && localCached.length > 0) {
+      setTracks(localCached);
+      setIsLoadingTracks(false);
+    } else if (item.tracks && item.tracks.length > 0) {
       setTracks(item.tracks.filter(Boolean));
       setIsLoadingTracks(false);
     } else if (item.id) {
@@ -176,29 +182,27 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     if (isReorderMode) return;
 
     try {
-      let activeToken = getInMemoryToken() || "";
-      if (!activeToken) {
-        try {
-          const saved = localStorage.getItem("oblivion_saved_user");
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            activeToken = parsed?.accessToken || "";
-          }
-        } catch {}
-      }
+      let activeToken = getStoredAuthToken() || getInMemoryToken() || "";
 
       const headers: Record<string, string> = {};
       if (activeToken) {
         headers["Authorization"] = `Bearer ${activeToken}`;
+        headers["X-Access-Token"] = activeToken;
       }
 
       const titleParam = encodeURIComponent(item.title || "");
       const artistParam = encodeURIComponent((item as any).artist || (item as any).description || "");
       const typeParam = isAlbum ? "album" : "playlist";
-      const res = await fetch(
-        `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`,
+      let res = await fetch(
+        `/api/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`,
         { headers }
       );
+      if (!res.ok) {
+        res = await fetch(
+          `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`,
+          { headers }
+        );
+      }
       const data = await res.json().catch(() => ({ tracks: [] }));
       if (data?.tracks && Array.isArray(data.tracks)) {
         const clean: Track[] = data.tracks
@@ -216,11 +220,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
         // Set authoritative YouTube tracks directly - preserves all songs and duplicates
         setTracks(clean);
+        setCachedPlaylistTracks(item.id, clean);
         savePlaylistTracksToDBCache(item.id, clean);
-        try {
-          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id}`, JSON.stringify(clean));
-          localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${item.id.replace(/^VL/, "")}`, JSON.stringify(clean));
-        } catch {}
       }
       setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {
@@ -450,7 +451,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       className="flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52 will-change-transform"
     >
       {/* Top Sticky Header with Close (X) / Reorder Controls */}
-      <div className={`sticky top-14 sm:top-16 z-30 flex flex-col px-4 sm:px-6 py-2.5 ${designConfig.headerBg} backdrop-blur-xl border-b ${designConfig.borderSubtle} shadow-md shrink-0 transition-all`}>
+      <div className={`playlist-action-toolbar flex flex-col shrink-0 transition-all`}>
         {/* Subtle pull handle for mobile gesture indicator (only when not reordering) */}
         {!isReorderMode && (
           <div className="w-8 h-1 rounded-full bg-zinc-400/40 mx-auto mb-1.5 sm:hidden" />

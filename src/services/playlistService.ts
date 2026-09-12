@@ -9,6 +9,163 @@ import {
   isVideoThumbnailUrl,
   PLAYLIST_CUSTOM_ARTWORK_KEY,
 } from "../utils/customCoversStorage";
+import { getStoredAuthToken, getStoredUserSession } from "./authService";
+
+export const OBLIVION_PLAYLIST_CACHE_KEY = "OBLIVION_PLAYLIST_CACHE";
+const LEGACY_PLAYLIST_CACHE_KEY = "oblivion_saved_playlists";
+
+/**
+ * 0. Read playlists synchronously from perpetual client-side cache
+ */
+export function getCachedPlaylists(): Playlist[] {
+  try {
+    const raw = localStorage.getItem(OBLIVION_PLAYLIST_CACHE_KEY) || localStorage.getItem(LEGACY_PLAYLIST_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return stitchCustomArtworkToPlaylists(parsed);
+      }
+    }
+  } catch (err) {
+    console.warn("[playlistService] Failed reading cached playlists:", err);
+  }
+  return [];
+}
+
+/**
+ * Save playlists strictly into OBLIVION_PLAYLIST_CACHE and legacy key for resilience
+ */
+export function setCachedPlaylists(playlists: Playlist[]): void {
+  if (!Array.isArray(playlists)) return;
+  try {
+    const serialized = JSON.stringify(playlists);
+    localStorage.setItem(OBLIVION_PLAYLIST_CACHE_KEY, serialized);
+    localStorage.setItem(LEGACY_PLAYLIST_CACHE_KEY, serialized);
+    localStorage.setItem("oblivion_playlist_sync_time", String(Date.now()));
+  } catch (err) {
+    console.warn("[playlistService] Failed saving cached playlists:", err);
+  }
+}
+
+/**
+ * Read tracks for a specific playlist from local cache
+ */
+export function getCachedPlaylistTracks(playlistId: string): Track[] {
+  if (!playlistId) return [];
+  const cleanId = playlistId.replace(/^VL/, "");
+  try {
+    const raw =
+      localStorage.getItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`) ||
+      localStorage.getItem(`OBLIVION_PLAYLIST_CACHE_${cleanId}`) ||
+      localStorage.getItem(`oblivion_tracks_${cleanId}`) ||
+      localStorage.getItem(`oblivion_tracks_${playlistId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+    }
+  } catch {}
+  return [];
+}
+
+/**
+ * Save tracks for a specific playlist to local cache and update parent playlist count
+ */
+export function setCachedPlaylistTracks(playlistId: string, tracks: Track[]): void {
+  if (!playlistId || !Array.isArray(tracks)) return;
+  const cleanId = playlistId.replace(/^VL/, "");
+  const cleanTracks = tracks.filter(Boolean);
+  try {
+    const serialized = JSON.stringify(cleanTracks);
+    localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${playlistId}`, serialized);
+    localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanId}`, serialized);
+    localStorage.setItem(`oblivion_tracks_${cleanId}`, serialized);
+
+    // Concurrently update track count in OBLIVION_PLAYLIST_CACHE
+    const currentPlaylists = getCachedPlaylists();
+    if (currentPlaylists.length > 0) {
+      const updated = currentPlaylists.map((pl) => {
+        if (pl.id === playlistId || pl.id.replace(/^VL/, "") === cleanId || (pl as any).playlistId === playlistId) {
+          return {
+            ...pl,
+            tracks: cleanTracks,
+            itemCount: cleanTracks.length,
+            trackCount: cleanTracks.length,
+            tracksCount: cleanTracks.length,
+            contentDetails: {
+              ...(pl.contentDetails || {}),
+              itemCount: cleanTracks.length,
+            },
+          };
+        }
+        return pl;
+      });
+      setCachedPlaylists(updated);
+    }
+  } catch (err) {
+    console.warn("[playlistService] Failed saving cached tracks:", err);
+  }
+}
+
+/**
+ * Merge newly fetched YouTube playlists into existing local cache
+ */
+export function mergePlaylists(cachedList: Playlist[], remoteList: Playlist[]): Playlist[] {
+  if (!Array.isArray(remoteList) || remoteList.length === 0) {
+    return cachedList;
+  }
+  const mergedMap = new Map<string, Playlist>();
+
+  // 1. Seed with cached items to preserve locally fetched tracks & custom covers
+  for (const pl of cachedList) {
+    if (pl && pl.id) {
+      mergedMap.set(pl.id, pl);
+      mergedMap.set(pl.id.replace(/^VL/, ""), pl);
+    }
+  }
+
+  // 2. Overlay remote items
+  for (const remote of remoteList) {
+    if (!remote || !remote.id) continue;
+    const cleanId = remote.id.replace(/^VL/, "");
+    const existing = mergedMap.get(remote.id) || mergedMap.get(cleanId);
+
+    const mergedTracks = remote.tracks && remote.tracks.length > 0 ? remote.tracks : (existing?.tracks || []);
+    const directCount = Number(
+      remote.itemCount ?? remote.trackCount ?? remote.tracksCount ?? remote.contentDetails?.itemCount ?? mergedTracks.length ?? (existing?.tracksCount || 0)
+    );
+
+    const mergedItem: Playlist = {
+      ...existing,
+      ...remote,
+      id: remote.id,
+      tracks: mergedTracks,
+      itemCount: directCount,
+      trackCount: directCount,
+      tracksCount: directCount,
+      coverUrl: existing?.isCustomCover && existing?.coverUrl ? existing.coverUrl : (remote.coverUrl || existing?.coverUrl || ""),
+      customCoverUrl: existing?.customCoverUrl || remote.customCoverUrl,
+      isCustomCover: Boolean(existing?.isCustomCover || remote.isCustomCover),
+    };
+
+    mergedMap.set(remote.id, mergedItem);
+    mergedMap.set(cleanId, mergedItem);
+  }
+
+  // Deduplicate by clean ID
+  const result: Playlist[] = [];
+  const seenIds = new Set<string>();
+  for (const pl of mergedMap.values()) {
+    const cleanId = pl.id.replace(/^VL/, "");
+    if (!seenIds.has(cleanId)) {
+      seenIds.add(cleanId);
+      result.push(pl);
+    }
+  }
+
+  return stitchCustomArtworkToPlaylists(result);
+}
 
 /**
  * 1. Synchronously get custom artwork override for a playlist from LocalStorage & memory cache
@@ -292,22 +449,17 @@ function getActiveAuthHeaders(tokenOverride?: string): Record<string, string> {
     Pragma: "no-cache",
   };
 
-  let token = tokenOverride;
+  let token = tokenOverride || getStoredAuthToken();
   if (!token) {
     try {
       const inMem = (window as any).__OBLIVION_ACCESS_TOKEN;
       if (inMem) token = inMem;
     } catch {}
   }
-  if (!token) {
-    try {
-      const saved = localStorage.getItem("oblivion_saved_user");
-      if (saved) token = JSON.parse(saved)?.accessToken;
-    } catch {}
-  }
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+    headers["X-Access-Token"] = token;
   }
   return headers;
 }

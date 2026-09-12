@@ -16,6 +16,7 @@ import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";
+import { DesignerTrapezoidBackground } from "./components/DesignerTrapezoidBackground";
 import { EqualizerProvider } from "./context/EqualizerContext";
 import {
   getCachedPlaylistsFromDB,
@@ -43,7 +44,22 @@ import {
   deleteCustomArtwork,
   stitchCustomArtworkToPlaylists,
   reorderPlaylistTracks,
+  getCachedPlaylists,
+  setCachedPlaylists,
+  getCachedPlaylistTracks,
+  setCachedPlaylistTracks,
+  mergePlaylists,
+  OBLIVION_PLAYLIST_CACHE_KEY,
 } from "./services/playlistService";
+import {
+  getStoredAuthToken,
+  getStoredUserSession,
+  setStoredAuth,
+  clearStoredAuth,
+  OBLIVION_AUTH_TOKEN_KEY,
+  OBLIVION_USER_SESSION_KEY,
+} from "./services/authService";
+import { Navbar } from "./components/Navbar";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
@@ -288,20 +304,12 @@ export default function App() {
     }, 3500);
   };
   
-  // Persistent user state - remains signed in until explicit sign out
+  // Persistent user state - remains signed in perpetually until explicit sign out
   const [user, setUser] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem("oblivion_saved_user");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && (parsed.name || parsed.email)) {
-          const u = { ...parsed, isLoggedIn: true };
-          setInMemoryAuth(u.accessToken || null, u);
-          return u;
-        }
-      }
-    } catch (err) {
-      console.error("Error reading saved user:", err);
+    const session = getStoredUserSession();
+    if (session) {
+      setInMemoryAuth(session.accessToken || null, session);
+      return session;
     }
     return null;
   });
@@ -309,13 +317,7 @@ export default function App() {
   const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
 
   const getAuthHeaders = (): Record<string, string> => {
-    let activeToken = user?.accessToken || getInMemoryToken();
-    if (!activeToken) {
-      try {
-        const saved = localStorage.getItem("oblivion_saved_user");
-        if (saved) activeToken = JSON.parse(saved)?.accessToken;
-      } catch {}
-    }
+    let activeToken = user?.accessToken || getStoredAuthToken() || getInMemoryToken();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (activeToken) {
       headers["Authorization"] = `Bearer ${activeToken}`;
@@ -324,31 +326,12 @@ export default function App() {
     return headers;
   };
 
-  // Persistent playlists state - loaded immediately from local persistence and filtered
+  // Persistent playlists state - loaded immediately from perpetual OBLIVION_PLAYLIST_CACHE
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
     try {
-      const customCoversStore = getCustomPlaylistCovers();
-      const saved = localStorage.getItem("oblivion_saved_playlists");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed
-            .filter((p: any) => p && p.id && isValidPlaylistId(p.id) && !p.id.startsWith("mix_"))
-            .map((p: any) => {
-              const plId = p.id;
-              const cleanId = plId ? plId.replace(/^VL/, "") : "";
-              const customFromStore = customCoversStore[plId] || customCoversStore[cleanId];
-              const resolvedCustom = customFromStore || p.customCoverUrl || (p.isCustomCover ? p.coverUrl : null) || null;
-              const hasCustom = Boolean(resolvedCustom);
-              const bestCover = resolvedCustom || p.coverUrl || p.customCoverUrl || "";
-              return {
-                ...p,
-                coverUrl: bestCover,
-                customCoverUrl: resolvedCustom || undefined,
-                isCustomCover: hasCustom,
-              };
-            });
-        }
+      const cached = getCachedPlaylists();
+      if (Array.isArray(cached) && cached.length > 0) {
+        return cached.filter((p) => p && p.id && isValidPlaylistId(p.id) && !p.id.startsWith("mix_"));
       }
     } catch {}
     return [];
@@ -434,7 +417,6 @@ export default function App() {
   }, []);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isPwaInstalled, setIsPwaInstalled] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -637,10 +619,12 @@ export default function App() {
         }
       > = {
         designer: {
-          accent: "#c59b27",
-          secondary: "#d8a846",
-          tertiary: "#9b7617",
-          contrastText: "#000000",
+          accent: "#dfb86c",
+          secondary: "#f7e2ab",
+          tertiary: "#a07422",
+          contrastText: "#120f14",
+          sliderTrack: "rgba(223, 184, 108, 0.2)",
+          sliderFill: "#dfb86c",
         },
         "cyberpunk-neon": {
           accent: "#00f3ff",
@@ -853,13 +837,11 @@ export default function App() {
     playerState.likedTrackIds.length,
   ]);
 
-  // Save user changes to localStorage to keep user signed in
+  // Save user changes to perpetual localStorage to keep user signed in indefinitely
   useEffect(() => {
     if (user && user.isLoggedIn) {
       setInMemoryAuth(user.accessToken || null, user);
-      try {
-        localStorage.setItem("oblivion_saved_user", JSON.stringify(user));
-      } catch {}
+      setStoredAuth(user.accessToken || null, user);
     }
   }, [user]);
 
@@ -886,10 +868,8 @@ export default function App() {
             if (parsedUser && (parsedUser.id || parsedUser.email)) {
               const fullUser = { ...parsedUser, isLoggedIn: true };
               setInMemoryAuth(fullUser.accessToken || null, fullUser);
+              setStoredAuth(fullUser.accessToken || null, fullUser);
               setUser(fullUser);
-              try {
-                localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
-              } catch {}
               showToast(`Signed in as ${fullUser.name || fullUser.email || "Google User"}`);
             }
           } catch (e) {
@@ -903,14 +883,12 @@ export default function App() {
         }, 1200);
       }
 
-      let localToken: string | undefined = undefined;
-      try {
-        const savedUser = localStorage.getItem("oblivion_saved_user");
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          if (parsed?.accessToken) localToken = parsed.accessToken;
-        }
-      } catch {}
+      const localToken = getStoredAuthToken();
+      const localUser = getStoredUserSession();
+      if (localUser && localUser.isLoggedIn && isMounted) {
+        setUser(localUser);
+        setInMemoryAuth(localUser.accessToken || null, localUser);
+      }
 
       try {
         const headers: Record<string, string> = {};
@@ -925,20 +903,20 @@ export default function App() {
           if (data && data.isLoggedIn && data.user) {
             const fullUser = { ...data.user, isLoggedIn: true };
             setInMemoryAuth(fullUser.accessToken || null, fullUser);
+            setStoredAuth(fullUser.accessToken || null, fullUser);
             if (isMounted) {
               setUser(fullUser);
-              localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
             }
             fetchPlaylists(false, fullUser.accessToken, false);
           } else if (localToken) {
             fetchPlaylists(false, localToken, false);
           }
         } else if (localToken) {
-          // If server or network returned non-200, preserve user from localStorage and load cached playlists
+          // If server or network returned non-200, preserve user perpetually and load cached playlists
           fetchPlaylists(false, localToken, false);
         }
       } catch (err) {
-        console.warn("Auth check notice (preserving local session):", err);
+        console.warn("Auth check notice (preserving perpetual session):", err);
         if (localToken) {
           fetchPlaylists(false, localToken, false);
         }
@@ -954,7 +932,12 @@ export default function App() {
     // Fetch server-side custom artwork mappings to survive browser cache clears
     fetchServerCustomArtwork().catch(() => {});
 
-    // Immediate local-first playlist load from IndexedDB on startup
+    // Immediate local-first playlist load on startup
+    const localCached = getCachedPlaylists();
+    if (localCached && localCached.length > 0) {
+      setPlaylists(localCached);
+    }
+
     let isDbMounted = true;
     getCachedPlaylistsFromDB().then((cached) => {
       if (isDbMounted && Array.isArray(cached) && cached.length > 0) {
@@ -1008,13 +991,7 @@ export default function App() {
   // Automatic live sync whenever the user navigates to Library (just like Home and Explore feeds)
   useEffect(() => {
     if (activeTab === "library") {
-      let activeToken = user?.accessToken || getInMemoryToken();
-      if (!activeToken) {
-        try {
-          const saved = localStorage.getItem("oblivion_saved_user");
-          if (saved) activeToken = JSON.parse(saved)?.accessToken;
-        } catch {}
-      }
+      let activeToken = user?.accessToken || getStoredAuthToken() || getInMemoryToken();
       // Trigger a live background verification & sync with YouTube Music
       fetchPlaylists(false, activeToken, false);
     }
@@ -1025,9 +1002,7 @@ export default function App() {
     setIsAuthenticatingGlobal(true);
     const fullUser = { ...loggedUser, isLoggedIn: true };
     setInMemoryAuth(fullUser.accessToken || null, fullUser);
-    try {
-      localStorage.setItem("oblivion_saved_user", JSON.stringify(fullUser));
-    } catch {}
+    setStoredAuth(fullUser.accessToken || null, fullUser);
     setUser(fullUser);
     setIsAuthModalOpen(false);
     showToast(`Signed in as ${fullUser.name || fullUser.email || "Google User"}`);
@@ -1048,12 +1023,9 @@ export default function App() {
       console.error("Logout error:", err);
     }
     setInMemoryAuth(null, null);
+    clearStoredAuth();
     setIsAuthenticatingGlobal(false);
     setUser(null);
-    localStorage.removeItem("oblivion_saved_user");
-    localStorage.removeItem("oblivion_saved_playlists");
-    localStorage.removeItem("oblivion_playlist_sync_time");
-    localStorage.removeItem("oblivion_selected_playlist");
     setPlaylists([]);
     setSelectedPlaylist(null);
     showToast("Signed out successfully.");
@@ -1066,9 +1038,7 @@ export default function App() {
         if (!prev) return prev;
         const updated = { ...prev, ...(userObj || {}), accessToken: newToken, isLoggedIn: true };
         setInMemoryAuth(newToken, updated);
-        try {
-          localStorage.setItem("oblivion_saved_user", JSON.stringify(updated));
-        } catch {}
+        setStoredAuth(newToken, updated);
         return updated;
       });
     };
@@ -1142,17 +1112,12 @@ export default function App() {
       const res = await safeClientFetch(url, { headers, credentials: "include" }, 2, 800);
 
       if (!res) {
-        // Safe fallback to local saved playlists
-        try {
-          const saved = localStorage.getItem("oblivion_saved_playlists");
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setPlaylists(parsed);
-              return { success: true, count: parsed.length };
-            }
-          }
-        } catch {}
+        // Safe fallback to perpetual local cache
+        const cached = getCachedPlaylists();
+        if (Array.isArray(cached) && cached.length > 0) {
+          setPlaylists(cached);
+          return { success: true, count: cached.length };
+        }
         return { success: false, count: playlists.length };
       }
 
@@ -1286,10 +1251,7 @@ export default function App() {
             });
 
           if (isDifferent || prevPlaylists.length === 0) {
-            try {
-              localStorage.setItem("oblivion_saved_playlists", JSON.stringify(sanitizedPlaylists));
-              localStorage.setItem("oblivion_playlist_sync_time", String(Date.now()));
-            } catch {}
+            setCachedPlaylists(sanitizedPlaylists);
             return sanitizedPlaylists;
           }
           return prevPlaylists;
@@ -1318,16 +1280,11 @@ export default function App() {
       return { success: true, count: 0 };
     } catch (err: any) {
       console.warn("Fetch playlists notice (recovering from local store):", err?.message || err);
-      try {
-        const saved = localStorage.getItem("oblivion_saved_playlists");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPlaylists(parsed);
-            return { success: true, count: parsed.length };
-          }
-        }
-      } catch {}
+      const cached = getCachedPlaylists();
+      if (Array.isArray(cached) && cached.length > 0) {
+        setPlaylists(cached);
+        return { success: true, count: cached.length };
+      }
       return { success: false, count: playlists.length };
     }
   };
@@ -2369,12 +2326,15 @@ export default function App() {
 
   return (
     <EqualizerProvider>
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-hidden`}>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-hidden`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean(activeFullDesign.isCandy || activeFullDesign.id === "candyland")} />
 
       {/* Animated Glowing Nebula Gradient & Fluid Aurora Canvas for Theme 09 (Nebula Liquid Glass) */}
       <NebulaLiquidBackground isActive={Boolean(activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass")} />
+
+      {/* Animated Dynamic Trapezoid Lines Mesh & Shifting Charcoal Shadows for Theme 01 (Designer) */}
+      <DesignerTrapezoidBackground isActive={Boolean(activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory")} />
 
       {/* Sidebar Navigation */}
       <Sidebar
@@ -2399,126 +2359,20 @@ export default function App() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
-        {/* Top Header App Bar (Desktop + Mobile) with Search Magnifying Glass Icon Button */}
-        <header className={`sticky top-0 h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 ${activeFullDesign.headerBg} backdrop-blur-xl border-b ${activeFullDesign.borderSubtle} shrink-0 z-30 shadow-xs`}>
-          <div
-            className="flex items-center gap-2.5 cursor-pointer group"
-            onClick={() => {
-              setSelectedPlaylist(null);
-              setActiveTab("home");
-            }}
-          >
-            <OblivionLogo size={34} designId={activeFullDesign.id} withAura animated />
-            <div className="flex items-baseline gap-1">
-              <span className={`text-sm font-extrabold tracking-widest ${activeFullDesign.textPrimary}`}>OBLIVION</span>
-              <span className={`text-[9px] font-bold tracking-[0.18em] ${activeFullDesign.accentText} hidden sm:inline`}>MUSIC</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Top Search Button (Magnifying Glass Icon) */}
-            <button
-              id="top-header-search-btn"
-              onClick={() => {
-                setActiveTab("search");
-              }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
-                activeTab === "search"
-                  ? `${activeFullDesign.btnPrimary} text-white shadow-md`
-                  : `${activeFullDesign.btnSecondary} ${activeFullDesign.textPrimary} hover:scale-105 active:scale-95 border border-zinc-300/80`
-              }`}
-              title="Search music, albums, artists"
-            >
-              <Search className="w-4 h-4" />
-              <span className="text-xs font-semibold hidden sm:inline">Search</span>
-            </button>
-
-            {/* User Auth Section: Sign-In Button OR User Portrait with Pop-up Sign Out */}
-            {!user?.isLoggedIn ? (
-              <button
-                id="top-header-signin-btn"
-                onClick={() => setIsAuthModalOpen(true)}
-                className={`px-4 py-2 rounded-xl ${activeFullDesign.btnPrimary} text-white text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5`}
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
-              </button>
-            ) : (
-              <div className="relative">
-                <button
-                  id="top-header-user-avatar-btn"
-                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                  className="w-9 h-9 rounded-full overflow-hidden shadow-md hover:scale-105 active:scale-95 transition-transform flex items-center justify-center bg-zinc-800 focus:outline-none user-avatar-ring"
-                  title={user.name || user.email || "Account Profile"}
-                >
-                  {user.picture ? (
-                    <img src={user.picture} alt={user.name || "User"} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs font-bold text-white">{(user.name || user.email || "U")[0].toUpperCase()}</span>
-                  )}
-                </button>
-
-                {/* Account Pop-Up Window */}
-                {isUserMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    />
-                    <div className={`absolute right-0 top-12 z-50 w-72 bg-white border border-zinc-200 rounded-3xl shadow-2xl p-5 space-y-4 animate-fade-in text-left select-none ring-1 ring-black/5`}>
-                      {/* Header with Close X */}
-                      <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
-                        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-bold">
-                          Account Profile
-                        </span>
-                        <button
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="p-1 rounded-full text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
-                          title="Close"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* User Info */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 shadow-sm bg-zinc-800 flex items-center justify-center user-avatar-ring">
-                          {user.picture ? (
-                            <img src={user.picture} alt={user.name || "User"} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-sm font-bold text-white">{(user.name || user.email || "U")[0].toUpperCase()}</span>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-sm font-bold text-zinc-900 truncate">{user.name || "Google User"}</h4>
-                          <p className="text-xs text-zinc-600 truncate font-medium">{user.email}</p>
-                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold border border-emerald-300">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
-                            YouTube Synced
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Sign Out Button */}
-                      <button
-                        id="user-menu-signout-btn"
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          handleLogout();
-                        }}
-                        className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 font-bold text-xs rounded-2xl border border-red-200 flex items-center justify-center gap-2 transition-all shadow-sm hover:scale-[1.02]"
-                      >
-                        <LogOut className="w-4 h-4 text-red-600" />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </header>
+      <main className={`app-content main-viewport flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass" || activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
+        {/* Sticky Top Navigation Header Across All Views */}
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          user={user}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onLogout={handleLogout}
+          designConfig={activeFullDesign}
+          onLogoClick={() => {
+            setSelectedPlaylist(null);
+            setActiveTab("home");
+          }}
+        />
 
         {/* Global Toast Notification */}
         {toastMessage && (

@@ -355,4 +355,35 @@ html, body {
   box-shadow: 0 0 14px var(--accent-primary, #c59b27), 0 3px 6px rgba(0, 0, 0, 0.35);
 }
 
+/* Sticky Top Navigation Header Across All Views */
+.top-navbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(15, 12, 29, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Sticky Playlist Action Toolbar */
+.playlist-action-toolbar {
+  position: sticky;
+  top: 60px;
+  z-index: 990;
+  background: rgba(15, 12, 29, 0.90);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-content, .main-viewport {
+  position: relative;
+  min-height: 100vh;
+}
+
+
 

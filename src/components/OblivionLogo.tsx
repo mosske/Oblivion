@@ -40,17 +40,17 @@ const PALETTES: Record<string, GradientPalette> = {
     textGold: "#dfbe7a",
   },
 
-  // 1. Designer (Warm Studio Ivory, Gold & Emerald Sheen)
+  // 1. Designer (Haute Couture Champagne Gold & Shimmering Metallic Highlights)
   designer: {
-    ringGrad: { c1: "#fef08a", c2: "#e5b85c", c3: "#b88928", c4: "#fef9c3" },
-    tri1Grad: { c1: "#f5d78e", c2: "#d99b26", c3: "#926312" },
-    tri2Grad: { c1: "#fffbeb", c2: "#e5b85c", c3: "#b88928" },
+    ringGrad: { c1: "#fdf2db", c2: "#dfb86c", c3: "#a07422", c4: "#f7e2ab" },
+    tri1Grad: { c1: "#f7e2ab", c2: "#dfb86c", c3: "#8c6218" },
+    tri2Grad: { c1: "#fff9eb", c2: "#eac97e", c3: "#a07422" },
     highlight: "#ffffff",
-    shadow: "#452d06",
+    shadow: "#261a08",
     playCore: "#FFFFFF",
-    playHighlight: "#fef08a",
-    auraColor: "#e5b85c",
-    textGold: "#e5b85c",
+    playHighlight: "#fdf2db",
+    auraColor: "#dfb86c",
+    textGold: "#dfb86c",
   },
 
   // 2. Cyberpunk Neon (Electric Cyan, Neon Magenta & Hologram Violet)

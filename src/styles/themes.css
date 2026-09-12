@@ -2,28 +2,30 @@
 
 :root,
 [data-theme="designer"],
-.theme-designer {
-  --bg-canvas: linear-gradient(135deg, #051911 0%, #082017 50%, #0a261b 100%);
-  --canvas-text-primary: #f8f6f0;
-  --canvas-text-secondary: #d8d2c4;
-  --canvas-text-muted: #a39c8e;
-  --card-bg: rgba(248, 246, 240, 0.95);
-  --card-text: #1a201c;
-  --card-border: rgba(230, 226, 216, 0.8);
-  --accent-primary: #c59b27;
-  --accent-color: #c59b27;
-  --primary: #c59b27;
-  --accent-primary-rgb: 197, 155, 39;
-  --accent-secondary: #f59e0b;
-  --accent-tertiary: #e5b85c;
-  --accent-contrast-text: #1a201c;
-  --text-muted: #666258;
-  --border-subtle: #e6e2d8;
+.theme-designer,
+[data-theme="designer-ivory"],
+.theme-designer-ivory {
+  --bg-canvas: radial-gradient(circle at 50% 20%, #1f1b22 0%, #131116 50%, #0a090c 100%);
+  --canvas-text-primary: #fdfcf9;
+  --canvas-text-secondary: #e6decb;
+  --canvas-text-muted: #b0a694;
+  --card-bg: linear-gradient(180deg, rgba(42, 38, 45, 0.72) 0%, rgba(26, 23, 29, 0.82) 55%, rgba(16, 14, 18, 0.92) 100%);
+  --card-text: #fdfcf9;
+  --card-border: rgba(223, 184, 108, 0.28);
+  --accent-primary: #dfb86c;
+  --accent-color: #dfb86c;
+  --primary: #dfb86c;
+  --accent-primary-rgb: 223, 184, 108;
+  --accent-secondary: #f7e2ab;
+  --accent-tertiary: #a07422;
+  --accent-contrast-text: #120f14;
+  --text-muted: #b0a694;
+  --border-subtle: rgba(223, 184, 108, 0.22);
   --border-active: var(--accent-primary);
-  --waveform-inactive: rgba(102, 98, 88, 0.48);
-  --glass-blur: blur(16px);
-  --glass-bg: rgba(248, 246, 240, 0.92);
-  --glass-border: rgba(230, 226, 216, 0.8);
+  --waveform-inactive: rgba(176, 166, 148, 0.4);
+  --glass-blur: blur(24px);
+  --glass-bg: linear-gradient(180deg, rgba(40, 35, 43, 0.7) 0%, rgba(22, 19, 25, 0.85) 100%);
+  --glass-border: rgba(223, 184, 108, 0.3);
 }
 
 [data-theme="cyberpunk-neon"],
@@ -950,3 +952,202 @@ input[type="checkbox"] {
   border-radius: 9999px !important;
   border: 2px solid rgba(12, 7, 30, 0.8) !important;
 }
+
+/* ==========================================================================
+   THEME 01: HAUTE COUTURE DESIGNER (REVAMPED)
+   Luxury Serif Typography, Metallic Gold Gradients, 3D Glossy Frosted Glass,
+   5-Second Shifting Charcoal Shadows & Dynamic Shifting Trapezoid Lines Mesh
+   ========================================================================== */
+
+/* 5-Second Continuous Color Ebbing Animation Behind the Lines */
+@keyframes designerColorEbb {
+  0% {
+    background: radial-gradient(circle at 15% 20%, #201a24 0%, #131017 45%, #0a090c 100%);
+  }
+  25% {
+    background: radial-gradient(circle at 80% 30%, #291e14 0%, #17131a 48%, #0d0a0e 100%);
+  }
+  50% {
+    background: radial-gradient(circle at 50% 85%, #251d15 0%, #1a1520 50%, #09080b 100%);
+  }
+  75% {
+    background: radial-gradient(circle at 20% 75%, #221a28 0%, #151218 52%, #0b090d 100%);
+  }
+  100% {
+    background: radial-gradient(circle at 15% 20%, #201a24 0%, #131017 45%, #0a090c 100%);
+  }
+}
+
+.designer-color-ebb-bg {
+  animation: designerColorEbb 5s ease-in-out infinite;
+  background-size: 130% 130%;
+}
+
+@keyframes pulseSlow5s {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08) translate(15px, -10px);
+  }
+}
+
+.animate-pulse-slow-5s {
+  animation: pulseSlow5s 5s ease-in-out infinite;
+}
+
+/* Luxury Typography Bindings */
+[data-theme="designer"],
+[data-theme="designer-ivory"],
+.theme-designer,
+.theme-designer-ivory {
+  font-family: 'Montserrat', sans-serif;
+}
+
+[data-theme="designer"] h1,
+[data-theme="designer"] h2,
+[data-theme="designer"] h3,
+[data-theme="designer"] .designer-heading,
+[data-theme="designer"] .font-display,
+[data-theme="designer-ivory"] h1,
+[data-theme="designer-ivory"] h2,
+[data-theme="designer-ivory"] h3,
+[data-theme="designer-ivory"] .designer-heading,
+[data-theme="designer-ivory"] .font-display {
+  font-family: 'Cinzel', 'Cormorant Garamond', 'Playfair Display', serif;
+  letter-spacing: 0.04em;
+}
+
+/* Gold Gradient Utilities */
+.gold-metallic-gradient {
+  background: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 38%, #b3842c 75%, #e2be72 100%);
+}
+
+.gold-metallic-text {
+  background: linear-gradient(135deg, #fbf2db 0%, #eac97e 40%, #b8860b 80%, #f4da96 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.gold-shimmer-border {
+  border-image: linear-gradient(135deg, rgba(247, 226, 171, 0.65), rgba(223, 184, 108, 0.2), rgba(160, 116, 34, 0.4), rgba(255, 235, 195, 0.8)) 1;
+}
+
+/* 3D Glossy Dark Frosted Glass Cards for Designer Theme */
+[data-theme="designer"] .designer-card,
+[data-theme="designer-ivory"] .designer-card,
+[data-theme="designer"] .glass-card,
+[data-theme="designer-ivory"] .glass-card {
+  background: linear-gradient(180deg, rgba(46, 40, 50, 0.7) 0%, rgba(28, 24, 32, 0.8) 55%, rgba(16, 14, 18, 0.9) 100%);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(223, 184, 108, 0.22);
+  border-top-color: rgba(247, 226, 171, 0.45);
+  border-bottom-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 
+    0 14px 40px -6px rgba(0, 0, 0, 0.75), 
+    inset 0 1.5px 1.5px 0 rgba(255, 245, 225, 0.35), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.5), 
+    0 0 24px rgba(223, 184, 108, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="designer"] .designer-card:hover,
+[data-theme="designer-ivory"] .designer-card:hover,
+[data-theme="designer"] .glass-card:hover,
+[data-theme="designer-ivory"] .glass-card:hover {
+  background: linear-gradient(180deg, rgba(54, 48, 58, 0.78) 0%, rgba(34, 29, 38, 0.86) 55%, rgba(18, 16, 22, 0.94) 100%);
+  border-color: rgba(223, 184, 108, 0.4);
+  border-top-color: rgba(247, 226, 171, 0.7);
+  border-bottom-color: rgba(0, 0, 0, 0.7);
+  box-shadow: 
+    0 20px 48px -6px rgba(0, 0, 0, 0.85), 
+    inset 0 2px 2px 0 rgba(255, 245, 225, 0.55), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.6), 
+    0 0 32px rgba(223, 184, 108, 0.22);
+}
+
+/* 3D Glossy Buttons for Designer Theme */
+[data-theme="designer"] .designer-btn-primary,
+[data-theme="designer-ivory"] .designer-btn-primary,
+[data-theme="designer"] .btn-gold-3d,
+[data-theme="designer-ivory"] .btn-gold-3d {
+  background: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 40%, #b3842c 85%, #d4a753 100%) !important;
+  color: #120f14 !important;
+  font-weight: 800 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.45) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 
+    0 8px 24px -2px rgba(223, 184, 108, 0.5), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.75), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.15s ease-out;
+}
+
+[data-theme="designer"] .designer-btn-primary:active,
+[data-theme="designer-ivory"] .designer-btn-primary:active,
+[data-theme="designer"] .btn-gold-3d:active,
+[data-theme="designer-ivory"] .btn-gold-3d:active {
+  transform: translateY(1.5px) !important;
+  box-shadow: 
+    0 3px 10px rgba(0, 0, 0, 0.6), 
+    inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 3D Glossy Secondary Frosted Charcoal Buttons */
+[data-theme="designer"] .designer-btn-secondary,
+[data-theme="designer-ivory"] .designer-btn-secondary {
+  background: linear-gradient(180deg, rgba(50, 44, 54, 0.75) 0%, rgba(28, 24, 32, 0.85) 100%) !important;
+  color: #fdfcf9 !important;
+  border: 1px solid rgba(223, 184, 108, 0.25) !important;
+  border-top-color: rgba(247, 226, 171, 0.5) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 
+    0 6px 18px rgba(0, 0, 0, 0.6), 
+    inset 0 1.5px 1px rgba(255, 245, 225, 0.4), 
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="designer"] .designer-btn-secondary:hover,
+[data-theme="designer-ivory"] .designer-btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(62, 54, 68, 0.85) 0%, rgba(36, 30, 40, 0.92) 100%) !important;
+  border-color: rgba(223, 184, 108, 0.45) !important;
+  border-top-color: rgba(247, 226, 171, 0.75) !important;
+}
+
+[data-theme="designer"] .designer-btn-secondary:active,
+[data-theme="designer-ivory"] .designer-btn-secondary:active {
+  transform: translateY(1.5px) !important;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6), 
+    inset 0 2px 3px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* User Avatar Gold Halo for Designer */
+[data-theme="designer"] .user-avatar-ring,
+[data-theme="designer-ivory"] .user-avatar-ring,
+.theme-designer .user-avatar-ring {
+  border: 2px solid #dfb86c !important;
+  border-top-color: #f7e2ab !important;
+  box-shadow: 
+    0 0 18px rgba(223, 184, 108, 0.75), 
+    0 0 30px rgba(160, 116, 34, 0.45),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Custom Scrollbar for Designer Theme */
+[data-theme="designer"] ::-webkit-scrollbar-thumb,
+[data-theme="designer-ivory"] ::-webkit-scrollbar-thumb,
+.theme-designer ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(247, 226, 171, 0.65), rgba(223, 184, 108, 0.5), rgba(160, 116, 34, 0.55)) !important;
+  border-radius: 9999px !important;
+  border: 2px solid rgba(16, 14, 18, 0.85) !important;
+}
+

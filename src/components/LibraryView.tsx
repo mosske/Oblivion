@@ -20,6 +20,7 @@ import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes"
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { PlaylistCard } from "./PlaylistCard";
 import { ManageVisibilityModal } from "./ManageVisibilityModal";
+import { getCachedPlaylists } from "../services/playlistService";
 
 interface LibraryViewProps {
   playlists: Playlist[];
@@ -110,10 +111,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     });
   };
 
+  // Effective playlists with instant OBLIVION_PLAYLIST_CACHE fallback
+  const effectivePlaylists = useMemo(() => {
+    if (Array.isArray(playlists) && playlists.length > 0) return playlists;
+    return getCachedPlaylists();
+  }, [playlists]);
+
   // Filter and deduplicate playlists
   const cleanPlaylists = useMemo(() => {
     const seen = new Set<string>();
-    return (playlists || []).filter((pl) => {
+    return (effectivePlaylists || []).filter((pl) => {
       if (!pl) return false;
       const id = pl.id || pl.playlistId;
       if (!id || seen.has(id)) return false;
@@ -126,7 +133,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       seen.add(id);
       return true;
     });
-  }, [playlists]);
+  }, [effectivePlaylists]);
 
   // Sort and apply Hidden filter
   const displayedPlaylists = useMemo(() => {
