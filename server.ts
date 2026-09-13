@@ -2507,8 +2507,24 @@ app.get(["/api/playlists", "/api/youtube/playlists"], async (req, res) => {
     
     // Automatically stitch server-persisted custom artwork mappings into the returned playlist objects
     const storedCustomCovers = readStoredCustomCovers(req);
-    const finalized = deduped.map((pl: any) => {
-      if (!pl || !pl.id) return pl;
+    const finalized = deduped.map((rawPl: any) => {
+      if (!rawPl || !rawPl.id) return rawPl;
+      const isUser = Boolean(
+        rawPl.isUserCreated ||
+        rawPl.type === "playlist" ||
+        rawPl.id.startsWith("pl_custom_") ||
+        rawPl.id.startsWith("PL") ||
+        rawPl.id.startsWith("VLPL") ||
+        rawPl.isEditable
+      );
+      const pl = isUser ? {
+        ...rawPl,
+        isUserCreated: true,
+        type: "playlist",
+        isEditable: true,
+        badge: "Playlist",
+        isAlbum: false,
+      } : rawPl;
       const cleanPlId = pl.id.replace(/^VL/, "");
       const customImg = storedCustomCovers[cleanPlId] || storedCustomCovers[pl.id] || pl.customArtwork || pl.customCoverUrl;
       if (customImg && typeof customImg === "string" && customImg.trim().length > 5) {
@@ -2651,13 +2667,22 @@ app.get(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async 
       }
     }
 
-    // 4. Official Studio Albums (ONLY when explicitly an album ID or requested as album type)
+    // 4. Official Studio Albums (ONLY when explicitly an album ID or requested as album type, never for user playlists)
+    const isUserPlaylist = Boolean(
+      (found as any)?.isUserCreated ||
+      (found as any)?.type === "playlist" ||
+      (found as any)?.isEditable ||
+      id.startsWith("pl_custom_") ||
+      id.startsWith("PL") ||
+      id.startsWith("VLPL")
+    );
     const isExplicitAlbum =
-      type === "album" ||
+      !isUserPlaylist &&
+      (type === "album" ||
       id.startsWith("album_") ||
       id.startsWith("MPREb_") ||
       id.startsWith("OLAK5uy_") ||
-      Boolean((found as any)?.isAlbum);
+      Boolean((found as any)?.isAlbum));
 
     const targetTitle = title || found?.title || "";
     const targetArtist = artist || found?.description || "";
@@ -2877,6 +2902,11 @@ app.post("/api/youtube/playlists", async (req, res) => {
     tracks: initialTracksList,
     privacy: effectivePrivacy.toUpperCase(),
     privacyStatus: effectivePrivacy.toUpperCase(),
+    isUserCreated: true,
+    type: "playlist",
+    isEditable: true,
+    badge: "Playlist",
+    isAlbum: false,
   };
 
   if (!req.session.playlists) req.session.playlists = [...localPlaylistsStore];

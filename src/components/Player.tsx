@@ -30,6 +30,7 @@ import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes"
 import { CandylandFallingSweets } from "./CandylandFallingSweets";
 import { equalizerManager } from "../utils/equalizerEngine";
 import { useEqualizer } from "../context/EqualizerContext";
+import { audioPlayer } from "../services/audioPlayer";
 
 interface PlayerProps {
   playerState: PlayerState;
@@ -1159,8 +1160,10 @@ export const Player: React.FC<PlayerProps> = ({
         audioRef.current.crossOrigin = "anonymous";
       }
       attachAudioElement(audioRef.current);
+      audioPlayer.attachAudioElement(audioRef.current);
       if (isPlaying) {
         resumeAudioContext();
+        audioPlayer.resumeContext();
         // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
         const silentUrl = getSilentAudioUrl();
         if (audioRef.current.src !== silentUrl) {

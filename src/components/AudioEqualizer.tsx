@@ -3,6 +3,7 @@ import { Sliders, RotateCcw, Volume2, Sparkles, Check, Play, Square } from "luci
 import { FullAppDesignConfig } from "../utils/appDesignThemes";
 import { EQ_FREQUENCIES, EQ_PRESETS } from "../utils/equalizerEngine";
 import { useEqualizer } from "../context/EqualizerContext";
+import { audioPlayer } from "../services/audioPlayer";
 
 interface AudioEqualizerProps {
   designConfig: FullAppDesignConfig;
@@ -101,6 +102,7 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
   // filters[bandIndex].gain.setTargetAtTime(newGainValue, audioCtx.currentTime, 0.01);
   const handleSliderChange = (index: number, valStr: string) => {
     const newGainValue = parseFloat(valStr);
+    audioPlayer.setBandGain(index, newGainValue);
     if (filtersRef.current && filtersRef.current[index]) {
       const audioCtx = audioCtxRef.current;
       if (audioCtx) {
@@ -118,6 +120,7 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
 
   // 3. Ensure changing presets updates all 7 filterNode.gain.setTargetAtTime properties in real time
   const handlePresetSelect = (presetName: string) => {
+    audioPlayer.setPreset(presetName);
     const presetGains = EQ_PRESETS[presetName];
     if (presetGains) {
       const audioCtx = audioCtxRef.current;
@@ -139,6 +142,7 @@ export const AudioEqualizer: React.FC<AudioEqualizerProps> = ({ designConfig }) 
   };
 
   const handleReset = () => {
+    audioPlayer.resetEQ();
     const flatGains = EQ_PRESETS["Flat"];
     const audioCtx = audioCtxRef.current;
     flatGains.forEach((gain, i) => {

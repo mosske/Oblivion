@@ -110,6 +110,24 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     );
   }
 
+  // A. PERMANENT PLAYLIST TYPE LOCK:
+  // Explicitly identify user-created playlists and prevent inheriting official album properties
+  const isPlaylist = Boolean(
+    (item as any)?.type === "playlist" ||
+    (item as any)?.isUserCreated === true ||
+    (item as any)?.isEditable === true ||
+    (typeof item.id === "string" && (item.id.startsWith("pl_custom_") || item.id.startsWith("PL") || item.id.startsWith("VLPL")))
+  );
+  // Never display the "OFFICIAL ALBUM" tag or treat collection as album if user-created or playlist type
+  const effectiveIsAlbum = !isPlaylist && Boolean(isAlbum || (item as any)?.isAlbum);
+  // Render "Reorder Songs" & "Search playlist songs..." whenever playlist.type === 'playlist' OR playlist.isUserCreated === true OR playlist.isEditable === true
+  const canReorder = Boolean(
+    (item as any)?.type === "playlist" ||
+    (item as any)?.isUserCreated === true ||
+    (item as any)?.isEditable === true ||
+    !effectiveIsAlbum
+  );
+
   const initialCachedTracks = React.useMemo(() => {
     const fromStorage = getCachedPlaylistTracks(item.id);
     if (fromStorage && fromStorage.length > 0) return fromStorage;
@@ -138,7 +156,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
   // Check if this playlist has custom cover artwork
   const isCustomCover = React.useMemo(() => {
-    if (isAlbum) return false;
+    if (effectiveIsAlbum) return false;
     const pl = item as Playlist;
     const plId = pl.id || (pl as any).playlistId || "";
     const fromStore = getPlaylistCustomArtwork(plId);
@@ -147,7 +165,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     if (pl.customCoverUrl && isAuthenticCustomArtworkUrl(pl.customCoverUrl)) return true;
     if (pl.isCustomCover && pl.coverUrl && !isVideoThumbnailUrl(pl.coverUrl)) return true;
     return Boolean(pl.isCustomCover || pl.customCoverUrl || pl.customArtwork);
-  }, [item, isAlbum]);
+  }, [item, effectiveIsAlbum]);
 
   // Always reset scroll position to the very top when opening or switching playlists/albums
   useLayoutEffect(() => {
@@ -191,7 +209,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     try {
       const titleParam = encodeURIComponent(item.title || "");
       const artistParam = encodeURIComponent((item as any).artist || (item as any).description || "");
-      const typeParam = isAlbum ? "album" : "playlist";
+      const typeParam = effectiveIsAlbum ? "album" : "playlist";
       
       let res = await apiFetch(
         `/api/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`
@@ -294,7 +312,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         })
       );
     }
-    if (!isAlbum && onRemoveTrack) {
+    if (!effectiveIsAlbum && onRemoveTrack) {
       const bestId = (targetTrack as any)?.playlistItemId || targetTrack?.youtubeVideoId || targetTrack?.id || trackId;
       onRemoveTrack(bestId, targetTrack);
     }
@@ -328,7 +346,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     } catch {}
 
     try {
-      if (!isAlbum && onReorderTracks) {
+      if (!effectiveIsAlbum && onReorderTracks) {
         await onReorderTracks(tracksToSave);
       }
     } catch (err) {
@@ -564,7 +582,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                     type="text"
                     value={inViewSearch}
                     onChange={(e) => setInViewSearch(e.target.value)}
-                    placeholder={isAlbum ? "Search album tracks..." : "Search playlist songs..."}
+                    placeholder={canReorder ? "Search playlist songs..." : "Search album tracks..."}
                     className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
                   />
                   {inViewSearch && (
@@ -582,7 +600,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               </div>
 
               {/* Reorder Songs Button - with explicit text "Reorder Songs", drops below on narrow screens if needed */}
-              {!isAlbum && (
+              {canReorder && (
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
@@ -619,12 +637,12 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             <div className="flex-1 text-center md:text-left space-y-3 min-w-0">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 <span className={`px-3 py-1 rounded-full ${designConfig.pillBg} text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm`}>
-                  {isAlbum ? <Layers className="w-3.5 h-3.5" /> : <Sparkles className={`w-3.5 h-3.5 ${designConfig.accentText}`} />}
-                  {isAlbum ? "Official Album" : "YouTube Music Playlist"}
+                  {effectiveIsAlbum ? <Layers className="w-3.5 h-3.5" /> : <Sparkles className={`w-3.5 h-3.5 ${designConfig.accentText}`} />}
+                  {effectiveIsAlbum ? "Official Album" : (isPlaylist ? "Oblivion Playlist" : "YouTube Music Playlist")}
                 </span>
 
                 {/* Playlist Visibility Badge */}
-                {!isAlbum && ((item as Playlist).privacy || (item as Playlist).privacyStatus) && (
+                {!effectiveIsAlbum && ((item as Playlist).privacy || (item as Playlist).privacyStatus) && (
                   <span className={`px-3 py-1 rounded-full ${designConfig.pillBg} text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm`}>
                     {((item as Playlist).privacy?.toUpperCase() === "PRIVATE" || (item as Playlist).privacyStatus?.toUpperCase() === "PRIVATE") ? (
                       <>
@@ -646,7 +664,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 )}
 
                 {/* Custom Artwork Badge (Shown inside Playlist View per user request) */}
-                {!isAlbum && isCustomCover && (
+                {!effectiveIsAlbum && isCustomCover && (
                   <span className={`px-3 py-1 rounded-full ${designConfig.pillBg} text-[11px] font-mono font-bold tracking-wider flex items-center gap-1.5 shadow-sm`}>
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                     <span>Custom Cover</span>
@@ -659,7 +677,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               </h1>
 
               <p className={`text-sm ${designConfig.textSecondary} line-clamp-2 max-w-2xl font-normal`}>
-                {(item as any).description || (isAlbum ? `Album by ${(item as Album).artist} • Released ${(item as Album).releaseYear}` : "Curated YouTube Music track collection.")}
+                {(item as any).description || (effectiveIsAlbum ? `Album by ${(item as Album).artist} • Released ${(item as Album).releaseYear}` : "Curated YouTube Music track collection.")}
               </p>
 
               <div className={`flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs ${designConfig.textSecondary} pt-1 font-mono`}>
@@ -717,7 +735,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
           {/* Right Action Buttons: Edit details and Delete Playlist */}
           <div className="flex flex-col items-end gap-2">
-            {!isAlbum && onEditPlaylist && (
+            {!effectiveIsAlbum && onEditPlaylist && (
               <button
                 onClick={() => onEditPlaylist(item as Playlist)}
                 className={`flex items-center gap-1.5 px-3 py-2 ${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} rounded-xl border border-transparent transition-colors text-xs font-semibold`}
@@ -727,7 +745,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 <span>Edit Details</span>
               </button>
             )}
-            {!isAlbum && (
+            {!effectiveIsAlbum && (
               <button
                 onClick={() => setIsDeleteModalOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-2 bg-red-600/15 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 hover:border-red-600 rounded-xl transition-all text-xs font-semibold shadow-sm active:scale-95"
@@ -757,7 +775,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             <div className={`p-16 text-center rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-3 animate-fade-in`}>
               <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} text-[var(--accent-color,var(--primary))] animate-spin`} stroke="currentColor" />
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
-                {isAlbum ? "Pulling album tracks from YouTube Music..." : "Loading playlist tracks..."}
+                {effectiveIsAlbum ? "Pulling album tracks from YouTube Music..." : "Loading playlist tracks..."}
               </p>
               <p className={`text-xs ${designConfig.textMuted}`}>Fetching lossless audio streams & metadata</p>
             </div>
@@ -772,7 +790,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               <Search className={`w-8 h-8 mx-auto ${designConfig.textMuted}`} />
               <p className={`text-sm font-bold ${designConfig.textPrimary}`}>No matching tracks found</p>
               <p className={`text-xs ${designConfig.textMuted}`}>
-                No tracks in this {isAlbum ? "album" : "playlist"} match "{inViewSearch}".
+                No tracks in this {effectiveIsAlbum ? "album" : "playlist"} match "{inViewSearch}".
               </p>
               <button
                 type="button"
@@ -785,7 +803,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           ) : (
             <PlaylistTrackList
               tracks={isReorderMode ? localTracks : safeTracks}
-              isAlbum={isAlbum}
+              isAlbum={effectiveIsAlbum}
               item={item}
               isReorderMode={isReorderMode}
               inViewSearch={inViewSearch}
@@ -800,7 +818,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                   setLocalTracks(newTracks);
                 } else {
                   setTracks(newTracks);
-                  if (!isAlbum && onReorderTracks) {
+                  if (!effectiveIsAlbum && onReorderTracks) {
                     onReorderTracks(newTracks);
                   }
                 }
@@ -814,7 +832,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       </div>
 
       {/* YouTube Custom Cover Action Sheet Modal */}
-      {!isAlbum && (
+      {!effectiveIsAlbum && (
         <PlaylistCustomCoverModal
           isOpen={isCustomCoverModalOpen}
           onClose={() => setIsCustomCoverModalOpen(false)}
@@ -829,7 +847,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       )}
 
       {/* Delete Playlist Confirmation Modal */}
-      {!isAlbum && isDeleteModalOpen && (
+      {!effectiveIsAlbum && isDeleteModalOpen && (
         <DeletePlaylistModal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}

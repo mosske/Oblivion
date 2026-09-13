@@ -1246,7 +1246,13 @@ export default function App() {
 
       const qTitle = encodeURIComponent(title || selectedPlaylist?.title || "");
       const qArtist = encodeURIComponent(artist || (selectedPlaylist as any)?.artist || selectedPlaylist?.description || "");
-      const isAlb = Boolean((selectedPlaylist as any)?.isAlbum || (selectedPlaylist as any)?.artist || playlistId.startsWith("MPREb_") || playlistId.startsWith("OLAK5uy_"));
+      const isUserCreatedPl = Boolean(
+        (selectedPlaylist as any)?.isUserCreated ||
+        (selectedPlaylist as any)?.type === "playlist" ||
+        (selectedPlaylist as any)?.isEditable ||
+        playlistId.startsWith("pl_custom_")
+      );
+      const isAlb = !isUserCreatedPl && Boolean((selectedPlaylist as any)?.isAlbum || playlistId.startsWith("MPREb_") || playlistId.startsWith("OLAK5uy_"));
       const qType = isAlb ? "album" : "playlist";
       const refreshParam = forceRefresh ? "&refresh=true" : "";
 
@@ -1634,14 +1640,17 @@ export default function App() {
         });
         const data = await res.json().catch(() => ({}));
         if (data && data.playlist) {
-          setPlaylists((prev) => [
-            {
-              ...data.playlist,
-              privacy: visibility,
-              privacyStatus: visibility,
-            },
-            ...prev,
-          ]);
+          const newPl: Playlist = {
+            ...data.playlist,
+            privacy: visibility,
+            privacyStatus: visibility,
+            isUserCreated: true,
+            type: "playlist",
+            isEditable: true,
+            badge: "Playlist",
+            isAlbum: false,
+          };
+          setPlaylists((prev) => [newPl, ...prev]);
           if (data.syncedToYouTube) {
             showToast(`Created "${title}" & synced to YouTube`);
           } else {
@@ -1676,11 +1685,19 @@ export default function App() {
       });
       const data = await res.json().catch(() => ({}));
       if (data && data.playlist) {
-        setPlaylists((prev) => [data.playlist, ...prev]);
+        const newPl: Playlist = {
+          ...data.playlist,
+          isUserCreated: true,
+          type: "playlist",
+          isEditable: true,
+          badge: "Playlist",
+          isAlbum: false,
+        };
+        setPlaylists((prev) => [newPl, ...prev]);
         try {
-          localStorage.setItem("oblivion_saved_playlists", JSON.stringify([data.playlist, ...playlists]));
+          localStorage.setItem("oblivion_saved_playlists", JSON.stringify([newPl, ...playlists]));
         } catch {}
-        return data.playlist;
+        return newPl;
       }
     } catch (err) {
       console.error("Create playlist error:", err);
@@ -1734,6 +1751,11 @@ export default function App() {
           coverUrl: coverUrl || data.playlist.coverUrl,
           customCoverUrl: coverUrl || data.playlist.customCoverUrl,
           isCustomCover: Boolean(coverUrl),
+          isUserCreated: true,
+          type: "playlist",
+          isEditable: true,
+          badge: "Playlist",
+          isAlbum: false,
         };
 
         setPlaylists((prev) => [createdPl, ...prev]);
@@ -2340,13 +2362,18 @@ export default function App() {
         {selectedPlaylist ? (
           <PlaylistDetailView
             item={selectedPlaylist}
-            isAlbum={Boolean(
-              (selectedPlaylist as any).isAlbum ||
-              (selectedPlaylist as any).artist ||
-              (selectedPlaylist.description && selectedPlaylist.description.toLowerCase().includes("album")) ||
-              selectedPlaylist.id?.startsWith("MPREb_") ||
-              selectedPlaylist.id?.startsWith("OLAK5uy_")
-            )}
+            isAlbum={
+              !Boolean(
+                (selectedPlaylist as any)?.isUserCreated ||
+                (selectedPlaylist as any)?.type === "playlist" ||
+                (selectedPlaylist as any)?.isEditable ||
+                (typeof selectedPlaylist.id === "string" && (selectedPlaylist.id.startsWith("pl_custom_") || selectedPlaylist.id.startsWith("PL") || selectedPlaylist.id.startsWith("VLPL")))
+              ) && Boolean(
+                (selectedPlaylist as any).isAlbum ||
+                selectedPlaylist.id?.startsWith("MPREb_") ||
+                selectedPlaylist.id?.startsWith("OLAK5uy_")
+              )
+            }
             onBack={() => {
               setSelectedPlaylist(null);
               if (window.history.state && window.history.state.view === "playlist_detail") {

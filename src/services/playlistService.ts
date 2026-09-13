@@ -412,6 +412,67 @@ export async function deleteCustomArtwork(playlistId: string): Promise<boolean> 
 }
 
 /**
+ * Permanent Playlist Type Lock:
+ * Ensures user-created playlists never inherit official album properties, badges, or types from added tracks.
+ */
+export function lockPlaylistTypeMetadata<T extends Partial<Playlist>>(playlist: T): T {
+  if (!playlist) return playlist;
+  const isUser = Boolean(
+    playlist.isUserCreated === true ||
+    playlist.type === "playlist" ||
+    (playlist.id && typeof playlist.id === "string" && (playlist.id.startsWith("pl_custom_") || playlist.id.startsWith("PL") || playlist.id.startsWith("VLPL"))) ||
+    playlist.isEditable === true
+  );
+
+  if (isUser) {
+    return {
+      ...playlist,
+      isUserCreated: true,
+      type: "playlist",
+      isEditable: true,
+      isAlbum: false,
+      // Never allow an official album badge on user-created playlists
+      badge: playlist.badge && !playlist.badge.toLowerCase().includes("album") ? playlist.badge : "Playlist",
+    };
+  }
+
+  return playlist;
+}
+
+/**
+ * Creates explicit user playlist metadata with locked properties
+ */
+export function createPlaylistMetadata(
+  title: string,
+  options?: {
+    description?: string;
+    coverUrl?: string;
+    tracks?: Track[];
+    id?: string;
+    privacy?: string;
+  }
+): Playlist {
+  const id = options?.id || `pl_custom_${Date.now()}`;
+  return {
+    id,
+    playlistId: id,
+    title: title || "New Playlist",
+    description: options?.description || "Created with Oblivion Music",
+    coverUrl: options?.coverUrl || options?.tracks?.[0]?.coverUrl || "",
+    customCoverUrl: options?.coverUrl,
+    isCustomCover: Boolean(options?.coverUrl),
+    tracks: options?.tracks || [],
+    tracksCount: options?.tracks?.length || 0,
+    isUserCreated: true,
+    type: "playlist",
+    isEditable: true,
+    badge: "Playlist",
+    privacy: options?.privacy || "PUBLIC",
+    privacyStatus: options?.privacy || "PUBLIC",
+  };
+}
+
+/**
  * Stitch server-persisted and locally cached custom artwork into a list of playlists
  */
 export function stitchCustomArtworkToPlaylists(playlists: Playlist[]): Playlist[] {
@@ -419,8 +480,9 @@ export function stitchCustomArtworkToPlaylists(playlists: Playlist[]): Playlist[
 
   const store = getCustomArtworkStore();
 
-  return playlists.map((pl) => {
-    if (!pl || !pl.id) return pl;
+  return playlists.map((rawPl) => {
+    if (!rawPl || !rawPl.id) return rawPl;
+    const pl = lockPlaylistTypeMetadata(rawPl);
     const cleanId = pl.id.replace(/^VL/, "");
     const custom = store[pl.id] || store[cleanId] || getPlaylistCustomArtwork(pl.id);
 

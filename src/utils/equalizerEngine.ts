@@ -10,7 +10,9 @@ export const EQ_PRESETS: Record<string, number[]> = {
   "Vocal / Clarity": [-2, -1, 1, 3, 4, 2, 0],
 };
 
-const STORAGE_KEY = "oblivion_eq_settings";
+export const OBLIVION_EQ_PRESETS_KEY = "OBLIVION_EQ_PRESETS";
+const STORAGE_KEY = OBLIVION_EQ_PRESETS_KEY;
+const LEGACY_STORAGE_KEY = "oblivion_eq_settings";
 
 export interface EQState {
   preset: string;
@@ -19,7 +21,7 @@ export interface EQState {
 
 export function loadSavedEQState(): EQState {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed.gains) && parsed.gains.length === 7) {
@@ -41,7 +43,9 @@ export function loadSavedEQState(): EQState {
 
 export function saveEQState(state: EQState): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const val = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY, val);
+    localStorage.setItem(LEGACY_STORAGE_KEY, val);
   } catch {}
 }
 

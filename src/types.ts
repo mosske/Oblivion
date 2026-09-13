@@ -63,6 +63,10 @@ export interface Playlist {
   snippet?: PlaylistSnippet;
   privacy?: "PUBLIC" | "UNLISTED" | "PRIVATE" | string;
   privacyStatus?: string;
+  type?: "playlist" | "album" | string;
+  isUserCreated?: boolean;
+  isEditable?: boolean;
+  badge?: string;
 }
 
 export interface Album {
