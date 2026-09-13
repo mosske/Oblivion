@@ -90,17 +90,17 @@ const PALETTES: Record<string, GradientPalette> = {
     textGold: "#ff70a6",
   },
 
-  // 4. Dynamic Island Emerald (Jade, Neon Mint & Deep Forest)
+  // 4. Emerald Wilderness (Jade, Neon Mint, Electric Teal & Warm Firefly Gold)
   "dynamic-emerald": {
-    ringGrad: { c1: "#a7f3d0", c2: "#10b981", c3: "#047857", c4: "#34d399" },
-    tri1Grad: { c1: "#6ee7b7", c2: "#059669", c3: "#064e3b" },
-    tri2Grad: { c1: "#ecfdf5", c2: "#10b981", c3: "#047857" },
+    ringGrad: { c1: "#d0fbe9", c2: "#00f5a0", c3: "#00d9f5", c4: "#ffe066" },
+    tri1Grad: { c1: "#00f5a0", c2: "#00d9f5", c3: "#012a1d" },
+    tri2Grad: { c1: "#ffffff", c2: "#00f5a0", c3: "#00d9f5" },
     highlight: "#ffffff",
-    shadow: "#022c22",
-    playCore: "#FFFFFF",
-    playHighlight: "#a7f3d0",
-    auraColor: "#10b981",
-    textGold: "#34d399",
+    shadow: "#011a12",
+    playCore: "#ffffff",
+    playHighlight: "#ffe066",
+    auraColor: "#00f5a0",
+    textGold: "#00f5a0",
   },
 
   // 5. Studio Audiophile Deck (Warm Carbon Vinyl Gold & Amber Brass)

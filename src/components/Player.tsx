@@ -28,6 +28,7 @@ import { MarqueeText } from "./MarqueeText";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { CandylandFallingSweets } from "./CandylandFallingSweets";
+import { EmeraldWildernessBackground } from "./EmeraldWildernessBackground";
 import { equalizerManager } from "../utils/equalizerEngine";
 import { useEqualizer } from "../context/EqualizerContext";
 import { audioPlayer } from "../services/audioPlayer";
@@ -228,41 +229,41 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
       };
     case "dynamic-emerald":
       return {
-        bgCanvas: "bg-[#021a12]",
-        orb1: "bg-emerald-400/60",
-        orb2: "bg-teal-400/45",
-        auroraBeam1: "bg-gradient-to-r from-[#00f5a0]/50 via-teal-300/45 to-emerald-500/45",
-        auroraBeam2: "bg-gradient-to-r from-teal-400/45 via-[#00f5a0]/50 to-cyan-400/40",
-        orbitalGlow1: "bg-gradient-to-tr from-[#00f5a0]/65 via-teal-400/55 to-emerald-600/65",
-        orbitalGlow2: "bg-gradient-to-bl from-teal-300/50 via-emerald-500/55 to-teal-600/50",
-        driftAuraGlow: "bg-gradient-to-br from-emerald-500/25 via-teal-500/20 to-transparent",
-        veil: "bg-gradient-to-b from-black/35 via-black/10 to-black/80",
-        topBar: "bg-[#042017]/95 border-emerald-900/50 text-white shadow-sm",
-        minimizeBtn: "bg-[#073024] hover:bg-[#0b3d2f] text-emerald-200 border-emerald-800/60 shadow-sm",
-        nowPlayingDot: "bg-[#00f5a0]",
-        nowPlayingLabel: "text-[#00f5a0]",
-        nowPlayingTitle: "text-emerald-100",
-        tabActive: "bg-[#00f5a0] text-[#021a12] border-[#00f5a0] shadow-[0_0_15px_rgba(0,245,160,0.4)] font-bold",
-        tabInactive: "bg-[#073024] hover:bg-[#0b3d2f] text-emerald-200 border-emerald-800/50",
-        artGlowRing: "from-emerald-500/50 via-teal-500/40 to-[#00f5a0]/50",
-        artBorder: "border-emerald-800/60 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
-        stageTitle: "text-white drop-shadow-md",
-        stageArtist: "text-[#00f5a0]",
-        stageTagAccent: "bg-[#00f5a0]/20 border-[#00f5a0]/40 text-[#00f5a0]",
-        stageTagNeutral: "bg-[#073024] border-emerald-800 text-emerald-200",
-        bottomDeck: "bg-[#042017]/95 border-emerald-900/50 text-emerald-100 shadow-2xl ring-1 ring-[#00f5a0]/20",
-        seekbarTrack: "bg-[#073024]",
-        seekbarFill: "bg-gradient-to-r from-[#00f5a0] via-teal-400 to-cyan-300",
-        seekbarThumb: "bg-[#00f5a0] border-2 border-[#021a12] shadow-[0_0_14px_rgba(0,245,160,0.75)]",
-        seekbarGlow: "shadow-emerald-500/40",
+        bgCanvas: "bg-transparent",
+        orb1: "bg-emerald-400/40",
+        orb2: "bg-teal-400/35",
+        auroraBeam1: "bg-gradient-to-r from-[#00f5a0]/40 via-teal-300/35 to-emerald-500/35",
+        auroraBeam2: "bg-gradient-to-r from-teal-400/35 via-[#00f5a0]/40 to-cyan-400/30",
+        orbitalGlow1: "bg-gradient-to-tr from-[#00f5a0]/50 via-teal-400/40 to-emerald-600/50",
+        orbitalGlow2: "bg-gradient-to-bl from-teal-300/40 via-emerald-500/45 to-teal-600/40",
+        driftAuraGlow: "bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-transparent",
+        veil: "bg-gradient-to-b from-black/25 via-transparent to-black/75",
+        topBar: "bg-gradient-to-b from-[#021f16]/75 via-[#011710]/80 to-[#010e08]/85 backdrop-blur-3xl border-b border-white/[0.18] text-[#e6fff5] shadow-[inset_0_-1px_1px_rgba(0,0,0,0.5),0_8px_30px_rgba(0,0,0,0.6)]",
+        minimizeBtn: "bg-gradient-to-b from-white/[0.14] via-emerald-950/40 to-black/50 hover:from-white/[0.22] text-[#e6fff5] border border-[#00f5a0]/30 border-t-white/45 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)]",
+        nowPlayingDot: "bg-[#00f5a0] shadow-[0_0_10px_#00f5a0]",
+        nowPlayingLabel: "text-[#00f5a0] font-black tracking-wider",
+        nowPlayingTitle: "text-[#e6fff5]",
+        tabActive: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] text-[#011a12] border-t border-white/60 border-b border-black/40 shadow-[0_0_20px_rgba(0,245,160,0.6),inset_0_1.5px_1px_rgba(255,255,255,0.7)] font-black",
+        tabInactive: "bg-gradient-to-b from-white/[0.08] to-black/40 hover:from-white/[0.15] text-emerald-200 border border-[#00f5a0]/25 border-t-white/30 backdrop-blur-xl",
+        artGlowRing: "from-[#00f5a0]/60 via-teal-400/45 to-[#00d9f5]/60",
+        artBorder: "border-emerald-500/35 border-t-white/45 border-b-black/60 shadow-[0_25px_60px_rgba(0,0,0,0.9),inset_0_2px_2px_rgba(255,255,255,0.45)]",
+        stageTitle: "text-[#e6fff5] drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-extrabold",
+        stageArtist: "text-[#00f5a0] font-bold",
+        stageTagAccent: "bg-gradient-to-r from-[#00f5a0]/25 to-teal-500/20 border border-[#00f5a0]/50 border-t-white/40 text-[#00f5a0] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]",
+        stageTagNeutral: "bg-gradient-to-b from-white/[0.08] to-black/40 border border-white/15 border-t-white/30 text-emerald-200 shadow-inner",
+        bottomDeck: "bg-gradient-to-t from-[#010e08]/90 via-[#021f16]/80 to-[#02281c]/70 backdrop-blur-3xl border-t border-white/[0.25] border-t-white/40 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.45),0_-12px_36px_rgba(0,0,0,0.7),0_0_24px_rgba(0,245,160,0.22)] ring-1 ring-[#00f5a0]/20",
+        seekbarTrack: "bg-black/50 border border-white/10 shadow-inner",
+        seekbarFill: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5]",
+        seekbarThumb: "bg-[#00f5a0] border-2 border-[#011a12] shadow-[0_0_16px_rgba(0,245,160,0.85)]",
+        seekbarGlow: "shadow-[#00f5a0]/50",
         seekbarAccent: "accent-[#00f5a0]",
-        timeText: "text-emerald-300/70",
-        playBtn: "bg-[#00f5a0] hover:bg-[#33f7b3] text-[#021a12] shadow-[0_0_30px_rgba(0,245,160,0.5)] ring-4 ring-[#00f5a0]/30",
-        playIconFill: "fill-[#021a12]",
-        ctrlBtn: "bg-[#073024] hover:bg-[#0b3d2f] text-emerald-200 border-emerald-800/60 shadow-md",
-        activeText: "text-[#00f5a0]",
-        mutedText: "text-emerald-400/60 hover:text-white",
-        volSlider: "bg-[#073024] accent-[#00f5a0]",
+        timeText: "text-emerald-300/80 font-mono",
+        playBtn: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] hover:brightness-115 text-[#011a12] shadow-[0_0_32px_rgba(0,245,160,0.7),inset_0_1.5px_1px_rgba(255,255,255,0.8)] border-t border-white/70 active:scale-95 ring-4 ring-[#00f5a0]/30",
+        playIconFill: "fill-[#011a12]",
+        ctrlBtn: "bg-gradient-to-b from-white/[0.12] via-emerald-950/40 to-black/50 hover:from-white/[0.2] text-[#e6fff5] border border-[#00f5a0]/30 border-t-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)] backdrop-blur-xl",
+        activeText: "text-[#00f5a0] drop-shadow-[0_0_10px_rgba(0,245,160,0.5)]",
+        mutedText: "text-emerald-300/70 hover:text-white",
+        volSlider: "bg-black/50 accent-[#00f5a0]",
       };
     case "audiophile-gold":
       return {
@@ -1759,6 +1760,9 @@ export const Player: React.FC<PlayerProps> = ({
 
             {/* Candyland Falling Sweets in Full Player Ambient Layer */}
             <CandylandFallingSweets isActive={Boolean(designConfig.isCandy || designConfig.id === "candyland")} />
+
+            {/* Emerald Wilderness Living Nature Scenes & Warm Fireflies */}
+            <EmeraldWildernessBackground isActive={Boolean(designConfig.isEmeraldWilderness || designConfig.id === "dynamic-emerald")} isFullPlayer={true} />
           </div>
 
           {/* Top Bar Navigation with Swipe Handle */}

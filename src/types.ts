@@ -144,7 +144,7 @@ export type FullAppDesignId =
   | 'cyberpunk-neon'     // 2. Cyberpunk Neon Glass (Futuristic Obsidian & Electric Cyan/Magenta Multi-Accent)
   | 'candyland'          // 3. Candyland Pastel (Vibrant Light Mode, Sugar-Glass, Bubblegum Pink & Sweet Berry Text)
   | 'ytmusic-red'        // Legacy alias for Candyland
-  | 'dynamic-emerald'    // 4. Dynamic Island Emerald (Ultra-Minimalist Monolith & Jade Pulse Multi-Accent)
+  | 'dynamic-emerald'    // 4. Emerald Wilderness (Living Nature Scenes, Frosted Wilderness Glass & Warm Fireflies)
   | 'audiophile-gold'    // 5. Studio Audiophile Gold (Warm Carbon, Vinyl Gold & Solar Amber Multi-Accent)
   | 'twilight-vaporwave' // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Sunset Magenta Multi-Accent)
   | 'neue-editorial'    // 7. Neue Editorial (Swiss High-Contrast, Pale Beige & Charcoal Pills)

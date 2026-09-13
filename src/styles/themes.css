@@ -88,26 +88,26 @@
 
 [data-theme="dynamic-emerald"],
 .theme-dynamic-emerald {
-  --bg-canvas: linear-gradient(150deg, #021a12 0%, #072419 60%, #010e08 100%);
-  --canvas-text-primary: #d0fbe9;
+  --bg-canvas: linear-gradient(160deg, #01140e 0%, #032419 45%, #010d09 100%);
+  --canvas-text-primary: #e6fff5;
   --canvas-text-secondary: #a7f3d0;
   --canvas-text-muted: #6ee7b7;
-  --card-bg: rgba(2, 26, 18, 0.75);
-  --card-text: #d0fbe9;
-  --card-border: rgba(0, 245, 160, 0.3);
+  --card-bg: rgba(2, 34, 24, 0.38);
+  --card-text: #e6fff5;
+  --card-border: rgba(0, 245, 160, 0.28);
   --accent-primary: #00f5a0;
   --accent-color: #00f5a0;
   --primary: #00f5a0;
   --accent-primary-rgb: 0, 245, 160;
   --accent-secondary: #00d9f5;
-  --accent-tertiary: #05668d;
-  --accent-contrast-text: #021a12;
+  --accent-tertiary: #ffe066;
+  --accent-contrast-text: #011a12;
   --text-muted: #6ee7b7;
-  --border-subtle: rgba(0, 245, 160, 0.25);
+  --border-subtle: rgba(0, 245, 160, 0.22);
   --border-active: var(--accent-primary);
-  --glass-blur: blur(16px);
-  --glass-bg: rgba(2, 26, 18, 0.75);
-  --glass-border: rgba(0, 245, 160, 0.3);
+  --glass-blur: blur(24px);
+  --glass-bg: rgba(2, 30, 22, 0.38);
+  --glass-border: rgba(0, 245, 160, 0.28);
 }
 
 [data-theme="audiophile-gold"],
@@ -1150,4 +1150,737 @@ input[type="checkbox"] {
   border-radius: 9999px !important;
   border: 2px solid rgba(16, 14, 18, 0.85) !important;
 }
+
+/* ==========================================================================
+   EMERALD WILDERNESS (LIVING NATURE, 3D FROSTED GLASS & WARM FIREFLIES)
+   ========================================================================== */
+
+/* Keyframes: Moving Trees & Foliage Sway */
+@keyframes trees-sway-slow {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  50% {
+    transform: rotate(1.2deg) skewX(0.8deg);
+  }
+}
+
+@keyframes trees-sway-med {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  50% {
+    transform: rotate(-1.5deg) skewX(-1deg);
+  }
+}
+
+@keyframes palm-sway {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2deg) translateY(-2px);
+  }
+}
+
+@keyframes jungle-sway {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.015) rotate(0.8deg);
+  }
+}
+
+/* Keyframes: Moving Water Ripples, Shimmer & Cascade */
+@keyframes water-shimmer {
+  0% {
+    transform: translateY(0) scaleY(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-8px) scaleY(1.05);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 0.35;
+  }
+}
+
+@keyframes water-ripple {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.08) translateY(-4px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes waterfall-flow {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes spray-rise {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.15) translateY(-14px);
+    opacity: 0.8;
+  }
+}
+
+/* Keyframes: Moving Light Rays (God Rays) & Cloud Shadows */
+@keyframes light-rays-sweep {
+  0%, 100% {
+    transform: rotate(0deg) translateX(0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: rotate(3deg) translateX(40px) scale(1.06);
+    opacity: 0.75;
+  }
+}
+
+@keyframes shadow-drift {
+  0% {
+    transform: translate(-10%, -5%);
+  }
+  50% {
+    transform: translate(10%, 8%);
+  }
+  100% {
+    transform: translate(-10%, -5%);
+  }
+}
+
+@keyframes mist-drift-1 {
+  0% {
+    transform: translateX(-25%);
+  }
+  50% {
+    transform: translateX(15%);
+  }
+  100% {
+    transform: translateX(-25%);
+  }
+}
+
+@keyframes mist-drift-2 {
+  0% {
+    transform: translateX(20%);
+  }
+  50% {
+    transform: translateX(-20%);
+  }
+  100% {
+    transform: translateX(20%);
+  }
+}
+
+/* Apply CSS classes for keyframe animations */
+.animate-trees-sway-slow {
+  animation: trees-sway-slow 8s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-trees-sway-med {
+  animation: trees-sway-med 5.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-palm-sway {
+  animation: palm-sway 6.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-jungle-sway {
+  animation: jungle-sway 7s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-water-shimmer {
+  animation: water-shimmer 7s ease-in-out infinite;
+}
+
+.animate-water-ripple {
+  animation: water-ripple 6s ease-in-out infinite;
+}
+
+.animate-waterfall-flow {
+  animation: waterfall-flow 1.8s linear infinite;
+}
+
+.animate-spray-rise {
+  animation: spray-rise 3.8s ease-in-out infinite;
+}
+
+.animate-light-rays-sweep {
+  animation: light-rays-sweep 14s ease-in-out infinite;
+  transform-origin: top left;
+}
+
+.animate-shadow-drift {
+  animation: shadow-drift 35s ease-in-out infinite;
+}
+
+.animate-mist-drift-1 {
+  animation: mist-drift-1 45s ease-in-out infinite;
+}
+
+.animate-mist-drift-2 {
+  animation: mist-drift-2 36s ease-in-out infinite;
+}
+
+/* Enhanced Dynamic Movement Keyframes for Tropical Rainforest */
+@keyframes vine-swing-left {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  35% {
+    transform: rotate(3.2deg) skewX(1deg);
+  }
+  70% {
+    transform: rotate(-2.4deg) skewX(-0.8deg);
+  }
+}
+
+@keyframes vine-swing-right {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  40% {
+    transform: rotate(-3.8deg) skewX(-1.2deg);
+  }
+  75% {
+    transform: rotate(2.2deg) skewX(0.7deg);
+  }
+}
+
+@keyframes vine-swing-center {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2.6deg) translateY(-2px);
+  }
+}
+
+@keyframes monstera-breathe-left {
+  0%, 100% {
+    transform: scale(1) rotate(0deg) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.035) rotate(1.8deg) translate(6px, -4px);
+  }
+}
+
+@keyframes monstera-breathe-right {
+  0%, 100% {
+    transform: scale(1) rotate(0deg) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.03) rotate(-2deg) translate(-5px, -3px);
+  }
+}
+
+@keyframes canopy-rustle {
+  0%, 100% {
+    transform: translateY(0) scaleY(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-5px) scaleY(1.02);
+    filter: brightness(1.06);
+  }
+}
+
+@keyframes stream-shimmer {
+  0% {
+    transform: translateX(-4%) scaleY(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateX(4%) scaleY(1.08);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(-4%) scaleY(1);
+    opacity: 0.45;
+  }
+}
+
+@keyframes dappled-sunlight {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(1) translate(0, 0);
+  }
+  33% {
+    opacity: 0.55;
+    transform: scale(1.06) translate(12px, 8px);
+  }
+  66% {
+    opacity: 0.4;
+    transform: scale(0.96) translate(-8px, 4px);
+  }
+}
+
+@keyframes jungle-fog-drift {
+  0% {
+    transform: translateX(-15%) translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(12%) translateY(-8px);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(-15%) translateY(0);
+    opacity: 0.35;
+  }
+}
+
+.animate-vine-left {
+  animation: vine-swing-left 5.2s ease-in-out infinite;
+  transform-origin: top left;
+}
+
+.animate-vine-right {
+  animation: vine-swing-right 6.4s ease-in-out infinite;
+  transform-origin: top right;
+}
+
+.animate-vine-center {
+  animation: vine-swing-center 4.6s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-monstera-left {
+  animation: monstera-breathe-left 5.8s ease-in-out infinite;
+  transform-origin: bottom left;
+}
+
+.animate-monstera-right {
+  animation: monstera-breathe-right 6.6s ease-in-out infinite;
+  transform-origin: bottom right;
+}
+
+.animate-canopy-rustle {
+  animation: canopy-rustle 7.5s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-stream-shimmer {
+  animation: stream-shimmer 4.8s ease-in-out infinite;
+}
+
+.animate-dappled-sunlight {
+  animation: dappled-sunlight 9s ease-in-out infinite;
+}
+
+.animate-jungle-fog {
+  animation: jungle-fog-drift 28s ease-in-out infinite;
+}
+
+/* Animated Living Oil Painting Keyframes */
+@keyframes painting-living-breath {
+  0% {
+    transform: scale(1) translate(0%, 0%);
+  }
+  35% {
+    transform: scale(1.035) translate(-0.8%, -0.4%);
+  }
+  70% {
+    transform: scale(1.02) translate(0.6%, -0.8%);
+  }
+  100% {
+    transform: scale(1) translate(0%, 0%);
+  }
+}
+
+@keyframes water-oil-caustics {
+  0%, 100% {
+    opacity: 0.38;
+    transform: scaleY(1) translateY(0);
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.68;
+    transform: scaleY(1.06) translateY(-2px);
+    filter: brightness(1.22);
+  }
+}
+
+@keyframes impasto-sheen {
+  0%, 100% {
+    opacity: 0.12;
+    transform: translateX(-5%);
+  }
+  50% {
+    opacity: 0.28;
+    transform: translateX(5%);
+  }
+}
+
+.animate-painting-living {
+  animation: painting-living-breath 38s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.animate-water-oil-caustics {
+  animation: water-oil-caustics 6s ease-in-out infinite;
+}
+
+.animate-impasto-sheen {
+  animation: impasto-sheen 12s ease-in-out infinite;
+}
+
+/* Animated Forest Diagonal Bands Keyframes (Sliding, Breeze Swaying, Random Zooming) */
+@keyframes band-slide-1 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -110px, 0);
+  }
+}
+
+@keyframes band-slide-2 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 130px, 0);
+  }
+}
+
+@keyframes band-slide-3 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -145px, 0);
+  }
+}
+
+@keyframes band-slide-4 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 95px, 0);
+  }
+}
+
+@keyframes band-slide-5 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -90px, 0);
+  }
+}
+
+@keyframes band-slide-6 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 120px, 0);
+  }
+}
+
+@keyframes band-slide-7 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -130px, 0);
+  }
+}
+
+@keyframes band-slide-8 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 110px, 0);
+  }
+}
+
+/* Organic Canopy Breeze Sway & Random Zooming */
+@keyframes band-sway-zoom {
+  0% {
+    transform: rotate(-36deg) scale(1.12) translate3d(0px, 0px, 0);
+  }
+  25% {
+    transform: rotate(-33deg) scale(1.22) translate3d(-16px, 14px, 0);
+  }
+  50% {
+    transform: rotate(-38.5deg) scale(1.09) translate3d(18px, -16px, 0);
+  }
+  75% {
+    transform: rotate(-34deg) scale(1.24) translate3d(-14px, -20px, 0);
+  }
+  100% {
+    transform: rotate(-36deg) scale(1.12) translate3d(0px, 0px, 0);
+  }
+}
+
+@keyframes canopy-light-spot-1 {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+    opacity: 0.25;
+  }
+  35% {
+    transform: translate3d(85px, -65px, 0) scale(1.35);
+    opacity: 0.65;
+  }
+  70% {
+    transform: translate3d(150px, 30px, 0) scale(0.85);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+    opacity: 0.25;
+  }
+}
+
+@keyframes canopy-light-spot-2 {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(1.1);
+    opacity: 0.3;
+  }
+  40% {
+    transform: translate3d(-90px, 65px, 0) scale(0.85);
+    opacity: 0.7;
+  }
+  80% {
+    transform: translate3d(-45px, -35px, 0) scale(1.3);
+    opacity: 0.38;
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(1.1);
+    opacity: 0.3;
+  }
+}
+
+@keyframes canopy-light-spot-3 {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(0.95);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate3d(105px, 85px, 0) scale(1.45);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(0.95);
+    opacity: 0.2;
+  }
+}
+
+.animate-band-slide-1 {
+  animation: band-slide-1 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-2 {
+  animation: band-slide-2 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-3 {
+  animation: band-slide-3 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-4 {
+  animation: band-slide-4 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-5 {
+  animation: band-slide-5 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-6 {
+  animation: band-slide-6 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-7 {
+  animation: band-slide-7 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-8 {
+  animation: band-slide-8 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-sway-overall {
+  animation: band-sway-zoom 5s ease-in-out infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.animate-canopy-spot-1 {
+  animation: canopy-light-spot-1 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-canopy-spot-2 {
+  animation: canopy-light-spot-2 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-canopy-spot-3 {
+  animation: canopy-light-spot-3 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ==========================================================================
+   3D FROSTED GLASS & GRADIENT SURFACES FOR EMERALD WILDERNESS
+   ========================================================================== */
+
+/* Universal Frosted Glass with 3D Specular Highlight & Bevel Edges */
+[data-theme="dynamic-emerald"] .wilderness-glass-card,
+[data-theme="dynamic-emerald"] .bg-card,
+[data-theme="dynamic-emerald"] article,
+.theme-dynamic-emerald .wilderness-glass-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(2, 38, 26, 0.32) 40%, rgba(1, 16, 11, 0.46) 100%) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid rgba(0, 245, 160, 0.22) !important;
+  border-top-color: rgba(255, 255, 255, 0.42) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.42), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.48), 
+    0 16px 40px -8px rgba(0, 10, 6, 0.7), 
+    0 0 20px rgba(0, 245, 160, 0.12) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="dynamic-emerald"] .wilderness-glass-card:hover,
+[data-theme="dynamic-emerald"] .bg-card:hover,
+.theme-dynamic-emerald .wilderness-glass-card:hover {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.14) 0%, rgba(2, 48, 32, 0.4) 40%, rgba(1, 20, 14, 0.52) 100%) !important;
+  border-top-color: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(0, 245, 160, 0.45) !important;
+  box-shadow: 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.65), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.55), 
+    0 22px 50px -6px rgba(0, 10, 6, 0.8), 
+    0 0 32px rgba(0, 245, 160, 0.32) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 3D Frosted Glass Modals & Dialogs */
+[data-theme="dynamic-emerald"] .modal-content,
+[data-theme="dynamic-emerald"] [role="dialog"],
+.theme-dynamic-emerald [role="dialog"] {
+  background: linear-gradient(165deg, rgba(2, 42, 30, 0.78) 0%, rgba(1, 24, 17, 0.88) 50%, rgba(1, 14, 10, 0.96) 100%) !important;
+  backdrop-filter: blur(36px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(200%) !important;
+  border: 1px solid rgba(0, 245, 160, 0.32) !important;
+  border-top-color: rgba(255, 255, 255, 0.55) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.75) !important;
+  box-shadow: 
+    0 30px 90px rgba(0, 0, 0, 0.85), 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.55), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.6), 
+    0 0 45px rgba(0, 245, 160, 0.28) !important;
+}
+
+/* 3D Glowing Gradient Primary Buttons */
+[data-theme="dynamic-emerald"] .btn-primary,
+[data-theme="dynamic-emerald"] button.bg-accent {
+  background: linear-gradient(135deg, #00f5a0 0%, #00e5cc 45%, #00d9f5 100%) !important;
+  color: #011a12 !important;
+  font-weight: 900 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.45) !important;
+  box-shadow: 
+    0 8px 24px -2px rgba(0, 245, 160, 0.55), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.75), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4), 
+    0 0 24px rgba(0, 245, 160, 0.4) !important;
+}
+
+[data-theme="dynamic-emerald"] .btn-primary:hover,
+[data-theme="dynamic-emerald"] button.bg-accent:hover {
+  filter: brightness(1.12);
+  box-shadow: 
+    0 10px 28px rgba(0, 245, 160, 0.7), 
+    inset 0 2px 2px 0 #ffffff, 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4), 
+    0 0 36px rgba(0, 245, 160, 0.6) !important;
+}
+
+/* 3D Frosted Glass Secondary Buttons */
+[data-theme="dynamic-emerald"] .btn-secondary {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(2, 40, 28, 0.45) 100%) !important;
+  color: #e6fff5 !important;
+  border: 1px solid rgba(0, 245, 160, 0.3) !important;
+  border-top-color: rgba(255, 255, 255, 0.48) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 
+    0 6px 18px rgba(0, 0, 0, 0.5), 
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.4), 
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="dynamic-emerald"] .btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(2, 54, 38, 0.55) 100%) !important;
+  border-top-color: rgba(255, 255, 255, 0.75) !important;
+  color: #ffffff !important;
+}
+
+/* Frosted Glass Inputs with 3D Bevel and Glowing Focus */
+[data-theme="dynamic-emerald"] input,
+[data-theme="dynamic-emerald"] textarea,
+[data-theme="dynamic-emerald"] select {
+  background: linear-gradient(180deg, rgba(0, 16, 11, 0.5) 0%, rgba(2, 34, 24, 0.42) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  color: #e6fff5 !important;
+  border: 1px solid rgba(0, 245, 160, 0.25) !important;
+  border-top-color: rgba(0, 0, 0, 0.65) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.6), 
+    0 0 14px rgba(0, 245, 160, 0.1) !important;
+}
+
+[data-theme="dynamic-emerald"] input:focus,
+[data-theme="dynamic-emerald"] textarea:focus,
+[data-theme="dynamic-emerald"] select:focus {
+  border-color: #00f5a0 !important;
+  box-shadow: 
+    0 0 20px rgba(0, 245, 160, 0.4), 
+    inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+  outline: none !important;
+}
+
+/* Glowing Scrollbar for Emerald Wilderness */
+[data-theme="dynamic-emerald"] ::-webkit-scrollbar-thumb,
+.theme-dynamic-emerald ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0, 245, 160, 0.65), rgba(0, 217, 245, 0.55), rgba(255, 224, 102, 0.6)) !important;
+  border-radius: 9999px !important;
+  border: 2px solid rgba(1, 16, 11, 0.85) !important;
+  box-shadow: 0 0 10px rgba(0, 245, 160, 0.4) !important;
+}
+
 

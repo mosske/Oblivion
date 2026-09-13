@@ -17,6 +17,7 @@ import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";
 import { DesignerTrapezoidBackground } from "./components/DesignerTrapezoidBackground";
+import { EmeraldWildernessBackground } from "./components/EmeraldWildernessBackground";
 import { EqualizerProvider } from "./context/EqualizerContext";
 import {
   getCachedPlaylistsFromDB,
@@ -476,14 +477,25 @@ export default function App() {
       const saved = localStorage.getItem("oblivion_user_settings");
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Default to dynamic-emerald (Emerald Wilderness) so living nature scenes & fireflies are visible immediately
+        let fullAppDesign = parsed.fullAppDesign;
+        if (!fullAppDesign || fullAppDesign === "designer") {
+          fullAppDesign = "dynamic-emerald";
+        }
+
+        let themePreset = parsed.themePreset;
+        if (!themePreset || themePreset === "designer-ivory") {
+          themePreset = "emerald-synth";
+        }
+
         return {
           audioQuality: parsed.audioQuality || "high",
           crossfadeDuration: parsed.crossfadeDuration ?? 2,
           normalizeVolume: parsed.normalizeVolume ?? true,
           autoPlaySimilar: parsed.autoPlaySimilar ?? true,
-          themePreset: parsed.themePreset || "designer-ivory",
-          miniPlayerLayout: parsed.miniPlayerLayout || "designer-waveform",
-          fullAppDesign: parsed.fullAppDesign || "designer",
+          themePreset,
+          miniPlayerLayout: parsed.miniPlayerLayout || "minimal-capsule",
+          fullAppDesign,
           playerBackgroundAnimation: parsed.playerBackgroundAnimation || "ambient-drift",
           animationDriftSpeed: parsed.animationDriftSpeed ?? 6,
           animationAuroraSpeed: parsed.animationAuroraSpeed ?? 6,
@@ -504,9 +516,9 @@ export default function App() {
       crossfadeDuration: 2,
       normalizeVolume: true,
       autoPlaySimilar: true,
-      themePreset: "designer-ivory",
-      miniPlayerLayout: "designer-waveform",
-      fullAppDesign: "designer",
+      themePreset: "emerald-synth",
+      miniPlayerLayout: "minimal-capsule",
+      fullAppDesign: "dynamic-emerald",
       playerBackgroundAnimation: "ambient-drift",
       animationDriftSpeed: 6,
       animationAuroraSpeed: 6,
@@ -572,9 +584,9 @@ export default function App() {
         "dynamic-emerald": {
           accent: "#00f5a0",
           secondary: "#00d9f5",
-          tertiary: "#059669",
-          contrastText: "#000000",
-          sliderTrack: "#06281e",
+          tertiary: "#ffe066",
+          contrastText: "#011a12",
+          sliderTrack: "#03281c",
           sliderFill: "#00f5a0",
         },
         "audiophile-gold": {
@@ -2282,7 +2294,7 @@ export default function App() {
 
   return (
     <EqualizerProvider>
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean(activeFullDesign.isCandy || activeFullDesign.id === "candyland")} />
 
@@ -2291,6 +2303,9 @@ export default function App() {
 
       {/* Animated Dynamic Trapezoid Lines Mesh & Shifting Charcoal Shadows for Theme 01 (Designer) */}
       <DesignerTrapezoidBackground isActive={Boolean(activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory")} />
+
+      {/* Animated Living Nature Scenes (Alpine Pine Forest & Bridge, Ocean Island, Rainforest, Waterfall) & Warm Fireflies for Theme 04 (Emerald Wilderness) */}
+      <EmeraldWildernessBackground isActive={Boolean(activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald")} />
 
       {/* Sidebar Navigation */}
       <Sidebar
@@ -2315,7 +2330,7 @@ export default function App() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`app-content main-viewport flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass" || activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
+      <main className={`app-content main-viewport flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass" || activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory" || activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
         {/* Sticky Top Navigation Header Across All Views */}
         <Navbar
           activeTab={activeTab}

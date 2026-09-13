@@ -2,23 +2,30 @@
 
 :root,
 [data-theme="designer"],
-.theme-designer {
-  --bg-canvas: linear-gradient(135deg, #051911 0%, #082017 50%, #0a261b 100%);
-  --canvas-text-primary: #f8f6f0;
-  --canvas-text-secondary: #d8d2c4;
-  --canvas-text-muted: #a39c8e;
-  --card-bg: rgba(248, 246, 240, 0.95);
-  --card-text: #1a201c;
-  --card-border: rgba(230, 226, 216, 0.8);
-  --accent-primary: #c59b27;
-  --accent-secondary: #e5b85c;
-  --accent-tertiary: #fef08a;
-  --accent-contrast-text: #1a201c;
-  --text-muted: #666258;
-  --border-subtle: #e6e2d8;
-  --glass-blur: blur(16px);
-  --glass-bg: rgba(248, 246, 240, 0.92);
-  --glass-border: rgba(230, 226, 216, 0.8);
+.theme-designer,
+[data-theme="designer-ivory"],
+.theme-designer-ivory {
+  --bg-canvas: radial-gradient(circle at 50% 20%, #1f1b22 0%, #131116 50%, #0a090c 100%);
+  --canvas-text-primary: #fdfcf9;
+  --canvas-text-secondary: #e6decb;
+  --canvas-text-muted: #b0a694;
+  --card-bg: linear-gradient(180deg, rgba(42, 38, 45, 0.72) 0%, rgba(26, 23, 29, 0.82) 55%, rgba(16, 14, 18, 0.92) 100%);
+  --card-text: #fdfcf9;
+  --card-border: rgba(223, 184, 108, 0.28);
+  --accent-primary: #dfb86c;
+  --accent-color: #dfb86c;
+  --primary: #dfb86c;
+  --accent-primary-rgb: 223, 184, 108;
+  --accent-secondary: #f7e2ab;
+  --accent-tertiary: #a07422;
+  --accent-contrast-text: #120f14;
+  --text-muted: #b0a694;
+  --border-subtle: rgba(223, 184, 108, 0.22);
+  --border-active: var(--accent-primary);
+  --waveform-inactive: rgba(176, 166, 148, 0.4);
+  --glass-blur: blur(24px);
+  --glass-bg: linear-gradient(180deg, rgba(40, 35, 43, 0.7) 0%, rgba(22, 19, 25, 0.85) 100%);
+  --glass-border: rgba(223, 184, 108, 0.3);
 }
 
 [data-theme="cyberpunk-neon"],
@@ -31,11 +38,15 @@
   --card-text: #ffffff;
   --card-border: rgba(0, 243, 255, 0.3);
   --accent-primary: #00f3ff;
+  --accent-color: #00f3ff;
+  --primary: #00f3ff;
+  --accent-primary-rgb: 0, 243, 255;
   --accent-secondary: #ff007f;
   --accent-tertiary: #7b2cbf;
   --accent-contrast-text: #050814;
   --text-muted: #94a3b8;
   --border-subtle: rgba(0, 243, 255, 0.25);
+  --border-active: var(--accent-primary);
   --glass-blur: blur(16px);
   --glass-bg: rgba(10, 13, 26, 0.75);
   --glass-border: rgba(0, 243, 255, 0.3);
@@ -61,11 +72,15 @@
   --card-text: #3b1235;
   --card-border: rgba(255, 255, 255, 0.95);
   --accent-primary: #ff70a6;
+  --accent-color: #ff70a6;
+  --primary: #ff70a6;
+  --accent-primary-rgb: 255, 112, 166;
   --accent-secondary: #a3c4f3;
   --accent-tertiary: #ffd166;
   --accent-contrast-text: #ffffff;
   --text-muted: #5e356d;
   --border-subtle: rgba(255, 182, 193, 0.5);
+  --border-active: var(--accent-primary);
   --glass-blur: blur(16px);
   --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(255, 255, 255, 0.95);
@@ -73,22 +88,26 @@
 
 [data-theme="dynamic-emerald"],
 .theme-dynamic-emerald {
-  --bg-canvas: linear-gradient(150deg, #021a12 0%, #072419 60%, #010e08 100%);
-  --canvas-text-primary: #d0fbe9;
+  --bg-canvas: linear-gradient(160deg, #01140e 0%, #032419 45%, #010d09 100%);
+  --canvas-text-primary: #e6fff5;
   --canvas-text-secondary: #a7f3d0;
   --canvas-text-muted: #6ee7b7;
-  --card-bg: rgba(2, 26, 18, 0.75);
-  --card-text: #d0fbe9;
-  --card-border: rgba(0, 245, 160, 0.3);
+  --card-bg: rgba(2, 34, 24, 0.38);
+  --card-text: #e6fff5;
+  --card-border: rgba(0, 245, 160, 0.28);
   --accent-primary: #00f5a0;
+  --accent-color: #00f5a0;
+  --primary: #00f5a0;
+  --accent-primary-rgb: 0, 245, 160;
   --accent-secondary: #00d9f5;
-  --accent-tertiary: #05668d;
-  --accent-contrast-text: #021a12;
+  --accent-tertiary: #ffe066;
+  --accent-contrast-text: #011a12;
   --text-muted: #6ee7b7;
-  --border-subtle: rgba(0, 245, 160, 0.25);
-  --glass-blur: blur(16px);
-  --glass-bg: rgba(2, 26, 18, 0.75);
-  --glass-border: rgba(0, 245, 160, 0.3);
+  --border-subtle: rgba(0, 245, 160, 0.22);
+  --border-active: var(--accent-primary);
+  --glass-blur: blur(24px);
+  --glass-bg: rgba(2, 30, 22, 0.38);
+  --glass-border: rgba(0, 245, 160, 0.28);
 }
 
 [data-theme="audiophile-gold"],
@@ -101,11 +120,15 @@
   --card-text: #fef3c7;
   --card-border: rgba(245, 158, 11, 0.35);
   --accent-primary: #f59e0b;
-  --accent-secondary: #e65c00;
-  --accent-tertiary: #d4af37;
+  --accent-color: #f59e0b;
+  --primary: #f59e0b;
+  --accent-primary-rgb: 245, 158, 11;
+  --accent-secondary: #d4af37;
+  --accent-tertiary: #e65c00;
   --accent-contrast-text: #170d06;
   --text-muted: #fbbf24;
   --border-subtle: rgba(245, 158, 11, 0.3);
+  --border-active: var(--accent-primary);
   --glass-blur: blur(16px);
   --glass-bg: rgba(38, 20, 8, 0.75);
   --glass-border: rgba(245, 158, 11, 0.35);
@@ -121,14 +144,142 @@
   --card-text: #fdf4ff;
   --card-border: rgba(255, 42, 141, 0.35);
   --accent-primary: #ff2a8d;
-  --accent-secondary: #ff758c;
-  --accent-tertiary: #8a2be2;
+  --accent-color: #ff2a8d;
+  --primary: #ff2a8d;
+  --accent-primary-rgb: 255, 42, 141;
+  --accent-secondary: #8a2be2;
+  --accent-tertiary: #ff758c;
   --accent-contrast-text: #ffffff;
   --text-muted: #f0abfc;
   --border-subtle: rgba(255, 42, 141, 0.3);
+  --border-active: var(--accent-primary);
   --glass-blur: blur(16px);
   --glass-bg: rgba(30, 11, 54, 0.65);
   --glass-border: rgba(255, 42, 141, 0.35);
+}
+
+/* Theme 07: Neue Editorial (High-Contrast Swiss Layout, Warm Pale Beige, Alabaster Cards & Charcoal Pills) */
+[data-theme="neue-editorial"],
+.theme-neue-editorial {
+  --bg-canvas: #F2E8D8;
+  --canvas-text-primary: #1F1F1F;
+  --canvas-text-secondary: #666055;
+  --canvas-text-muted: #8A8478;
+  --card-bg: #FAF5ED;
+  --card-text: #1F1F1F;
+  --card-border: rgba(31, 31, 31, 0.12);
+  --accent-primary: #1F1F1F;
+  --accent-color: #1F1F1F;
+  --primary: #1F1F1F;
+  --accent-primary-rgb: 31, 31, 31;
+  --accent-secondary: #3A3530;
+  --accent-tertiary: #524B44;
+  --accent-contrast-text: #F2E8D8;
+  --text-primary: #1F1F1F;
+  --text-secondary: #666055;
+  --text-muted: #666055;
+  --border-color: rgba(31, 31, 31, 0.12);
+  --border-subtle: rgba(31, 31, 31, 0.12);
+  --border-active: var(--accent-primary);
+  --glow-color-1: rgba(31, 31, 31, 0.15);
+  --glow-color-2: rgba(242, 232, 216, 0.60);
+  --waveform-inactive: rgba(31, 31, 31, 0.18);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(250, 245, 237, 0.96);
+  --glass-border: rgba(31, 31, 31, 0.12);
+}
+
+/* Theme 08: Obsidian Depth (Matte Slate, Authentic 3D Neumorphic Sculpting, Radiant Light Blue / Cyan Gradient) */
+[data-theme="obsidian-depth"],
+.theme-obsidian-depth {
+  --bg-canvas: #2a2e38;
+  --canvas-text-primary: #f1f5f9;
+  --canvas-text-secondary: #94a3b8;
+  --canvas-text-muted: #64748b;
+  --card-bg: #2e3441;
+  --card-text: #f1f5f9;
+  --card-border: rgba(255, 255, 255, 0.05);
+  --accent-primary: #38bdf8;
+  --accent-color: #38bdf8;
+  --primary: #38bdf8;
+  --accent-primary-rgb: 56, 189, 248;
+  --accent-secondary: #a5f3fc;
+  --accent-tertiary: #0284c7;
+  --accent-contrast-text: #0f172a;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-active: var(--accent-primary);
+  --glow-color-1: rgba(56, 189, 248, 0.35);
+  --glow-color-2: rgba(165, 243, 252, 0.45);
+  --waveform-inactive: rgba(148, 163, 184, 0.22);
+  --glass-blur: blur(20px);
+  --glass-bg: rgba(46, 52, 65, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  /* 3D Neumorphic Tokens */
+  --neu-shadow-raised: 8px 8px 18px rgba(16, 18, 24, 0.75), -7px -7px 16px rgba(255, 255, 255, 0.07), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  --neu-shadow-raised-hover: 11px 11px 24px rgba(14, 16, 22, 0.85), -9px -9px 20px rgba(255, 255, 255, 0.09), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  --neu-shadow-button: 6px 6px 14px rgba(15, 17, 23, 0.7), -5px -5px 12px rgba(255, 255, 255, 0.07);
+  --neu-shadow-sunken: inset 4px 4px 9px rgba(14, 16, 22, 0.85), inset -3px -3px 7px rgba(255, 255, 255, 0.06);
+  --neu-shadow-dock: 10px 10px 24px rgba(12, 14, 20, 0.85), -8px -8px 20px rgba(255, 255, 255, 0.07), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Theme 09: Nebula Liquid Glass (Deep Cosmic Void, Animated Saturated Gradient Mesh, Frosted Liquid Glass & Glowing Accents) */
+[data-theme="nebula-liquid-glass"],
+.theme-nebula-liquid-glass {
+  --bg-canvas: #0c071e;
+  --canvas-text-primary: #ffffff;
+  --canvas-text-secondary: #f1e4ff;
+  --canvas-text-muted: #c084fc;
+  --card-bg: rgba(255, 255, 255, 0.035);
+  --card-text: #ffffff;
+  --card-border: rgba(255, 255, 255, 0.18);
+  --accent-primary: #ff007f;
+  --accent-color: #ff007f;
+  --primary: #ff007f;
+  --accent-primary-rgb: 255, 0, 127;
+  --accent-secondary: #ff7b00;
+  --accent-tertiary: #00f0ff;
+  --accent-violet: #8b5cf6;
+  --accent-contrast-text: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #ebd6ff;
+  --text-muted: #c084fc;
+  --border-color: rgba(255, 255, 255, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-active: var(--accent-primary);
+  --glow-color-1: rgba(255, 0, 127, 0.6);
+  --glow-color-2: rgba(255, 123, 0, 0.5);
+  --glow-color-3: rgba(0, 240, 255, 0.5);
+  --glow-color-4: rgba(139, 92, 246, 0.5);
+  --waveform-inactive: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(32px);
+  --glass-bg: rgba(255, 255, 255, 0.035);
+  --glass-border: rgba(255, 255, 255, 0.20);
+  --glass-shadow: 0 14px 40px -6px rgba(0, 0, 0, 0.65), inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35), 0 0 24px rgba(255, 0, 127, 0.18);
+}
+
+[data-theme="neue-editorial"],
+.theme-neue-editorial {
+  font-family: 'Neue Haas Grotesk Display Pro', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+}
+
+[data-theme="neue-editorial"] .font-light {
+  font-weight: 300 !important;
+}
+
+[data-theme="neue-editorial"] .font-medium {
+  font-weight: 500 !important;
+}
+
+[data-theme="neue-editorial"] .font-semibold,
+[data-theme="neue-editorial"] .font-bold,
+[data-theme="neue-editorial"] .font-extrabold,
+[data-theme="neue-editorial"] .font-black {
+  font-weight: 600 !important;
 }
 
 /* Candyland 3x Thicker Upward Candy-Cane Diagonal Striped Canvas Background */
@@ -194,6 +345,46 @@
   color: var(--card-text) !important;
 }
 
+/* Lyrics Timing Calibration Control Bar & Buttons (Dynamically bound across all 6 themes) */
+.lyrics-timing-bar {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--card-text) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lyrics-timing-btn {
+  background: rgba(125, 125, 125, 0.1);
+  color: var(--card-text) !important;
+  border: 1px solid var(--border-subtle) !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lyrics-timing-btn:hover {
+  background: var(--accent-primary) !important;
+  color: var(--accent-contrast-text) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.lyrics-timing-btn:hover *,
+.lyrics-timing-btn:hover svg {
+  color: var(--accent-contrast-text) !important;
+  stroke: var(--accent-contrast-text) !important;
+}
+
+.lyrics-timing-badge {
+  color: var(--card-text);
+  border: 1px solid var(--border-subtle);
+  background: rgba(125, 125, 125, 0.06);
+}
+
+.lyrics-timing-badge.active-offset {
+  color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  background: rgba(125, 125, 125, 0.12);
+}
+
 /* Enforced WCAG Active Button, Pill, & Toggle Rule */
 .active-accent-state,
 button.active,
@@ -253,3 +444,1034 @@ input[type="checkbox"] {
 .theme-status-active {
   color: var(--accent-primary) !important;
 }
+
+/* User Profile Avatar Dynamic Theme Ring & Glow (Theme 01-06 dynamic accent binding) */
+.user-avatar-ring,
+.theme-avatar-ring {
+  border: 2px solid var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px var(--accent-primary) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-avatar-ring:hover,
+.theme-avatar-ring:hover,
+.user-avatar-ring:focus-visible,
+.theme-avatar-ring:focus-visible {
+  border-color: var(--accent-secondary, var(--accent-primary)) !important;
+  box-shadow: 0 0 8px var(--accent-primary), 0 0 0 2px var(--accent-secondary, var(--accent-primary)) !important;
+}
+
+/* =========================================================================
+   Animated Gradient Waveform, Scrubber Fill & Dynamic Artwork Glow
+   ========================================================================= */
+
+@keyframes progress-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes artwork-glow-pulse {
+  0% {
+    box-shadow: 0 0 20px var(--accent-primary), 0 0 40px var(--accent-secondary);
+  }
+  50% {
+    box-shadow: 0 0 35px var(--accent-secondary), 0 0 70px var(--accent-primary);
+  }
+  100% {
+    box-shadow: 0 0 25px var(--accent-primary), 0 0 55px var(--accent-secondary);
+  }
+}
+
+/* High-Contrast Dynamic Multi-Stop Animated Gradient Fill */
+.progress-gradient-animated,
+.active-progress-gradient {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary)) !important;
+  background-size: 200% 100% !important;
+  animation: progress-gradient-shift 3s linear infinite !important;
+}
+
+/* Dynamic Color-Shifting Ambient Glow for Album Artwork & Video Player Window */
+.artwork-glow-dynamic,
+.artwork-ambient-glow {
+  box-shadow: 0 0 25px var(--accent-primary), 0 0 50px var(--accent-secondary) !important;
+  animation: artwork-glow-pulse 6s ease-in-out infinite alternate !important;
+}
+
+/* Crisp Structural Inactive Waveform Bars & Unplayed Scrubber Track */
+.waveform-inactive-bar,
+.unplayed-track-tint {
+  background: rgba(255, 255, 255, 0.20) !important;
+}
+
+[data-theme="designer"] .waveform-inactive-bar,
+.theme-designer .waveform-inactive-bar,
+[data-theme="designer"] .unplayed-track-tint,
+.theme-designer .unplayed-track-tint {
+  background: var(--waveform-inactive, rgba(102, 98, 88, 0.48)) !important;
+}
+
+[data-theme="candyland"] .waveform-inactive-bar,
+.theme-candyland .waveform-inactive-bar,
+[data-theme="ytmusic-red"] .waveform-inactive-bar,
+.theme-ytmusic-red .waveform-inactive-bar,
+[data-theme="candyland"] .unplayed-track-tint,
+.theme-candyland .unplayed-track-tint {
+  background: rgba(30, 74, 122, 0.25) !important;
+}
+
+[data-theme="neue-editorial"] .waveform-inactive-bar,
+.theme-neue-editorial .waveform-inactive-bar,
+[data-theme="neue-editorial"] .unplayed-track-tint,
+.theme-neue-editorial .unplayed-track-tint {
+  background: var(--waveform-inactive, rgba(31, 31, 31, 0.18)) !important;
+}
+
+[data-theme="obsidian-depth"] .waveform-inactive-bar,
+.theme-obsidian-depth .waveform-inactive-bar,
+[data-theme="obsidian-depth"] .unplayed-track-tint,
+.theme-obsidian-depth .unplayed-track-tint {
+  background: rgba(148, 163, 184, 0.22) !important;
+}
+
+/* =========================================================================
+   Obsidian Depth Authentic 3D Neumorphic Sculpting & Lighting Architecture
+   ========================================================================= */
+
+[data-theme="obsidian-depth"] body,
+.theme-obsidian-depth body {
+  background-color: #2a2e38 !important;
+}
+
+/* 3D Elevated Cards & Blocks */
+[data-theme="obsidian-depth"] .neu-3d-card,
+[data-theme="obsidian-depth"] .playlist-card-elevated,
+[data-theme="obsidian-depth"] .stat-card,
+[data-theme="obsidian-depth"] .settings-card,
+[data-theme="obsidian-depth"] .modal-3d-surface {
+  background: linear-gradient(145deg, #323846, #262b34) !important;
+  box-shadow: 8px 8px 18px rgba(16, 18, 24, 0.75), -7px -7px 16px rgba(255, 255, 255, 0.07), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="obsidian-depth"] .neu-3d-card:hover,
+[data-theme="obsidian-depth"] .playlist-card-elevated:hover {
+  box-shadow: 11px 11px 24px rgba(14, 16, 22, 0.85), -9px -9px 20px rgba(255, 255, 255, 0.09), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+/* 3D Raised Buttons & Squircle Action Controls */
+[data-theme="obsidian-depth"] .neu-3d-btn,
+[data-theme="obsidian-depth"] .transport-btn-3d {
+  background: linear-gradient(145deg, #333946, #262a33) !important;
+  box-shadow: 6px 6px 14px rgba(15, 17, 23, 0.7), -5px -5px 12px rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  color: #f1f5f9 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="obsidian-depth"] .neu-3d-btn:hover,
+[data-theme="obsidian-depth"] .transport-btn-3d:hover {
+  box-shadow: 8px 8px 18px rgba(13, 15, 21, 0.85), -6px -6px 15px rgba(255, 255, 255, 0.09) !important;
+  color: #38bdf8 !important;
+  transform: translateY(-1px);
+}
+
+[data-theme="obsidian-depth"] .neu-3d-btn:active,
+[data-theme="obsidian-depth"] .transport-btn-3d:active {
+  box-shadow: inset 4px 4px 8px rgba(13, 15, 20, 0.85), inset -3px -3px 7px rgba(255, 255, 255, 0.05) !important;
+  transform: translateY(1px);
+}
+
+/* Radiant Blue Gradient 3D Buttons (Main Play, Apply, Primary CTAs) */
+[data-theme="obsidian-depth"] .neu-3d-btn-primary,
+[data-theme="obsidian-depth"] .btn-primary-gradient {
+  background: linear-gradient(135deg, #a5f3fc 0%, #38bdf8 45%, #0284c7 100%) !important;
+  box-shadow: 6px 6px 16px rgba(12, 14, 20, 0.75), -4px -4px 10px rgba(255, 255, 255, 0.12), 0 0 22px rgba(56, 189, 248, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #0b1322 !important;
+  font-weight: 800 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="obsidian-depth"] .neu-3d-btn-primary:hover,
+[data-theme="obsidian-depth"] .btn-primary-gradient:hover {
+  box-shadow: 8px 8px 20px rgba(10, 12, 18, 0.85), -5px -5px 14px rgba(255, 255, 255, 0.16), 0 0 28px rgba(56, 189, 248, 0.5) !important;
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+[data-theme="obsidian-depth"] .neu-3d-btn-primary:active,
+[data-theme="obsidian-depth"] .btn-primary-gradient:active {
+  box-shadow: inset 3px 3px 6px rgba(10, 36, 64, 0.7), inset -2px -2px 5px rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(1px);
+}
+
+/* Recessed / Sunken 3D Inputs, Search Bars, & Inset Trays */
+[data-theme="obsidian-depth"] .neu-3d-inset,
+[data-theme="obsidian-depth"] input[type="text"],
+[data-theme="obsidian-depth"] input[type="search"],
+[data-theme="obsidian-depth"] textarea,
+[data-theme="obsidian-depth"] .search-input-field {
+  background: #242831 !important;
+  box-shadow: inset 4px 4px 9px rgba(13, 15, 21, 0.85), inset -3px -3px 7px rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="obsidian-depth"] input[type="text"]:focus,
+[data-theme="obsidian-depth"] input[type="search"]:focus,
+[data-theme="obsidian-depth"] textarea:focus,
+[data-theme="obsidian-depth"] .search-input-field:focus {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: inset 4px 4px 9px rgba(13, 15, 21, 0.85), inset -3px -3px 7px rgba(255, 255, 255, 0.06), 0 0 12px rgba(56, 189, 248, 0.25) !important;
+}
+
+/* 3D Floating Player Dock & Bottom Deck */
+[data-theme="obsidian-depth"] .floating-player-deck,
+[data-theme="obsidian-depth"] .bottom-nav-3d {
+  background: linear-gradient(145deg, #303643, #252932) !important;
+  box-shadow: 10px 10px 24px rgba(12, 14, 20, 0.85), -8px -8px 20px rgba(255, 255, 255, 0.07), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 3D Range Sliders & Audio Seekers */
+[data-theme="obsidian-depth"] .slider-track-3d {
+  background: #20242d !important;
+  box-shadow: inset 3px 3px 6px rgba(10, 12, 17, 0.85), inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="obsidian-depth"] input[type="range"]::-webkit-slider-runnable-track,
+.theme-obsidian-depth input[type="range"]::-webkit-slider-runnable-track {
+  background: #20242d !important;
+  box-shadow: inset 3px 3px 6px rgba(10, 12, 17, 0.85), inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
+  border-radius: 9999px;
+  height: 8px;
+}
+
+[data-theme="obsidian-depth"] input[type="range"]::-moz-range-track,
+.theme-obsidian-depth input[type="range"]::-moz-range-track {
+  background: #20242d !important;
+  box-shadow: inset 3px 3px 6px rgba(10, 12, 17, 0.85), inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
+  border-radius: 9999px;
+  height: 8px;
+}
+
+[data-theme="obsidian-depth"] input[type="range"]::-webkit-slider-thumb,
+.theme-obsidian-depth input[type="range"]::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #a5f3fc 0%, #38bdf8 50%, #0284c7 100%) !important;
+  box-shadow: 4px 4px 10px rgba(10, 12, 18, 0.8), -2px -2px 6px rgba(255, 255, 255, 0.2), 0 0 12px rgba(56, 189, 248, 0.6) !important;
+  border: 2px solid #20242d !important;
+  width: 18px;
+  height: 18px;
+  margin-top: -5px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+[data-theme="obsidian-depth"] input[type="range"]::-moz-range-thumb,
+.theme-obsidian-depth input[type="range"]::-moz-range-thumb {
+  background: linear-gradient(135deg, #a5f3fc 0%, #38bdf8 50%, #0284c7 100%) !important;
+  box-shadow: 4px 4px 10px rgba(10, 12, 18, 0.8), -2px -2px 6px rgba(255, 255, 255, 0.2), 0 0 12px rgba(56, 189, 248, 0.6) !important;
+  border: 2px solid #20242d !important;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+[data-theme="obsidian-depth"] input[type="range"]:hover::-webkit-slider-thumb,
+.theme-obsidian-depth input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+/* 3D Checkboxes */
+[data-theme="obsidian-depth"] input[type="checkbox"],
+.theme-obsidian-depth input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #242831;
+  box-shadow: inset 2px 2px 5px rgba(13, 15, 21, 0.85), inset -2px -2px 4px rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="obsidian-depth"] input[type="checkbox"]:checked,
+.theme-obsidian-depth input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, #a5f3fc 0%, #38bdf8 50%, #0284c7 100%) !important;
+  box-shadow: 3px 3px 8px rgba(12, 14, 20, 0.8), 0 0 12px rgba(56, 189, 248, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="obsidian-depth"] input[type="checkbox"]:checked::after,
+.theme-obsidian-depth input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 11px;
+  border: solid #0f172a;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+/* Obsidian Depth Interactive Elements Radiant Lighter-Blue Gradient Overrides */
+[data-theme="obsidian-depth"] .theme-badge-active,
+.theme-obsidian-depth .theme-badge-active {
+  background: linear-gradient(135deg, #a5f3fc 0%, #38bdf8 50%, #0284c7 100%) !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  box-shadow: 4px 4px 10px rgba(12, 14, 20, 0.7), 0 0 14px rgba(56, 189, 248, 0.4) !important;
+}
+
+[data-theme="obsidian-depth"] .theme-badge-active *,
+.theme-obsidian-depth .theme-badge-active * {
+  color: #0f172a !important;
+  stroke: #0f172a !important;
+}
+
+[data-theme="obsidian-depth"] .theme-card-active,
+.theme-obsidian-depth .theme-card-active {
+  border: 2px solid #38bdf8 !important;
+  box-shadow: 8px 8px 20px rgba(14, 16, 22, 0.85), -7px -7px 16px rgba(255, 255, 255, 0.08), 0 0 20px rgba(56, 189, 248, 0.3) !important;
+}
+
+[data-theme="obsidian-depth"] .user-avatar-ring,
+.theme-obsidian-depth .user-avatar-ring,
+[data-theme="obsidian-depth"] .theme-avatar-ring,
+.theme-obsidian-depth .theme-avatar-ring {
+  border: 2px solid #38bdf8 !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6), 4px 4px 10px rgba(12, 14, 20, 0.7) !important;
+}
+
+/* Neue Editorial Pill-Shaped Control Elements */
+[data-theme="neue-editorial"] .lyrics-mode-pill,
+[data-theme="neue-editorial"] .lyrics-timing-btn,
+[data-theme="neue-editorial"] .lyrics-timing-bar {
+  border-radius: 9999px !important;
+}
+
+/* Dynamic Waveform Playing Equalizer Bars in Track/Playlist Views */
+.track-equalizer-bar {
+  background: linear-gradient(180deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary)) !important;
+  box-shadow: 0 0 5px var(--accent-primary) !important;
+}
+
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-shift {
+  animation: gradient-shift 15s ease infinite;
+  background-size: 200% 200%;
+}
+
+/* ========================================================
+   NEBULA LIQUID GLASS (Theme 09) SPECIALIZED STYLING & FX
+   ======================================================== */
+@keyframes nebula-orb-drift-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(80px, -60px) scale(1.15);
+  }
+  66% {
+    transform: translate(-50px, 70px) scale(0.9);
+  }
+}
+
+@keyframes nebula-orb-drift-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-90px, 50px) scale(0.95);
+  }
+  66% {
+    transform: translate(60px, -70px) scale(1.2);
+  }
+}
+
+@keyframes nebula-orb-drift-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1.05);
+  }
+  50% {
+    transform: translate(70px, 80px) scale(0.85);
+  }
+}
+
+@keyframes nebula-orb-drift-4 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-70px, -80px) scale(1.15);
+  }
+  66% {
+    transform: translate(80px, 40px) scale(0.9);
+  }
+}
+
+@keyframes nebula-aurora-sweep {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(25deg);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+}
+
+.animate-nebula-orb-1 {
+  animation: nebula-orb-drift-1 6s ease-in-out infinite;
+}
+
+.animate-nebula-orb-2 {
+  animation: nebula-orb-drift-2 6s ease-in-out infinite;
+}
+
+.animate-nebula-orb-3 {
+  animation: nebula-orb-drift-3 6s ease-in-out infinite;
+}
+
+.animate-nebula-orb-4 {
+  animation: nebula-orb-drift-4 6s ease-in-out infinite;
+}
+
+.animate-nebula-aurora {
+  animation: nebula-aurora-sweep 6s ease infinite;
+  background-size: 300% 300%;
+}
+
+/* Liquid Glass Frosted Card Surfacing with 3D Edge Highlights */
+[data-theme="nebula-liquid-glass"] .liquid-glass-card,
+.theme-nebula-liquid-glass .liquid-glass-card {
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.35);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+  box-shadow: 
+    0 14px 40px -6px rgba(0, 0, 0, 0.65), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35), 
+    0 0 22px rgba(255, 0, 127, 0.14);
+}
+
+[data-theme="nebula-liquid-glass"] .liquid-glass-card:hover,
+.theme-nebula-liquid-glass .liquid-glass-card:hover {
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(255, 255, 255, 0.28);
+  border-top-color: rgba(255, 255, 255, 0.55);
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    0 20px 48px -6px rgba(0, 0, 0, 0.75), 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.7), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.45), 
+    0 0 32px rgba(255, 0, 127, 0.28);
+}
+
+/* Transparent Liquid Frosted Modal Overlay with 3D Bevel Edge */
+[data-theme="nebula-liquid-glass"] .liquid-glass-modal,
+.theme-nebula-liquid-glass .liquid-glass-modal {
+  background: rgba(12, 7, 30, 0.65);
+  backdrop-filter: blur(40px) saturate(220%);
+  -webkit-backdrop-filter: blur(40px) saturate(220%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-top-color: rgba(255, 255, 255, 0.45);
+  border-bottom-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 
+    0 30px 80px -10px rgba(0, 0, 0, 0.85), 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.6), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.5), 
+    0 0 45px rgba(255, 0, 127, 0.35);
+}
+
+/* 3D Liquid Glass Buttons, Badges & Interactive Blocks */
+[data-theme="nebula-liquid-glass"] .theme-badge-active,
+.theme-nebula-liquid-glass .theme-badge-active {
+  background: linear-gradient(135deg, #ff007f 0%, #ec4899 45%, #ff7b00 100%) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 
+    0 8px 24px -2px rgba(255, 0, 127, 0.6), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.65), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="nebula-liquid-glass"] .theme-card-active,
+.theme-nebula-liquid-glass .theme-card-active {
+  border: 2px solid #ff007f !important;
+  border-top-color: #ff5eb0 !important;
+  box-shadow: 
+    0 16px 45px rgba(0, 0, 0, 0.7), 
+    inset 0 2px 2px rgba(255, 255, 255, 0.6), 
+    inset 0 -2px 3px rgba(0, 0, 0, 0.4), 
+    0 0 36px rgba(255, 0, 127, 0.45) !important;
+}
+
+[data-theme="nebula-liquid-glass"] .user-avatar-ring,
+.theme-nebula-liquid-glass .user-avatar-ring {
+  border: 2px solid #ff007f !important;
+  border-top-color: #ffffff !important;
+  box-shadow: 
+    0 0 20px rgba(255, 0, 127, 0.8), 
+    0 0 32px rgba(255, 123, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Custom Scrollbar for Nebula Liquid Glass */
+[data-theme="nebula-liquid-glass"] ::-webkit-scrollbar-thumb,
+.theme-nebula-liquid-glass ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 0, 127, 0.6), rgba(255, 123, 0, 0.5), rgba(0, 240, 255, 0.5)) !important;
+  border-radius: 9999px !important;
+  border: 2px solid rgba(12, 7, 30, 0.8) !important;
+}
+
+/* ==========================================================================
+   THEME 01: HAUTE COUTURE DESIGNER (REVAMPED)
+   Luxury Serif Typography, Metallic Gold Gradients, 3D Glossy Frosted Glass,
+   5-Second Shifting Charcoal Shadows & Dynamic Shifting Trapezoid Lines Mesh
+   ========================================================================== */
+
+/* 5-Second Continuous Color Ebbing Animation Behind the Lines */
+@keyframes designerColorEbb {
+  0% {
+    background: radial-gradient(circle at 15% 20%, #201a24 0%, #131017 45%, #0a090c 100%);
+  }
+  25% {
+    background: radial-gradient(circle at 80% 30%, #291e14 0%, #17131a 48%, #0d0a0e 100%);
+  }
+  50% {
+    background: radial-gradient(circle at 50% 85%, #251d15 0%, #1a1520 50%, #09080b 100%);
+  }
+  75% {
+    background: radial-gradient(circle at 20% 75%, #221a28 0%, #151218 52%, #0b090d 100%);
+  }
+  100% {
+    background: radial-gradient(circle at 15% 20%, #201a24 0%, #131017 45%, #0a090c 100%);
+  }
+}
+
+.designer-color-ebb-bg {
+  animation: designerColorEbb 5s ease-in-out infinite;
+  background-size: 130% 130%;
+}
+
+@keyframes pulseSlow5s {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08) translate(15px, -10px);
+  }
+}
+
+.animate-pulse-slow-5s {
+  animation: pulseSlow5s 5s ease-in-out infinite;
+}
+
+/* Luxury Typography Bindings */
+[data-theme="designer"],
+[data-theme="designer-ivory"],
+.theme-designer,
+.theme-designer-ivory {
+  font-family: 'Montserrat', sans-serif;
+}
+
+[data-theme="designer"] h1,
+[data-theme="designer"] h2,
+[data-theme="designer"] h3,
+[data-theme="designer"] .designer-heading,
+[data-theme="designer"] .font-display,
+[data-theme="designer-ivory"] h1,
+[data-theme="designer-ivory"] h2,
+[data-theme="designer-ivory"] h3,
+[data-theme="designer-ivory"] .designer-heading,
+[data-theme="designer-ivory"] .font-display {
+  font-family: 'Cinzel', 'Cormorant Garamond', 'Playfair Display', serif;
+  letter-spacing: 0.04em;
+}
+
+/* Gold Gradient Utilities */
+.gold-metallic-gradient {
+  background: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 38%, #b3842c 75%, #e2be72 100%);
+}
+
+.gold-metallic-text {
+  background: linear-gradient(135deg, #fbf2db 0%, #eac97e 40%, #b8860b 80%, #f4da96 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.gold-shimmer-border {
+  border-image: linear-gradient(135deg, rgba(247, 226, 171, 0.65), rgba(223, 184, 108, 0.2), rgba(160, 116, 34, 0.4), rgba(255, 235, 195, 0.8)) 1;
+}
+
+/* 3D Glossy Dark Frosted Glass Cards for Designer Theme */
+[data-theme="designer"] .designer-card,
+[data-theme="designer-ivory"] .designer-card,
+[data-theme="designer"] .glass-card,
+[data-theme="designer-ivory"] .glass-card {
+  background: linear-gradient(180deg, rgba(46, 40, 50, 0.7) 0%, rgba(28, 24, 32, 0.8) 55%, rgba(16, 14, 18, 0.9) 100%);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(223, 184, 108, 0.22);
+  border-top-color: rgba(247, 226, 171, 0.45);
+  border-bottom-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 
+    0 14px 40px -6px rgba(0, 0, 0, 0.75), 
+    inset 0 1.5px 1.5px 0 rgba(255, 245, 225, 0.35), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.5), 
+    0 0 24px rgba(223, 184, 108, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="designer"] .designer-card:hover,
+[data-theme="designer-ivory"] .designer-card:hover,
+[data-theme="designer"] .glass-card:hover,
+[data-theme="designer-ivory"] .glass-card:hover {
+  background: linear-gradient(180deg, rgba(54, 48, 58, 0.78) 0%, rgba(34, 29, 38, 0.86) 55%, rgba(18, 16, 22, 0.94) 100%);
+  border-color: rgba(223, 184, 108, 0.4);
+  border-top-color: rgba(247, 226, 171, 0.7);
+  border-bottom-color: rgba(0, 0, 0, 0.7);
+  box-shadow: 
+    0 20px 48px -6px rgba(0, 0, 0, 0.85), 
+    inset 0 2px 2px 0 rgba(255, 245, 225, 0.55), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.6), 
+    0 0 32px rgba(223, 184, 108, 0.22);
+}
+
+/* 3D Glossy Buttons for Designer Theme */
+[data-theme="designer"] .designer-btn-primary,
+[data-theme="designer-ivory"] .designer-btn-primary,
+[data-theme="designer"] .btn-gold-3d,
+[data-theme="designer-ivory"] .btn-gold-3d {
+  background: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 40%, #b3842c 85%, #d4a753 100%) !important;
+  color: #120f14 !important;
+  font-weight: 800 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.45) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 
+    0 8px 24px -2px rgba(223, 184, 108, 0.5), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.75), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.15s ease-out;
+}
+
+[data-theme="designer"] .designer-btn-primary:active,
+[data-theme="designer-ivory"] .designer-btn-primary:active,
+[data-theme="designer"] .btn-gold-3d:active,
+[data-theme="designer-ivory"] .btn-gold-3d:active {
+  transform: translateY(1.5px) !important;
+  box-shadow: 
+    0 3px 10px rgba(0, 0, 0, 0.6), 
+    inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 3D Glossy Secondary Frosted Charcoal Buttons */
+[data-theme="designer"] .designer-btn-secondary,
+[data-theme="designer-ivory"] .designer-btn-secondary {
+  background: linear-gradient(180deg, rgba(50, 44, 54, 0.75) 0%, rgba(28, 24, 32, 0.85) 100%) !important;
+  color: #fdfcf9 !important;
+  border: 1px solid rgba(223, 184, 108, 0.25) !important;
+  border-top-color: rgba(247, 226, 171, 0.5) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 
+    0 6px 18px rgba(0, 0, 0, 0.6), 
+    inset 0 1.5px 1px rgba(255, 245, 225, 0.4), 
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="designer"] .designer-btn-secondary:hover,
+[data-theme="designer-ivory"] .designer-btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(62, 54, 68, 0.85) 0%, rgba(36, 30, 40, 0.92) 100%) !important;
+  border-color: rgba(223, 184, 108, 0.45) !important;
+  border-top-color: rgba(247, 226, 171, 0.75) !important;
+}
+
+[data-theme="designer"] .designer-btn-secondary:active,
+[data-theme="designer-ivory"] .designer-btn-secondary:active {
+  transform: translateY(1.5px) !important;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6), 
+    inset 0 2px 3px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* User Avatar Gold Halo for Designer */
+[data-theme="designer"] .user-avatar-ring,
+[data-theme="designer-ivory"] .user-avatar-ring,
+.theme-designer .user-avatar-ring {
+  border: 2px solid #dfb86c !important;
+  border-top-color: #f7e2ab !important;
+  box-shadow: 
+    0 0 18px rgba(223, 184, 108, 0.75), 
+    0 0 30px rgba(160, 116, 34, 0.45),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Custom Scrollbar for Designer Theme */
+[data-theme="designer"] ::-webkit-scrollbar-thumb,
+[data-theme="designer-ivory"] ::-webkit-scrollbar-thumb,
+.theme-designer ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(247, 226, 171, 0.65), rgba(223, 184, 108, 0.5), rgba(160, 116, 34, 0.55)) !important;
+  border-radius: 9999px !important;
+  border: 2px solid rgba(16, 14, 18, 0.85) !important;
+}
+
+/* ==========================================================================
+   EMERALD WILDERNESS (LIVING NATURE, 3D FROSTED GLASS & WARM FIREFLIES)
+   ========================================================================== */
+
+/* Keyframes: Moving Trees & Foliage Sway */
+@keyframes trees-sway-slow {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  50% {
+    transform: rotate(1.2deg) skewX(0.8deg);
+  }
+}
+
+@keyframes trees-sway-med {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  50% {
+    transform: rotate(-1.5deg) skewX(-1deg);
+  }
+}
+
+@keyframes palm-sway {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2deg) translateY(-2px);
+  }
+}
+
+@keyframes jungle-sway {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.015) rotate(0.8deg);
+  }
+}
+
+/* Keyframes: Moving Water Ripples, Shimmer & Cascade */
+@keyframes water-shimmer {
+  0% {
+    transform: translateY(0) scaleY(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-8px) scaleY(1.05);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 0.35;
+  }
+}
+
+@keyframes water-ripple {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.08) translateY(-4px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes waterfall-flow {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes spray-rise {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.15) translateY(-14px);
+    opacity: 0.8;
+  }
+}
+
+/* Keyframes: Moving Light Rays (God Rays) & Cloud Shadows */
+@keyframes light-rays-sweep {
+  0%, 100% {
+    transform: rotate(0deg) translateX(0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: rotate(3deg) translateX(40px) scale(1.06);
+    opacity: 0.75;
+  }
+}
+
+@keyframes shadow-drift {
+  0% {
+    transform: translate(-10%, -5%);
+  }
+  50% {
+    transform: translate(10%, 8%);
+  }
+  100% {
+    transform: translate(-10%, -5%);
+  }
+}
+
+@keyframes mist-drift-1 {
+  0% {
+    transform: translateX(-25%);
+  }
+  50% {
+    transform: translateX(15%);
+  }
+  100% {
+    transform: translateX(-25%);
+  }
+}
+
+@keyframes mist-drift-2 {
+  0% {
+    transform: translateX(20%);
+  }
+  50% {
+    transform: translateX(-20%);
+  }
+  100% {
+    transform: translateX(20%);
+  }
+}
+
+/* Apply CSS classes for keyframe animations */
+.animate-trees-sway-slow {
+  animation: trees-sway-slow 8s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-trees-sway-med {
+  animation: trees-sway-med 5.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-palm-sway {
+  animation: palm-sway 6.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-jungle-sway {
+  animation: jungle-sway 7s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-water-shimmer {
+  animation: water-shimmer 7s ease-in-out infinite;
+}
+
+.animate-water-ripple {
+  animation: water-ripple 6s ease-in-out infinite;
+}
+
+.animate-waterfall-flow {
+  animation: waterfall-flow 1.8s linear infinite;
+}
+
+.animate-spray-rise {
+  animation: spray-rise 3.8s ease-in-out infinite;
+}
+
+.animate-light-rays-sweep {
+  animation: light-rays-sweep 14s ease-in-out infinite;
+  transform-origin: top left;
+}
+
+.animate-shadow-drift {
+  animation: shadow-drift 35s ease-in-out infinite;
+}
+
+.animate-mist-drift-1 {
+  animation: mist-drift-1 45s ease-in-out infinite;
+}
+
+.animate-mist-drift-2 {
+  animation: mist-drift-2 36s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   3D FROSTED GLASS & GRADIENT SURFACES FOR EMERALD WILDERNESS
+   ========================================================================== */
+
+/* Universal Frosted Glass with 3D Specular Highlight & Bevel Edges */
+[data-theme="dynamic-emerald"] .wilderness-glass-card,
+[data-theme="dynamic-emerald"] .bg-card,
+[data-theme="dynamic-emerald"] article,
+.theme-dynamic-emerald .wilderness-glass-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(2, 38, 26, 0.32) 40%, rgba(1, 16, 11, 0.46) 100%) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid rgba(0, 245, 160, 0.22) !important;
+  border-top-color: rgba(255, 255, 255, 0.42) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.42), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.48), 
+    0 16px 40px -8px rgba(0, 10, 6, 0.7), 
+    0 0 20px rgba(0, 245, 160, 0.12) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="dynamic-emerald"] .wilderness-glass-card:hover,
+[data-theme="dynamic-emerald"] .bg-card:hover,
+.theme-dynamic-emerald .wilderness-glass-card:hover {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.14) 0%, rgba(2, 48, 32, 0.4) 40%, rgba(1, 20, 14, 0.52) 100%) !important;
+  border-top-color: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(0, 245, 160, 0.45) !important;
+  box-shadow: 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.65), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.55), 
+    0 22px 50px -6px rgba(0, 10, 6, 0.8), 
+    0 0 32px rgba(0, 245, 160, 0.32) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 3D Frosted Glass Modals & Dialogs */
+[data-theme="dynamic-emerald"] .modal-content,
+[data-theme="dynamic-emerald"] [role="dialog"],
+.theme-dynamic-emerald [role="dialog"] {
+  background: linear-gradient(165deg, rgba(2, 42, 30, 0.78) 0%, rgba(1, 24, 17, 0.88) 50%, rgba(1, 14, 10, 0.96) 100%) !important;
+  backdrop-filter: blur(36px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(200%) !important;
+  border: 1px solid rgba(0, 245, 160, 0.32) !important;
+  border-top-color: rgba(255, 255, 255, 0.55) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.75) !important;
+  box-shadow: 
+    0 30px 90px rgba(0, 0, 0, 0.85), 
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.55), 
+    inset 0 -2px 3px 0 rgba(0, 0, 0, 0.6), 
+    0 0 45px rgba(0, 245, 160, 0.28) !important;
+}
+
+/* 3D Glowing Gradient Primary Buttons */
+[data-theme="dynamic-emerald"] .btn-primary,
+[data-theme="dynamic-emerald"] button.bg-accent {
+  background: linear-gradient(135deg, #00f5a0 0%, #00e5cc 45%, #00d9f5 100%) !important;
+  color: #011a12 !important;
+  font-weight: 900 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.45) !important;
+  box-shadow: 
+    0 8px 24px -2px rgba(0, 245, 160, 0.55), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.75), 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4), 
+    0 0 24px rgba(0, 245, 160, 0.4) !important;
+}
+
+[data-theme="dynamic-emerald"] .btn-primary:hover,
+[data-theme="dynamic-emerald"] button.bg-accent:hover {
+  filter: brightness(1.12);
+  box-shadow: 
+    0 10px 28px rgba(0, 245, 160, 0.7), 
+    inset 0 2px 2px 0 #ffffff, 
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4), 
+    0 0 36px rgba(0, 245, 160, 0.6) !important;
+}
+
+/* 3D Frosted Glass Secondary Buttons */
+[data-theme="dynamic-emerald"] .btn-secondary {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(2, 40, 28, 0.45) 100%) !important;
+  color: #e6fff5 !important;
+  border: 1px solid rgba(0, 245, 160, 0.3) !important;
+  border-top-color: rgba(255, 255, 255, 0.48) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 
+    0 6px 18px rgba(0, 0, 0, 0.5), 
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.4), 
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="dynamic-emerald"] .btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(2, 54, 38, 0.55) 100%) !important;
+  border-top-color: rgba(255, 255, 255, 0.75) !important;
+  color: #ffffff !important;
+}
+
+/* Frosted Glass Inputs with 3D Bevel and Glowing Focus */
+[data-theme="dynamic-emerald"] input,
+[data-theme="dynamic-emerald"] textarea,
+[data-theme="dynamic-emerald"] select {
+  background: linear-gradient(180deg, rgba(0, 16, 11, 0.5) 0%, rgba(2, 34, 24, 0.42) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  color: #e6fff5 !important;
+  border: 1px solid rgba(0, 245, 160, 0.25) !important;
+  border-top-color: rgba(0, 0, 0, 0.65) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.6), 
+    0 0 14px rgba(0, 245, 160, 0.1) !important;
+}
+
+[data-theme="dynamic-emerald"] input:focus,
+[data-theme="dynamic-emerald"] textarea:focus,
+[data-theme="dynamic-emerald"] select:focus {
+  border-color: #00f5a0 !important;
+  box-shadow: 
+    0 0 20px rgba(0, 245, 160, 0.4), 
+    inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+  outline: none !important;
+}
+
+/* Glowing Scrollbar for Emerald Wilderness */
+[data-theme="dynamic-emerald"] ::-webkit-scrollbar-thumb,
+.theme-dynamic-emerald ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0, 245, 160, 0.65), rgba(0, 217, 245, 0.55), rgba(255, 224, 102, 0.6)) !important;
+  border-radius: 9999px !important;
+  border: 2px solid rgba(1, 16, 11, 0.85) !important;
+  box-shadow: 0 0 10px rgba(0, 245, 160, 0.4) !important;
+}
+
+

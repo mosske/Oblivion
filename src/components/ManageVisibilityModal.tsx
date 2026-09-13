@@ -40,7 +40,7 @@ const getDoneButtonThemeStyles = (themeId?: string): string => {
     case "ytmusic-red":
       return "bg-gradient-to-r from-[#ff70a6] to-[#ff4d8d] hover:from-[#f75b95] hover:to-[#e03a7c] text-white font-extrabold shadow-lg shadow-pink-500/30";
     case "dynamic-emerald":
-      return "bg-gradient-to-r from-[#00f5a0] to-[#00d9f5] hover:brightness-110 text-[#021a12] font-extrabold shadow-lg shadow-emerald-500/25";
+      return "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] hover:brightness-110 text-[#011a12] font-black shadow-[0_0_24px_rgba(0,245,160,0.55),inset_0_1.5px_1px_rgba(255,255,255,0.7)] border-t border-white/60";
     case "audiophile-gold":
       return "bg-gradient-to-r from-[#f59e0b] to-[#d4af37] hover:brightness-110 text-[#170d06] font-extrabold shadow-lg shadow-amber-500/25";
     case "twilight-vaporwave":
@@ -61,7 +61,7 @@ const getHeaderBadgeThemeStyles = (themeId?: string): string => {
     case "ytmusic-red":
       return "bg-[#ff70a6]/20 text-[#ff70a6] border-[#ff70a6]/30";
     case "dynamic-emerald":
-      return "bg-[#00f5a0]/20 text-[#00f5a0] border-[#00f5a0]/30";
+      return "bg-gradient-to-r from-emerald-950/50 to-teal-950/40 text-[#00f5a0] border border-[#00f5a0]/40 border-t-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]";
     case "audiophile-gold":
       return "bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b]/30";
     case "twilight-vaporwave":

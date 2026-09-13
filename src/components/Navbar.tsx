@@ -48,6 +48,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             MUSIC
           </span>
         </div>
+        {(designConfig.id === "dynamic-emerald" || designConfig.isEmeraldWilderness) && (
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#00f5a0]/20 via-[#00d9f5]/15 to-transparent border border-[#00f5a0]/35 shadow-[0_0_12px_rgba(0,245,160,0.25)] text-[#00f5a0] text-[10px] font-mono tracking-wider ml-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ffe040] shadow-[0_0_8px_#ffe040] animate-ping" />
+            <span className="font-bold">EMERALD WILDERNESS</span>
+          </div>
+        )}
       </div>
 
       {/* Right Controls */}
