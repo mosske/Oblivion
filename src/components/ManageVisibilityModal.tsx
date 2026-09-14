@@ -42,7 +42,7 @@ const getDoneButtonThemeStyles = (themeId?: string): string => {
     case "dynamic-emerald":
       return "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] hover:brightness-110 text-[#011a12] font-black shadow-[0_0_24px_rgba(0,245,160,0.55),inset_0_1.5px_1px_rgba(255,255,255,0.7)] border-t border-white/60";
     case "audiophile-gold":
-      return "bg-gradient-to-r from-[#f59e0b] to-[#d4af37] hover:brightness-110 text-[#170d06] font-extrabold shadow-lg shadow-amber-500/25";
+      return "bg-gradient-to-r from-[#b8cadc] via-[#8fa7c2] to-[#4a5f78] hover:brightness-110 text-[#070b14] font-extrabold shadow-lg shadow-[#8fa7c2]/35 border-t border-white/60";
     case "twilight-vaporwave":
       return "bg-gradient-to-r from-[#ff2a8d] to-[#8a2be2] hover:brightness-110 text-white font-extrabold shadow-lg shadow-purple-500/30";
     case "neue-editorial":
@@ -63,7 +63,7 @@ const getHeaderBadgeThemeStyles = (themeId?: string): string => {
     case "dynamic-emerald":
       return "bg-gradient-to-r from-emerald-950/50 to-teal-950/40 text-[#00f5a0] border border-[#00f5a0]/40 border-t-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]";
     case "audiophile-gold":
-      return "bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b]/30";
+      return "bg-gradient-to-r from-[#8fa7c2]/25 via-[#4a5f78]/18 to-transparent text-[#d8e5f2] border border-[#8fa7c2]/45 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)]";
     case "twilight-vaporwave":
       return "bg-[#ff2a8d]/20 text-[#ff2a8d] border-[#ff2a8d]/30";
     case "neue-editorial":
@@ -84,7 +84,7 @@ const getSearchFocusBorder = (themeId?: string): string => {
     case "dynamic-emerald":
       return "focus:border-[#00f5a0]";
     case "audiophile-gold":
-      return "focus:border-[#f59e0b]";
+      return "focus:border-[#8fa7c2]";
     case "twilight-vaporwave":
       return "focus:border-[#ff2a8d]";
     case "neue-editorial":

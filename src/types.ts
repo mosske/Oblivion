@@ -145,7 +145,7 @@ export type FullAppDesignId =
   | 'candyland'          // 3. Candyland Pastel (Vibrant Light Mode, Sugar-Glass, Bubblegum Pink & Sweet Berry Text)
   | 'ytmusic-red'        // Legacy alias for Candyland
   | 'dynamic-emerald'    // 4. Emerald Wilderness (Living Nature Scenes, Frosted Wilderness Glass & Warm Fireflies)
-  | 'audiophile-gold'    // 5. Studio Audiophile Gold (Warm Carbon, Vinyl Gold & Solar Amber Multi-Accent)
+  | 'audiophile-gold'    // 5. Studio Homme Mosaïque (Dark Midnight Blue, Slate Blue-Grey, Smoked Glass & Mocha Mousse)
   | 'twilight-vaporwave' // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Sunset Magenta Multi-Accent)
   | 'neue-editorial'    // 7. Neue Editorial (Swiss High-Contrast, Pale Beige & Charcoal Pills)
   | 'obsidian-depth'    // 8. Obsidian Depth (Matte Slate, Soft 3D Extrusion & Neon Cyan)

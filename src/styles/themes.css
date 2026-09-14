@@ -132,31 +132,31 @@
 
 [data-theme="audiophile-gold"],
 .theme-audiophile-gold {
-  --bg-canvas: linear-gradient(160deg, #170d06 0%, #261408 50%, #100804 100%);
-  --canvas-text-primary: #fef3c7;
-  --canvas-text-secondary: #fde68a;
-  --canvas-text-muted: #fbbf24;
-  --card-bg: rgba(38, 20, 8, 0.75);
-  --card-text: #fef3c7;
-  --card-border: rgba(245, 158, 11, 0.35);
-  --accent-primary: #f59e0b;
-  --accent-color: #f59e0b;
-  --primary: #f59e0b;
-  --accent-primary-rgb: 245, 158, 11;
-  --accent-secondary: #d4af37;
-  --accent-tertiary: #e65c00;
-  --accent-gradient: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d4af37 100%);
-  --accent-border: rgba(245, 158, 11, 0.5);
-  --accent-contrast-text: #170d06;
-  --text-on-accent: #170d06;
-  --bg-surface-elevated: #281608;
-  --text-primary: #fef3c7;
-  --text-muted: #fbbf24;
-  --border-subtle: rgba(245, 158, 11, 0.3);
+  --bg-canvas: linear-gradient(160deg, #080c16 0%, #0e1422 50%, #05080e 100%);
+  --canvas-text-primary: #f1f5f9;
+  --canvas-text-secondary: #cbd5e1;
+  --canvas-text-muted: #7e91a6;
+  --card-bg: rgba(12, 18, 30, 0.65);
+  --card-text: #f1f5f9;
+  --card-border: rgba(143, 167, 194, 0.22);
+  --accent-primary: #8fa7c2;
+  --accent-color: #8fa7c2;
+  --primary: #8fa7c2;
+  --accent-primary-rgb: 143, 167, 194;
+  --accent-secondary: #cbd5e1;
+  --accent-tertiary: #4a5f78;
+  --accent-gradient: linear-gradient(135deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%);
+  --accent-border: rgba(143, 167, 194, 0.45);
+  --accent-contrast-text: #070b14;
+  --text-on-accent: #070b14;
+  --bg-surface-elevated: #101726;
+  --text-primary: #f1f5f9;
+  --text-muted: #7e91a6;
+  --border-subtle: rgba(143, 167, 194, 0.2);
   --border-active: var(--accent-primary);
-  --glass-blur: blur(16px);
-  --glass-bg: rgba(38, 20, 8, 0.75);
-  --glass-border: rgba(245, 158, 11, 0.35);
+  --glass-blur: blur(24px);
+  --glass-bg: rgba(12, 18, 30, 0.65);
+  --glass-border: rgba(143, 167, 194, 0.22);
 }
 
 [data-theme="twilight-vaporwave"],
@@ -1981,6 +1981,126 @@ canvas.animated-theme-bg,
 .full-player-overlay[data-theme="dynamic-emerald"] {
   background-color: #01140c !important;
 }
+
+/* ==========================================================================
+   Studio Homme Mosaïque (Homme Masculine Luxury Aesthetic)
+   Smokey Glass Cards, Modals, Gradient Buttons, Badges, and Full Player Styling
+   ========================================================================== */
+
+/* Smokey Glass Cards, Boxes & Articles */
+[data-theme="audiophile-gold"] .homme-glass-card,
+[data-theme="audiophile-gold"] .bg-card,
+[data-theme="audiophile-gold"] article,
+[data-theme="audiophile-gold"] .glass-card {
+  background: linear-gradient(135deg, rgba(16, 23, 37, 0.65) 0%, rgba(10, 15, 25, 0.75) 100%) !important;
+  backdrop-filter: blur(24px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+  border: 1px solid rgba(143, 167, 194, 0.22) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.52), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="audiophile-gold"] .homme-glass-card:hover,
+[data-theme="audiophile-gold"] .bg-card:hover,
+[data-theme="audiophile-gold"] article:hover,
+[data-theme="audiophile-gold"] .glass-card:hover {
+  background: linear-gradient(135deg, rgba(22, 32, 49, 0.72) 0%, rgba(13, 20, 33, 0.82) 100%) !important;
+  border-color: rgba(143, 167, 194, 0.42) !important;
+  border-top-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.62), 0 0 24px rgba(143, 167, 194, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Smokey Glass Modals & Dialogs */
+[data-theme="audiophile-gold"] [role="dialog"],
+[data-theme="audiophile-gold"] .modal-content,
+[data-theme="audiophile-gold"] .homme-modal {
+  background: linear-gradient(150deg, rgba(14, 20, 33, 0.94) 0%, rgba(7, 11, 18, 0.98) 100%) !important;
+  backdrop-filter: blur(32px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(150%) !important;
+  border: 1px solid rgba(143, 167, 194, 0.3) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.88), 0 0 35px rgba(143, 167, 194, 0.15) !important;
+}
+
+/* Gradient Primary Buttons (No Single Solid Colors) */
+[data-theme="audiophile-gold"] .btn-primary,
+[data-theme="audiophile-gold"] button.bg-accent,
+[data-theme="audiophile-gold"] .homme-btn-primary {
+  background: linear-gradient(135deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%) !important;
+  color: #070b14 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.7) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 6px 22px rgba(143, 167, 194, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="audiophile-gold"] .btn-primary:hover,
+[data-theme="audiophile-gold"] button.bg-accent:hover,
+[data-theme="audiophile-gold"] .homme-btn-primary:hover {
+  filter: brightness(1.14) !important;
+  box-shadow: 0 8px 28px rgba(143, 167, 194, 0.48), inset 0 1px 1px rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Gradient Secondary Buttons */
+[data-theme="audiophile-gold"] .btn-secondary,
+[data-theme="audiophile-gold"] .homme-btn-secondary {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(26, 36, 52, 0.75) 55%, rgba(12, 17, 27, 0.9) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(143, 167, 194, 0.35) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-theme="audiophile-gold"] .btn-secondary:hover,
+[data-theme="audiophile-gold"] .homme-btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(34, 46, 66, 0.8) 55%, rgba(16, 23, 35, 0.95) 100%) !important;
+  border-color: rgba(143, 167, 194, 0.55) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 15px rgba(143, 167, 194, 0.2) !important;
+}
+
+/* Gradient Badges, Pills & Status Indicators */
+[data-theme="audiophile-gold"] .badge-gradient,
+[data-theme="audiophile-gold"] .pill-gradient,
+[data-theme="audiophile-gold"] .theme-badge {
+  background: linear-gradient(135deg, rgba(143, 167, 194, 0.2) 0%, rgba(74, 95, 120, 0.15) 100%) !important;
+  border: 1px solid rgba(143, 167, 194, 0.38) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #d8e5f2 !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Smokey Glass Inputs & Textareas */
+[data-theme="audiophile-gold"] input,
+[data-theme="audiophile-gold"] textarea,
+[data-theme="audiophile-gold"] select {
+  background: rgba(14, 21, 33, 0.72) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(143, 167, 194, 0.26) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="audiophile-gold"] input:focus,
+[data-theme="audiophile-gold"] textarea:focus,
+[data-theme="audiophile-gold"] select:focus {
+  border-color: rgba(143, 167, 194, 0.75) !important;
+  box-shadow: 0 0 20px rgba(143, 167, 194, 0.28) !important;
+}
+
+/* Full Player Overlay Foundation */
+[data-theme="audiophile-gold"] .full-player-overlay,
+.full-player-overlay[data-theme="audiophile-gold"] {
+  background-color: #070a12 !important;
+}
+
+/* Custom Gilded Scrollbar Thumb */
+[data-theme="audiophile-gold"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%) !important;
+  border-radius: 9999px !important;
+}
+
 
 
 

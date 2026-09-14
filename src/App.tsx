@@ -18,6 +18,7 @@ import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";
 import { DesignerTrapezoidBackground } from "./components/DesignerTrapezoidBackground";
 import { EmeraldWildernessBackground } from "./components/EmeraldWildernessBackground";
+import { HommeMosaicBackground } from "./components/HommeMosaicBackground";
 import { EqualizerProvider } from "./context/EqualizerContext";
 import {
   getCachedPlaylistsFromDB,
@@ -590,12 +591,12 @@ export default function App() {
           sliderFill: "#00f5a0",
         },
         "audiophile-gold": {
-          accent: "#f59e0b",
-          secondary: "#fbbf24",
-          tertiary: "#d97706",
-          contrastText: "#000000",
-          sliderTrack: "#291508",
-          sliderFill: "#f59e0b",
+          accent: "#8fa7c2",
+          secondary: "#cbd5e1",
+          tertiary: "#4a5f78",
+          contrastText: "#070b14",
+          sliderTrack: "#121a28",
+          sliderFill: "#8fa7c2",
         },
         "twilight-vaporwave": {
           accent: "#ff2a8d",
@@ -2294,7 +2295,7 @@ export default function App() {
 
   return (
     <EqualizerProvider>
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
 
@@ -2306,6 +2307,9 @@ export default function App() {
 
       {/* Animated Living Nature Scenes (Alpine Pine Forest & Bridge, Ocean Island, Rainforest, Waterfall) & Warm Fireflies for Theme 04 (Emerald Wilderness) */}
       <EmeraldWildernessBackground isActive={Boolean((activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") && !playerState.isFullscreen)} />
+
+      {/* Animated Dynamic Mosaic Triangles with Natural Textures (Mocha, Charcoal, Gold, Fluting) for Theme 05 (Studio Homme Mosaïque) */}
+      <HommeMosaicBackground isActive={Boolean((activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") && !playerState.isFullscreen)} />
 
       {/* Sidebar Navigation */}
       <Sidebar
@@ -2330,7 +2334,7 @@ export default function App() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`app-content main-viewport flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass" || activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory" || activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
+      <main className={`app-content main-viewport flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass" || activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory" || activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald" || activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
         {/* Sticky Top Navigation Header Across All Views */}
         <Navbar
           activeTab={activeTab}

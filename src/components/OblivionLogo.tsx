@@ -103,17 +103,17 @@ const PALETTES: Record<string, GradientPalette> = {
     textGold: "#00f5a0",
   },
 
-  // 5. Studio Audiophile Deck (Warm Carbon Vinyl Gold & Amber Brass)
+  // 5. Studio Homme Mosaïque (Midnight Slate, Lighter Slate-Blue-Grey & Mocha Mousse)
   "audiophile-gold": {
-    ringGrad: { c1: "#fde68a", c2: "#f59e0b", c3: "#92400e", c4: "#fbbf24" },
-    tri1Grad: { c1: "#fcd34d", c2: "#d97706", c3: "#78350f" },
-    tri2Grad: { c1: "#fffbeb", c2: "#f59e0b", c3: "#b45309" },
+    ringGrad: { c1: "#d0deec", c2: "#8fa7c2", c3: "#4a5f78", c4: "#080c16" },
+    tri1Grad: { c1: "#b8cadc", c2: "#8fa7c2", c3: "#35495e" },
+    tri2Grad: { c1: "#e2ecf5", c2: "#9bb0c6", c3: "#523c2e" },
     highlight: "#ffffff",
-    shadow: "#451a03",
+    shadow: "#05080f",
     playCore: "#FFFFFF",
-    playHighlight: "#fef3c7",
-    auraColor: "#f59e0b",
-    textGold: "#fbbf24",
+    playHighlight: "#d0deec",
+    auraColor: "#8fa7c2",
+    textGold: "#9bb0c6",
   },
 
   // 6. Twilight Vaporwave (Sunset Violet, Rose & Midnight Purple)
@@ -214,7 +214,7 @@ export const OblivionLogo: React.FC<OblivionLogoProps> = ({
     else if (accentColor.includes("cyan")) palette = PALETTES["cyberpunk-neon"];
     else if (accentColor.includes("emerald") || accentColor.includes("green")) palette = PALETTES["dynamic-emerald"];
     else if (accentColor.includes("purple") || accentColor.includes("pink")) palette = PALETTES["twilight-vaporwave"];
-    else if (accentColor.includes("amber") || accentColor.includes("yellow")) palette = PALETTES["audiophile-gold"];
+    else if (accentColor.includes("slate") || accentColor.includes("amber") || accentColor.includes("gold")) palette = PALETTES["audiophile-gold"];
     else palette = PALETTES.designer;
   }
 
