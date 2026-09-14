@@ -20,6 +20,7 @@ export interface FullAppDesignConfig {
   isDesigner?: boolean;
   isEmeraldWilderness?: boolean;
   isHommeMosaic?: boolean;
+  isCyberpunkCity?: boolean;
   themeColorMeta?: string;
 
   // Visual Styling Classes
@@ -146,22 +147,24 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
   "cyberpunk-neon": {
     id: "cyberpunk-neon",
     name: "Cyberpunk Neon Glass",
-    subtitle: "Electric Cyan, Fuchsia Magenta & Electric Purple",
+    subtitle: "Sprawling Neon Metropolis & Atmospheric Night Drizzle",
     badge: "NEON SYNTH",
     num: "02",
     themePreset: "cyberpunk",
     playerLayout: "card-expanded",
     description:
-      "High-tech futuristic dark obsidian mesh paired with neon cyan, radiant fuchsia magenta, and electric purple multi-accent gradients behind translucent frosted glass.",
+      "A sprawling cyberpunk metropolis at night with towering illuminated skyscrapers, massive glowing holographic billboards in electric cyan and fuchsia magenta, cruising aerial vehicles with thruster wakes, and atmospheric night drizzle.",
     features: [
-      "Multi-accent: Electric Cyan (#00f3ff) + Fuchsia Magenta (#ff007f)",
-      "Electric Purple (#7b2cbf) tertiary highlights & glow",
-      "Frosted Obsidian tinted-glass cards (blur-16px)",
-      "High-contrast dark obsidian active button text (#050814)",
+      "Cinematic cyberpunk city skyline with towering megastructures and glowing neon billboards",
+      "Cruising aerial vehicles and spinners with navigation beacons and thruster light wakes",
+      "Atmospheric slanted night drizzle across the glowing neon horizon",
+      "Luminous Electric Cyan (#00f3ff) and Fuchsia Magenta (#ff007f) ambient volumetric haze",
+      "Frosted obsidian player cards with high-contrast glowing accents",
     ],
     swatchColors: ["#0a0d1a", "#00f3ff", "#ff007f", "#7b2cbf"],
     multiAccentGradient: "from-[#00f3ff] via-[#ff007f] to-[#7b2cbf]",
     isLight: false,
+    isCyberpunkCity: true,
     themeColorMeta: "#0a0d1a",
 
     bgCanvas: "from-[#0a0d1a] via-[#12092b] to-[#05030a]",

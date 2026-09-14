@@ -2101,6 +2101,30 @@ canvas.animated-theme-bg,
   border-radius: 9999px !important;
 }
 
+/* ==========================================================================
+   Cyberpunk Neon Glass — Translucent Obsidian Frosted Glass Cards & Neon Highlights
+   Allows the dynamic cyberpunk city & window raindrops to show through beautifully
+   ========================================================================== */
+[data-theme="cyberpunk-neon"] .bg-card,
+[data-theme="cyberpunk-neon"] article,
+[data-theme="cyberpunk-neon"] .glass-card {
+  background: rgba(10, 13, 26, 0.7) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(0, 243, 255, 0.22) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="cyberpunk-neon"] .bg-card:hover,
+[data-theme="cyberpunk-neon"] article:hover,
+[data-theme="cyberpunk-neon"] .glass-card:hover {
+  background: rgba(16, 20, 38, 0.78) !important;
+  border-color: rgba(0, 243, 255, 0.45) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.7), 0 0 24px rgba(0, 243, 255, 0.22) !important;
+}
+
+
 
 
 
