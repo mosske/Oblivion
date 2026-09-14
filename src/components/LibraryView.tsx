@@ -173,7 +173,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       <div className="flex flex-col select-none">
         <div className="flex-1 p-6 md:p-10 pb-40 md:pb-48 max-w-4xl mx-auto w-full">
           <div className={`p-8 sm:p-12 text-center ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} shadow-xl flex flex-col items-center justify-center space-y-6 mt-4`}>
-            <div className={`w-16 h-16 rounded-2xl ${designConfig.isLight ? "bg-[#c89b3c]/15 text-[#b8860b]" : "bg-[#c89b3c]/20 text-[#c89b3c]"} flex items-center justify-center shadow-inner`}>
+            <div className={`w-16 h-16 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} text-[var(--accent-primary,#dfb86c)] border ${designConfig.borderSubtle} flex items-center justify-center shadow-inner`}>
               <Library className="w-8 h-8" />
             </div>
 
@@ -285,7 +285,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               <select
                 value={sortOption}
                 onChange={(e) => handleSortChange(e.target.value as SortOption)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${designConfig.inputBg} ${designConfig.textPrimary} border border-transparent focus:outline-none cursor-pointer`}
+                className={`sort-dropdown px-3 py-1.5 rounded-xl text-xs font-semibold ${designConfig.inputBg} ${designConfig.textPrimary} border border-transparent focus:outline-none cursor-pointer`}
               >
                 <option value="recent">Recently Added (Default)</option>
                 <option value="name-asc">Name (A → Z)</option>
@@ -302,9 +302,18 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   onClick={() => setShowHidden(!showHidden)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
                     showHidden
-                      ? "bg-[#c89b3c] text-white border-[#c89b3c] shadow-sm"
+                      ? "viewing-hidden-active shadow-sm"
                       : `${designConfig.btnSecondary} ${designConfig.textSecondary}`
                   }`}
+                  style={
+                    showHidden
+                      ? {
+                          background: "var(--accent-gradient, var(--accent-primary))",
+                          color: "var(--text-on-accent, var(--accent-contrast-text, #ffffff))",
+                          border: "1px solid var(--accent-border, var(--border-active, transparent))",
+                        }
+                      : undefined
+                  }
                 >
                   {showHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                   <span>{showHidden ? "Viewing Hidden" : `Hidden (${hiddenCount})`}</span>

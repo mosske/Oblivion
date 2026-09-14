@@ -27,8 +27,6 @@ import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { MarqueeText } from "./MarqueeText";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
-import { CandylandFallingSweets } from "./CandylandFallingSweets";
-import { EmeraldWildernessBackground } from "./EmeraldWildernessBackground";
 import { equalizerManager } from "../utils/equalizerEngine";
 import { useEqualizer } from "../context/EqualizerContext";
 import { audioPlayer } from "../services/audioPlayer";
@@ -227,9 +225,47 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         mutedText: "text-red-400/60 hover:text-white",
         volSlider: "bg-red-950/80 accent-[#ff1e42]",
       };
+    case "candyland":
+      return {
+        bgCanvas: "bg-[#1a0818]",
+        orb1: "bg-pink-400/50",
+        orb2: "bg-sky-400/45",
+        auroraBeam1: "bg-gradient-to-r from-pink-400/40 via-purple-300/35 to-sky-400/40",
+        auroraBeam2: "bg-gradient-to-r from-yellow-300/35 via-pink-400/40 to-cyan-300/35",
+        orbitalGlow1: "bg-gradient-to-tr from-pink-400/50 via-purple-400/40 to-sky-400/50",
+        orbitalGlow2: "bg-gradient-to-bl from-yellow-300/40 via-pink-400/45 to-purple-500/40",
+        driftAuraGlow: "bg-gradient-to-br from-pink-400/20 via-sky-400/15 to-transparent",
+        veil: "bg-gradient-to-b from-black/25 via-transparent to-black/75",
+        topBar: "bg-gradient-to-b from-[#2a1028]/85 via-[#1d0b1c]/90 to-[#140613]/95 backdrop-blur-3xl border-b border-pink-500/25 text-[#fff0f8] shadow-lg",
+        minimizeBtn: "bg-gradient-to-b from-white/[0.14] via-pink-950/40 to-black/50 hover:from-white/[0.22] text-[#fff0f8] border border-pink-400/35 border-t-white/45 backdrop-blur-xl shadow-md",
+        nowPlayingDot: "bg-[#ff69b4] shadow-[0_0_10px_#ff69b4]",
+        nowPlayingLabel: "text-[#ff69b4] font-black tracking-wider",
+        nowPlayingTitle: "text-[#fff0f8]",
+        tabActive: "bg-gradient-to-r from-[#ff69b4] via-[#f472b6] to-[#38bdf8] text-[#1e0720] border-t border-white/60 border-b border-black/40 shadow-[0_0_20px_rgba(255,105,180,0.6)] font-black",
+        tabInactive: "bg-gradient-to-b from-white/[0.08] to-black/40 hover:from-white/[0.15] text-pink-200 border border-pink-400/25 border-t-white/30 backdrop-blur-xl",
+        artGlowRing: "from-[#ff69b4]/60 via-purple-400/45 to-[#38bdf8]/60",
+        artBorder: "border-pink-400/40 border-t-white/45 border-b-black/60 shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_30px_rgba(255,105,180,0.2)]",
+        stageTitle: "text-[#fff0f8] drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-extrabold",
+        stageArtist: "text-[#ff69b4] font-bold",
+        stageTagAccent: "bg-gradient-to-r from-[#ff69b4]/25 to-sky-500/20 border border-pink-400/50 border-t-white/40 text-[#ff69b4]",
+        stageTagNeutral: "bg-gradient-to-b from-white/[0.08] to-black/40 border border-white/15 border-t-white/30 text-pink-100",
+        bottomDeck: "bg-gradient-to-t from-[#140613]/95 via-[#220d20]/90 to-[#2c102a]/85 backdrop-blur-3xl border-t border-pink-500/30 border-t-white/40 shadow-[0_-12px_36px_rgba(0,0,0,0.7),0_0_24px_rgba(255,105,180,0.25)] ring-1 ring-pink-500/25",
+        seekbarTrack: "bg-black/50 border border-pink-500/20 shadow-inner",
+        seekbarFill: "bg-gradient-to-r from-[#ff69b4] via-[#c084fc] to-[#38bdf8]",
+        seekbarThumb: "bg-[#ff69b4] border-2 border-[#1e0720] shadow-[0_0_16px_rgba(255,105,180,0.9)]",
+        seekbarGlow: "shadow-[#ff69b4]/50",
+        seekbarAccent: "accent-[#ff69b4]",
+        timeText: "text-pink-300/80 font-mono",
+        playBtn: "bg-gradient-to-r from-[#ff69b4] via-[#f472b6] to-[#38bdf8] hover:brightness-115 text-[#1e0720] shadow-[0_0_32px_rgba(255,105,180,0.7)] border-t border-white/70 active:scale-95 ring-4 ring-[#ff69b4]/30",
+        playIconFill: "fill-[#1e0720]",
+        ctrlBtn: "bg-gradient-to-b from-white/[0.12] via-pink-950/40 to-black/50 hover:from-white/[0.2] text-[#fff0f8] border border-pink-400/30 border-t-white/40 shadow-md backdrop-blur-xl",
+        activeText: "text-[#ff69b4] drop-shadow-[0_0_10px_rgba(255,105,180,0.5)]",
+        mutedText: "text-pink-300/70 hover:text-white",
+        volSlider: "bg-black/50 accent-[#ff69b4]",
+      };
     case "dynamic-emerald":
       return {
-        bgCanvas: "bg-transparent",
+        bgCanvas: "bg-[#01140c]",
         orb1: "bg-emerald-400/40",
         orb2: "bg-teal-400/35",
         auroraBeam1: "bg-gradient-to-r from-[#00f5a0]/40 via-teal-300/35 to-emerald-500/35",
@@ -237,30 +273,30 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
         orbitalGlow1: "bg-gradient-to-tr from-[#00f5a0]/50 via-teal-400/40 to-emerald-600/50",
         orbitalGlow2: "bg-gradient-to-bl from-teal-300/40 via-emerald-500/45 to-teal-600/40",
         driftAuraGlow: "bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-transparent",
-        veil: "bg-gradient-to-b from-black/25 via-transparent to-black/75",
-        topBar: "bg-gradient-to-b from-[#021f16]/75 via-[#011710]/80 to-[#010e08]/85 backdrop-blur-3xl border-b border-white/[0.18] text-[#e6fff5] shadow-[inset_0_-1px_1px_rgba(0,0,0,0.5),0_8px_30px_rgba(0,0,0,0.6)]",
-        minimizeBtn: "bg-gradient-to-b from-white/[0.14] via-emerald-950/40 to-black/50 hover:from-white/[0.22] text-[#e6fff5] border border-[#00f5a0]/30 border-t-white/45 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)]",
+        veil: "bg-gradient-to-b from-[#01140c]/70 via-black/25 to-[#01140c]/85",
+        topBar: "bg-[#021f16]/95 backdrop-blur-2xl border-b border-emerald-500/25 text-[#e6fff5] shadow-lg",
+        minimizeBtn: "bg-[#02281c]/80 hover:bg-[#033626] text-[#e6fff5] border border-[#00f5a0]/30 backdrop-blur-xl shadow-sm",
         nowPlayingDot: "bg-[#00f5a0] shadow-[0_0_10px_#00f5a0]",
         nowPlayingLabel: "text-[#00f5a0] font-black tracking-wider",
         nowPlayingTitle: "text-[#e6fff5]",
-        tabActive: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] text-[#011a12] border-t border-white/60 border-b border-black/40 shadow-[0_0_20px_rgba(0,245,160,0.6),inset_0_1.5px_1px_rgba(255,255,255,0.7)] font-black",
-        tabInactive: "bg-gradient-to-b from-white/[0.08] to-black/40 hover:from-white/[0.15] text-emerald-200 border border-[#00f5a0]/25 border-t-white/30 backdrop-blur-xl",
+        tabActive: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] text-[#011a12] border-t border-white/60 border-b border-black/40 shadow-[0_0_20px_rgba(0,245,160,0.6)] font-black",
+        tabInactive: "bg-[#02281c]/80 hover:bg-[#033626] text-emerald-200 border border-[#00f5a0]/25 backdrop-blur-xl",
         artGlowRing: "from-[#00f5a0]/60 via-teal-400/45 to-[#00d9f5]/60",
-        artBorder: "border-emerald-500/35 border-t-white/45 border-b-black/60 shadow-[0_25px_60px_rgba(0,0,0,0.9),inset_0_2px_2px_rgba(255,255,255,0.45)]",
+        artBorder: "border-emerald-500/35 border-t-white/45 border-b-black/60 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
         stageTitle: "text-[#e6fff5] drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-extrabold",
         stageArtist: "text-[#00f5a0] font-bold",
         stageTagAccent: "bg-gradient-to-r from-[#00f5a0]/25 to-teal-500/20 border border-[#00f5a0]/50 border-t-white/40 text-[#00f5a0] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]",
-        stageTagNeutral: "bg-gradient-to-b from-white/[0.08] to-black/40 border border-white/15 border-t-white/30 text-emerald-200 shadow-inner",
-        bottomDeck: "bg-gradient-to-t from-[#010e08]/90 via-[#021f16]/80 to-[#02281c]/70 backdrop-blur-3xl border-t border-white/[0.25] border-t-white/40 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.45),0_-12px_36px_rgba(0,0,0,0.7),0_0_24px_rgba(0,245,160,0.22)] ring-1 ring-[#00f5a0]/20",
+        stageTagNeutral: "bg-[#02281c]/70 border border-white/15 border-t-white/30 text-emerald-200 shadow-inner",
+        bottomDeck: "bg-[#021f16]/95 backdrop-blur-3xl border-t border-emerald-500/30 shadow-2xl ring-1 ring-[#00f5a0]/20",
         seekbarTrack: "bg-black/50 border border-white/10 shadow-inner",
         seekbarFill: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5]",
         seekbarThumb: "bg-[#00f5a0] border-2 border-[#011a12] shadow-[0_0_16px_rgba(0,245,160,0.85)]",
         seekbarGlow: "shadow-[#00f5a0]/50",
         seekbarAccent: "accent-[#00f5a0]",
         timeText: "text-emerald-300/80 font-mono",
-        playBtn: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] hover:brightness-115 text-[#011a12] shadow-[0_0_32px_rgba(0,245,160,0.7),inset_0_1.5px_1px_rgba(255,255,255,0.8)] border-t border-white/70 active:scale-95 ring-4 ring-[#00f5a0]/30",
+        playBtn: "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] hover:brightness-115 text-[#011a12] shadow-[0_0_32px_rgba(0,245,160,0.7)] border-t border-white/70 active:scale-95 ring-4 ring-[#00f5a0]/30",
         playIconFill: "fill-[#011a12]",
-        ctrlBtn: "bg-gradient-to-b from-white/[0.12] via-emerald-950/40 to-black/50 hover:from-white/[0.2] text-[#e6fff5] border border-[#00f5a0]/30 border-t-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)] backdrop-blur-xl",
+        ctrlBtn: "bg-[#02281c]/80 hover:bg-[#033626] text-[#e6fff5] border border-[#00f5a0]/30 border-t-white/40 shadow-md backdrop-blur-xl",
         activeText: "text-[#00f5a0] drop-shadow-[0_0_10px_rgba(0,245,160,0.5)]",
         mutedText: "text-emerald-300/70 hover:text-white",
         volSlider: "bg-black/50 accent-[#00f5a0]",
@@ -1435,11 +1471,22 @@ export const Player: React.FC<PlayerProps> = ({
       if (videoPlaceholderRef.current) {
         const rect = videoPlaceholderRef.current.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
-          setVideoRect({
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height,
+          setVideoRect((prev) => {
+            if (
+              prev &&
+              Math.abs(prev.top - rect.top) < 1 &&
+              Math.abs(prev.left - rect.left) < 1 &&
+              Math.abs(prev.width - rect.width) < 1 &&
+              Math.abs(prev.height - rect.height) < 1
+            ) {
+              return prev;
+            }
+            return {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+            };
           });
         }
       }
@@ -1631,7 +1678,7 @@ export const Player: React.FC<PlayerProps> = ({
             transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
           }}
           data-theme={designConfig.id}
-          className={`fixed inset-0 z-[100] w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}
+          className={`full-player-overlay fixed inset-0 z-[100] w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}
         >
           {/* Animated Dynamic Ambient Background based on the HD Cover Art / Video Thumbnail & Active Theme */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
@@ -1757,12 +1804,6 @@ export const Player: React.FC<PlayerProps> = ({
 
             {/* Layer 3: High-Legibility Contrast Readability Veil */}
             <div className={`absolute inset-0 ${fpTheme.veil}`} />
-
-            {/* Candyland Falling Sweets in Full Player Ambient Layer */}
-            <CandylandFallingSweets isActive={Boolean(designConfig.isCandy || designConfig.id === "candyland")} />
-
-            {/* Emerald Wilderness Living Nature Scenes & Warm Fireflies */}
-            <EmeraldWildernessBackground isActive={Boolean(designConfig.isEmeraldWilderness || designConfig.id === "dynamic-emerald")} isFullPlayer={true} />
           </div>
 
           {/* Top Bar Navigation with Swipe Handle */}
@@ -1857,7 +1898,7 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
 
           {/* Main Fullscreen Center Body */}
-          <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto sm:overflow-hidden">
+          <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center px-3 py-1 sm:px-6 sm:py-3 overflow-hidden">
             {/* Lyrics View overlay if active */}
             {showLyrics ? (
               <div className="w-full max-w-2xl h-full flex items-center justify-center">
@@ -1891,31 +1932,31 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             ) : playerState.mediaMode === "video" ? (
               /* Music Video Mode on Center Stage */
-              <div className="flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-1">
+              <div className="flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-0.5">
                 {/* 16:9 Video Placeholder - exact bounding frame synchronized with YouTube wrapper with dynamic ambient glow */}
                 <div
                   ref={videoPlaceholderRef}
-                  className={`w-[min(90vw,520px)] aspect-video max-h-[34vh] sm:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none artwork-glow-dynamic border-2 ${fpTheme.artBorder}`}
+                  className={`w-[min(88vw,480px)] aspect-video max-h-[26vh] sm:max-h-[34vh] md:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none artwork-glow-dynamic border-2 ${fpTheme.artBorder}`}
                 />
 
                 {/* Song Title, Artist, & Master Video Tags - lowered with clean gap below the video screen and clear of shadows */}
-                <div className="relative z-30 text-center space-y-1 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-5 sm:mt-7 pt-1">
+                <div className="relative z-30 text-center space-y-0.5 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-2.5 sm:mt-4 pt-0.5">
                   <MarqueeText
                     as="h2"
                     text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    className={`text-base sm:text-2xl md:text-3xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
+                    className={`text-sm sm:text-xl md:text-2xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
                     containerClassName="w-full mx-auto text-center"
                     speed={30}
                   />
                   <MarqueeText
                     as="p"
                     text={currentTrack.artist || "Unknown Artist"}
-                    className={`text-xs sm:text-sm md:text-base font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
+                    className={`text-xs sm:text-sm font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
                     containerClassName="w-full mx-auto text-center"
                     speed={26}
                   />
-                  <div className="flex items-center justify-center gap-2 pt-0.5">
-                    <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono flex items-center gap-1 ${fpTheme.stageTagNeutral}`}>
+                  <div className="flex items-center justify-center gap-1.5 pt-0.5">
+                    <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono flex items-center gap-1 ${fpTheme.stageTagNeutral}`}>
                       <Video className="w-3 h-3 text-red-500" />
                       <span>Official Music Video</span>
                     </span>
@@ -1927,16 +1968,16 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             ) : (
               /* Audio / Song Mode: Central HD Album Artwork & Dynamic Stage */
-              <div className="flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto">
+              <div className="flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto py-0.5">
                 {/* HD Cover Art with Dynamic Pulsing Color-Shifting Ambient Glow Aura */}
                 <div className="relative group flex items-center justify-center">
                   {/* Dynamic themed colored backlight aura */}
-                  <div className={`absolute -inset-3 sm:-inset-4 rounded-[2.5rem] artwork-glow-dynamic opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
+                  <div className={`absolute -inset-2.5 sm:-inset-4 rounded-[2.5rem] artwork-glow-dynamic opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
 
                   {/* Contained 3D atmospheric floor drop shadow */}
                   <div className="absolute -inset-0.5 rounded-3xl shadow-[0_12px_28px_rgba(0,0,0,0.7),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
 
-                  <div className={`relative w-[min(54vw,220px)] h-[min(54vw,220px)] xs:w-[min(60vw,250px)] xs:h-[min(60vw,250px)] sm:w-72 sm:h-72 md:w-80 md:h-80 max-h-[32vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} artwork-glow-dynamic shadow-[0_16px_36px_rgba(0,0,0,0.7)]`}>
+                  <div className={`relative w-[min(48vw,200px)] h-[min(48vw,200px)] xs:w-[min(54vw,220px)] xs:h-[min(54vw,220px)] sm:w-64 sm:h-64 md:w-72 md:h-72 max-h-[26vh] sm:max-h-[32vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} artwork-glow-dynamic shadow-[0_16px_36px_rgba(0,0,0,0.7)]`}>
                     <img
                       src={getHdCoverUrl(currentTrack.coverUrl)}
                       alt={currentTrack.title}
@@ -1954,22 +1995,22 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
 
                 {/* Song Title, Artist, & Master Quality Tag - lowered with clean gap below album artwork and clear of shadows */}
-                <div className="relative z-30 text-center space-y-1 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-5 sm:mt-7 pt-1">
+                <div className="relative z-30 text-center space-y-0.5 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-2.5 sm:mt-4 pt-0.5">
                   <MarqueeText
                     as="h2"
                     text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    className={`text-base sm:text-2xl md:text-3xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
+                    className={`text-sm sm:text-xl md:text-2xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
                     containerClassName="w-full mx-auto text-center"
                     speed={30}
                   />
                   <MarqueeText
                     as="p"
                     text={currentTrack.artist || "Unknown Artist"}
-                    className={`text-xs sm:text-sm md:text-base font-semibold ${fpTheme.stageArtist} text-center`}
+                    className={`text-xs sm:text-sm font-semibold ${fpTheme.stageArtist} text-center`}
                     containerClassName="w-full mx-auto text-center"
                     speed={26}
                   />
-                  <div className="flex items-center justify-center gap-2 pt-0.5">
+                  <div className="flex items-center justify-center gap-1.5 pt-0.5">
                     <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagNeutral}`}>
                       {currentTrack.album || "Oblivion HD"}
                     </span>
@@ -1983,7 +2024,7 @@ export const Player: React.FC<PlayerProps> = ({
           </div>
 
           {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
-          <div className={`relative z-20 shrink-0 p-3 sm:p-4 pb-5 sm:pb-6 border-t backdrop-blur-2xl space-y-2.5 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
+          <div className={`relative z-20 shrink-0 p-2.5 sm:p-4 pb-4 sm:pb-6 border-t backdrop-blur-2xl space-y-2 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
             {/* Top Row Controls: Like, Add, Prev, Play/Pause, Next, Shuffle, Repeat, Volume */}
             <div className="flex items-center justify-between gap-1.5 sm:gap-2">
               {/* Left Group: Like, Add to Playlist */}

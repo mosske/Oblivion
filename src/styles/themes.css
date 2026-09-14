@@ -18,7 +18,12 @@
   --accent-primary-rgb: 223, 184, 108;
   --accent-secondary: #f7e2ab;
   --accent-tertiary: #a07422;
+  --accent-gradient: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 50%, #a07422 100%);
+  --accent-border: rgba(223, 184, 108, 0.45);
   --accent-contrast-text: #120f14;
+  --text-on-accent: #120f14;
+  --bg-surface-elevated: #1f1b22;
+  --text-primary: #fdfcf9;
   --text-muted: #b0a694;
   --border-subtle: rgba(223, 184, 108, 0.22);
   --border-active: var(--accent-primary);
@@ -43,7 +48,12 @@
   --accent-primary-rgb: 0, 243, 255;
   --accent-secondary: #ff007f;
   --accent-tertiary: #7b2cbf;
+  --accent-gradient: linear-gradient(135deg, #00f3ff 0%, #ff007f 100%);
+  --accent-border: rgba(0, 243, 255, 0.5);
   --accent-contrast-text: #050814;
+  --text-on-accent: #050814;
+  --bg-surface-elevated: #0f1325;
+  --text-primary: #ffffff;
   --text-muted: #94a3b8;
   --border-subtle: rgba(0, 243, 255, 0.25);
   --border-active: var(--accent-primary);
@@ -77,7 +87,12 @@
   --accent-primary-rgb: 255, 112, 166;
   --accent-secondary: #a3c4f3;
   --accent-tertiary: #ffd166;
+  --accent-gradient: linear-gradient(135deg, #ff70a6 0%, #a3c4f3 100%);
+  --accent-border: rgba(255, 112, 166, 0.6);
   --accent-contrast-text: #ffffff;
+  --text-on-accent: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --text-primary: #3b1235;
   --text-muted: #5e356d;
   --border-subtle: rgba(255, 182, 193, 0.5);
   --border-active: var(--accent-primary);
@@ -101,7 +116,12 @@
   --accent-primary-rgb: 0, 245, 160;
   --accent-secondary: #00d9f5;
   --accent-tertiary: #ffe066;
+  --accent-gradient: linear-gradient(135deg, #00f5a0 0%, #00d9f5 100%);
+  --accent-border: rgba(0, 245, 160, 0.5);
   --accent-contrast-text: #011a12;
+  --text-on-accent: #011a12;
+  --bg-surface-elevated: #04291e;
+  --text-primary: #e6fff5;
   --text-muted: #6ee7b7;
   --border-subtle: rgba(0, 245, 160, 0.22);
   --border-active: var(--accent-primary);
@@ -125,7 +145,12 @@
   --accent-primary-rgb: 245, 158, 11;
   --accent-secondary: #d4af37;
   --accent-tertiary: #e65c00;
+  --accent-gradient: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d4af37 100%);
+  --accent-border: rgba(245, 158, 11, 0.5);
   --accent-contrast-text: #170d06;
+  --text-on-accent: #170d06;
+  --bg-surface-elevated: #281608;
+  --text-primary: #fef3c7;
   --text-muted: #fbbf24;
   --border-subtle: rgba(245, 158, 11, 0.3);
   --border-active: var(--accent-primary);
@@ -149,7 +174,12 @@
   --accent-primary-rgb: 255, 42, 141;
   --accent-secondary: #8a2be2;
   --accent-tertiary: #ff758c;
+  --accent-gradient: linear-gradient(135deg, #ff2a8d 0%, #8a2be2 100%);
+  --accent-border: rgba(255, 42, 141, 0.5);
   --accent-contrast-text: #ffffff;
+  --text-on-accent: #ffffff;
+  --bg-surface-elevated: #240e3f;
+  --text-primary: #fdf4ff;
   --text-muted: #f0abfc;
   --border-subtle: rgba(255, 42, 141, 0.3);
   --border-active: var(--accent-primary);
@@ -174,7 +204,11 @@
   --accent-primary-rgb: 31, 31, 31;
   --accent-secondary: #3A3530;
   --accent-tertiary: #524B44;
+  --accent-gradient: linear-gradient(135deg, #1F1F1F 0%, #3A3530 100%);
+  --accent-border: rgba(31, 31, 31, 0.4);
   --accent-contrast-text: #F2E8D8;
+  --text-on-accent: #F2E8D8;
+  --bg-surface-elevated: #FAF5ED;
   --text-primary: #1F1F1F;
   --text-secondary: #666055;
   --text-muted: #666055;
@@ -205,7 +239,11 @@
   --accent-primary-rgb: 56, 189, 248;
   --accent-secondary: #a5f3fc;
   --accent-tertiary: #0284c7;
+  --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  --accent-border: rgba(56, 189, 248, 0.5);
   --accent-contrast-text: #0f172a;
+  --text-on-accent: #0f172a;
+  --bg-surface-elevated: #262a34;
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
@@ -244,7 +282,11 @@
   --accent-secondary: #ff7b00;
   --accent-tertiary: #00f0ff;
   --accent-violet: #8b5cf6;
+  --accent-gradient: linear-gradient(135deg, #ff007f 0%, #ff7b00 50%, #00f0ff 100%);
+  --accent-border: rgba(255, 0, 127, 0.5);
   --accent-contrast-text: #ffffff;
+  --text-on-accent: #ffffff;
+  --bg-surface-elevated: #1a0f35;
   --text-primary: #ffffff;
   --text-secondary: #ebd6ff;
   --text-muted: #c084fc;
@@ -383,6 +425,31 @@
   color: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
   background: rgba(125, 125, 125, 0.12);
+}
+
+/* Dynamic 'Viewing Hidden' Active Button State */
+.viewing-hidden-active {
+  background: var(--accent-gradient, var(--accent-primary)) !important;
+  color: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+  border: 1px solid var(--accent-border, var(--border-active, transparent)) !important;
+}
+
+.viewing-hidden-active svg,
+.viewing-hidden-active * {
+  color: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+  stroke: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+}
+
+/* Windows / Desktop Select Dropdown Popup Option Contrast */
+select.sort-dropdown,
+select {
+  color: var(--text-primary, var(--canvas-text-primary, #ffffff));
+}
+
+select.sort-dropdown option,
+select option {
+  background-color: var(--bg-surface-elevated, #1a1625) !important;
+  color: var(--text-primary, #ffffff) !important;
 }
 
 /* Enforced WCAG Active Button, Pill, & Toggle Rule */
@@ -1882,5 +1949,39 @@ input[type="checkbox"] {
   border: 2px solid rgba(1, 16, 11, 0.85) !important;
   box-shadow: 0 0 10px rgba(0, 245, 160, 0.4) !important;
 }
+
+/* Background Stacking Isolation */
+.emerald-wilderness-bg,
+canvas.animated-theme-bg,
+.animated-theme-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+/* Full Player UI Overlay Layering - Strict Non-scrolling Immersive Viewport */
+.full-player-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  z-index: 100 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+}
+
+[data-theme="dynamic-emerald"] .full-player-overlay,
+.full-player-overlay[data-theme="dynamic-emerald"] {
+  background-color: #01140c !important;
+}
+
+
 
 

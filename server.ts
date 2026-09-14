@@ -1718,25 +1718,23 @@ async function searchYouTubePublic(query: string, searchType: string = "all"): P
 
 // Utility to strictly disambiguate true artist from channel/uploader
 function parseTrackMetadataServer(rawTitle: string, channelOrUploader?: string): { title: string; artist: string; uploader: string } {
-  const uploader = (channelOrUploader || "").trim();
+  const uploader = fixMojibakeAndEntitiesServer(channelOrUploader || "").trim();
   if (!rawTitle) {
     return {
       title: "Untitled Track",
-      artist: uploader || "Unknown Artist",
+      artist: cleanArtistNameServer(uploader) || "Unknown Artist",
       uploader,
     };
   }
 
-  let cleaned = rawTitle.trim();
-  cleaned = cleaned
-    .replace(/\s*[\(\[]\s*(official\s*(music\s*)?(video|audio|lyric\s*video|hd|4k|stream)?|hd|4k|remastered|lyric\s*video|audio|visualizer|mv|m\/v)\s*[\)\]]/gi, "")
-    .trim();
+  const rawDecoded = fixMojibakeAndEntitiesServer(rawTitle).trim();
+  let cleaned = cleanTrackTitleServer(rawDecoded, uploader);
 
   // ONLY match hyphens/dashes [-–—], NEVER colons ":" or pipes "|" which are part of song titles/subtitles
-  const splitMatch = cleaned.match(/^(.+?)\s+[-–—]\s+(.+)$/);
+  const splitMatch = rawDecoded.match(/^(.+?)\s+[-–—]\s+(.+)$/);
   if (splitMatch) {
-    const extractedArtist = splitMatch[1].trim();
-    let extractedTitle = splitMatch[2].trim().replace(/^["']|["']$/g, "").trim();
+    const extractedArtist = cleanArtistNameServer(splitMatch[1]);
+    let extractedTitle = cleanTrackTitleServer(splitMatch[2], extractedArtist);
     if (extractedArtist && extractedTitle) {
       return {
         title: extractedTitle,
@@ -1746,16 +1744,11 @@ function parseTrackMetadataServer(rawTitle: string, channelOrUploader?: string):
     }
   }
 
-  let cleanArtist = uploader || "Unknown Artist";
-  if (cleanArtist.endsWith(" - Topic")) {
-    cleanArtist = cleanArtist.replace(/ - Topic$/, "").trim();
-  } else if (cleanArtist.toLowerCase().endsWith("vevo")) {
-    cleanArtist = cleanArtist.replace(/vevo$/i, "").trim();
-  }
+  let cleanArtist = cleanArtistNameServer(uploader) || "Unknown Artist";
 
   return {
-    title: cleaned || rawTitle,
-    artist: cleanArtist || "Unknown Artist",
+    title: cleaned || rawDecoded || "Untitled Track",
+    artist: cleanArtist,
     uploader,
   };
 }
@@ -4951,6 +4944,133 @@ app.get("/api/youtube/search", async (req, res) => {
 // Multi-Source Lyrics Pipeline with Title Sanitization & Provider Fallback
 // =========================================================================
 
+function fixMojibakeAndEntitiesServer(input: string | undefined | null): string {
+  if (!input || typeof input !== "string") return "";
+  let text = input;
+
+  // 1. Decode numeric entities
+  text = text.replace(/&#(\d+);/g, (_, dec) => {
+    try {
+      const code = parseInt(dec, 10);
+      if (code >= 32) return String.fromCharCode(code);
+      return "";
+    } catch {
+      return "";
+    }
+  });
+
+  text = text.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+    try {
+      const code = parseInt(hex, 16);
+      if (code >= 32) return String.fromCharCode(code);
+      return "";
+    } catch {
+      return "";
+    }
+  });
+
+  // 2. Decode named HTML entities
+  const entityMap: Record<string, string> = {
+    "&quot;": '"',
+    "&apos;": "'",
+    "&lsquo;": "'",
+    "&rsquo;": "'",
+    "&sbquo;": "'",
+    "&ldquo;": '"',
+    "&rdquo;": '"',
+    "&bdquo;": '"',
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&nbsp;": " ",
+    "&hellip;": "…",
+    "&ndash;": "–",
+    "&mdash;": "—",
+    "&bull;": "•",
+    "&prime;": "'",
+    "&Prime;": '"',
+    "&acute;": "´",
+    "&copy;": "©",
+    "&reg;": "®",
+    "&trade;": "™",
+  };
+  text = text.replace(/&(?:quot|apos|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|amp|lt|gt|nbsp|hellip|ndash|mdash|bull|prime|Prime|acute|copy|reg|trade);/gi, (match) => {
+    const lower = match.toLowerCase();
+    return entityMap[match] || entityMap[lower] || match;
+  });
+
+  // 3. Double-encoded UTF-8 / Windows-1252 mojibake substitutions
+  const mojibakeReplacements: Array<[string | RegExp, string]> = [
+    [/â€™/g, "'"],
+    [/â€˜/g, "'"],
+    [/â€TM/gi, "'"],
+    [/Ã¢â‚¬â„¢/g, "'"],
+    [/Ã¢â‚¬Ëœ/g, "'"],
+    [/`|´/g, "'"],
+    [/â€œ/g, '"'],
+    [/â€\x9d/g, '"'],
+    [/â€\x9c/g, '"'],
+    [/â€/g, '"'],
+    [/Ã¢â‚¬Å“/g, '"'],
+    [/Ã¢â‚¬Â/g, '"'],
+    [/â€“/g, "–"],
+    [/â€”/g, "—"],
+    [/Ã¢â‚¬â—/g, "—"],
+    [/â€¦/g, "…"],
+    [/â€¢/g, "•"],
+    [/Ã©/g, "é"],
+    [/Ã¨/g, "è"],
+    [/Ã /g, "à"],
+    [/Ã¡/g, "á"],
+    [/Ã¢/g, "â"],
+    [/Ã£/g, "ã"],
+    [/Ã¤/g, "ä"],
+    [/Ã¥/g, "å"],
+    [/Ã®/g, "î"],
+    [/Ã¯/g, "ï"],
+    [/Ã¬/g, "ì"],
+    [/Ã­/g, "í"],
+    [/Ã³/g, "ó"],
+    [/Ã²/g, "ò"],
+    [/Ã´/g, "ô"],
+    [/Ãµ/g, "õ"],
+    [/Ã¶/g, "ö"],
+    [/Ã¸/g, "ø"],
+    [/Ãº/g, "ú"],
+    [/Ã¹/g, "ù"],
+    [/Ã»/g, "û"],
+    [/Ã¼/g, "ü"],
+    [/Ã±/g, "ñ"],
+    [/Ã§/g, "ç"],
+    [/Ã‰/g, "É"],
+    [/Ã€/g, "À"],
+    [/Ã /g, "Á"],
+    [/Ã“/g, "Ó"],
+    [/Ãš/g, "Ú"],
+    [/Ã‘/g, "Ñ"],
+    [/Ã‡/g, "Ç"],
+    [/â™ª/g, "♪"],
+    [/â™«/g, "♫"],
+    [/\uFFFD/g, ""],
+  ];
+
+  for (const [pattern, replacement] of mojibakeReplacements) {
+    text = text.replace(pattern, replacement);
+  }
+
+  // 4. Escaped unicode sequences
+  text = text
+    .replace(/\\u0027/gi, "'")
+    .replace(/\\u2019/gi, "'")
+    .replace(/\\u2018/gi, "'")
+    .replace(/\\u201c/gi, '"')
+    .replace(/\\u201d/gi, '"')
+    .replace(/\\u2013/gi, "–")
+    .replace(/\\u2014/gi, "—");
+
+  return text.trim();
+}
+
 function cleanArtistNameServer(rawArtistOrUploader?: string | string[] | any): string {
   if (!rawArtistOrUploader) return "";
   let artist = "";
@@ -4961,6 +5081,9 @@ function cleanArtistNameServer(rawArtistOrUploader?: string | string[] | any): s
   }
 
   if (!artist) return "";
+
+  // Universal Mojibake & entity decoding
+  artist = fixMojibakeAndEntitiesServer(artist);
 
   const branding = [
     /\s*-\s*topic$/i,
@@ -5038,7 +5161,7 @@ function getArtistSearchVariantsServer(rawArtistOrUploader?: string | string[] |
 
 function cleanTrackTitleServer(rawTitle: string, artistName?: string): string {
   if (!rawTitle) return "Untitled Track";
-  let title = rawTitle.trim();
+  let title = fixMojibakeAndEntitiesServer(String(rawTitle)).trim();
 
   // Strip anything following - Remastered or - Live (e.g. "- Remastered 2011", "- Live at Wembley", etc.)
   title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?(?:\s+\d{4})?|live(?:\s+at[^)\]]+)?|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary|radio\s+edit|single\s+version|original\s+mix|clean\s+version|explicit\s+version|extended\s+mix|club\s+mix).*$/i, "");
@@ -5413,7 +5536,9 @@ function sanitizeCaptionsAndLyricsServer(rawLyricsText: string): string {
   const artifactRegex = /\s*(\[|\()(?:\s*(?:music|applause|laughter|cheering|cheers|instrumental|silence|intro|outro|vocalizing|screaming|groaning|coughing|sound\s+effects?|audience\s+applause|singing|beatboxing|chatter|whistling|audio)\s*)(\]|\))\s*/gi;
   const musicalSymbolsRegex = /[♪♫♩♬♯♭]+/g;
 
-  const lines = rawLyricsText.split("\n");
+  // Universal Mojibake & HTML Entity Decoding
+  const decodedText = fixMojibakeAndEntitiesServer(rawLyricsText);
+  const lines = decodedText.split("\n");
   const cleanedLines: string[] = [];
 
   for (const rawLine of lines) {

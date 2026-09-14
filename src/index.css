@@ -384,5 +384,53 @@ html, body {
   min-height: 100vh;
 }
 
+/* Dynamic 'Viewing Hidden' Active Button State */
+.viewing-hidden-active {
+  background: var(--accent-gradient, var(--accent-primary)) !important;
+  color: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+  border: 1px solid var(--accent-border, var(--border-active, transparent)) !important;
+}
+
+.viewing-hidden-active svg,
+.viewing-hidden-active * {
+  color: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+  stroke: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+}
+
+/* Windows & Desktop Select Dropdown Popup Option Contrast */
+select.sort-dropdown option,
+select option {
+  background-color: var(--bg-surface-elevated, #1a1625) !important;
+  color: var(--text-primary, #ffffff) !important;
+}
+
+/* Background Stacking Isolation */
+.emerald-wilderness-bg:not(.full-player-bg),
+canvas.animated-theme-bg:not(.full-player-canvas),
+.animated-theme-bg:not(.full-player-bg) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+/* Full Player UI Overlay Layering - Strict Non-scrolling Immersive Viewport */
+.full-player-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  z-index: 100 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+  contain: paint;
+}
+
 
 

@@ -1,55 +1,24 @@
 import { Track } from "../types";
-import { sanitizeLyricsQuery, cleanArtistName, extractPrimaryArtist } from "./lyricsSanitizer";
+import {
+  sanitizeLyricsQuery,
+  cleanArtistName,
+  extractPrimaryArtist,
+  cleanTrackTitle as sanitizeCleanTrackTitle,
+  fixMojibakeAndEntities,
+} from "./lyricsSanitizer";
+
+export { fixMojibakeAndEntities, cleanArtistName, extractPrimaryArtist };
 
 /**
  * Cleans YouTube video titles to extract and display the complete, true song title.
+ * Automatically decodes HTML entities (like &#39; &#x27;) and fixes Windows-1252 / Mojibake artifacts (like can't, don't).
  * Preserves compound titles, subtitles with colons (e.g. "Subway: The Series", "Star Wars: Duel of the Fates", "10:35"),
  * featured artist mentions, chapter numbers, and roman numerals, while removing extraneous video wrappers like
  * (Official Video), (Official Audio), [Lyric Video], [MV], etc.
  */
 export function cleanTrackTitle(rawTitle?: string, artistName?: string): string {
   if (!rawTitle) return "Untitled Track";
-  let title = String(rawTitle).trim();
-
-  // Strip purely video-hosting wrapper tags
-  title = title
-    .replace(/\s*[\(\[]\s*(?:official\s*(?:music\s*)?(?:video|audio|lyric\s*video|lyrics\s*video|track|stream|visualizer|clip|videoclip)?|music\s+video|lyric\s*video|visualizer|audio\s*stream|official\s+4k|official\s+hd|4k\s+60fps|8k|1080p|720p|m\/v|mv)\s*[\)\]]/gi, "")
-    .replace(/\s*[\(\[]\s*(?:full\s+)?album\s+(?:stream|audio|track)\s*[\)\]]/gi, "")
-    .replace(/\s*[\(\[]\s*(?:original\s+)?soundtrack\s*(?:ost)?\s*[\)\]]/gi, "")
-    .replace(/\s*[\(\[]\s*ost\s*[\)\]]/gi, "")
-    .replace(/\s*[\(\[]\s*(?:color\s+coded(?:\s+lyrics?)?|with\s+lyrics?|free\s+download|premiere)\s*[\)\]]/gi, "")
-    .replace(/\(\s*\)|\[\s*\]|\{\s*\}/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-
-  // If title is "Artist - Song Title", only isolate the song title if the left part matches the known artist
-  const hyphenMatch = title.match(/^(.+?)\s+[-–—]\s+(.+)$/);
-  if (hyphenMatch) {
-    const left = hyphenMatch[1].trim();
-    const right = hyphenMatch[2].trim();
-
-    if (artistName) {
-      const cleanArt = cleanArtistName(artistName).toLowerCase();
-      const primaryArt = extractPrimaryArtist(artistName).toLowerCase();
-      const cleanLeft = cleanArtistName(left).toLowerCase();
-
-      if (
-        cleanArt &&
-        (cleanLeft === cleanArt ||
-          cleanLeft === primaryArt ||
-          (cleanArt.length >= 3 && cleanLeft.includes(cleanArt)) ||
-          (cleanLeft.length >= 3 && cleanArt.includes(cleanLeft)))
-      ) {
-        title = right;
-      }
-    }
-  }
-
-  // Strip trailing metadata channel tags formatted with bullet/pipe (e.g. "• TopPop", "| VEVO") - NEVER colons!
-  title = title.replace(/\s+[•|~]\s*(?:TopPop|Vevo|Colors|BBC|Official|Visualizer|MV).*$/i, "");
-  title = title.replace(/^["'«“]|["'»”]$/g, "").trim();
-
-  return title || rawTitle.trim();
+  return sanitizeCleanTrackTitle(rawTitle, artistName);
 }
 
 /**

@@ -2296,16 +2296,16 @@ export default function App() {
     <EqualizerProvider>
       <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
-      <CandylandFallingSweets isActive={Boolean(activeFullDesign.isCandy || activeFullDesign.id === "candyland")} />
+      <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
 
       {/* Animated Glowing Nebula Gradient & Fluid Aurora Canvas for Theme 09 (Nebula Liquid Glass) */}
-      <NebulaLiquidBackground isActive={Boolean(activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass")} />
+      <NebulaLiquidBackground isActive={Boolean((activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") && !playerState.isFullscreen)} />
 
       {/* Animated Dynamic Trapezoid Lines Mesh & Shifting Charcoal Shadows for Theme 01 (Designer) */}
-      <DesignerTrapezoidBackground isActive={Boolean(activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory")} />
+      <DesignerTrapezoidBackground isActive={Boolean((activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory") && !playerState.isFullscreen)} />
 
       {/* Animated Living Nature Scenes (Alpine Pine Forest & Bridge, Ocean Island, Rainforest, Waterfall) & Warm Fireflies for Theme 04 (Emerald Wilderness) */}
-      <EmeraldWildernessBackground isActive={Boolean(activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald")} />
+      <EmeraldWildernessBackground isActive={Boolean((activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") && !playerState.isFullscreen)} />
 
       {/* Sidebar Navigation */}
       <Sidebar

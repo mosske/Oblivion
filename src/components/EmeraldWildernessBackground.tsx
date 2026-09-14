@@ -51,18 +51,18 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
       { r: 253, g: 224, b: 71 },  // glowing amber (#fde047)
     ];
 
-    const fireflyCount = typeof window !== "undefined" && window.innerWidth < 768 ? 24 : 38;
+    const fireflyCount = typeof window !== "undefined" && window.innerWidth < 768 ? 32 : 54;
     const fireflies: Firefly[] = [];
 
     const handleResize = () => {
       if (!canvas) return;
-      const rect = containerRef.current?.getBoundingClientRect() || {
-        width: window.innerWidth,
-        height: window.innerHeight,
-      };
+      const newW = window.innerWidth;
+      const newH = window.innerHeight;
+      if (width > 0 && Math.abs(width - newW) < 2 && Math.abs(height - newH) < 2) return;
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = Math.max(rect.width, 320);
-      height = Math.max(rect.height, 320);
+      width = Math.max(newW, 320);
+      height = Math.max(newH, 320);
 
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
@@ -79,16 +79,16 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
     for (let i = 0; i < fireflyCount; i++) {
       const col = colorPalettes[i % colorPalettes.length];
       fireflies.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: 0.35 + Math.random() * 0.75, // drift from left to right
-        vy: (Math.random() - 0.5) * 0.3,  // gentle vertical drift
-        waveFreq: 0.015 + Math.random() * 0.02,
-        waveAmp: 0.8 + Math.random() * 1.5,
-        radius: 2.2 + Math.random() * 1.8,
-        glowRadius: 14 + Math.random() * 14,
-        baseOpacity: 0.45 + Math.random() * 0.45,
-        pulseSpeed: 0.035 + Math.random() * 0.045,
+        x: Math.random() * (width || window.innerWidth || 800),
+        y: Math.random() * (height || window.innerHeight || 600),
+        vx: 0.35 + Math.random() * 0.85, // drift from left to right
+        vy: (Math.random() - 0.5) * 0.4,  // gentle vertical drift
+        waveFreq: 0.015 + Math.random() * 0.025,
+        waveAmp: 0.9 + Math.random() * 1.8,
+        radius: 2.2 + Math.random() * 2.2,
+        glowRadius: 16 + Math.random() * 18,
+        baseOpacity: 0.55 + Math.random() * 0.45,
+        pulseSpeed: 0.04 + Math.random() * 0.05,
         pulsePhase: Math.random() * Math.PI * 2,
         r: col.r,
         g: col.g,
@@ -122,7 +122,7 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
 
         // Bioluminescent pulsing glow
         const pulse = Math.sin(time * f.pulseSpeed + f.pulsePhase);
-        const currentOpacity = Math.max(0.18, Math.min(1.0, f.baseOpacity + pulse * 0.35));
+        const currentOpacity = Math.max(0.25, Math.min(1.0, f.baseOpacity + pulse * 0.38));
 
         // Outer soft glow halo
         ctx.save();
@@ -130,8 +130,8 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
           f.x, f.y, 0,
           f.x, f.y, f.glowRadius
         );
-        grad.addColorStop(0, `rgba(${f.r}, ${f.g}, ${f.b}, ${Math.min(1, currentOpacity * 0.95)})`);
-        grad.addColorStop(0.35, `rgba(${f.r}, ${f.g}, ${f.b}, ${currentOpacity * 0.4})`);
+        grad.addColorStop(0, `rgba(${f.r}, ${f.g}, ${f.b}, ${Math.min(1, currentOpacity * 0.98)})`);
+        grad.addColorStop(0.35, `rgba(${f.r}, ${f.g}, ${f.b}, ${currentOpacity * 0.48})`);
         grad.addColorStop(1, `rgba(${f.r}, ${f.g}, ${f.b}, 0)`);
 
         ctx.fillStyle = grad;
@@ -140,7 +140,7 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
         ctx.fill();
 
         // Intense warm white-gold center spark
-        ctx.fillStyle = `rgba(255, 255, 238, ${Math.min(1, currentOpacity * 0.98)})`;
+        ctx.fillStyle = `rgba(255, 255, 240, ${Math.min(1, currentOpacity * 0.99)})`;
         ctx.beginPath();
         ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -152,7 +152,7 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
 
     render();
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
       cancelAnimationFrame(animFrameId);
@@ -166,13 +166,11 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
     <div
       ref={containerRef}
       aria-hidden="true"
-      className={`pointer-events-none overflow-hidden select-none ${
-        isFullPlayer ? "absolute inset-0 z-0" : "fixed inset-0 z-0"
+      className={`emerald-wilderness-bg pointer-events-none overflow-hidden select-none ${
+        isFullPlayer ? "full-player-bg absolute inset-0 z-0" : "fixed inset-0 z-0"
       }`}
       style={{
-        background: "#011209",
-        isolation: "isolate",
-        contain: "strict",
+        background: isFullPlayer ? "transparent" : "#011209",
       }}
     >
       {/* Base Layer: Deep Forest Ambient Foundation */}
@@ -399,7 +397,7 @@ export const EmeraldWildernessBackground: React.FC<EmeraldWildernessBackgroundPr
       */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none z-10"
+        className={`animated-theme-bg ${isFullPlayer ? "full-player-canvas" : ""} absolute inset-0 w-full h-full pointer-events-none z-10`}
         style={{
           contain: "strict",
           willChange: "transform",

@@ -14,13 +14,152 @@ export interface SanitizedLyricsQuery {
 }
 
 /**
+ * Universal text decoder and Mojibake sanitizer:
+ * - Decodes numeric HTML entities (e.g. &#39; &#x27; &#039; &#8217;)
+ * - Decodes named HTML entities (&quot;, &apos;, &lsquo;, &rsquo;, &amp;, &lt;, &gt;, &hellip;, &ndash;, &mdash;, etc.)
+ * - Corrects Windows-1252 / ISO-8859-1 mojibake (e.g. canâ€™t -> can't, canÃ¢â‚¬â„¢t -> can't, BeyoncÃ© -> Beyoncé)
+ * - Cleans stray control characters while preserving unicode letters and valid punctuation.
+ */
+export function fixMojibakeAndEntities(input: string | undefined | null): string {
+  if (!input || typeof input !== "string") return "";
+  let text = input;
+
+  // 1. Decode decimal numeric entities (e.g., &#39; -> ', &#8217; -> ’)
+  text = text.replace(/&#(\d+);/g, (_, dec) => {
+    try {
+      const code = parseInt(dec, 10);
+      if (code >= 32) return String.fromCharCode(code);
+      return "";
+    } catch {
+      return "";
+    }
+  });
+
+  // 2. Decode hex numeric entities (e.g., &#x27; -> ')
+  text = text.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+    try {
+      const code = parseInt(hex, 16);
+      if (code >= 32) return String.fromCharCode(code);
+      return "";
+    } catch {
+      return "";
+    }
+  });
+
+  // 3. Decode standard named HTML entities
+  const entityMap: Record<string, string> = {
+    "&quot;": '"',
+    "&apos;": "'",
+    "&lsquo;": "'",
+    "&rsquo;": "'",
+    "&sbquo;": "'",
+    "&ldquo;": '"',
+    "&rdquo;": '"',
+    "&bdquo;": '"',
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&nbsp;": " ",
+    "&hellip;": "…",
+    "&ndash;": "–",
+    "&mdash;": "—",
+    "&bull;": "•",
+    "&prime;": "'",
+    "&Prime;": '"',
+    "&acute;": "´",
+    "&copy;": "©",
+    "&reg;": "®",
+    "&trade;": "™",
+  };
+  text = text.replace(/&(?:quot|apos|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|amp|lt|gt|nbsp|hellip|ndash|mdash|bull|prime|Prime|acute|copy|reg|trade);/gi, (match) => {
+    const lower = match.toLowerCase();
+    return entityMap[match] || entityMap[lower] || match;
+  });
+
+  // 4. Common double-encoded UTF-8 / Windows-1252 / ISO-8859-1 mojibake substitutions
+  const mojibakeReplacements: Array<[string | RegExp, string]> = [
+    // Right & Left Single Quotes / Apostrophes
+    [/â€™/g, "'"],
+    [/â€˜/g, "'"],
+    [/â€TM/gi, "'"],
+    [/Ã¢â‚¬â„¢/g, "'"],
+    [/Ã¢â‚¬Ëœ/g, "'"],
+    [/`|´/g, "'"],
+    // Double Quotes
+    [/â€œ/g, '"'],
+    [/â€\x9d/g, '"'],
+    [/â€\x9c/g, '"'],
+    [/â€/g, '"'],
+    [/Ã¢â‚¬Å“/g, '"'],
+    [/Ã¢â‚¬Â/g, '"'],
+    // Dashes & Ellipsis
+    [/â€“/g, "–"],
+    [/â€”/g, "—"],
+    [/Ã¢â‚¬â€/g, "—"],
+    [/â€¦/g, "…"],
+    [/â€¢/g, "•"],
+    // Accented vowels & letters
+    [/Ã©/g, "é"],
+    [/Ã¨/g, "è"],
+    [/Ã /g, "à"],
+    [/Ã¡/g, "á"],
+    [/Ã¢/g, "â"],
+    [/Ã£/g, "ã"],
+    [/Ã¤/g, "ä"],
+    [/Ã¥/g, "å"],
+    [/Ã®/g, "î"],
+    [/Ã¯/g, "ï"],
+    [/Ã¬/g, "ì"],
+    [/Ã­/g, "í"],
+    [/Ã³/g, "ó"],
+    [/Ã²/g, "ò"],
+    [/Ã´/g, "ô"],
+    [/Ãµ/g, "õ"],
+    [/Ã¶/g, "ö"],
+    [/Ã¸/g, "ø"],
+    [/Ãº/g, "ú"],
+    [/Ã¹/g, "ù"],
+    [/Ã»/g, "û"],
+    [/Ã¼/g, "ü"],
+    [/Ã±/g, "ñ"],
+    [/Ã§/g, "ç"],
+    [/Ã‰/g, "É"],
+    [/Ã€/g, "À"],
+    [/Ã /g, "Á"],
+    [/Ã“/g, "Ó"],
+    [/Ãš/g, "Ú"],
+    [/Ã‘/g, "Ñ"],
+    [/Ã‡/g, "Ç"],
+    [/â™ª/g, "♪"],
+    [/â™«/g, "♫"],
+    [/\uFFFD/g, ""],
+  ];
+
+  for (const [pattern, replacement] of mojibakeReplacements) {
+    text = text.replace(pattern, replacement);
+  }
+
+  // 5. Escaped unicode sequences like \u0027, \u2019
+  text = text
+    .replace(/\\u0027/gi, "'")
+    .replace(/\\u2019/gi, "'")
+    .replace(/\\u2018/gi, "'")
+    .replace(/\\u201c/gi, '"')
+    .replace(/\\u201d/gi, '"')
+    .replace(/\\u2013/gi, "–")
+    .replace(/\\u2014/gi, "—");
+
+  return text.trim();
+}
+
+/**
  * Common video noise patterns to strip out of music titles and queries
  */
 const VIDEO_NOISE_PATTERNS = [
-  // Official video / audio tags
-  /\s*[\(\[]\s*official\s+(?:music\s+)?video\s*[\)\]]/gi,
-  /\s*[\(\[]\s*official\s+(?:audio|lyric\s+video|lyrics\s+video|track|stream|visualizer)\s*[\)\]]/gi,
-  /\s*[\(\[]\s*(?:official\s+)?(?:hd|4k|4k\s+60fps|8k|1080p|720p)\s*[\)\]]/gi,
+  // Official video / audio tags (including HD / 4K prefixes and combinations)
+  /\s*[\(\[]\s*(?:hd\s+|4k\s+|hq\s+|ultra\s+hd\s+|official\s+)?(?:official\s+)?(?:music\s+)?video\s*[\)\]]/gi,
+  /\s*[\(\[]\s*(?:hd\s+|4k\s+|hq\s+|ultra\s+hd\s+|official\s+)?(?:official\s+)?(?:audio|lyric\s+video|lyrics\s+video|track|stream|visualizer)\s*[\)\]]/gi,
+  /\s*[\(\[]\s*(?:official\s+)?(?:hd|4k|4k\s+60fps|8k|1080p|720p|hq|uhd)\s*[\)\]]/gi,
   /\s*[\(\[]\s*(?:official\s+)?(?:music\s+video|music\s+audio|video\s+clip|clip\s+officiel|videoclip)\s*[\)\]]/gi,
   /\s*[\(\[]\s*(?:official\s+)?lyric\s*video\s*[\)\]]/gi,
   /\s*[\(\[]\s*(?:official\s+)?visualizer\s*[\)\]]/gi,
@@ -171,6 +310,9 @@ export function cleanArtistName(rawArtistOrUploader?: string | string[] | any): 
 
   if (!artist) return "";
 
+  // Universal Mojibake & entity decoding
+  artist = fixMojibakeAndEntities(artist);
+
   // Strip trailing channel branding (e.g. " - Topic", "Topic", "VEVO", "Official")
   for (const pattern of CHANNEL_BRANDING_PATTERNS) {
     artist = artist.replace(pattern, "").trim();
@@ -205,7 +347,11 @@ export function extractPrimaryArtist(rawArtistOrUploader?: string | string[] | a
  */
 export function cleanTrackTitle(rawTitle: string, artistName?: string): string {
   if (!rawTitle) return "Untitled Track";
-  let title = rawTitle.trim();
+  // Decode HTML entities and fix Windows-1252 / Mojibake encoding artifacts
+  let title = fixMojibakeAndEntities(String(rawTitle)).trim();
+
+  // Fix words with underscores in place of apostrophes (e.g., "Can_t" -> "Can't", "Don_t" -> "Don't", "It_s" -> "It's")
+  title = title.replace(/\b([a-zA-Z]+)_(t|s|m|d|ll|re|ve)\b/gi, "$1'$2");
 
   // Strip anything following - Remastered or - Live or - Acoustic etc.
   title = title.replace(/\s*[-–—]\s*(?:remaster(?:ed)?(?:\s+\d{4})?|live(?:\s+at[^)\]]+)?|acoustic|instrumental|deluxe|bonus\s+track|mono|stereo|anniversary|radio\s+edit|single\s+version|original\s+mix|clean\s+version|explicit\s+version|extended\s+mix|club\s+mix).*$/i, "");
@@ -600,7 +746,9 @@ export function sanitizeCaptionsAndLyrics(rawLyricsText: string): string {
   const artifactRegex = /\s*(\[|\()(?:\s*(?:music|applause|laughter|cheering|cheers|instrumental|silence|intro|outro|vocalizing|screaming|groaning|coughing|sound\s+effects?|audience\s+applause|singing|beatboxing|chatter|whistling|audio)\s*)(\]|\))\s*/gi;
   const musicalSymbolsRegex = /[♪♫♩♬♯♭]+/g;
 
-  const lines = rawLyricsText.split("\n");
+  // First decode HTML entities and fix Mojibake (e.g. can't, don't, etc.) across the full lyrics block
+  const decodedText = fixMojibakeAndEntities(rawLyricsText);
+  const lines = decodedText.split("\n");
   const cleanedLines: string[] = [];
 
   for (const rawLine of lines) {
