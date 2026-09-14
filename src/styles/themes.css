@@ -2102,26 +2102,180 @@ canvas.animated-theme-bg,
 }
 
 /* ==========================================================================
-   Cyberpunk Neon Glass — Translucent Obsidian Frosted Glass Cards & Neon Highlights
-   Allows the dynamic cyberpunk city & window raindrops to show through beautifully
+   Cyberpunk Neon Glass — Translucent Obsidian Frosted Glass UI
+   Gives boxes, buttons, cards, modals, blocks, player, and nav high transparency
+   so the sprawling cinematic cyberpunk city backdrop shines through vividly
    ========================================================================== */
+
+/* 1. Cards, Boxes, Blocks & Content Panels */
 [data-theme="cyberpunk-neon"] .bg-card,
 [data-theme="cyberpunk-neon"] article,
-[data-theme="cyberpunk-neon"] .glass-card {
-  background: rgba(10, 13, 26, 0.7) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(0, 243, 255, 0.22) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+[data-theme="cyberpunk-neon"] .glass-card,
+[data-theme="cyberpunk-neon"] .card,
+[data-theme="cyberpunk-neon"] .theme-card,
+[data-theme="cyberpunk-neon"] .playlist-card,
+[data-theme="cyberpunk-neon"] .track-card,
+[data-theme="cyberpunk-neon"] .album-card,
+[data-theme="cyberpunk-neon"] .panel,
+[data-theme="cyberpunk-neon"] .box {
+  background: rgba(8, 12, 28, 0.28) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1px solid rgba(0, 243, 255, 0.2) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme="cyberpunk-neon"] .bg-card:hover,
 [data-theme="cyberpunk-neon"] article:hover,
-[data-theme="cyberpunk-neon"] .glass-card:hover {
-  background: rgba(16, 20, 38, 0.78) !important;
+[data-theme="cyberpunk-neon"] .glass-card:hover,
+[data-theme="cyberpunk-neon"] .card:hover,
+[data-theme="cyberpunk-neon"] .playlist-card:hover,
+[data-theme="cyberpunk-neon"] .track-card:hover {
+  background: rgba(14, 20, 44, 0.45) !important;
   border-color: rgba(0, 243, 255, 0.45) !important;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.7), 0 0 24px rgba(0, 243, 255, 0.22) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 22px rgba(0, 243, 255, 0.22) !important;
+}
+
+/* 2. Buttons, Controls & Interactive Pills */
+[data-theme="cyberpunk-neon"] .btn-secondary,
+[data-theme="cyberpunk-neon"] .btn-ghost,
+[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active) {
+  background: rgba(12, 17, 38, 0.35) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(0, 243, 255, 0.25) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="cyberpunk-neon"] .btn-secondary:hover,
+[data-theme="cyberpunk-neon"] .btn-ghost:hover,
+[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active):hover {
+  background: rgba(18, 26, 56, 0.55) !important;
+  border-color: rgba(0, 243, 255, 0.55) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px rgba(0, 243, 255, 0.3) !important;
+}
+
+[data-theme="cyberpunk-neon"] .btn-primary {
+  background: linear-gradient(135deg, rgba(0, 243, 255, 0.85) 0%, rgba(255, 0, 127, 0.85) 100%) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 6px 24px rgba(0, 243, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Filter pills & chips */
+[data-theme="cyberpunk-neon"] button[class*="rounded-full"]:not(.active):not([class*="bg-[#00f3ff]"]) {
+  background: rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 243, 255, 0.22) !important;
+}
+
+/* 3. Modals, Dialogs, Drawers & Overlays */
+[data-theme="cyberpunk-neon"] div.fixed.inset-0.bg-black\/80,
+[data-theme="cyberpunk-neon"] div.fixed.inset-0.bg-black\/85,
+[data-theme="cyberpunk-neon"] div.fixed.inset-0[class*="bg-black"],
+[data-theme="cyberpunk-neon"] .modal-overlay {
+  background: rgba(3, 6, 16, 0.52) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+[data-theme="cyberpunk-neon"] [role="dialog"],
+[data-theme="cyberpunk-neon"] .modal-content,
+[data-theme="cyberpunk-neon"] div[class*="max-w-"][class*="rounded-3xl"] {
+  background: rgba(8, 12, 28, 0.52) !important;
+  backdrop-filter: blur(36px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(180%) !important;
+  border: 1px solid rgba(0, 243, 255, 0.32) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.24) !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.75), 0 0 40px rgba(0, 243, 255, 0.16) !important;
+}
+
+[data-theme="cyberpunk-neon"] div[class*="max-w-"][class*="rounded-3xl"] > div:first-child {
+  background: rgba(6, 9, 22, 0.38) !important;
+  border-bottom: 1px solid rgba(0, 243, 255, 0.2) !important;
+}
+
+/* Side Drawers (Queue Drawer, Similar Tracks Drawer) */
+[data-theme="cyberpunk-neon"] .drawer-content,
+[data-theme="cyberpunk-neon"] div[class*="fixed inset-y-0 right-0"] {
+  background: rgba(7, 10, 24, 0.55) !important;
+  backdrop-filter: blur(32px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(170%) !important;
+  border-left: 1px solid rgba(0, 243, 255, 0.28) !important;
+}
+
+/* 4. Player Components (Bottom Player & Full Player Overlay) */
+[data-theme="cyberpunk-neon"] .bottom-player,
+[data-theme="cyberpunk-neon"] div.fixed[class*="bottom-16"],
+[data-theme="cyberpunk-neon"] div.fixed[class*="bottom-4"],
+[data-theme="cyberpunk-neon"] div[class*="bottomDeck"] {
+  background: rgba(7, 11, 26, 0.38) !important;
+  backdrop-filter: blur(28px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(170%) !important;
+  border: 1px solid rgba(0, 243, 255, 0.28) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55), 0 0 25px rgba(0, 243, 255, 0.18) !important;
+}
+
+/* Full Player Overlay */
+[data-theme="cyberpunk-neon"] .full-player-overlay,
+.full-player-overlay[data-theme="cyberpunk-neon"] {
+  background-color: rgba(6, 9, 20, 0.55) !important;
+  backdrop-filter: blur(28px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+}
+
+[data-theme="cyberpunk-neon"] .full-player-overlay div[class*="bottomDeck"],
+[data-theme="cyberpunk-neon"] .full-player-overlay div.rounded-t-3xl {
+  background: rgba(7, 11, 26, 0.42) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border-top: 1px solid rgba(0, 243, 255, 0.25) !important;
+}
+
+/* 5. Navigation Chrome (Header, Sidebar & BottomNav) */
+[data-theme="cyberpunk-neon"] header.top-navbar {
+  background: rgba(6, 9, 20, 0.32) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-bottom: 1px solid rgba(0, 243, 255, 0.18) !important;
+}
+
+[data-theme="cyberpunk-neon"] aside#app-sidebar-nav {
+  background: rgba(6, 9, 20, 0.36) !important;
+  backdrop-filter: blur(28px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+  border-right: 1px solid rgba(0, 243, 255, 0.18) !important;
+}
+
+[data-theme="cyberpunk-neon"] div[class*="md:hidden fixed bottom-0"] {
+  background: rgba(6, 9, 20, 0.38) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-top: 1px solid rgba(0, 243, 255, 0.18) !important;
+}
+
+/* 6. Inputs & Search Fields */
+[data-theme="cyberpunk-neon"] input,
+[data-theme="cyberpunk-neon"] textarea,
+[data-theme="cyberpunk-neon"] select {
+  background: rgba(10, 14, 32, 0.35) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(0, 243, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="cyberpunk-neon"] input:focus,
+[data-theme="cyberpunk-neon"] textarea:focus,
+[data-theme="cyberpunk-neon"] select:focus {
+  background: rgba(14, 20, 45, 0.52) !important;
+  border-color: rgba(0, 243, 255, 0.75) !important;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.32) !important;
 }
 
 

@@ -2312,8 +2312,8 @@ export default function App() {
       {/* Animated Dynamic Mosaic Triangles with Natural Textures (Mocha, Charcoal, Gold, Fluting) for Theme 05 (Studio Homme Mosaïque) */}
       <HommeMosaicBackground isActive={Boolean((activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") && !playerState.isFullscreen)} />
 
-      {/* Animated Sprawling Cyberpunk City Drizzling at Night with Flickering Neon & Window Glass Rain for Theme 02 (Cyberpunk Neon Glass) */}
-      <CyberpunkCityRainBackground isActive={Boolean((activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") && !playerState.isFullscreen)} />
+      {/* Animated Sprawling Cyberpunk City Drizzling at Night with Flickering Neon for Theme 02 (Cyberpunk Neon Glass) */}
+      <CyberpunkCityRainBackground isActive={Boolean(activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon")} />
 
       {/* Sidebar Navigation */}
       <Sidebar
