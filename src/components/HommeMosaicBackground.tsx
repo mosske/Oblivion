@@ -554,17 +554,42 @@ export const HommeMosaicBackground: React.FC<HommeMosaicBackgroundProps> = ({ is
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
-      {/* Dynamic Textured Mosaic Canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full block"
-      />
+      {/* Dynamic Textured Mosaic Canvas - softened with a slight optical blur to sit behind the glass */}
+      <div className="absolute -inset-3 overflow-hidden pointer-events-none">
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full block"
+          style={{
+            filter: "blur(3.5px)",
+            transform: "scale(1.025)",
+            willChange: "transform, filter",
+          }}
+        />
+      </div>
 
       {/* Subtle Ambient Slate & Midnight Architectural Glow Pools */}
-      <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-35">
+      <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-30">
         <div className="absolute -top-[15%] left-[10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-[#8fa7c2]/20 via-[#4a5f78]/12 to-transparent blur-[120px]" />
         <div className="absolute bottom-[5%] right-[10%] w-[55vw] h-[55vw] rounded-full bg-gradient-to-tl from-[#647c96]/18 via-[#1f2e42]/25 to-transparent blur-[140px]" />
       </div>
+
+      {/* Translucent Frosted Glass Sheet Layer - Creates the illusion of the mosaic being behind a tinted architectural glass pane */}
+      <div
+        className="absolute inset-0 pointer-events-none backdrop-blur-[2.5px]"
+        style={{
+          background:
+            "linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(143, 167, 194, 0.02) 35%, transparent 65%), linear-gradient(180deg, rgba(8, 12, 22, 0.22) 0%, rgba(14, 20, 34, 0.12) 50%, rgba(4, 6, 11, 0.35) 100%)",
+        }}
+      />
+
+      {/* Subtle Translucent Glass Surface Light Sheen / Specular Glare Reflection */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-40 mix-blend-screen"
+        style={{
+          background:
+            "linear-gradient(125deg, transparent 20%, rgba(200, 225, 250, 0.035) 38%, rgba(255, 255, 255, 0.07) 42%, rgba(200, 225, 250, 0.035) 46%, transparent 60%)",
+        }}
+      />
 
       {/* Deep Smoky Midnight Vignette Overlay */}
       <div className="absolute inset-0 bg-radial-vignette opacity-50 pointer-events-none" />
