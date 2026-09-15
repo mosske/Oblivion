@@ -64,6 +64,7 @@ import {
   OBLIVION_REFRESH_TOKEN_KEY,
   OBLIVION_USER_SESSION_KEY,
 } from "./services/authService";
+import { recordPlaybackHistory } from "./services/homeService";
 import { Navbar } from "./components/Navbar";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
 
@@ -1410,6 +1411,7 @@ export default function App() {
   const handlePlayTrack = (track: Track) => {
     const trId = track.id || track.youtubeVideoId;
     const cleanTrack = { ...track, id: trId };
+    recordPlaybackHistory(cleanTrack, cleanTrack.isVideo ? "video" : "song");
     setPlayerState((prev) => {
       const existingIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId) === trId);
       let newQueue = [...prev.queue];
@@ -1445,12 +1447,30 @@ export default function App() {
     }
     if (cleanTracks.length === 0) return;
     const validIdx = Math.min(Math.max(0, startIndex), cleanTracks.length - 1);
+    const startTrack = cleanTracks[validIdx];
+    if (startTrack) {
+      recordPlaybackHistory(startTrack, startTrack.isVideo ? "video" : "song");
+    }
     setPlayerState((prev) => ({
       ...prev,
       queue: cleanTracks,
       queueIndex: validIdx,
       currentTrack: cleanTracks[validIdx],
       currentTime: 0,
+      isPlaying: true,
+    }));
+  };
+
+  // Launch track directly in Oblivion's built-in video player mode
+  const handlePlayVideo = (track: Track) => {
+    const trId = track.id || track.youtubeVideoId;
+    const cleanTrack = { ...track, id: trId, isVideo: true };
+    recordPlaybackHistory(cleanTrack, "video");
+    handlePlayTrack(cleanTrack);
+    setPlayerState((prev) => ({
+      ...prev,
+      mediaMode: "video",
+      isFullscreen: true,
       isPlaying: true,
     }));
   };
@@ -2460,6 +2480,13 @@ export default function App() {
                     tracksCount: alb.tracksCount || (alb.tracks ? alb.tracks.length : 0),
                   })
                 }
+                onSearchGenre={(genreQuery) => {
+                  setSelectedPlaylist(null);
+                  setSearchQuery(genreQuery);
+                  setActiveTab("search");
+                }}
+                onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                onPlayVideo={handlePlayVideo}
                 playlists={playlists}
                 user={user}
                 onOpenSettings={() => setActiveTab("settings")}
@@ -2478,7 +2505,8 @@ export default function App() {
                   setSearchQuery(genreQuery);
                   setActiveTab("search");
                 }}
-                currentTrackId={playerState.currentTrack?.id}
+                onPlayVideo={handlePlayVideo}
+                currentTrackId={playerState.currentTrack?.id || playerState.currentTrack?.youtubeVideoId}
                 isPlaying={playerState.isPlaying}
                 designConfig={activeFullDesign}
               />

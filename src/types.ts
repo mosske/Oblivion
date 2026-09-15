@@ -13,6 +13,9 @@ export interface Track {
   genre?: string;
   playsCount?: number;
   lyricsRaw?: string;
+  isVideo?: boolean;
+  channelTitle?: string;
+  mediaType?: "song" | "video";
 }
 
 export interface YouTubeThumbnailItem {
