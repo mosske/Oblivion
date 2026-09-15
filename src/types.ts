@@ -120,7 +120,8 @@ export type ThemePreset =
   | 'minimal-light'
   | 'neue-editorial'
   | 'obsidian-depth'
-  | 'nebula-liquid-glass';
+  | 'nebula-liquid-glass'
+  | 'bespoke';
 export type AudioQuality = 'normal' | 'high' | 'lossless';
 export type LyricsFontSize = 'sm' | 'md' | 'lg';
 export type LyricsAlignment = 'left' | 'center';
@@ -149,7 +150,8 @@ export type FullAppDesignId =
   | 'twilight-vaporwave' // 6. Twilight Vaporwave (Sunset Violet, Rose Glass & Sunset Magenta Multi-Accent)
   | 'neue-editorial'    // 7. Neue Editorial (Swiss High-Contrast, Pale Beige & Charcoal Pills)
   | 'obsidian-depth'    // 8. Obsidian Depth (Matte Slate, Soft 3D Extrusion & Neon Cyan)
-  | 'nebula-liquid-glass'; // 9. Nebula Liquid Glass (Deep Cosmic Void, Translucent Liquid Glass & Violet/Cyan Glow)
+  | 'nebula-liquid-glass' // 9. Nebula Liquid Glass (Deep Cosmic Void, Translucent Liquid Glass & Violet/Cyan Glow)
+  | 'bespoke';           // 10. Bespoke (Customizable Liquid Glass Canvas with 4 User-Selected Theme Colors)
 
 export interface UserSettings {
   audioQuality: AudioQuality;

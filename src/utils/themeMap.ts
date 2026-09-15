@@ -255,6 +255,24 @@ export class ThemeRegistry {
       subtextColor: "text-pink-100/85",
       swatchColors: ["#0c071e", "#ff007f", "#ff7b00", "#00f0ff"]
     },
+    "bespoke": {
+      id: "bespoke",
+      name: "Bespoke Dynamic Palette",
+      description: "Customized 4-color interactive palette with real-time gradient swatches and hex code tuning across entire application.",
+      category: "Vibrant",
+      previewGradient: "from-[var(--bespoke-c1,#0a0d1a)] via-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)]",
+      accentClass: "text-[var(--bespoke-c2,#ff007f)]",
+      accentText: "text-[var(--bespoke-c2,#ff007f)]",
+      accentBg: "bg-gradient-to-r from-[var(--bespoke-c2,#ff007f)] to-[var(--bespoke-c3,#8b5cf6)]",
+      borderAccent: "border-[var(--bespoke-c2,#ff007f)]/50",
+      bgCanvas: "bg-[var(--bespoke-c1,#0a0d1a)]",
+      cardBg: "bg-white/[0.04] backdrop-blur-3xl border border-white/[0.18] shadow-2xl",
+      sidebarBg: "bg-[var(--bespoke-c1,#0a0d1a)]/70 backdrop-blur-3xl border-r border-white/[0.14]",
+      playerBg: "bg-[var(--bespoke-c1,#0a0d1a)]/80 backdrop-blur-3xl border-t border-white/[0.16]",
+      textColor: "text-white",
+      subtextColor: "text-slate-200",
+      swatchColors: ["#0a0d1a", "#ff007f", "#8b5cf6", "#00f0ff"]
+    },
   };
 
   static getTheme(id: ThemePreset): ThemeMeta {

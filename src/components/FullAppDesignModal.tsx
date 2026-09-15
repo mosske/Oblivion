@@ -1,5 +1,6 @@
 import React from "react";
 import { FullAppDesignId, FULL_APP_DESIGNS, FULL_APP_DESIGNS_LIST } from "../utils/appDesignThemes";
+import { BespokeColorPicker } from "./BespokeColorPicker";
 import {
   X,
   Palette,
@@ -202,17 +203,29 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                     </div>
 
                     {/* Bottom Action / Swatches */}
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      {/* Swatch dots */}
-                      <div className="flex items-center gap-1">
-                        {design.swatchColors.map((color, idx) => (
-                          <span
-                            key={idx}
-                            className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-inner"
-                            style={{ backgroundColor: color }}
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
+                      {design.isBespoke || design.id === "bespoke" ? (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <BespokeColorPicker
+                            compact={true}
+                            onColorsChange={() => {
+                              if (!isSelected) {
+                                onSelectDesign(design.id);
+                              }
+                            }}
                           />
-                        ))}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          {design.swatchColors.map((color, idx) => (
+                            <span
+                              key={idx}
+                              className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-inner"
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                      )}
 
                       <button
                         onClick={(e) => {

@@ -21,6 +21,7 @@ export interface FullAppDesignConfig {
   isEmeraldWilderness?: boolean;
   isHommeMosaic?: boolean;
   isCyberpunkCity?: boolean;
+  isBespoke?: boolean;
   themeColorMeta?: string;
 
   // Visual Styling Classes
@@ -696,7 +697,148 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     navInactive: "text-pink-200/70 hover:text-white hover:bg-white/[0.06] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] rounded-2xl",
     trackRowHover: "hover:bg-white/[0.06] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),inset_0_-1px_1px_rgba(0,0,0,0.3),0_6px_20px_rgba(0,0,0,0.4),0_0_20px_rgba(255,0,127,0.18)]",
   },
+
+  bespoke: {
+    id: "bespoke",
+    name: "Bespoke",
+    subtitle: "Custom 4-Color Palette, Liquid Glass & Refractive Glow",
+    badge: "BESPOKE",
+    num: "10",
+    themePreset: "bespoke",
+    playerLayout: "floating-dock",
+    isNebulaGlass: true,
+    isBespoke: true,
+    description:
+      "A personalized liquid glass experience with your own 4 custom theme colors. Features an interactive gradient swatch picker, direct hex input, animated cosmic fluid canvas, and frosted glass refraction.",
+    features: [
+      "Custom 4-color theme palette with live gradient swatch picker & hex input",
+      "Animated cosmic gradient canvas with fluid glowing orbs driven by your colors",
+      "Translucent frosted liquid glass cards with chromatic refraction & specular rims",
+      "Locally persistent custom palette so your bespoke theme is always ready",
+    ],
+    swatchColors: ["#0a0d1a", "#ff007f", "#8b5cf6", "#00f0ff"],
+    multiAccentGradient: "from-[#ff007f] via-[#8b5cf6] to-[#00f0ff]",
+    isLight: false,
+    themeColorMeta: "#0a0d1a",
+
+    bgCanvas: "from-[#0a0d1a] via-[#150a2e] to-[#070312]",
+    cardBg: "bg-white/[0.035] backdrop-blur-3xl backdrop-saturate-[200%] border border-white/[0.18] border-t-white/35 border-b-black/40 shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.55),inset_0_-1.5px_2px_rgba(0,0,0,0.35),0_14px_40px_rgba(0,0,0,0.65)]",
+    headerBg: "bg-[#0a0d1a]/35 backdrop-blur-3xl border-b border-white/[0.16] shadow-[inset_0_-1px_1px_rgba(0,0,0,0.4),0_8px_30px_rgba(0,0,0,0.5)]",
+    sidebarBg: "bg-[#0a0d1a]/40 backdrop-blur-3xl border-r border-white/[0.16] shadow-[inset_-1px_0_1px_rgba(0,0,0,0.4),8px_0_30px_rgba(0,0,0,0.5)]",
+    bottomNavBg: "bg-[#0a0d1a]/45 backdrop-blur-3xl border-t border-white/[0.18] border-t-white/30 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),0_-12px_36px_0_rgba(0,0,0,0.65)]",
+    borderSubtle: "border-white/[0.14]",
+    borderStrong: "border-white/30",
+    textPrimary: "text-white",
+    textSecondary: "text-pink-100/85",
+    textMuted: "text-purple-300/70",
+    accentBg: "bg-gradient-to-r from-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)]",
+    accentText: "text-[var(--bespoke-c2,#ff007f)]",
+    accentBorder: "border-[var(--bespoke-c2,#ff007f)]/50",
+    accentContrastText: "text-white",
+
+    headingPrimary: "text-white font-extrabold tracking-tight",
+    headingSecondary: "text-pink-100 font-bold",
+    headingMuted: "text-purple-200/70",
+    cardHover: "hover:bg-white/[0.07] hover:border-white/[0.30] hover:border-t-white/60 hover:-translate-y-1 transition-all duration-300",
+    modalBg: "bg-[#0a0d1a]/65 backdrop-blur-3xl border border-white/[0.22] border-t-white/45 border-b-black/60 shadow-[0_30px_80px_rgba(0,0,0,0.85)]",
+    pillBg: "bg-white/[0.035] backdrop-blur-2xl border border-white/[0.18] border-t-white/35 border-b-black/35 text-pink-100",
+    pillActive: "bg-gradient-to-r from-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)] text-white font-black shadow-lg border-t border-white/50 border-b border-black/40",
+    inputBg: "bg-white/[0.03] backdrop-blur-2xl text-white border border-white/[0.18]",
+    glowRing: "shadow-[0_0_32px_var(--bespoke-c2,#ff007f)]",
+    waveformGradient: "from-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)]",
+    progressGradient: "bg-gradient-to-r from-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)]",
+    bannerGradient: "from-[var(--bespoke-c2,#ff007f)]/30 via-[var(--bespoke-c3,#8b5cf6)]/25 to-transparent",
+    mockup: {
+      bannerGradient: "from-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)]",
+      heroTitle: "Bespoke Liquid Glass",
+      heroSubtitle: "Your Custom Palette & Frosted Glass",
+      chipLabels: ["Custom Palette", "Liquid Glass", "Color Swatches", "Lossless"],
+      dockStyle: "bg-white/[0.06] backdrop-blur-3xl border border-white/[0.22] border-t-white/40 border-b-black/40 shadow-2xl rounded-full",
+    },
+
+    accentSecondaryBg: "bg-[var(--bespoke-c3,#8b5cf6)]",
+    accentSecondaryText: "text-[var(--bespoke-c3,#8b5cf6)]",
+    accentTertiaryBg: "bg-[var(--bespoke-c4,#00f0ff)]",
+    accentTertiaryText: "text-[var(--bespoke-c4,#00f0ff)]",
+
+    btnPrimary: "bg-gradient-to-r from-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)] hover:brightness-115 text-white font-black shadow-lg border-t border-white/50 border-b border-black/35 active:translate-y-0.5 transition-all",
+    btnSecondary: "bg-white/[0.04] hover:bg-white/[0.12] text-white border border-white/[0.18] border-t-white/35 border-b-black/40 backdrop-blur-2xl font-bold transition-all",
+    navActive: "bg-gradient-to-r from-[var(--bespoke-c2,#ff007f)]/25 via-[var(--bespoke-c3,#8b5cf6)]/15 to-transparent text-white border border-white/30 border-t-white/40 font-black rounded-2xl",
+    navInactive: "text-white/70 hover:text-white hover:bg-white/[0.06] rounded-2xl",
+    trackRowHover: "hover:bg-white/[0.06]",
+  },
 };
+
+export const DEFAULT_BESPOKE_COLORS: [string, string, string, string] = [
+  "#0a0d1a", // 1. Base / Canvas / Cosmic Void
+  "#ff007f", // 2. Primary Accent / Aurora Glow
+  "#8b5cf6", // 3. Secondary Accent / Fluid Shift
+  "#00f0ff", // 4. Highlight / Neon Rim & Spectrum
+];
+
+export function getBespokeColors(): [string, string, string, string] {
+  if (typeof window === "undefined") return [...DEFAULT_BESPOKE_COLORS];
+  try {
+    const raw = localStorage.getItem("oblivion_bespoke_colors");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length >= 4) {
+        return [parsed[0], parsed[1], parsed[2], parsed[3]];
+      }
+    }
+  } catch (e) {
+    console.error("Failed to read oblivion_bespoke_colors from localStorage", e);
+  }
+  return [...DEFAULT_BESPOKE_COLORS];
+}
+
+export function saveBespokeColors(colors: [string, string, string, string] | string[]): [string, string, string, string] {
+  const normalized: [string, string, string, string] = [
+    colors[0] || DEFAULT_BESPOKE_COLORS[0],
+    colors[1] || DEFAULT_BESPOKE_COLORS[1],
+    colors[2] || DEFAULT_BESPOKE_COLORS[2],
+    colors[3] || DEFAULT_BESPOKE_COLORS[3],
+  ];
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("oblivion_bespoke_colors", JSON.stringify(normalized));
+      applyBespokeCssVariables(normalized);
+      window.dispatchEvent(new CustomEvent("oblivion_bespoke_colors_updated", { detail: normalized }));
+    } catch (e) {
+      console.error("Failed to persist custom bespoke colors to localStorage", e);
+    }
+  }
+  return normalized;
+}
+
+export function applyBespokeCssVariables(colors: string[]): void {
+  if (typeof document === "undefined") return;
+  const [c1, c2, c3, c4] = colors;
+  const root = document.documentElement;
+  root.style.setProperty("--bespoke-c1", c1);
+  root.style.setProperty("--bespoke-c2", c2);
+  root.style.setProperty("--bespoke-c3", c3);
+  root.style.setProperty("--bespoke-c4", c4);
+  root.style.setProperty("--accent-primary", c2);
+  root.style.setProperty("--accent-color", c2);
+  root.style.setProperty("--primary", c2);
+  root.style.setProperty("--accent-secondary", c3);
+  root.style.setProperty("--accent-tertiary", c4);
+  root.style.setProperty("--accent-contrast-text", "#ffffff");
+}
+
+export function createBespokeConfig(customColors?: string[]): FullAppDesignConfig {
+  const colors = customColors && customColors.length >= 4 ? customColors : getBespokeColors();
+  const [c1, c2, c3, c4] = colors;
+
+  return {
+    ...FULL_APP_DESIGNS_BASE.bespoke,
+    swatchColors: [c1, c2, c3, c4],
+    themeColorMeta: c1,
+    multiAccentGradient: `from-[${c2}] via-[${c3}] to-[${c4}]`,
+    bgCanvas: `from-[${c1}] via-[#150a2e] to-[#070312]`,
+  };
+}
 
 /**
  * Theme Canvas Top/Header Background Hex Colors Reference
@@ -721,10 +863,11 @@ export const THEME_CANVAS_COLORS: Record<string, string> = {
   "neue-editorial": "#F2E8D8",
   "obsidian-depth": "#2a2e38",
   "nebula-liquid-glass": "#0d0b1a",
+  bespoke: "#0a0d1a",
 };
 
 /**
- * Array of the 8 canonical Full App Designs (guaranteed unique IDs for React key rendering)
+ * Array of the 10 canonical Full App Designs (guaranteed unique IDs for React key rendering)
  */
 export const FULL_APP_DESIGNS_LIST: FullAppDesignConfig[] = Object.values(FULL_APP_DESIGNS_BASE);
 
@@ -734,6 +877,7 @@ export const FULL_APP_DESIGNS_LIST: FullAppDesignConfig[] = Object.values(FULL_A
 export function getFullAppDesign(id?: string | null): FullAppDesignConfig {
   if (!id) return FULL_APP_DESIGNS_BASE.designer;
   if (id === "ytmusic-red") return FULL_APP_DESIGNS_BASE.candyland;
+  if (id === "bespoke") return createBespokeConfig();
   return FULL_APP_DESIGNS_BASE[id] || FULL_APP_DESIGNS_BASE.designer;
 }
 
@@ -882,6 +1026,7 @@ export const FULL_APP_DESIGNS: Record<string, FullAppDesignConfig> = new Proxy(F
   get(target, prop: string | symbol) {
     if (typeof prop === "string") {
       if (prop === "ytmusic-red") return target.candyland;
+      if (prop === "bespoke") return createBespokeConfig();
       if (prop in target) return target[prop];
     }
     return (target as any)[prop];

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FullAppDesignId, FULL_APP_DESIGNS, FULL_APP_DESIGNS_LIST } from "../utils/appDesignThemes";
 import { PlayerState, Track, MiniPlayerLayout } from "../types";
+import { BespokeColorPicker } from "./BespokeColorPicker";
 import {
   Layout,
   Check,
@@ -266,17 +267,30 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                   </div>
 
                   {/* Swatches and Switch Action */}
-                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {design.swatchColors.map((color, idx) => (
-                        <span
-                          key={idx}
-                          className="w-4 h-4 rounded-full border border-white/20 shadow-inner"
-                          style={{ backgroundColor: color }}
-                          title={`Color ${color}`}
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+                    {design.isBespoke || design.id === "bespoke" ? (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <BespokeColorPicker
+                          compact={true}
+                          onColorsChange={() => {
+                            if (!isSelected) {
+                              onSelectDesign(design.id);
+                            }
+                          }}
                         />
-                      ))}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        {design.swatchColors.map((color, idx) => (
+                          <span
+                            key={idx}
+                            className="w-4 h-4 rounded-full border border-white/20 shadow-inner"
+                            style={{ backgroundColor: color }}
+                            title={`Color ${color}`}
+                          />
+                        ))}
+                      </div>
+                    )}
 
                     <button
                       onClick={(e) => {

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { OblivionLogo } from "./OblivionLogo";
 import { AudioEqualizer } from "./AudioEqualizer";
+import { BespokeThemeCard } from "./BespokeThemeCard";
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -178,14 +179,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </span>
         </div>
 
-        {/* 9 Full App Design Cards */}
+        {/* 10 Full App Design Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {FULL_APP_DESIGNS_LIST.map((design) => {
             const isSelected = (settings.fullAppDesign || "designer") === design.id;
+            const isBespoke = design.isBespoke || design.id === "bespoke";
+
+            if (isBespoke) {
+              return (
+                <BespokeThemeCard
+                  key={design.id}
+                  isSelected={isSelected}
+                  designConfig={design}
+                  className="col-span-1 md:col-span-2 lg:col-span-3"
+                  onSelect={() => {
+                    onUpdateSettings({
+                      fullAppDesign: "bespoke",
+                      themePreset: "bespoke",
+                      miniPlayerLayout: "floating-dock",
+                    });
+                  }}
+                  onColorsChange={() => {
+                    if (!isSelected) {
+                      onUpdateSettings({
+                        fullAppDesign: "bespoke",
+                        themePreset: "bespoke",
+                        miniPlayerLayout: "floating-dock",
+                      });
+                    }
+                  }}
+                />
+              );
+            }
 
             return (
-              <button
+              <div
                 key={design.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => {
                   onUpdateSettings({
                     fullAppDesign: design.id,
@@ -193,7 +224,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     miniPlayerLayout: design.playerLayout,
                   });
                 }}
-                className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group ${
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onUpdateSettings({
+                      fullAppDesign: design.id,
+                      themePreset: design.themePreset,
+                      miniPlayerLayout: design.playerLayout,
+                    });
+                  }
+                }}
+                className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
                   isSelected
                     ? `bg-white/95 shadow-lg scale-[1.01]`
                     : `bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-sm`
@@ -210,7 +251,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 {/* Active Checkmark Badge */}
                 {isSelected && (
                   <div
-                    className="absolute top-3 right-3 px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-md"
+                    className="absolute top-3 right-3 px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-md z-10"
                     style={{
                       background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
                       color: "var(--accent-contrast-text)",
@@ -248,7 +289,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
 
                 {/* Swatches & Selection Status Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-zinc-200 mt-auto">
+                <div className="flex items-center justify-between pt-3 border-t border-zinc-200 mt-auto gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5">
                     {design.swatchColors.map((color, idx) => (
                       <span
@@ -258,6 +299,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       />
                     ))}
                   </div>
+
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? "font-mono font-black" : "text-zinc-600 group-hover:text-zinc-900"}`}
                     style={isSelected ? { color: "var(--accent-primary)" } : undefined}
@@ -265,7 +307,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     {isSelected ? "● Live On App" : "Apply Design →"}
                   </span>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>

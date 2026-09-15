@@ -2278,6 +2278,49 @@ canvas.animated-theme-bg,
   box-shadow: 0 0 20px rgba(0, 243, 255, 0.32) !important;
 }
 
+/* =========================================================================
+   Theme 10: Bespoke (Liquid Glass with Custom 4-Color Palette Architecture)
+   ========================================================================= */
+
+:root {
+  --bespoke-c1: #0a0d1a;
+  --bespoke-c2: #ff007f;
+  --bespoke-c3: #8b5cf6;
+  --bespoke-c4: #00f0ff;
+}
+
+[data-theme="bespoke"] {
+  --accent-primary: var(--bespoke-c2);
+  --accent-secondary: var(--bespoke-c3);
+  --accent-tertiary: var(--bespoke-c4);
+  --accent-color: var(--bespoke-c2);
+  --primary: var(--bespoke-c2);
+  --accent-contrast-text: #ffffff;
+  --glow-color-1: var(--bespoke-c2);
+  --glow-color-2: var(--bespoke-c3);
+  --glow-color-3: var(--bespoke-c4);
+}
+
+[data-theme="bespoke"] body {
+  background-color: var(--bespoke-c1) !important;
+}
+
+[data-theme="bespoke"] .waveform-inactive-bar,
+[data-theme="bespoke"] .unplayed-track-tint {
+  background: rgba(255, 255, 255, 0.20) !important;
+}
+
+[data-theme="bespoke"] .active-progress-gradient,
+[data-theme="bespoke"] .progress-gradient-animated {
+  background: linear-gradient(90deg, var(--bespoke-c2), var(--bespoke-c3), var(--bespoke-c4)) !important;
+  background-size: 200% 100% !important;
+  animation: progress-gradient-shift 3s linear infinite !important;
+}
+
+[data-theme="bespoke"] .artwork-glow-dynamic {
+  box-shadow: 0 0 35px var(--bespoke-c2), 0 0 70px var(--bespoke-c3) !important;
+}
+
 
 
 
