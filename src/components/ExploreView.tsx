@@ -45,7 +45,14 @@ interface ExploreViewProps {
   designConfig?: FullAppDesignConfig;
 }
 
-type ExploreCategory = "All" | "New Releases" | "Charts" | "Moods & Genres" | "Videos & Trailers" | "Podcasts";
+type ExploreCategory =
+  | "All"
+  | "New Releases"
+  | "Charts"
+  | "Music Videos"
+  | "Latest Movie Trailers"
+  | "Podcasts"
+  | "Moods & Genres";
 
 export const ExploreView: React.FC<ExploreViewProps> = ({
   onPlayTrack,
@@ -123,6 +130,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     moodsAndMoments: [],
     genres: [],
     podcasts: [],
+    musicVideos: [],
+    movieTrailers: [],
     videosAndTrailers: [],
   });
 
@@ -130,9 +139,10 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     "All",
     "New Releases",
     "Charts",
-    "Moods & Genres",
-    "Videos & Trailers",
+    "Music Videos",
+    "Latest Movie Trailers",
     "Podcasts",
+    "Moods & Genres",
   ];
 
   const loadFeed = async () => {
@@ -175,9 +185,10 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const showAll = activeCategory === "All";
   const showNewReleases = showAll || activeCategory === "New Releases";
   const showCharts = showAll || activeCategory === "Charts";
-  const showMoodsAndGenres = showAll || activeCategory === "Moods & Genres";
-  const showVideos = showAll || activeCategory === "Videos & Trailers";
+  const showMusicVideos = showAll || activeCategory === "Music Videos";
+  const showMovieTrailers = showAll || activeCategory === "Latest Movie Trailers";
   const showPodcasts = showAll || activeCategory === "Podcasts";
+  const showMoodsAndGenres = showAll || activeCategory === "Moods & Genres";
 
   if (selectedGenre) {
     return (
@@ -491,26 +502,26 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 3. MUSIC VIDEOS & MOVIE TRAILERS (Built-in Video Player Integration) */}
+          {/* 3. MUSIC VIDEOS (Trending 4K Official Releases) */}
           {/* ========================================================================= */}
-          {showVideos && data.videosAndTrailers.length > 0 && (
+          {showMusicVideos && data.musicVideos.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Film className="w-5 h-5 text-red-500" />
+                  <Video className="w-5 h-5 text-red-500" />
                   <div>
                     <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
-                      Music Videos & Movie Trailers
+                      Music Videos
                     </h2>
                     <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>
-                      High-definition videos & movie trailers • Plays in Oblivion's built-in video player
+                      High-definition music videos & visualizers • Plays in Oblivion's built-in video player
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => {
-                    const first = data.videosAndTrailers[0];
+                    const first = data.musicVideos[0];
                     if (first) handleVideoClick(first);
                   }}
                   className={`px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95`}
@@ -521,10 +532,9 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {data.videosAndTrailers.map((video, idx) => {
+                {data.musicVideos.map((video, idx) => {
                   const vId = video.id || video.youtubeVideoId;
                   const isCurrent = currentTrackId === vId;
-                  const isTrailer = video.videoType === "trailer";
 
                   return (
                     <div
@@ -552,9 +562,9 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                             }
                           }}
                         />
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-bold flex items-center gap-1">
-                          {isTrailer ? <Film className="w-3 h-3 text-amber-400" /> : <Video className="w-3 h-3 text-red-500" />}
-                          <span>{isTrailer ? "TRAILER" : "MUSIC VIDEO"}</span>
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-bold flex items-center gap-1">
+                          <Video className="w-3 h-3 text-red-500" />
+                          <span>MUSIC VIDEO</span>
                         </div>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                           <div className="p-3 rounded-full bg-white text-black shadow-lg transform group-hover:scale-110 transition-transform">
@@ -562,7 +572,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                           </div>
                         </div>
                         {video.duration ? (
-                          <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-mono">
+                          <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 text-white text-[10px] font-mono">
                             {formatDuration(video.duration)}
                           </span>
                         ) : null}
@@ -579,6 +589,118 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                         />
                         <MarqueeText
                           text={video.artist || "Official Video"}
+                          className={`text-[11px] ${designConfig.textMuted}`}
+                          containerClassName="w-full mt-0.5"
+                          speed={24}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 4. LATEST MOVIE TRAILERS (Past 3 Months Freshness Filter) */}
+          {/* ========================================================================= */}
+          {showMovieTrailers && data.movieTrailers.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <Film className="w-5 h-5 text-amber-500" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                        Latest Movie Trailers
+                      </h2>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-extrabold tracking-wide uppercase">
+                        Past 3 Months Fresh
+                      </span>
+                    </div>
+                    <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>
+                      Fresh 4K theatrical & teaser trailers released within the past 3 months • Cinematic previews
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const first = data.movieTrailers[0];
+                    if (first) handleVideoClick(first);
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Play trailers</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {data.movieTrailers.map((trailer, idx) => {
+                  const vId = trailer.id || trailer.youtubeVideoId;
+                  const isCurrent = currentTrackId === vId;
+
+                  return (
+                    <div
+                      key={vId || idx}
+                      onClick={() => handleVideoClick(trailer)}
+                      className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${
+                        designConfig.cardBg
+                      } ${designConfig.cardHover} border border-transparent hover:${
+                        designConfig.accentBorder
+                      } p-3 flex flex-col shadow-sm hover:shadow-xl ${
+                        isCurrent ? `ring-2 ${designConfig.accentBorder}` : ""
+                      }`}
+                    >
+                      <div className="relative aspect-video rounded-xl overflow-hidden mb-2.5 bg-black/20 shadow-inner">
+                        <img
+                          src={trailer.coverUrl}
+                          alt={trailer.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            if (vId) {
+                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+                            } else {
+                              e.currentTarget.src =
+                                "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=400&q=80";
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          <div className="px-2 py-0.5 rounded-full bg-black/75 text-amber-400 text-[10px] font-bold flex items-center gap-1">
+                            <Film className="w-3 h-3" />
+                            <span>TRAILER</span>
+                          </div>
+                          {trailer.publishedText && (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/90 text-black text-[9px] font-extrabold shadow-sm">
+                              {trailer.publishedText}
+                            </span>
+                          )}
+                        </div>
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <div className="p-3 rounded-full bg-amber-400 text-black shadow-lg transform group-hover:scale-110 transition-transform">
+                            <Play className="w-4 h-4 fill-current ml-0.5" />
+                          </div>
+                        </div>
+                        {trailer.duration ? (
+                          <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 text-white text-[10px] font-mono">
+                            {formatDuration(trailer.duration)}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="flex-1 min-w-0 w-full">
+                        <MarqueeText
+                          text={cleanTrackTitle(trailer.title, trailer.artist)}
+                          className={`font-bold text-xs ${
+                            isCurrent ? designConfig.accentText : designConfig.textPrimary
+                          } group-hover:${designConfig.accentText} transition-colors`}
+                          containerClassName="w-full"
+                          speed={28}
+                        />
+                        <MarqueeText
+                          text={trailer.artist || "Official Studio"}
                           className={`text-[11px] ${designConfig.textMuted}`}
                           containerClassName="w-full mt-0.5"
                           speed={24}

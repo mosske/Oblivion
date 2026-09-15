@@ -144,10 +144,24 @@ export interface MusicVideoItem extends Track {
   matchedType?: "artist" | "playlist" | "recommended";
 }
 
+export interface HomePodcastItem {
+  id: string;
+  youtubeVideoId: string;
+  title: string;
+  channelTitle: string;
+  coverUrl: string;
+  durationText?: string;
+  duration?: number;
+  description?: string;
+  sourceReason?: string;
+  isSubscribed?: boolean;
+}
+
 export interface PersonalizedHomeData {
   jumpBackIn: Playlist[];
   listenAgain: PlaybackHistoryItem[];
   musicVideos: MusicVideoItem[];
+  podcasts: HomePodcastItem[];
   newReleasesForYou: Album[];
   quickPicks: Playlist[];
   communityPlaylists: Playlist[];
@@ -358,9 +372,13 @@ export async function fetchPersonalizedHomeFeed(
       .catch(() => ({ results: [] }))
   );
 
-  const [musicVideoGroups, newReleasesRes, liveRes, albumsRes, communityRes] = await Promise.all([
+  // E. Podcasts for You: latest episodes from subscribed podcasters & regular watch history
+  const podcastsPromise = fetchPersonalizedPodcasts(authHeaders, history);
+
+  const [musicVideoGroups, newReleasesRes, liveRes, albumsRes, communityRes, podcasts] = await Promise.all([
     Promise.all(musicVideoQueries),
     ...searchQueries,
+    podcastsPromise,
   ]);
 
   // Aggregate music videos
@@ -418,6 +436,7 @@ export async function fetchPersonalizedHomeFeed(
     jumpBackIn,
     listenAgain,
     musicVideos: musicVideos.slice(0, 16),
+    podcasts: podcasts || [],
     newReleasesForYou,
     quickPicks,
     communityPlaylists,
@@ -426,4 +445,161 @@ export async function fetchPersonalizedHomeFeed(
     musicGenres,
     moodFilters: ["All", "Relax", "Workout", "Focus", "Energize", "Commute", "Party", "Romance", "Sleep"],
   };
+}
+
+/**
+ * Fetches latest podcast episodes tailored to podcasters the user is subscribed to
+ * and channels/podcasters they watch on a regular basis (derived from playback history).
+ */
+export async function fetchPersonalizedPodcasts(
+  authHeaders: Record<string, string>,
+  history: PlaybackHistoryItem[]
+): Promise<HomePodcastItem[]> {
+  const podcasts: HomePodcastItem[] = [];
+  const seenIds = new Set<string>();
+
+  // 1. Fetch user subscriptions if available
+  let subscriptions: { channelId: string; title: string; description: string; coverUrl: string }[] = [];
+  try {
+    const subRes = await fetch("/api/youtube/subscriptions", { headers: authHeaders });
+    if (subRes.ok) {
+      const subData = await subRes.json();
+      subscriptions = subData.subscriptions || [];
+    }
+  } catch (err) {
+    console.warn("Could not fetch user subscriptions for podcasts:", err);
+  }
+
+  // 2. Identify channels/podcasters watched on a regular basis from history
+  const channelWatchCount: Record<string, number> = {};
+  const podcastKeywords = [
+    "podcast",
+    "interview",
+    "episode",
+    "show",
+    "talk",
+    "conversation",
+    "discussion",
+    "breakdown",
+    "tiny desk",
+    "sessions",
+    "experience",
+  ];
+
+  for (const item of history) {
+    const candidateName = item.channelTitle || item.uploader || item.artist;
+    if (
+      candidateName &&
+      candidateName !== "Unknown Artist" &&
+      candidateName.toLowerCase() !== "youtube" &&
+      candidateName.toLowerCase() !== "various artists"
+    ) {
+      const lowerTitle = (item.title || "").toLowerCase();
+      const isPodcastTitle = podcastKeywords.some((kw) => lowerTitle.includes(kw));
+      const weight = item.isVideo || item.mediaType === "video" || isPodcastTitle || (item.duration && item.duration > 600) ? 2 : 1;
+      channelWatchCount[candidateName] = (channelWatchCount[candidateName] || 0) + weight;
+    }
+  }
+
+  // Sort channels by watch frequency
+  const frequentChannels = Object.entries(channelWatchCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name]) => name);
+
+  // 3. Build target podcasters: Subscribed first, then frequent watch history
+  interface PodcasterTarget {
+    name: string;
+    sourceReason: string;
+    isSubscribed: boolean;
+  }
+
+  const targets: PodcasterTarget[] = [];
+  const addedNames = new Set<string>();
+
+  // A. From user subscriptions
+  for (const sub of subscriptions.slice(0, 4)) {
+    const key = sub.title.toLowerCase().trim();
+    if (!addedNames.has(key)) {
+      targets.push({
+        name: sub.title,
+        sourceReason: "Subscribed Podcaster",
+        isSubscribed: true,
+      });
+      addedNames.add(key);
+    }
+  }
+
+  // B. From frequent watch history
+  for (const name of frequentChannels.slice(0, 4)) {
+    const key = name.toLowerCase().trim();
+    if (!addedNames.has(key)) {
+      targets.push({
+        name,
+        sourceReason: "Frequently Watched",
+        isSubscribed: false,
+      });
+      addedNames.add(key);
+    }
+  }
+
+  // C. Curated high-caliber musical & cultural podcast fallbacks for new users
+  const defaultPodcasters = [
+    { name: "Song Exploder", sourceReason: "Artist Deep-Dive", isSubscribed: false },
+    { name: "NPR Music Tiny Desk", sourceReason: "Live Acoustic Shows", isSubscribed: false },
+    { name: "Lex Fridman Podcast", sourceReason: "Long-form In-depth Conversations", isSubscribed: false },
+    { name: "Tape Notes Podcast", sourceReason: "Studio Music Production", isSubscribed: false },
+    { name: "The Joe Rogan Experience", sourceReason: "Popular Talk Show", isSubscribed: false },
+  ];
+
+  for (const def of defaultPodcasters) {
+    if (targets.length >= 4) break;
+    const key = def.name.toLowerCase().trim();
+    if (!addedNames.has(key)) {
+      targets.push(def);
+      addedNames.add(key);
+    }
+  }
+
+  // 4. Query YouTube in parallel for recent full podcast episodes
+  const queries = targets.slice(0, 4).map(async (t) => {
+    try {
+      const q = `${t.name} podcast full episode latest`;
+      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(q)}&type=video`, { headers: authHeaders });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.results || []).slice(0, 4).map((item: any) => ({
+        ...item,
+        channelTitle: t.name,
+        sourceReason: t.sourceReason,
+        isSubscribed: t.isSubscribed,
+      }));
+    } catch {
+      return [];
+    }
+  });
+
+  const queryResults = await Promise.all(queries);
+
+  for (const group of queryResults) {
+    for (const item of group) {
+      const vId = item.id || item.youtubeVideoId;
+      if (!vId || seenIds.has(vId)) continue;
+      seenIds.add(vId);
+
+      podcasts.push({
+        id: vId,
+        youtubeVideoId: vId,
+        title: item.title || "Podcast Episode",
+        channelTitle: item.channelTitle || item.artist || item.uploader || "Podcaster",
+        coverUrl: item.coverUrl || `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`,
+        durationText: item.durationText,
+        duration: item.duration,
+        description: item.album || item.description || "Full Episode & Discussion",
+        sourceReason: item.sourceReason,
+        isSubscribed: item.isSubscribed,
+      });
+    }
+  }
+
+  return podcasts.slice(0, 16);
 }

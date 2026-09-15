@@ -23,6 +23,12 @@ export interface PodcastItem {
   description?: string;
 }
 
+export interface MovieTrailerItem extends Track {
+  videoType: "trailer";
+  publishedText?: string;
+  publishedAt?: string;
+}
+
 export interface VideoTrailerItem extends Track {
   videoType: "music_video" | "trailer" | "live";
 }
@@ -33,7 +39,9 @@ export interface ExploreData {
   moodsAndMoments: MoodItem[];
   genres: MoodItem[];
   podcasts: PodcastItem[];
-  videosAndTrailers: VideoTrailerItem[];
+  musicVideos: Track[];
+  movieTrailers: MovieTrailerItem[];
+  videosAndTrailers?: VideoTrailerItem[];
 }
 
 export async function fetchExploreFeedData(): Promise<ExploreData> {
@@ -66,30 +74,46 @@ export async function fetchExploreFeedData(): Promise<ExploreData> {
     .then((r) => (r.ok ? r.json() : { results: [] }))
     .catch(() => ({ results: [] }));
 
-  // 3. Fetch trailers and official music videos
-  const trailersPromise = fetch(
-    `/api/youtube/search?q=${encodeURIComponent("Official New Movie Trailers 4K Official Teaser")}&type=track`,
+  // 3. Fetch latest movie trailers fresh from the past 3 months strictly
+  const trailersPromise = fetch(`/api/youtube/trailers?_t=${Date.now()}`, { headers })
+    .then((r) => (r.ok ? r.json() : { trailers: [] }))
+    .catch(() => ({ trailers: [] }));
+
+  // 4. Fetch trending 4K music videos
+  const musicVideosPromise = fetch(
+    `/api/youtube/search?q=${encodeURIComponent("Official 4K Music Videos 2026 Hits")}&type=video`,
     { headers }
   )
     .then((r) => (r.ok ? r.json() : { results: [] }))
     .catch(() => ({ results: [] }));
 
-  const [rawBaseData, podcastsRes, trailersRes] = await Promise.all([
+  const [rawBaseData, podcastsRes, trailersRes, musicVideosRes] = await Promise.all([
     basePromise,
     podcastsPromise,
     trailersPromise,
+    musicVideosPromise,
   ]);
 
   const baseData: any = rawBaseData || {};
 
-  const trendingVideos: Track[] = baseData?.trendingVideos || [];
-  const trailerTracks: Track[] = trailersRes?.results || [];
+  const baseTrendingVideos: Track[] = baseData?.trendingVideos || [];
+  const searchMusicVideos: Track[] = musicVideosRes?.results || [];
 
-  // Combine trending music videos and movie trailers
-  const videosAndTrailers: VideoTrailerItem[] = [
-    ...trendingVideos.map((v) => ({ ...v, isVideo: true, videoType: "music_video" as const })),
-    ...trailerTracks.slice(0, 10).map((t) => ({ ...t, isVideo: true, videoType: "trailer" as const })),
+  // Combine base trending music videos with search music videos
+  const musicVideos: Track[] = [
+    ...baseTrendingVideos.map((v) => ({ ...v, isVideo: true, mediaType: "video" as const })),
+    ...searchMusicVideos.map((v) => ({ ...v, isVideo: true, mediaType: "video" as const })),
   ];
+
+  // Movie trailers fresh within past 3 months
+  const rawTrailers = trailersRes?.trailers || [];
+  const movieTrailers: MovieTrailerItem[] = rawTrailers.map((t: any) => ({
+    ...t,
+    isVideo: true,
+    videoType: "trailer" as const,
+    mediaType: "video" as const,
+    publishedText: t.publishedText || "Past 3 Months",
+  }));
 
   const podcasts: PodcastItem[] = (podcastsRes?.results || []).slice(0, 8).map((p: any) => ({
     id: p.id || p.youtubeVideoId,
@@ -101,12 +125,20 @@ export async function fetchExploreFeedData(): Promise<ExploreData> {
     description: p.album || "Full Episode & Discussion",
   }));
 
+  // Backwards compatibility for videosAndTrailers
+  const videosAndTrailers: VideoTrailerItem[] = [
+    ...musicVideos.slice(0, 8).map((v) => ({ ...v, videoType: "music_video" as const })),
+    ...movieTrailers.slice(0, 8).map((t) => ({ ...t, videoType: "trailer" as const })),
+  ];
+
   return {
     newReleases: baseData?.newReleases || [],
     charts: baseData?.charts || [],
     moodsAndMoments: baseData?.moodsAndMoments || [],
     genres: baseData?.genres || [],
     podcasts,
+    musicVideos,
+    movieTrailers,
     videosAndTrailers,
   };
 }

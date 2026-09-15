@@ -16,6 +16,9 @@ export interface Track {
   isVideo?: boolean;
   channelTitle?: string;
   mediaType?: "song" | "video";
+  publishedText?: string;
+  publishedAt?: string;
+  durationText?: string;
 }
 
 export interface YouTubeThumbnailItem {
