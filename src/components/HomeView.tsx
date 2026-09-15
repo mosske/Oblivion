@@ -29,6 +29,8 @@ import {
   PlaybackHistoryItem,
   CuratedGenreItem,
 } from "../services/homeService";
+import { GenreDetailView } from "./GenreDetailView";
+import { GenreItem } from "../services/genreService";
 
 interface HomeViewProps {
   onPlayTrack: (track: Track) => void;
@@ -67,6 +69,54 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [timeGreeting, setTimeGreeting] = useState<string>("Welcome");
+  const [selectedGenre, setSelectedGenre] = useState<GenreItem | null>(null);
+
+  // Restore active genre modal if stashed in sessionStorage
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("OBLIVION_ACTIVE_GENRE_MODAL");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.title && parsed.originView === "home") {
+          setSelectedGenre(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const handleSelectGenre = (genre: CuratedGenreItem) => {
+    const item: GenreItem = {
+      id: genre.id,
+      title: genre.title,
+      query: genre.query,
+      color: genre.color,
+      description: `Curated ${genre.title} soundscape with top trending songs and live performances.`,
+    };
+    setSelectedGenre(item);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+    try {
+      sessionStorage.setItem("OBLIVION_ACTIVE_GENRE_MODAL", JSON.stringify({ ...item, originView: "home" }));
+    } catch {}
+  };
+
+  const handleCloseGenre = () => {
+    const closedId = selectedGenre?.id;
+    setSelectedGenre(null);
+    try {
+      sessionStorage.removeItem("OBLIVION_ACTIVE_GENRE_MODAL");
+    } catch {}
+    if (closedId) {
+      setTimeout(() => {
+        const elem = document.getElementById(`home-genre-tile-${closedId}`);
+        if (elem) {
+          elem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          elem.focus?.();
+        }
+      }, 50);
+    }
+  };
 
   // Dynamic Personalized Home state
   const [homeData, setHomeData] = useState<PersonalizedHomeData>({
@@ -226,7 +276,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
   }
 
   // --------------------------------------------------------------------------
-  // 2. AUTHENTICATED USER PERSONALIZED HOME
+  // 2. ENCAPSULATED GENRE DETAIL VIEW MODAL
+  // --------------------------------------------------------------------------
+  if (selectedGenre) {
+    return (
+      <GenreDetailView
+        genre={selectedGenre}
+        onClose={handleCloseGenre}
+        onPlayTrack={onPlayTrack}
+        onPlayQueue={onPlayQueue}
+        currentTrackId={currentTrack?.id || currentTrack?.youtubeVideoId}
+        designConfig={designConfig}
+      />
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // 3. AUTHENTICATED USER PERSONALIZED HOME
   // --------------------------------------------------------------------------
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-9 pb-64 sm:pb-72 md:pb-52 select-none">
@@ -857,7 +923,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 {homeData.musicGenres.map((genre) => (
                   <button
                     key={genre.id}
-                    onClick={() => onSearchGenre && onSearchGenre(genre.query)}
+                    id={`home-genre-tile-${genre.id}`}
+                    onClick={() => handleSelectGenre(genre)}
                     className={`h-22 p-4 rounded-2xl bg-gradient-to-br ${genre.color} text-white font-bold text-sm flex flex-col justify-between items-start shadow-md hover:scale-[1.03] active:scale-95 transition-all text-left group overflow-hidden relative`}
                   >
                     <div className="absolute -right-2 -bottom-2 opacity-20 group-hover:opacity-40 transition-opacity">

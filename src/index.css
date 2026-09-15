@@ -3,7 +3,6 @@
 
 html, body {
   min-height: 100%;
-  overflow-x: clip;
 }
 
 /* Dynamic scrollbar styling bound to active theme */

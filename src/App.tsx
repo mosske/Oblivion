@@ -2301,18 +2301,14 @@ export default function App() {
     }
   };
 
-  // Scroll to top whenever a playlist or album is selected
+  // Scroll to top on tab change or playlist selection
   useEffect(() => {
-    if (selectedPlaylist) {
-      if (typeof window !== "undefined") {
-        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      }
-      const mainEl = document.querySelector("main");
-      if (mainEl) mainEl.scrollTop = 0;
-      const rootEl = document.documentElement || document.body;
-      if (rootEl) rootEl.scrollTop = 0;
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }
-  }, [selectedPlaylist?.id]);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, [activeTab, selectedPlaylist?.id]);
 
   return (
     <EqualizerProvider>
@@ -2404,63 +2400,63 @@ export default function App() {
         {/* Fresh Screen: When a Playlist or Album is clicked, open PlaylistDetailView as a dedicated screen */}
         {selectedPlaylist ? (
           <PlaylistDetailView
-            item={selectedPlaylist}
-            isAlbum={
-              !Boolean(
-                (selectedPlaylist as any)?.isUserCreated ||
-                (selectedPlaylist as any)?.type === "playlist" ||
-                (selectedPlaylist as any)?.isEditable ||
-                (typeof selectedPlaylist.id === "string" && (selectedPlaylist.id.startsWith("pl_custom_") || selectedPlaylist.id.startsWith("PL") || selectedPlaylist.id.startsWith("VLPL")))
-              ) && Boolean(
-                (selectedPlaylist as any).isAlbum ||
-                selectedPlaylist.id?.startsWith("MPREb_") ||
-                selectedPlaylist.id?.startsWith("OLAK5uy_")
-              )
-            }
-            onBack={() => {
-              setSelectedPlaylist(null);
-              if (window.history.state && window.history.state.view === "playlist_detail") {
-                try {
-                  window.history.replaceState({ view: "main_tabs" }, "");
-                } catch {}
+              item={selectedPlaylist}
+              isAlbum={
+                !Boolean(
+                  (selectedPlaylist as any)?.isUserCreated ||
+                  (selectedPlaylist as any)?.type === "playlist" ||
+                  (selectedPlaylist as any)?.isEditable ||
+                  (typeof selectedPlaylist.id === "string" && (selectedPlaylist.id.startsWith("pl_custom_") || selectedPlaylist.id.startsWith("PL") || selectedPlaylist.id.startsWith("VLPL")))
+                ) && Boolean(
+                  (selectedPlaylist as any).isAlbum ||
+                  selectedPlaylist.id?.startsWith("MPREb_") ||
+                  selectedPlaylist.id?.startsWith("OLAK5uy_")
+                )
               }
-            }}
-            onBackToLibrary={() => {
-              setSelectedPlaylist(null);
-              setActiveTab("library");
-            }}
-            onDeletePlaylist={(delId) => {
-              handleDeletePlaylist(delId);
-            }}
-            onPlayTrack={handlePlayTrack}
-            onPlayQueue={handlePlayQueue}
-            onAddToQueue={handleAddToQueue}
-            onAddTrackToPlaylist={handleAddTrackToPlaylist}
-            onOpenAddToPlaylistModal={handleOpenAddToPlaylistModal}
-            onEditPlaylist={(pl) => {
-              setEditingPlaylist(pl);
-              setIsPlaylistModalOpen(true);
-            }}
-            onUpdateCover={(newCoverUrl, isCustom) =>
-              handleUpdatePlaylistCover(selectedPlaylist.id, newCoverUrl, isCustom)
-            }
-            currentTrackId={playerState.currentTrack?.id}
-            isPlaying={playerState.isPlaying}
-            playlists={playlists}
-            isShuffle={playerState.isShuffle}
-            onToggleShuffle={() => setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))}
-            repeatMode={playerState.repeatMode}
-            onToggleRepeat={() =>
-              setPlayerState((prev) => ({
-                ...prev,
-                repeatMode:
-                  prev.repeatMode === "off" ? "all" : prev.repeatMode === "all" ? "one" : "off",
-              }))
-            }
-            onReorderTracks={(newTracks) => handleReorderPlaylistTracks(selectedPlaylist.id, newTracks)}
-            onRemoveTrack={(trackId, trackObj) => handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId, trackObj)}
-            designConfig={activeFullDesign}
-          />
+              onBack={() => {
+                setSelectedPlaylist(null);
+                if (window.history.state && window.history.state.view === "playlist_detail") {
+                  try {
+                    window.history.replaceState({ view: "main_tabs" }, "");
+                  } catch {}
+                }
+              }}
+              onBackToLibrary={() => {
+                setSelectedPlaylist(null);
+                setActiveTab("library");
+              }}
+              onDeletePlaylist={(delId) => {
+                handleDeletePlaylist(delId);
+              }}
+              onPlayTrack={handlePlayTrack}
+              onPlayQueue={handlePlayQueue}
+              onAddToQueue={handleAddToQueue}
+              onAddTrackToPlaylist={handleAddTrackToPlaylist}
+              onOpenAddToPlaylistModal={handleOpenAddToPlaylistModal}
+              onEditPlaylist={(pl) => {
+                setEditingPlaylist(pl);
+                setIsPlaylistModalOpen(true);
+              }}
+              onUpdateCover={(newCoverUrl, isCustom) =>
+                handleUpdatePlaylistCover(selectedPlaylist.id, newCoverUrl, isCustom)
+              }
+              currentTrackId={playerState.currentTrack?.id}
+              isPlaying={playerState.isPlaying}
+              playlists={playlists}
+              isShuffle={playerState.isShuffle}
+              onToggleShuffle={() => setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))}
+              repeatMode={playerState.repeatMode}
+              onToggleRepeat={() =>
+                setPlayerState((prev) => ({
+                  ...prev,
+                  repeatMode:
+                    prev.repeatMode === "off" ? "all" : prev.repeatMode === "all" ? "one" : "off",
+                }))
+              }
+              onReorderTracks={(newTracks) => handleReorderPlaylistTracks(selectedPlaylist.id, newTracks)}
+              onRemoveTrack={(trackId, trackObj) => handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId, trackObj)}
+              designConfig={activeFullDesign}
+            />
         ) : (
           <>
             {activeTab === "home" && (

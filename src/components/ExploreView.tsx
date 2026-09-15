@@ -31,6 +31,8 @@ import {
   PodcastItem,
   VideoTrailerItem,
 } from "../services/exploreService";
+import { GenreDetailView } from "./GenreDetailView";
+import { GenreItem } from "../services/genreService";
 
 interface ExploreViewProps {
   onPlayTrack: (track: Track) => void;
@@ -58,6 +60,62 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const [activeCategory, setActiveCategory] = useState<ExploreCategory>("All");
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [selectedGenre, setSelectedGenre] = useState<GenreItem | null>(null);
+
+  // Restore active genre modal if stashed in sessionStorage
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("OBLIVION_ACTIVE_GENRE_MODAL");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.title && parsed.originView === "explore") {
+          setSelectedGenre(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const handleSelectGenre = (item: {
+    id: string;
+    title: string;
+    query: string;
+    color?: string;
+    description?: string;
+  }) => {
+    const gItem: GenreItem = {
+      id: item.id,
+      title: item.title,
+      query: item.query,
+      color: item.color,
+      description: item.description || `Curated ${item.title} soundscape featuring top hits and trending tracks.`,
+    };
+    setSelectedGenre(gItem);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+    try {
+      sessionStorage.setItem("OBLIVION_ACTIVE_GENRE_MODAL", JSON.stringify({ ...gItem, originView: "explore" }));
+    } catch {}
+  };
+
+  const handleCloseGenre = () => {
+    const closedId = selectedGenre?.id;
+    setSelectedGenre(null);
+    try {
+      sessionStorage.removeItem("OBLIVION_ACTIVE_GENRE_MODAL");
+    } catch {}
+    if (closedId) {
+      setTimeout(() => {
+        const elem =
+          document.getElementById(`explore-genre-tile-${closedId}`) ||
+          document.getElementById(`explore-mood-tile-${closedId}`);
+        if (elem) {
+          elem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          elem.focus?.();
+        }
+      }, 50);
+    }
+  };
 
   const [data, setData] = useState<ExploreData>({
     newReleases: [],
@@ -120,6 +178,20 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const showMoodsAndGenres = showAll || activeCategory === "Moods & Genres";
   const showVideos = showAll || activeCategory === "Videos & Trailers";
   const showPodcasts = showAll || activeCategory === "Podcasts";
+
+  if (selectedGenre) {
+    return (
+      <GenreDetailView
+        genre={selectedGenre}
+        onClose={handleCloseGenre}
+        onPlayTrack={onPlayTrack}
+        onPlayQueue={onPlayQueue}
+        currentTrackId={currentTrackId}
+        isPlaying={isPlaying}
+        designConfig={designConfig}
+      />
+    );
+  }
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-64 sm:pb-72 md:pb-52 select-none">
@@ -619,7 +691,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                 {data.moodsAndMoments.map((mood) => (
                   <button
                     key={mood.id}
-                    onClick={() => onSearchGenre && onSearchGenre(mood.query)}
+                    id={`explore-mood-tile-${mood.id}`}
+                    onClick={() => handleSelectGenre(mood)}
                     className={`h-24 p-3.5 rounded-2xl bg-gradient-to-br ${mood.color} text-white font-bold text-sm flex flex-col justify-between items-start shadow-md hover:scale-[1.03] active:scale-95 transition-all text-left group overflow-hidden relative`}
                   >
                     <div className="absolute -right-2 -bottom-2 opacity-20 group-hover:opacity-40 transition-opacity">
@@ -654,7 +727,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                 {data.genres.map((genre) => (
                   <button
                     key={genre.id}
-                    onClick={() => onSearchGenre && onSearchGenre(genre.query)}
+                    id={`explore-genre-tile-${genre.id}`}
+                    onClick={() => handleSelectGenre(genre)}
                     className={`h-20 p-3.5 rounded-2xl bg-gradient-to-br ${genre.color} text-white font-bold text-sm flex flex-col justify-between items-start shadow-md hover:scale-[1.03] active:scale-95 transition-all text-left group overflow-hidden relative`}
                   >
                     <div className="absolute -right-2 -bottom-2 opacity-20 group-hover:opacity-40 transition-opacity">

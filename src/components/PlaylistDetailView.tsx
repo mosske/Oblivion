@@ -377,6 +377,20 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     onPlayQueue(shuffled, 0);
   };
 
+  // Scroll top reset on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, [item?.id]);
+
+  const handleExitView = () => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+    onBack();
+  };
+
   // Swipe-down gesture state for exiting Playlist/Album view back to previous screen
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -467,7 +481,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     // Exit view if swiped down past 75px or quick flick down > 35px
     if ((deltaY > 75 || (deltaY > 35 && velocityY > 0.35)) && deltaY > Math.abs(deltaX)) {
       lockScrollFollowThrough(400);
-      onBack();
+      handleExitView();
     }
 
     setTouchStartY(null);
@@ -567,7 +581,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3.5 w-full">
               <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-[200px] sm:min-w-[280px]">
                 <button
-                  onClick={onBack}
+                  onClick={handleExitView}
                   aria-label="Close view"
                   className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0`}
                   title="Close and go back (or swipe down)"
