@@ -139,9 +139,15 @@ export function extractUserLibraryGenres(playlists: Playlist[]): CuratedGenreIte
   return [...matched, ...unmatched].slice(0, 8);
 }
 
+export interface MusicVideoItem extends Track {
+  matchedSource?: string;
+  matchedType?: "artist" | "playlist" | "recommended";
+}
+
 export interface PersonalizedHomeData {
   jumpBackIn: Playlist[];
   listenAgain: PlaybackHistoryItem[];
+  musicVideos: MusicVideoItem[];
   newReleasesForYou: Album[];
   quickPicks: Playlist[];
   communityPlaylists: Playlist[];
@@ -204,11 +210,110 @@ export async function fetchPersonalizedHomeFeed(
     listenAgain = [...listenAgain, ...fallbackTracks].slice(0, 16);
   }
 
-  // 4. Extract Artists from user library
+  // 4. Extract Artists and Playlists from user library
   const userArtists = extractUserLibraryArtists(playlists);
   const primaryArtists = userArtists.slice(0, 4);
 
+  // Extract meaningful playlist names and tracks for video discovery
+  const userPlaylistNames: string[] = [];
+  const playlistSampleTracks: { title: string; artist: string; playlistTitle: string }[] = [];
+
+  for (const pl of validUserPlaylists) {
+    if (pl && pl.title && typeof pl.title === "string") {
+      const cleanTitle = pl.title.trim();
+      const lower = cleanTitle.toLowerCase();
+      if (cleanTitle && lower !== "liked music" && lower !== "favorites" && !cleanTitle.startsWith("pl_")) {
+        userPlaylistNames.push(cleanTitle);
+      }
+    }
+    if (Array.isArray(pl.tracks)) {
+      for (const t of pl.tracks.slice(0, 4)) {
+        if (t && t.title && t.artist && t.artist !== "Unknown Artist") {
+          playlistSampleTracks.push({
+            title: t.title,
+            artist: t.artist,
+            playlistTitle: pl.title || "Playlist",
+          });
+        }
+      }
+    }
+  }
+
   // 5. Query dynamic recommendations in parallel
+
+  // Music Videos queries tailored to user's playlists and artists
+  const musicVideoQueries: Promise<{ results: any[]; source: string; type: "artist" | "playlist" | "recommended" }>[] = [];
+
+  // Query 1: Top artist official music video
+  if (primaryArtists.length > 0) {
+    const a1 = primaryArtists[0];
+    musicVideoQueries.push(
+      fetch(`/api/youtube/search?q=${encodeURIComponent(`${a1} official music video`)}&type=video`, { headers: authHeaders })
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((data) => ({ results: data.results || [], source: a1, type: "artist" as const }))
+        .catch(() => ({ results: [], source: a1, type: "artist" as const }))
+    );
+  }
+
+  // Query 2: Second top artist official music video
+  if (primaryArtists.length > 1) {
+    const a2 = primaryArtists[1];
+    musicVideoQueries.push(
+      fetch(`/api/youtube/search?q=${encodeURIComponent(`${a2} official music video`)}&type=video`, { headers: authHeaders })
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((data) => ({ results: data.results || [], source: a2, type: "artist" as const }))
+        .catch(() => ({ results: [], source: a2, type: "artist" as const }))
+    );
+  }
+
+  // Query 3: Based on user's playlists or playlist tracks
+  if (userPlaylistNames.length > 0) {
+    const plName = userPlaylistNames[0];
+    musicVideoQueries.push(
+      fetch(`/api/youtube/search?q=${encodeURIComponent(`${plName} music video`)}&type=video`, { headers: authHeaders })
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((data) => ({ results: data.results || [], source: plName, type: "playlist" as const }))
+        .catch(() => ({ results: [], source: plName, type: "playlist" as const }))
+    );
+  } else if (playlistSampleTracks.length > 0) {
+    const sample = playlistSampleTracks[0];
+    musicVideoQueries.push(
+      fetch(`/api/youtube/search?q=${encodeURIComponent(`${sample.artist} ${sample.title} official music video`)}&type=video`, { headers: authHeaders })
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((data) => ({ results: data.results || [], source: sample.playlistTitle, type: "playlist" as const }))
+        .catch(() => ({ results: [], source: sample.playlistTitle, type: "playlist" as const }))
+    );
+  }
+
+  // Query 4: Additional artist or playlist track
+  if (primaryArtists.length > 2) {
+    const a3 = primaryArtists[2];
+    musicVideoQueries.push(
+      fetch(`/api/youtube/search?q=${encodeURIComponent(`${a3} official music video`)}&type=video`, { headers: authHeaders })
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((data) => ({ results: data.results || [], source: a3, type: "artist" as const }))
+        .catch(() => ({ results: [], source: a3, type: "artist" as const }))
+    );
+  } else if (userPlaylistNames.length > 1) {
+    const plName2 = userPlaylistNames[1];
+    musicVideoQueries.push(
+      fetch(`/api/youtube/search?q=${encodeURIComponent(`${plName2} music video`)}&type=video`, { headers: authHeaders })
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((data) => ({ results: data.results || [], source: plName2, type: "playlist" as const }))
+        .catch(() => ({ results: [], source: plName2, type: "playlist" as const }))
+    );
+  }
+
+  // Fallback if empty library
+  if (primaryArtists.length === 0 && userPlaylistNames.length === 0) {
+    musicVideoQueries.push(
+      fetch(`/api/youtube/search?q=${encodeURIComponent("Top Official Music Videos 2026")}&type=video`, { headers: authHeaders })
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((data) => ({ results: data.results || [], source: "Trending", type: "recommended" as const }))
+        .catch(() => ({ results: [], source: "Trending", type: "recommended" as const }))
+    );
+  }
+
   const searchQueries: Promise<any>[] = [];
 
   // A. New releases for you (matching user's artists)
@@ -253,7 +358,33 @@ export async function fetchPersonalizedHomeFeed(
       .catch(() => ({ results: [] }))
   );
 
-  const [newReleasesRes, liveRes, albumsRes, communityRes] = await Promise.all(searchQueries);
+  const [musicVideoGroups, newReleasesRes, liveRes, albumsRes, communityRes] = await Promise.all([
+    Promise.all(musicVideoQueries),
+    ...searchQueries,
+  ]);
+
+  // Aggregate music videos
+  const musicVideos: MusicVideoItem[] = [];
+  const seenVideoIds = new Set<string>();
+
+  for (const group of musicVideoGroups) {
+    if (!group || !Array.isArray(group.results)) continue;
+    for (const item of group.results) {
+      const vId = item.id || item.youtubeVideoId;
+      if (!vId || seenVideoIds.has(vId)) continue;
+      seenVideoIds.add(vId);
+      musicVideos.push({
+        ...item,
+        id: vId,
+        youtubeVideoId: vId,
+        isVideo: true,
+        mediaType: "video",
+        coverUrl: item.coverUrl || `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`,
+        matchedSource: group.source,
+        matchedType: group.type,
+      });
+    }
+  }
 
   const newReleasesForYou: Album[] = (newReleasesRes?.results || [])
     .filter((a: any) => a && (a.id || a.playlistId))
@@ -286,6 +417,7 @@ export async function fetchPersonalizedHomeFeed(
   return {
     jumpBackIn,
     listenAgain,
+    musicVideos: musicVideos.slice(0, 16),
     newReleasesForYou,
     quickPicks,
     communityPlaylists,

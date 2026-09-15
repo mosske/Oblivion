@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { User, Track, Album, Playlist } from "../types";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { MarqueeText } from "./MarqueeText";
@@ -28,6 +28,7 @@ import {
   PersonalizedHomeData,
   PlaybackHistoryItem,
   CuratedGenreItem,
+  MusicVideoItem,
 } from "../services/homeService";
 import { GenreDetailView } from "./GenreDetailView";
 import { GenreItem } from "../services/genreService";
@@ -122,6 +123,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [homeData, setHomeData] = useState<PersonalizedHomeData>({
     jumpBackIn: [],
     listenAgain: [],
+    musicVideos: [],
     newReleasesForYou: [],
     quickPicks: [],
     communityPlaylists: [],
@@ -130,6 +132,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
     musicGenres: [],
     moodFilters: ["All", "Relax", "Workout", "Focus", "Energize", "Commute", "Party", "Romance", "Sleep"],
   });
+
+  const [selectedVideoFilter, setSelectedVideoFilter] = useState<string>("All");
+
+  const videoFilterSources = useMemo(() => {
+    const sources = new Set<string>();
+    (homeData.musicVideos || []).forEach((v) => {
+      if (v.matchedSource && v.matchedSource !== "Trending") {
+        sources.add(v.matchedSource);
+      }
+    });
+    return ["All", ...Array.from(sources)];
+  }, [homeData.musicVideos]);
+
+  const displayedMusicVideos = useMemo(() => {
+    if (selectedVideoFilter === "All") return homeData.musicVideos || [];
+    return (homeData.musicVideos || []).filter((v) => v.matchedSource === selectedVideoFilter);
+  }, [homeData.musicVideos, selectedVideoFilter]);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -562,7 +581,206 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 3. NEW RELEASES FOR YOU (Based on Library Artists) */}
+          {/* 3. MUSIC VIDEOS (Official Music Videos based on user's playlists & artists) */}
+          {/* ========================================================================= */}
+          {homeData.musicVideos && homeData.musicVideos.length > 0 && (
+            <section id="home-music-videos-section" className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-md">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                        Music Videos
+                      </h2>
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500/10 text-red-500 border border-red-500/20">
+                        HD
+                      </span>
+                    </div>
+                    <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>
+                      Official music videos based on your playlists & favorite artists • Plays in built-in video player
+                    </p>
+                  </div>
+                </div>
+
+                {/* Top Action Buttons */}
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  {displayedMusicVideos.length > 1 && (
+                    <button
+                      id="home-music-videos-shuffle-btn"
+                      title="Shuffle music videos"
+                      onClick={() => {
+                        const shuffled = [...displayedMusicVideos].sort(() => Math.random() - 0.5);
+                        if (shuffled[0]) {
+                          if (onPlayVideo) onPlayVideo(shuffled[0]);
+                          else onPlayTrack(shuffled[0]);
+                        }
+                      }}
+                      className={`p-2 sm:px-3 sm:py-1.5 rounded-xl ${designConfig.btnSecondary} text-xs font-bold flex items-center gap-1.5 shadow-sm hover:scale-105 active:scale-95 transition-all border ${designConfig.borderSubtle}`}
+                    >
+                      <Shuffle className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Shuffle</span>
+                    </button>
+                  )}
+                  <button
+                    id="home-music-videos-watch-all-btn"
+                    onClick={() => {
+                      const first = displayedMusicVideos[0];
+                      if (first) {
+                        if (onPlayVideo) onPlayVideo(first);
+                        else onPlayTrack(first);
+                      }
+                    }}
+                    className={`px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-white text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95 hover:scale-105 transition-all`}
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Watch all</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Source Filter Pills (All, Artist 1, Artist 2, Playlist 1) */}
+              {videoFilterSources.length > 2 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar -mx-1 px-1">
+                  {videoFilterSources.map((source) => {
+                    const isSelected = selectedVideoFilter === source;
+                    return (
+                      <button
+                        key={source}
+                        id={`home-music-video-filter-${source.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+                        onClick={() => setSelectedVideoFilter(source)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all active:scale-95 ${
+                          isSelected
+                            ? `${designConfig.accentBg} ${designConfig.accentContrastText} shadow-sm ring-1 ${designConfig.accentBorder}`
+                            : `${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle}`
+                        }`}
+                      >
+                        {source === "All" ? `All Videos (${homeData.musicVideos.length})` : source}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Videos Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {displayedMusicVideos.map((video, idx) => {
+                  const vId = video.youtubeVideoId || video.id;
+                  const isCurrent = currentTrack?.id === vId || currentTrack?.youtubeVideoId === vId;
+
+                  return (
+                    <div
+                      key={vId || idx}
+                      id={`home-music-video-card-${vId}`}
+                      onClick={() => (onPlayVideo ? onPlayVideo(video) : onPlayTrack(video))}
+                      className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${
+                        designConfig.cardBg
+                      } ${designConfig.cardHover} border ${
+                        isCurrent ? designConfig.accentBorder : "border-transparent"
+                      } hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl`}
+                    >
+                      {/* Video Widescreen Thumbnail */}
+                      <div className="relative aspect-video rounded-xl overflow-hidden mb-2.5 bg-black/20 shadow-inner">
+                        <img
+                          src={
+                            video.coverUrl ||
+                            `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`
+                          }
+                          alt={video.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                          onError={(e) => {
+                            if (vId) {
+                              e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                            } else {
+                              e.currentTarget.src =
+                                "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
+                            }
+                          }}
+                        />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          <div className="px-2 py-0.5 rounded-full bg-red-600/90 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm backdrop-blur-xs">
+                            <Video className="w-3 h-3" />
+                            <span>MUSIC VIDEO</span>
+                          </div>
+                        </div>
+
+                        {video.matchedSource && (
+                          <div className="absolute top-2 right-2 max-w-[55%]">
+                            <span className="truncate block px-2 py-0.5 rounded-md bg-black/75 text-white/90 text-[10px] font-medium backdrop-blur-xs shadow-xs">
+                              {video.matchedType === "playlist" ? `📁 ${video.matchedSource}` : `🎤 ${video.matchedSource}`}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Bottom-right Duration */}
+                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-white text-[10px] font-mono font-medium shadow-xs">
+                          {video.duration ? formatDuration(video.duration) : "VIDEO"}
+                        </div>
+
+                        {/* Center Hover Play Overlay */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                          <div
+                            id={`home-music-video-play-btn-${vId}`}
+                            className="p-3.5 rounded-full bg-white text-black shadow-xl transform group-hover:scale-110 transition-transform"
+                          >
+                            <Play className="w-4 h-4 fill-current ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Video Title & Artist */}
+                      <div className="flex-1 min-w-0 w-full">
+                        <MarqueeText
+                          text={cleanTrackTitle(video.title, video.artist)}
+                          className={`font-bold text-sm ${
+                            isCurrent ? designConfig.accentText : designConfig.textPrimary
+                          } group-hover:${designConfig.accentText} transition-colors`}
+                          containerClassName="w-full"
+                          speed={28}
+                        />
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                          <MarqueeText
+                            text={video.artist || "Unknown Artist"}
+                            className={`text-xs ${designConfig.textMuted}`}
+                            containerClassName="w-full"
+                            speed={24}
+                          />
+                          {video.uploader && video.uploader !== video.artist && (
+                            <span className={`text-[10px] ${designConfig.textMuted} shrink-0 opacity-75 truncate max-w-[40%]`}>
+                              {video.uploader}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Matched context footer */}
+                        <div className="mt-2 pt-1.5 border-t border-white/5 flex items-center justify-between text-[10px]">
+                          <span className={`${designConfig.textMuted} truncate`}>
+                            {video.matchedType === "playlist"
+                              ? `Matched from your playlist`
+                              : video.matchedType === "artist"
+                              ? `Based on artist you listen to`
+                              : `Trending video for you`}
+                          </span>
+                          <span className={`font-semibold ${designConfig.accentText} group-hover:underline`}>
+                            Watch →
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 4. NEW RELEASES FOR YOU (Based on Library Artists) */}
           {/* ========================================================================= */}
           {homeData.newReleasesForYou.length > 0 && (
             <section className="space-y-4">
@@ -623,7 +841,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 4. QUICK PICKS (Direct access links & shuffle shortcuts for favorite playlists) */}
+          {/* 5. QUICK PICKS (Direct access links & shuffle shortcuts for favorite playlists) */}
           {/* ========================================================================= */}
           {homeData.quickPicks.length > 0 && (
             <section className="space-y-4">
@@ -699,7 +917,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 5. FROM THE COMMUNITY (Public playlists with similar music to user's playlists) */}
+          {/* 6. FROM THE COMMUNITY (Public playlists with similar music to user's playlists) */}
           {/* ========================================================================= */}
           {homeData.communityPlaylists.length > 0 && (
             <section className="space-y-4">
@@ -755,7 +973,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 6. LIVE PERFORMANCES (Direct video launch in Oblivion built-in video player) */}
+          {/* 7. LIVE PERFORMANCES (Direct video launch in Oblivion built-in video player) */}
           {/* ========================================================================= */}
           {homeData.livePerformances.length > 0 && (
             <section className="space-y-4">
@@ -842,7 +1060,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 7. ALBUMS FOR YOU (Albums matched to artists in user's playlists) */}
+          {/* 8. ALBUMS FOR YOU (Albums matched to artists in user's playlists) */}
           {/* ========================================================================= */}
           {homeData.albumsForYou.length > 0 && (
             <section className="space-y-4">
@@ -903,7 +1121,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 8. MUSIC GENRES (Curated list tailored to user's playlist genres) */}
+          {/* 9. MUSIC GENRES (Curated list tailored to user's playlist genres) */}
           {/* ========================================================================= */}
           {homeData.musicGenres.length > 0 && (
             <section className="space-y-4">
