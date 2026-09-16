@@ -41,6 +41,7 @@ interface ExploreViewProps {
   onSearchGenre?: (genreQuery: string) => void;
   onPlayVideo?: (track: Track) => void;
   currentTrackId?: string;
+  activeTrack?: Track | null;
   isPlaying?: boolean;
   designConfig?: FullAppDesignConfig;
 }
@@ -61,6 +62,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   onSearchGenre,
   onPlayVideo,
   currentTrackId,
+  activeTrack,
   isPlaying = false,
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
@@ -197,6 +199,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         onClose={handleCloseGenre}
         onPlayTrack={onPlayTrack}
         onPlayQueue={onPlayQueue}
+        activeTrack={activeTrack}
         currentTrackId={currentTrackId}
         isPlaying={isPlaying}
         designConfig={designConfig}

@@ -74,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="top-header-signin-btn"
             onClick={onOpenAuthModal}
-            className={`px-4 py-2 rounded-xl ${designConfig.btnPrimary} text-white text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5`}
+            className={`btn-signin px-4 py-2 rounded-xl ${designConfig.btnPrimary} text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5`}
           >
             <LogIn className="w-3.5 h-3.5" />
             <span>Sign In</span>

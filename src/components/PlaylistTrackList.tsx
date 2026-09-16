@@ -579,6 +579,9 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
         return (
           <div
             key={stableTrackKey}
+            id={`track-row-${track.id}`}
+            data-track-id={track.id}
+            data-youtube-id={track.youtubeVideoId}
             ref={(el) => {
               if (el) rowRefs.current.set(idx, el);
               else rowRefs.current.delete(idx);

@@ -20,6 +20,8 @@ import { DesignerTrapezoidBackground } from "./components/DesignerTrapezoidBackg
 import { EmeraldWildernessBackground } from "./components/EmeraldWildernessBackground";
 import { HommeMosaicBackground } from "./components/HommeMosaicBackground";
 import { CyberpunkCityRainBackground } from "./components/CyberpunkCityRainBackground";
+import { BespokeCanvas } from "./components/BespokeCanvas";
+import { applyBespokeCssVariables } from "./theme/themeService";
 import { EqualizerProvider } from "./context/EqualizerContext";
 import {
   getCachedPlaylistsFromDB,
@@ -634,21 +636,30 @@ export default function App() {
         },
       };
 
-      const vars = themeVariables[activeFullDesign.id] || themeVariables.designer;
-      document.documentElement.style.setProperty("--accent-color", vars.accent);
-      document.documentElement.style.setProperty("--primary", vars.accent);
-      document.documentElement.style.setProperty("--accent-primary", vars.accent);
-      document.documentElement.style.setProperty("--accent-secondary", vars.secondary);
-      document.documentElement.style.setProperty("--accent-tertiary", vars.tertiary);
-      document.documentElement.style.setProperty("--accent-contrast-text", vars.contrastText);
-      if (vars.sliderTrack) {
-        document.documentElement.style.setProperty("--slider-track-bg", vars.sliderTrack);
-      }
-      if (vars.sliderFill) {
-        document.documentElement.style.setProperty("--slider-fill-bg", vars.sliderFill);
+      if (activeFullDesign.id === "bespoke" || activeFullDesign.isBespoke) {
+        applyBespokeCssVariables();
+      } else {
+        const vars = themeVariables[activeFullDesign.id] || themeVariables.designer;
+        document.documentElement.style.setProperty("--accent-color", vars.accent);
+        document.documentElement.style.setProperty("--primary", vars.accent);
+        document.documentElement.style.setProperty("--accent-primary", vars.accent);
+        document.documentElement.style.setProperty("--accent-secondary", vars.secondary);
+        document.documentElement.style.setProperty("--accent-tertiary", vars.tertiary);
+        document.documentElement.style.setProperty("--accent-contrast-text", vars.contrastText);
+        if (vars.sliderTrack) {
+          document.documentElement.style.setProperty("--slider-track-bg", vars.sliderTrack);
+        }
+        if (vars.sliderFill) {
+          document.documentElement.style.setProperty("--slider-fill-bg", vars.sliderFill);
+        }
       }
     }
   }, [activeFullDesign.id, activeFullDesign.themeColorMeta]);
+
+  // Initial Bespoke CSS variable hydration
+  useEffect(() => {
+    applyBespokeCssVariables();
+  }, []);
 
   // Save settings whenever updated
   useEffect(() => {
@@ -2312,7 +2323,7 @@ export default function App() {
 
   return (
     <EqualizerProvider>
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
 
@@ -2330,6 +2341,9 @@ export default function App() {
 
       {/* Animated Sprawling Cyberpunk City Drizzling at Night with Flickering Neon for Theme 02 (Cyberpunk Neon Glass) */}
       <CyberpunkCityRainBackground isActive={Boolean(activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon")} />
+
+      {/* Animated Glowing Orb Uniforms & Bespoke Liquid Glass Canvas for Theme 10 (Bespoke) */}
+      <BespokeCanvas isActive={Boolean((activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") && !playerState.isFullscreen)} />
 
       {/* Sidebar Navigation */}
       <Sidebar
@@ -2441,6 +2455,7 @@ export default function App() {
                 handleUpdatePlaylistCover(selectedPlaylist.id, newCoverUrl, isCustom)
               }
               currentTrackId={playerState.currentTrack?.id}
+              activeTrack={playerState.currentTrack}
               isPlaying={playerState.isPlaying}
               playlists={playlists}
               isShuffle={playerState.isShuffle}
@@ -2487,6 +2502,7 @@ export default function App() {
                 user={user}
                 onOpenSettings={() => setActiveTab("settings")}
                 currentTrack={playerState.currentTrack}
+                isPlaying={playerState.isPlaying}
                 designConfig={activeFullDesign}
               />
             )}
@@ -2503,6 +2519,7 @@ export default function App() {
                 }}
                 onPlayVideo={handlePlayVideo}
                 currentTrackId={playerState.currentTrack?.id || playerState.currentTrack?.youtubeVideoId}
+                activeTrack={playerState.currentTrack}
                 isPlaying={playerState.isPlaying}
                 designConfig={activeFullDesign}
               />

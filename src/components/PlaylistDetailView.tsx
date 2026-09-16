@@ -37,6 +37,7 @@ import { PlaylistTrackList } from "./PlaylistTrackList";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
+import { useContextualScrollRecovery } from "../utils/scrollRecovery";
 import { getInMemoryToken, getStoredAuthToken } from "../services/authService";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
 import { getCachedPlaylistTracks, setCachedPlaylistTracks } from "../services/playlistService";
@@ -63,6 +64,7 @@ interface PlaylistDetailViewProps {
   onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
   onOpenAddToPlaylistModal?: (track: Track) => void;
   currentTrackId?: string;
+  activeTrack?: Track | null;
   isPlaying?: boolean;
   playlists?: Playlist[];
   designConfig?: FullAppDesignConfig;
@@ -88,6 +90,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   onAddTrackToPlaylist,
   onOpenAddToPlaylistModal,
   currentTrackId,
+  activeTrack,
   isPlaying = false,
   playlists = [],
   designConfig = FULL_APP_DESIGNS["designer"],
@@ -166,17 +169,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     if (pl.isCustomCover && pl.coverUrl && !isVideoThumbnailUrl(pl.coverUrl)) return true;
     return Boolean(pl.isCustomCover || pl.customCoverUrl || pl.customArtwork);
   }, [item, effectiveIsAlbum]);
-
-  // Always reset scroll position to the very top when opening or switching playlists/albums
-  useLayoutEffect(() => {
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    }
-    const mainEl = document.querySelector("main");
-    if (mainEl) mainEl.scrollTop = 0;
-    const rootEl = document.documentElement || document.body;
-    if (rootEl) rootEl.scrollTop = 0;
-  }, [item?.id]);
 
   // Immediate local-first cache loading on mount or item change
   useEffect(() => {
@@ -377,17 +369,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     onPlayQueue(shuffled, 0);
   };
 
-  // Scroll top reset on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    }
-  }, [item?.id]);
+  // Contextual scroll recovery: Active track target (A) > Saved scroll position (B) > Top scroll (C) > Unmount capture (D)
+  const { captureScrollPosition } = useContextualScrollRecovery({
+    collectionId: item?.id,
+    tracks,
+    activeTrack,
+    currentTrackId,
+    isLoading: isLoadingTracks,
+  });
 
   const handleExitView = () => {
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    }
+    captureScrollPosition();
     onBack();
   };
 

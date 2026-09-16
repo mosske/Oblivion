@@ -263,7 +263,7 @@ export class ThemeRegistry {
       previewGradient: "from-[var(--bespoke-c1,#0a0d1a)] via-[var(--bespoke-c2,#ff007f)] via-[var(--bespoke-c3,#8b5cf6)] to-[var(--bespoke-c4,#00f0ff)]",
       accentClass: "text-[var(--bespoke-c2,#ff007f)]",
       accentText: "text-[var(--bespoke-c2,#ff007f)]",
-      accentBg: "bg-gradient-to-r from-[var(--bespoke-c2,#ff007f)] to-[var(--bespoke-c3,#8b5cf6)]",
+      accentBg: "bg-gradient-to-r from-[var(--bespoke-c1,#0a0d1a)] to-[var(--bespoke-c2,#ff007f)]",
       borderAccent: "border-[var(--bespoke-c2,#ff007f)]/50",
       bgCanvas: "bg-[var(--bespoke-c1,#0a0d1a)]",
       cardBg: "bg-white/[0.04] backdrop-blur-3xl border border-white/[0.18] shadow-2xl",

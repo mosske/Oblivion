@@ -19,6 +19,7 @@ import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { MarqueeText } from "./MarqueeText";
 import { fetchGenreTracks, GenreItem } from "../services/genreService";
+import { useContextualScrollRecovery } from "../utils/scrollRecovery";
 
 interface GenreDetailViewProps {
   genre: GenreItem;
@@ -27,6 +28,7 @@ interface GenreDetailViewProps {
   onPlayQueue: (tracks: Track[], startIndex?: number) => void;
   onAddToQueue?: (track: Track) => void;
   currentTrackId?: string;
+  activeTrack?: Track | null;
   isPlaying?: boolean;
   designConfig?: FullAppDesignConfig;
 }
@@ -38,6 +40,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
   onPlayQueue,
   onAddToQueue,
   currentTrackId,
+  activeTrack,
   isPlaying = false,
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
@@ -66,12 +69,23 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    }
     setLoading(true);
     loadTracks();
   }, [genre.id, genre.query]);
+
+  const genreCollectionId = genre.id || genre.query || genre.title;
+  const { captureScrollPosition } = useContextualScrollRecovery({
+    collectionId: genreCollectionId,
+    tracks,
+    activeTrack,
+    currentTrackId,
+    isLoading: loading,
+  });
+
+  const handleClose = () => {
+    captureScrollPosition();
+    onClose();
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -153,7 +167,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
     const velocityY = deltaY / duration;
 
     if ((deltaY > 75 || (deltaY > 35 && velocityY > 0.35)) && deltaY > Math.abs(deltaX)) {
-      onClose();
+      handleClose();
     }
     setTouchStartY(null);
     setTouchStartX(null);
@@ -203,7 +217,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
               {/* Close Button (✕) */}
               <button
                 id="genre-modal-close-btn"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Close genre view"
                 className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0 border ${designConfig.borderSubtle}`}
                 style={{
@@ -430,6 +444,9 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                 return (
                   <div
                     key={trId || idx}
+                    id={`track-row-${track.id}`}
+                    data-track-id={track.id}
+                    data-youtube-id={track.youtubeVideoId}
                     onClick={() => onPlayQueue(filteredTracks, idx)}
                     className={`group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl cursor-pointer transition-all ${
                       isCurrent

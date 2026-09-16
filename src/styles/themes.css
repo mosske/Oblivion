@@ -2287,22 +2287,64 @@ canvas.animated-theme-bg,
   --bespoke-c2: #ff007f;
   --bespoke-c3: #8b5cf6;
   --bespoke-c4: #00f0ff;
+
+  --text-on-accent: #ffffff;
+  --text-off-accent: #ffffff;
+  --text-primary: #ffffff;
 }
 
 [data-theme="bespoke"] {
-  --accent-primary: var(--bespoke-c2);
-  --accent-secondary: var(--bespoke-c3);
-  --accent-tertiary: var(--bespoke-c4);
+  /* Strictly limit button gradients to a clean 2-color transition using Color 1 & Color 2 */
+  --accent-gradient: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  --accent-primary: var(--bespoke-c1);
+  --accent-secondary: var(--bespoke-c2);
+
+  /* 1. BUTTONS & INTERACTIVE ACCENTS (Color 1 & Color 2) */
   --accent-color: var(--bespoke-c2);
   --primary: var(--bespoke-c2);
-  --accent-contrast-text: #ffffff;
-  --glow-color-1: var(--bespoke-c2);
-  --glow-color-2: var(--bespoke-c3);
-  --glow-color-3: var(--bespoke-c4);
+  --accent-contrast-text: var(--text-on-accent);
+
+  /* 2. OFF / INACTIVE STATES & SURFACES (Color 3) */
+  --btn-off-bg: rgba(255, 255, 255, 0.06);
+  --btn-off-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.1), var(--bespoke-c3));
+  --surface-card: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.4));
+  --border-subtle: linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3));
+
+  /* 3. APP BACKGROUND & CANVAS SHADER (All 4 Colors) */
+  --bg-primary: radial-gradient(circle at 10% 10%, var(--bespoke-c1) 0%, var(--bespoke-c3) 40%, #050508 80%);
+  --bespoke-full-gradient: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2), var(--bespoke-c3), var(--bespoke-c4));
+
+  /* 4. PLAYER CONTROL & PROGRESS SURFACES (Color 1, 2 & 4) */
+  --player-bg: linear-gradient(180deg, rgba(15, 15, 20, 0.85) 0%, var(--bespoke-c4) 100%);
+  --player-progress-fill: linear-gradient(90deg, var(--bespoke-c1), var(--bespoke-c2));
+  --glow-accent: 0 0 20px var(--bespoke-c1), inset 0 0 10px var(--bespoke-c2);
+}
+
+/* Button & Surface Text Styling Rules */
+[data-theme="bespoke"] .btn-signin,
+[data-theme="bespoke"] .button-primary,
+[data-theme="bespoke"] .header-action-btn,
+[data-theme="bespoke"] .chip-active,
+[data-theme="bespoke"] .pill-selected {
+  background: var(--accent-gradient) !important;
+  color: var(--text-on-accent) !important;
+}
+
+[data-theme="bespoke"] .chip-inactive,
+[data-theme="bespoke"] .button-secondary {
+  background: var(--btn-off-bg) !important;
+  color: var(--text-off-accent) !important;
+}
+
+[data-theme="bespoke"] body,
+[data-theme="bespoke"] .app-title,
+[data-theme="bespoke"] .track-title,
+[data-theme="bespoke"] .section-heading {
+  color: var(--text-primary);
 }
 
 [data-theme="bespoke"] body {
-  background-color: var(--bespoke-c1) !important;
+  background: var(--bg-primary) !important;
 }
 
 [data-theme="bespoke"] .waveform-inactive-bar,
@@ -2312,13 +2354,13 @@ canvas.animated-theme-bg,
 
 [data-theme="bespoke"] .active-progress-gradient,
 [data-theme="bespoke"] .progress-gradient-animated {
-  background: linear-gradient(90deg, var(--bespoke-c2), var(--bespoke-c3), var(--bespoke-c4)) !important;
+  background: var(--player-progress-fill) !important;
   background-size: 200% 100% !important;
   animation: progress-gradient-shift 3s linear infinite !important;
 }
 
 [data-theme="bespoke"] .artwork-glow-dynamic {
-  box-shadow: 0 0 35px var(--bespoke-c2), 0 0 70px var(--bespoke-c3) !important;
+  box-shadow: 0 0 35px var(--bespoke-c1), 0 0 70px var(--bespoke-c2) !important;
 }
 
 

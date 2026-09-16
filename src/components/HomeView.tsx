@@ -20,6 +20,7 @@ import {
   LogIn,
   Library,
   Tv,
+  Mic,
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -29,6 +30,7 @@ import {
   PlaybackHistoryItem,
   CuratedGenreItem,
   MusicVideoItem,
+  HomePodcastItem,
 } from "../services/homeService";
 import { GenreDetailView } from "./GenreDetailView";
 import { GenreItem } from "../services/genreService";
@@ -45,8 +47,36 @@ interface HomeViewProps {
   onOpenAuthModal?: () => void;
   onPlayVideo?: (track: Track) => void;
   currentTrack?: Track | null;
+  isPlaying?: boolean;
   designConfig?: FullAppDesignConfig;
 }
+
+export type HomeSectionCategory =
+  | "All"
+  | "Jump Back In"
+  | "Listen Again"
+  | "Music Videos"
+  | "Podcasts"
+  | "New Releases"
+  | "Quick Picks"
+  | "Community"
+  | "Live Performances"
+  | "Albums"
+  | "Genres";
+
+const homeCategories: HomeSectionCategory[] = [
+  "All",
+  "Jump Back In",
+  "Listen Again",
+  "Music Videos",
+  "Podcasts",
+  "New Releases",
+  "Quick Picks",
+  "Community",
+  "Live Performances",
+  "Albums",
+  "Genres",
+];
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onPlayTrack,
@@ -60,13 +90,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenAuthModal,
   onPlayVideo,
   currentTrack,
+  isPlaying = false,
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const isUserAuthenticated = Boolean(
     user && (user.isLoggedIn || user.accessToken || user.email)
   );
 
-  const [activeMood, setActiveMood] = useState<string>("All");
+  const [activeCategory, setActiveCategory] = useState<HomeSectionCategory>("All");
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [timeGreeting, setTimeGreeting] = useState<string>("Welcome");
@@ -124,6 +155,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     jumpBackIn: [],
     listenAgain: [],
     musicVideos: [],
+    podcasts: [],
     newReleasesForYou: [],
     quickPicks: [],
     communityPlaylists: [],
@@ -160,7 +192,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     setTimeGreeting(greeting);
   }, []);
 
-  const loadFeed = async (mood = activeMood) => {
+  const loadFeed = async () => {
     if (!isUserAuthenticated) {
       setLoading(false);
       setIsRefreshing(false);
@@ -168,7 +200,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     }
 
     try {
-      const data = await fetchPersonalizedHomeFeed(user, playlists, mood);
+      const data = await fetchPersonalizedHomeFeed(user, playlists, "All");
       setHomeData(data);
     } catch (err) {
       console.warn("Personalized Home feed load error:", err);
@@ -181,15 +213,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
   useEffect(() => {
     if (isUserAuthenticated) {
       setLoading(true);
-      loadFeed(activeMood);
+      loadFeed();
     } else {
       setLoading(false);
     }
-  }, [isUserAuthenticated, user?.accessToken, playlists.length, activeMood]);
+  }, [isUserAuthenticated, user?.accessToken, playlists.length]);
 
   const handleManualRefresh = () => {
     setIsRefreshing(true);
-    loadFeed(activeMood);
+    loadFeed();
   };
 
   const formatDuration = (sec?: number) => {
@@ -304,7 +336,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
         onClose={handleCloseGenre}
         onPlayTrack={onPlayTrack}
         onPlayQueue={onPlayQueue}
+        activeTrack={currentTrack}
         currentTrackId={currentTrack?.id || currentTrack?.youtubeVideoId}
+        isPlaying={isPlaying}
         designConfig={designConfig}
       />
     );
@@ -346,21 +380,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </button>
       </div>
 
-      {/* Mood Filters */}
+      {/* Category Pills matching Explore behavior */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar -mx-1 px-1">
-        {homeData.moodFilters.map((filter) => {
-          const isActive = activeMood === filter;
+        {homeCategories.map((category) => {
+          const isActive = activeCategory === category;
           return (
             <button
-              key={filter}
-              onClick={() => setActiveMood(filter)}
+              key={category}
+              id={`home-category-${category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+              onClick={() => setActiveCategory(category)}
               className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 ${
                 isActive
                   ? `${designConfig.accentBg} ${designConfig.accentContrastText} shadow-md ring-2 ${designConfig.accentBorder}`
                   : `${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle}`
               }`}
             >
-              {filter}
+              {category}
             </button>
           );
         })}
@@ -378,7 +413,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             Personalizing your Home lineup...
           </p>
           <p className={`text-xs ${designConfig.textMuted}`}>
-            Curating playlists, new releases, and live stages based on your library
+            Curating playlists, new releases, podcasts, and live stages based on your library
           </p>
         </div>
       ) : (
@@ -386,7 +421,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* ========================================================================= */}
           {/* 1. JUMP BACK IN (Quick access shortcuts to user's playlists/albums) */}
           {/* ========================================================================= */}
-          {homeData.jumpBackIn.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Jump Back In") && homeData.jumpBackIn.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -467,7 +502,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* ========================================================================= */}
           {/* 2. LISTEN AGAIN (Songs & Music Videos from playback history) */}
           {/* ========================================================================= */}
-          {homeData.listenAgain.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Listen Again") && homeData.listenAgain.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -583,7 +618,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* ========================================================================= */}
           {/* 3. MUSIC VIDEOS (Official Music Videos based on user's playlists & artists) */}
           {/* ========================================================================= */}
-          {homeData.musicVideos && homeData.musicVideos.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Music Videos") &&
+            homeData.musicVideos &&
+            homeData.musicVideos.length > 0 && (
             <section id="home-music-videos-section" className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
@@ -780,9 +817,225 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 4. NEW RELEASES FOR YOU (Based on Library Artists) */}
+          {/* 4. PODCASTS FOR YOU (Latest episodes from subscribed podcasters & history) */}
           {/* ========================================================================= */}
-          {homeData.newReleasesForYou.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Podcasts") &&
+            homeData.podcasts &&
+            homeData.podcasts.length > 0 && (
+              <section id="home-podcasts-section" className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-white shadow-md">
+                      <Mic className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                          Podcasts
+                        </h2>
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                          EPISODES
+                        </span>
+                      </div>
+                      <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>
+                        Latest podcast episodes from creators you're subscribed to and regularly watch
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    {homeData.podcasts.length > 1 && (
+                      <button
+                        title="Shuffle podcasts"
+                        onClick={() => {
+                          const shuffled = [...homeData.podcasts].sort(() => Math.random() - 0.5);
+                          const first = shuffled[0];
+                          if (first) {
+                            const trackObj: Track = {
+                              id: first.id,
+                              youtubeVideoId: first.youtubeVideoId,
+                              title: first.title,
+                              artist: first.channelTitle,
+                              album: "Podcast Episode",
+                              duration: first.duration || 0,
+                              coverUrl: first.coverUrl,
+                              audioUrl: "",
+                              isVideo: true,
+                              mediaType: "video",
+                            };
+                            if (onPlayVideo) onPlayVideo(trackObj);
+                            else onPlayTrack(trackObj);
+                          }
+                        }}
+                        className={`p-2 sm:px-3 sm:py-1.5 rounded-xl ${designConfig.btnSecondary} text-xs font-bold flex items-center gap-1.5 shadow-sm hover:scale-105 active:scale-95 transition-all border ${designConfig.borderSubtle}`}
+                      >
+                        <Shuffle className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Shuffle</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        const first = homeData.podcasts[0];
+                        if (first) {
+                          const trackObj: Track = {
+                            id: first.id,
+                            youtubeVideoId: first.youtubeVideoId,
+                            title: first.title,
+                            artist: first.channelTitle,
+                            album: "Podcast Episode",
+                            duration: first.duration || 0,
+                            coverUrl: first.coverUrl,
+                            audioUrl: "",
+                            isVideo: true,
+                            mediaType: "video",
+                          };
+                          if (onPlayVideo) onPlayVideo(trackObj);
+                          else onPlayTrack(trackObj);
+                        }
+                      }}
+                      className={`px-3.5 py-1.5 rounded-xl ${designConfig.btnPrimary} text-white text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95 hover:scale-105 transition-all`}
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Play latest</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Podcast Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {homeData.podcasts.map((pod, idx) => {
+                    const vId = pod.youtubeVideoId || pod.id;
+                    const isCurrent = currentTrack?.id === vId || currentTrack?.youtubeVideoId === vId;
+                    const trackObj: Track = {
+                      id: vId,
+                      youtubeVideoId: vId,
+                      title: pod.title,
+                      artist: pod.channelTitle,
+                      album: pod.description || "Podcast Episode",
+                      duration: pod.duration || 0,
+                      coverUrl: pod.coverUrl,
+                      audioUrl: "",
+                      isVideo: true,
+                      mediaType: "video",
+                    };
+
+                    return (
+                      <div
+                        key={vId || idx}
+                        id={`home-podcast-card-${vId}`}
+                        onClick={() => (onPlayVideo ? onPlayVideo(trackObj) : onPlayTrack(trackObj))}
+                        className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${
+                          designConfig.cardBg
+                        } ${designConfig.cardHover} border ${
+                          isCurrent ? designConfig.accentBorder : "border-transparent"
+                        } hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl`}
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative aspect-video rounded-xl overflow-hidden mb-2.5 bg-black/20 shadow-inner">
+                          <img
+                            src={pod.coverUrl || `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`}
+                            alt={pod.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
+                            onError={(e) => {
+                              if (vId) {
+                                e.currentTarget.src = `https://i.ytimg.com/vi/${vId}/mqdefault.jpg`;
+                              } else {
+                                e.currentTarget.src =
+                                  "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=400&q=80";
+                              }
+                            }}
+                          />
+
+                          {/* Source / Subscription badge */}
+                          <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                            {pod.isSubscribed ? (
+                              <div className="px-2 py-0.5 rounded-full bg-emerald-600/90 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm backdrop-blur-xs">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>SUBSCRIBED</span>
+                              </div>
+                            ) : (
+                              <div className="px-2 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm backdrop-blur-xs">
+                                <Mic className="w-2.5 h-2.5" />
+                                <span>REGULAR PODCAST</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Reason tag */}
+                          {pod.sourceReason && (
+                            <div className="absolute top-2 right-2 max-w-[55%]">
+                              <span className="truncate block px-2 py-0.5 rounded-md bg-black/75 text-white/90 text-[10px] font-medium backdrop-blur-xs shadow-xs">
+                                {pod.sourceReason}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Duration badge */}
+                          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-white text-[10px] font-mono font-medium shadow-xs">
+                            {pod.durationText || (pod.duration ? formatDuration(pod.duration) : "PODCAST")}
+                          </div>
+
+                          {/* Center Play Overlay */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                            <div
+                              id={`home-podcast-play-btn-${vId}`}
+                              className="p-3.5 rounded-full bg-white text-black shadow-xl transform group-hover:scale-110 transition-transform"
+                            >
+                              <Play className="w-4 h-4 fill-current ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Title & Channel */}
+                        <div className="flex-1 min-w-0 w-full">
+                          <MarqueeText
+                            text={cleanTrackTitle(pod.title, pod.channelTitle)}
+                            className={`font-bold text-sm ${
+                              isCurrent ? designConfig.accentText : designConfig.textPrimary
+                            } group-hover:${designConfig.accentText} transition-colors`}
+                            containerClassName="w-full"
+                            speed={28}
+                          />
+                          <div className="flex items-center justify-between gap-2 mt-1">
+                            <MarqueeText
+                              text={pod.channelTitle || "Podcaster"}
+                              className={`text-xs ${designConfig.textMuted} font-semibold`}
+                              containerClassName="w-full"
+                              speed={24}
+                            />
+                          </div>
+
+                          {/* Description preview */}
+                          {pod.description && (
+                            <p className={`text-[11px] ${designConfig.textMuted} mt-1 line-clamp-2 leading-relaxed opacity-85`}>
+                              {pod.description}
+                            </p>
+                          )}
+
+                          <div className="mt-2 pt-1.5 border-t border-white/5 flex items-center justify-between text-[10px]">
+                            <span className={`${designConfig.textMuted} truncate`}>
+                              {pod.isSubscribed ? "From your subscriptions" : "Based on your watch history"}
+                            </span>
+                            <span className={`font-semibold ${designConfig.accentText} group-hover:underline`}>
+                              Watch Episode →
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+          {/* ========================================================================= */}
+          {/* 5. NEW RELEASES FOR YOU (Based on Library Artists) */}
+          {/* ========================================================================= */}
+          {(activeCategory === "All" || activeCategory === "New Releases") &&
+            homeData.newReleasesForYou.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
                 <Flame className="w-5 h-5 text-rose-500" />
@@ -841,9 +1094,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 5. QUICK PICKS (Direct access links & shuffle shortcuts for favorite playlists) */}
+          {/* 6. QUICK PICKS (Direct access links & shuffle shortcuts for favorite playlists) */}
           {/* ========================================================================= */}
-          {homeData.quickPicks.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Quick Picks") &&
+            homeData.quickPicks.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
                 <Zap className={`w-5 h-5 ${designConfig.accentText} text-[var(--accent-color,var(--primary))]`} />
@@ -917,9 +1171,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 6. FROM THE COMMUNITY (Public playlists with similar music to user's playlists) */}
+          {/* 7. FROM THE COMMUNITY (Public playlists with similar music to user's playlists) */}
           {/* ========================================================================= */}
-          {homeData.communityPlaylists.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Community") &&
+            homeData.communityPlaylists.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
                 <Music2 className={`w-5 h-5 ${designConfig.accentText}`} />
@@ -973,9 +1228,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 7. LIVE PERFORMANCES (Direct video launch in Oblivion built-in video player) */}
+          {/* 8. LIVE PERFORMANCES (Direct video launch in Oblivion built-in video player) */}
           {/* ========================================================================= */}
-          {homeData.livePerformances.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Live Performances") &&
+            homeData.livePerformances.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -1060,9 +1316,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 8. ALBUMS FOR YOU (Albums matched to artists in user's playlists) */}
+          {/* 9. ALBUMS FOR YOU (Albums matched to artists in user's playlists) */}
           {/* ========================================================================= */}
-          {homeData.albumsForYou.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Albums") &&
+            homeData.albumsForYou.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
                 <Layers className="w-5 h-5 text-emerald-500" />
@@ -1121,9 +1378,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 9. MUSIC GENRES (Curated list tailored to user's playlist genres) */}
+          {/* 10. MUSIC GENRES (Curated list tailored to user's playlist genres) */}
           {/* ========================================================================= */}
-          {homeData.musicGenres.length > 0 && (
+          {(activeCategory === "All" || activeCategory === "Genres") &&
+            homeData.musicGenres.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
                 <Disc3 className="w-5 h-5 text-indigo-500" />
