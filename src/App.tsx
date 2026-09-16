@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { User, Playlist, Track, PlayerState, UserSettings, NavTab } from "./types";
 import { FULL_APP_DESIGNS, syncDocumentThemeColor } from "./utils/appDesignThemes";
 import { Sidebar } from "./components/Sidebar";
@@ -537,7 +537,25 @@ export default function App() {
     };
   });
 
-  const activeFullDesign = FULL_APP_DESIGNS[settings.fullAppDesign || "designer"] || FULL_APP_DESIGNS["designer"];
+  const [bespokeRevision, setBespokeRevision] = useState(0);
+
+  // Synchronize dynamic bespoke custom palette updates across the entire app
+  useEffect(() => {
+    const handleBespokeUpdate = () => {
+      setBespokeRevision((prev) => prev + 1);
+    };
+    window.addEventListener("oblivion_bespoke_colors_updated", handleBespokeUpdate);
+    window.addEventListener("oblivion_bespoke_config_updated", handleBespokeUpdate);
+    return () => {
+      window.removeEventListener("oblivion_bespoke_colors_updated", handleBespokeUpdate);
+      window.removeEventListener("oblivion_bespoke_config_updated", handleBespokeUpdate);
+    };
+  }, []);
+
+  const activeFullDesign = useMemo(() => {
+    const themeKey = settings.fullAppDesign || "designer";
+    return FULL_APP_DESIGNS[themeKey] || FULL_APP_DESIGNS["designer"];
+  }, [settings.fullAppDesign, bespokeRevision]);
 
   // Set data-theme attribute on <html> element, sync <meta name="theme-color"> and propagate dynamic --accent-color / --primary variables whenever active full design changes
   useEffect(() => {

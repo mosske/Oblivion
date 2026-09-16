@@ -2363,6 +2363,33 @@ canvas.animated-theme-bg,
   box-shadow: 0 0 35px var(--bespoke-c1), 0 0 70px var(--bespoke-c2) !important;
 }
 
+/* Full Player Overlay styling under Bespoke theme */
+[data-theme="bespoke"] .full-player-overlay,
+.theme-bespoke .full-player-overlay {
+  background: radial-gradient(circle at 10% 10%, var(--bespoke-c1) 0%, var(--bespoke-c3) 40%, #050508 80%) !important;
+}
+
+[data-theme="bespoke"] .full-player-overlay .full-player-play-btn,
+.theme-bespoke .full-player-overlay .full-player-play-btn {
+  background: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+  box-shadow: 0 0 28px var(--bespoke-c2), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.6) !important;
+  border-top-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="bespoke"] .full-player-overlay .full-player-play-btn svg,
+.theme-bespoke .full-player-overlay .full-player-play-btn svg {
+  fill: var(--text-on-accent, #ffffff) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+}
+
+[data-theme="bespoke"] .full-player-overlay .tab-active-bespoke,
+.theme-bespoke .full-player-overlay .tab-active-bespoke {
+  background: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+  box-shadow: 0 0 16px var(--bespoke-c2) !important;
+}
+
 
 
 

@@ -30,6 +30,8 @@ import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes"
 import { equalizerManager } from "../utils/equalizerEngine";
 import { useEqualizer } from "../context/EqualizerContext";
 import { audioPlayer } from "../services/audioPlayer";
+import { calculateWcagText, hexToRgba } from "../theme/colorUtils";
+import { getBespokeColors, getBespokeConfig } from "../theme/themeService";
 
 interface PlayerProps {
   playerState: PlayerState;
@@ -109,7 +111,53 @@ function getSilentAudioUrl(): string {
   return cachedSilentUrl;
 }
 
-function getFullPlayerThemeStyles(design: FullAppDesignConfig) {
+function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: string[]) {
+  if (design.id === "bespoke" || design.isBespoke) {
+    const colors = bespokeColors && bespokeColors.length >= 4
+      ? bespokeColors
+      : (design.swatchColors && design.swatchColors.length >= 4 ? design.swatchColors : getBespokeColors());
+    const [c1, c2, c3, c4] = colors;
+    const textOnC2 = calculateWcagText(c2);
+
+    return {
+      bgCanvas: "bg-transparent",
+      orb1: "blur-[120px]",
+      orb2: "blur-[130px]",
+      auroraBeam1: "blur-[100px]",
+      auroraBeam2: "blur-[110px]",
+      orbitalGlow1: "blur-[105px]",
+      orbitalGlow2: "blur-[115px]",
+      driftAuraGlow: "blur-[90px]",
+      veil: "bg-gradient-to-b from-black/45 via-black/15 to-black/85",
+      topBar: "bg-white/[0.04] backdrop-blur-3xl border border-white/[0.18] border-t-white/35 border-b-black/40 text-white shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.45),inset_0_-1.5px_2px_rgba(0,0,0,0.35),0_12px_36px_rgba(0,0,0,0.6)] rounded-2xl",
+      minimizeBtn: "bg-white/[0.05] hover:bg-white/[0.14] text-white border border-white/[0.18] border-t-white/35 border-b-black/40 backdrop-blur-2xl shadow-md active:translate-y-0.5 rounded-xl transition-all",
+      nowPlayingDot: `bg-[var(--bespoke-c2,${c2})] shadow-[0_0_12px_var(--bespoke-c2,${c2})]`,
+      nowPlayingLabel: `text-[var(--bespoke-c2,${c2})] font-bold tracking-wider`,
+      nowPlayingTitle: "text-white drop-shadow-sm font-sans",
+      tabActive: `bg-gradient-to-r from-[var(--bespoke-c1,${c1})] to-[var(--bespoke-c2,${c2})] text-white shadow-[0_0_20px_var(--bespoke-c2,${c2})]/60 border-t border-white/50 border-b border-black/35 font-black rounded-xl`,
+      tabInactive: "bg-white/[0.04] hover:bg-white/[0.10] text-white/80 border border-white/[0.16] border-t-white/30 border-b-black/30 backdrop-blur-2xl rounded-xl",
+      artGlowRing: `from-[var(--bespoke-c1,${c1})]/60 to-[var(--bespoke-c2,${c2})]/60`,
+      artBorder: "border border-white/[0.22] border-t-white/45 border-b-black/50 shadow-[0_24px_60px_rgba(0,0,0,0.8)] rounded-3xl",
+      stageTitle: "text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-black",
+      stageArtist: `text-[var(--bespoke-c2,${c2})] font-bold drop-shadow-sm`,
+      stageTagAccent: "border border-white/30 text-white font-bold shadow-sm",
+      stageTagNeutral: "bg-white/[0.04] border border-white/[0.16] border-t-white/30 border-b-black/30 text-white/90 backdrop-blur-2xl",
+      bottomDeck: "bg-white/[0.04] backdrop-blur-3xl border border-white/[0.18] border-t-white/35 border-b-black/40 text-white shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.5),inset_0_-1.5px_2px_rgba(0,0,0,0.35),0_16px_48px_rgba(0,0,0,0.7)] rounded-3xl",
+      seekbarTrack: "bg-white/[0.08] border border-white/[0.12] border-t-black/40 border-b-white/20 shadow-inner backdrop-blur-md",
+      seekbarFill: `bg-gradient-to-r from-[var(--bespoke-c1,${c1})] to-[var(--bespoke-c2,${c2})] shadow-[0_0_18px_var(--bespoke-c2,${c2})]/70`,
+      seekbarThumb: `bg-white border-2 border-[var(--bespoke-c2,${c2})] shadow-[0_0_18px_var(--bespoke-c2,${c2})]`,
+      seekbarGlow: `shadow-[var(--bespoke-c2,${c2})]/50`,
+      seekbarAccent: `accent-[var(--bespoke-c2,${c2})]`,
+      timeText: "text-white/80 font-mono",
+      playBtn: `full-player-play-btn bg-gradient-to-r from-[var(--bespoke-c1,${c1})] to-[var(--bespoke-c2,${c2})] hover:brightness-115 text-white shadow-[0_0_32px_var(--bespoke-c2,${c2})]/60 border-t border-white/60 border-b border-black/35 active:translate-y-0.5 rounded-2xl transition-all`,
+      playIconFill: "fill-white",
+      ctrlBtn: "bg-white/[0.05] hover:bg-white/[0.14] hover:text-white text-white/90 border border-white/[0.18] border-t-white/35 border-b-black/40 backdrop-blur-2xl shadow-md active:translate-y-0.5 rounded-2xl transition-all",
+      activeText: `text-[var(--bespoke-c2,${c2})] drop-shadow-[0_0_10px_var(--bespoke-c2,${c2})]/60`,
+      mutedText: "text-white/70 hover:text-white",
+      volSlider: `bg-white/[0.08] accent-[var(--bespoke-c2,${c2})]`,
+    };
+  }
+
   switch (design.id) {
     case "designer":
       return {
@@ -507,6 +555,7 @@ interface WaveformScrubberProps {
   isPlaying: boolean;
   onSeek: (newTime: number) => void;
   designConfig: FullAppDesignConfig;
+  bespokeColors?: [string, string, string, string] | string[];
   className?: string;
   isMini?: boolean;
 }
@@ -517,6 +566,7 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   isPlaying,
   onSeek,
   designConfig,
+  bespokeColors,
   className = "",
   isMini = false,
 }) => {
@@ -571,6 +621,8 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     } catch {}
   };
 
+  const hasBespokeColors = Boolean(bespokeColors && bespokeColors.length >= 2);
+
   return (
     <div
       ref={containerRef}
@@ -606,6 +658,12 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
                     ? heightPct * (0.7 + Math.sin(idx + currentTime * 3) * 0.3)
                     : heightPct
                 )}%`,
+                ...(hasBespokeColors && isPassed
+                  ? {
+                      background: `linear-gradient(90deg, ${bespokeColors![0]}, ${bespokeColors![1]})`,
+                      boxShadow: `0 0 8px ${bespokeColors![1]}`,
+                    }
+                  : {}),
               }}
             />
           </div>
@@ -621,9 +679,13 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
         }`}
         style={{
           left: `${progressPercent}%`,
-          background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
+          background: hasBespokeColors
+            ? `linear-gradient(135deg, ${bespokeColors![0]}, ${bespokeColors![1]})`
+            : "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
           border: "2px solid #ffffff",
-          boxShadow: "0 0 10px var(--accent-primary), 0 2px 6px rgba(0,0,0,0.5)",
+          boxShadow: hasBespokeColors
+            ? `0 0 12px ${bespokeColors![1]}, 0 2px 6px rgba(0,0,0,0.5)`
+            : "0 0 10px var(--accent-primary), 0 2px 6px rgba(0,0,0,0.5)",
         }}
       />
     </div>
@@ -898,7 +960,51 @@ export const Player: React.FC<PlayerProps> = ({
     showSimilar,
   } = playerState;
 
-  const fpTheme = getFullPlayerThemeStyles(designConfig);
+  const isBespoke = Boolean(designConfig.id === "bespoke" || designConfig.isBespoke);
+
+  const [bespokeColors, setBespokeColors] = useState<[string, string, string, string]>(() => {
+    if (designConfig.swatchColors && designConfig.swatchColors.length >= 4) {
+      return [
+        designConfig.swatchColors[0],
+        designConfig.swatchColors[1],
+        designConfig.swatchColors[2],
+        designConfig.swatchColors[3],
+      ];
+    }
+    const cfg = getBespokeConfig();
+    return cfg.colors;
+  });
+
+  useEffect(() => {
+    const handleColorsUpdate = (e: any) => {
+      if (e.detail && Array.isArray(e.detail) && e.detail.length >= 4) {
+        setBespokeColors([e.detail[0], e.detail[1], e.detail[2], e.detail[3]]);
+      } else if (e.detail && e.detail.colors && Array.isArray(e.detail.colors)) {
+        setBespokeColors([e.detail.colors[0], e.detail.colors[1], e.detail.colors[2], e.detail.colors[3]]);
+      }
+    };
+
+    window.addEventListener("oblivion_bespoke_colors_updated", handleColorsUpdate);
+    window.addEventListener("oblivion_bespoke_config_updated", handleColorsUpdate);
+
+    return () => {
+      window.removeEventListener("oblivion_bespoke_colors_updated", handleColorsUpdate);
+      window.removeEventListener("oblivion_bespoke_config_updated", handleColorsUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (designConfig.swatchColors && designConfig.swatchColors.length >= 4) {
+      setBespokeColors([
+        designConfig.swatchColors[0],
+        designConfig.swatchColors[1],
+        designConfig.swatchColors[2],
+        designConfig.swatchColors[3],
+      ]);
+    }
+  }, [designConfig.swatchColors]);
+
+  const fpTheme = getFullPlayerThemeStyles(designConfig, isBespoke ? bespokeColors : undefined);
 
   const isPlayingRef = useRef<boolean>(isPlaying);
   useEffect(() => {
@@ -1676,6 +1782,11 @@ export const Player: React.FC<PlayerProps> = ({
             transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
             opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
             transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
+            ...(isBespoke
+              ? {
+                  background: `radial-gradient(circle at 10% 10%, ${bespokeColors[0]} 0%, ${bespokeColors[2]} 40%, #050508 80%)`,
+                }
+              : {}),
           }}
           data-theme={designConfig.id}
           className={`full-player-overlay fixed inset-0 z-[100] w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}
@@ -1716,10 +1827,19 @@ export const Player: React.FC<PlayerProps> = ({
                   />
                 </div>
                 {/* Dynamic App Design Drift Aura Mesh */}
-                <div className={`absolute inset-0 ${fpTheme.driftAuraGlow} blur-[90px] pointer-events-none`} />
+                <div
+                  className={`absolute inset-0 ${fpTheme.driftAuraGlow} blur-[90px] pointer-events-none`}
+                  style={isBespoke ? { background: `radial-gradient(circle at 50% 50%, ${hexToRgba(bespokeColors[1], 0.25)}, transparent 70%)` } : undefined}
+                />
                 {/* Ambient Drifting Theme Orbs */}
-                <div className={`absolute -top-24 left-10 w-[550px] h-[550px] rounded-full ${fpTheme.orb1} blur-[120px] animate-ambient-orb`} />
-                <div className={`absolute -bottom-24 right-10 w-[500px] h-[500px] rounded-full ${fpTheme.orb2} blur-[130px] animate-ambient-orb`} />
+                <div
+                  className={`absolute -top-24 left-10 w-[550px] h-[550px] rounded-full ${fpTheme.orb1} blur-[120px] animate-ambient-orb`}
+                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[1], 0.55) } : undefined}
+                />
+                <div
+                  className={`absolute -bottom-24 right-10 w-[500px] h-[500px] rounded-full ${fpTheme.orb2} blur-[130px] animate-ambient-orb`}
+                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[3], 0.45) } : undefined}
+                />
               </>
             ) : settings.playerBackgroundAnimation === "aurora-pulse" ? (
               <>
@@ -1742,19 +1862,31 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* Sweeping Aurora Light Beams dynamically styled with App Design Color Sets */}
                 <div
                   className={`absolute -top-16 left-1/4 w-[600px] h-[500px] rounded-full ${fpTheme.auroraBeam1} blur-[100px] animate-aurora-surge`}
-                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s` }}
+                  style={{
+                    animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s`,
+                    ...(isBespoke ? { background: `linear-gradient(90deg, ${hexToRgba(bespokeColors[1], 0.5)}, ${hexToRgba(bespokeColors[2], 0.45)}, ${hexToRgba(bespokeColors[3], 0.5)})` } : {}),
+                  }}
                 />
                 <div
                   className={`absolute -bottom-16 right-1/4 w-[550px] h-[480px] rounded-full ${fpTheme.auroraBeam2} blur-[110px] animate-aurora-surge`}
-                  style={{ animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s` }}
+                  style={{
+                    animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s`,
+                    ...(isBespoke ? { background: `linear-gradient(90deg, ${hexToRgba(bespokeColors[3], 0.45)}, ${hexToRgba(bespokeColors[2], 0.5)}, ${hexToRgba(bespokeColors[1], 0.5)})` } : {}),
+                  }}
                 />
                 <div
                   className={`absolute top-1/4 left-1/4 w-[520px] h-[520px] rounded-full ${fpTheme.orb1} blur-[120px] animate-aurora-pulse`}
-                  style={{ animationDuration: `${settings.animationAuroraSpeed || 6}s` }}
+                  style={{
+                    animationDuration: `${settings.animationAuroraSpeed || 6}s`,
+                    ...(isBespoke ? { backgroundColor: hexToRgba(bespokeColors[1], 0.5) } : {}),
+                  }}
                 />
                 <div
                   className={`absolute bottom-1/4 right-1/4 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[130px] animate-aurora-pulse`}
-                  style={{ animationDuration: `${settings.animationAuroraSpeed || 6}s` }}
+                  style={{
+                    animationDuration: `${settings.animationAuroraSpeed || 6}s`,
+                    ...(isBespoke ? { backgroundColor: hexToRgba(bespokeColors[3], 0.45) } : {}),
+                  }}
                 />
               </>
             ) : settings.playerBackgroundAnimation === "orbital-flow" ? (
@@ -1780,8 +1912,14 @@ export const Player: React.FC<PlayerProps> = ({
                   className="absolute inset-0 flex items-center justify-center animate-orbital-counter"
                   style={{ animationDuration: `${(settings.animationOrbitalSpeed || 6) * 1.35}s` }}
                 >
-                  <div className={`absolute -top-24 left-16 w-[520px] h-[520px] rounded-full ${fpTheme.orbitalGlow1} blur-[105px] opacity-85`} />
-                  <div className={`absolute -bottom-24 right-16 w-[500px] h-[500px] rounded-full ${fpTheme.orbitalGlow2} blur-[115px] opacity-85`} />
+                  <div
+                    className={`absolute -top-24 left-16 w-[520px] h-[520px] rounded-full ${fpTheme.orbitalGlow1} blur-[105px] opacity-85`}
+                    style={isBespoke ? { background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[1], 0.6)}, ${hexToRgba(bespokeColors[2], 0.5)}, ${hexToRgba(bespokeColors[3], 0.6)})` } : undefined}
+                  />
+                  <div
+                    className={`absolute -bottom-24 right-16 w-[500px] h-[500px] rounded-full ${fpTheme.orbitalGlow2} blur-[115px] opacity-85`}
+                    style={isBespoke ? { background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[3], 0.5)}, ${hexToRgba(bespokeColors[0], 0.55)}, ${hexToRgba(bespokeColors[1], 0.6)})` } : undefined}
+                  />
                 </div>
               </>
             ) : (
@@ -1797,9 +1935,25 @@ export const Player: React.FC<PlayerProps> = ({
                     }
                   }}
                 />
-                <div className={`absolute -top-20 left-10 w-[400px] h-[400px] rounded-full ${fpTheme.orb1} blur-[140px] opacity-40`} />
-                <div className={`absolute -bottom-20 right-10 w-[380px] h-[380px] rounded-full ${fpTheme.orb2} blur-[140px] opacity-40`} />
+                <div
+                  className={`absolute -top-20 left-10 w-[400px] h-[400px] rounded-full ${fpTheme.orb1} blur-[140px] opacity-40`}
+                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[1], 0.4) } : undefined}
+                />
+                <div
+                  className={`absolute -bottom-20 right-10 w-[380px] h-[380px] rounded-full ${fpTheme.orb2} blur-[140px] opacity-40`}
+                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[3], 0.4) } : undefined}
+                />
               </div>
+            )}
+
+            {/* Bespoke Dynamic Nebula Aurora Layer */}
+            {isBespoke && (
+              <div
+                className="absolute inset-0 opacity-40 mix-blend-screen filter blur-[90px] animate-nebula-aurora pointer-events-none transition-all duration-700"
+                style={{
+                  background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[0], 0.5)} 0%, ${hexToRgba(bespokeColors[1], 0.45)} 35%, ${hexToRgba(bespokeColors[2], 0.4)} 70%, ${hexToRgba(bespokeColors[3], 0.4)} 100%)`,
+                }}
+              />
             )}
 
             {/* Layer 3: High-Legibility Contrast Readability Veil */}
@@ -1807,7 +1961,13 @@ export const Player: React.FC<PlayerProps> = ({
           </div>
 
           {/* Top Bar Navigation with Swipe Handle */}
-          <div className={`relative z-20 shrink-0 flex flex-col px-3.5 pt-2 pb-2.5 sm:px-6 sm:py-3.5 border-b backdrop-blur-2xl ${fpTheme.topBar}`}>
+          <div
+            className={`relative z-20 shrink-0 flex flex-col px-3.5 pt-2 pb-2.5 sm:px-6 sm:py-3.5 border-b backdrop-blur-2xl ${fpTheme.topBar}`}
+            style={isBespoke ? {
+              background: `linear-gradient(180deg, ${hexToRgba(bespokeColors[0], 0.4)} 0%, rgba(10, 10, 16, 0.75) 100%)`,
+              borderBottomColor: hexToRgba(bespokeColors[2], 0.3),
+            } : undefined}
+          >
             {/* Gesture Pull-Down Pill Indicator (Mobile / Touch Friendly) */}
             <div className="flex justify-center pb-1 -mt-0.5 sm:hidden">
               <div className="w-10 h-1 rounded-full bg-white/40 active:bg-white/70" />
@@ -1831,9 +1991,13 @@ export const Player: React.FC<PlayerProps> = ({
                 onClick={() => setPlayerState((prev) => ({ ...prev, mediaMode: "song" }))}
                 className={`px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
                   (playerState.mediaMode || "song") === "song"
-                    ? "bg-white text-black shadow-md"
+                    ? (isBespoke ? "shadow-md" : "bg-white text-black shadow-md")
                     : "text-white/70 hover:text-white"
                 }`}
+                style={isBespoke && (playerState.mediaMode || "song") === "song" ? {
+                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                  color: calculateWcagText(bespokeColors[1]),
+                } : undefined}
                 title="Switch to Audio Mode"
               >
                 <Music2 className="w-3.5 h-3.5" />
@@ -1851,9 +2015,13 @@ export const Player: React.FC<PlayerProps> = ({
                 }
                 className={`px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
                   playerState.mediaMode === "video"
-                    ? "bg-white text-black shadow-md"
+                    ? (isBespoke ? "shadow-md" : "bg-white text-black shadow-md")
                     : "text-white/70 hover:text-white"
                 }`}
+                style={isBespoke && playerState.mediaMode === "video" ? {
+                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                  color: calculateWcagText(bespokeColors[1]),
+                } : undefined}
                 title="Switch to Video Mode"
               >
                 <Video className="w-3.5 h-3.5" />
@@ -1870,6 +2038,12 @@ export const Player: React.FC<PlayerProps> = ({
                 className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                   showLyrics ? fpTheme.tabActive : fpTheme.tabInactive
                 }`}
+                style={isBespoke && showLyrics ? {
+                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                  color: calculateWcagText(bespokeColors[1]),
+                  borderColor: "transparent",
+                  boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                } : undefined}
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Lyrics</span>
@@ -1889,6 +2063,12 @@ export const Player: React.FC<PlayerProps> = ({
                 className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                   showSimilar ? fpTheme.tabActive : fpTheme.tabInactive
                 }`}
+                style={isBespoke && showSimilar ? {
+                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                  color: calculateWcagText(bespokeColors[1]),
+                  borderColor: "transparent",
+                  boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                } : undefined}
               >
                 <Radio className="w-3.5 h-3.5" />
                 <span>Radio</span>
@@ -1937,6 +2117,9 @@ export const Player: React.FC<PlayerProps> = ({
                 <div
                   ref={videoPlaceholderRef}
                   className={`w-[min(88vw,480px)] aspect-video max-h-[26vh] sm:max-h-[34vh] md:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none artwork-glow-dynamic border-2 ${fpTheme.artBorder}`}
+                  style={isBespoke ? {
+                    boxShadow: `0 0 35px ${bespokeColors[0]}, 0 0 70px ${bespokeColors[1]}`,
+                  } : undefined}
                 />
 
                 {/* Song Title, Artist, & Master Video Tags - lowered with clean gap below the video screen and clear of shadows */}
@@ -1953,6 +2136,7 @@ export const Player: React.FC<PlayerProps> = ({
                     text={currentTrack.artist || "Unknown Artist"}
                     className={`text-xs sm:text-sm font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
                     containerClassName="w-full mx-auto text-center"
+                    style={isBespoke ? { color: bespokeColors[1] } : undefined}
                     speed={26}
                   />
                   <div className="flex items-center justify-center gap-1.5 pt-0.5">
@@ -1960,7 +2144,14 @@ export const Player: React.FC<PlayerProps> = ({
                       <Video className="w-3 h-3 text-red-500" />
                       <span>Official Music Video</span>
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagAccent}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagAccent}`}
+                      style={isBespoke ? {
+                        borderColor: hexToRgba(bespokeColors[1], 0.5),
+                        color: bespokeColors[1],
+                        backgroundColor: hexToRgba(bespokeColors[0], 0.2),
+                      } : undefined}
+                    >
                       HD 1080p
                     </span>
                   </div>
@@ -1972,7 +2163,14 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* HD Cover Art with Dynamic Pulsing Color-Shifting Ambient Glow Aura */}
                 <div className="relative group flex items-center justify-center">
                   {/* Dynamic themed colored backlight aura */}
-                  <div className={`absolute -inset-2.5 sm:-inset-4 rounded-[2.5rem] artwork-glow-dynamic opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
+                  <div
+                    className={`absolute -inset-2.5 sm:-inset-4 rounded-[2.5rem] artwork-glow-dynamic opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`}
+                    style={isBespoke ? {
+                      background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[0], 0.6)}, ${hexToRgba(bespokeColors[1], 0.6)})`,
+                      filter: "blur(24px)",
+                      boxShadow: `0 0 45px ${bespokeColors[0]}, 0 0 90px ${bespokeColors[1]}`,
+                    } : undefined}
+                  />
 
                   {/* Contained 3D atmospheric floor drop shadow */}
                   <div className="absolute -inset-0.5 rounded-3xl shadow-[0_12px_28px_rgba(0,0,0,0.7),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
@@ -2008,13 +2206,21 @@ export const Player: React.FC<PlayerProps> = ({
                     text={currentTrack.artist || "Unknown Artist"}
                     className={`text-xs sm:text-sm font-semibold ${fpTheme.stageArtist} text-center`}
                     containerClassName="w-full mx-auto text-center"
+                    style={isBespoke ? { color: bespokeColors[1] } : undefined}
                     speed={26}
                   />
                   <div className="flex items-center justify-center gap-1.5 pt-0.5">
                     <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagNeutral}`}>
                       {currentTrack.album || "Oblivion HD"}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagAccent}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono ${fpTheme.stageTagAccent}`}
+                      style={isBespoke ? {
+                        borderColor: hexToRgba(bespokeColors[1], 0.5),
+                        color: bespokeColors[1],
+                        backgroundColor: hexToRgba(bespokeColors[0], 0.2),
+                      } : undefined}
+                    >
                       Lossless Audio
                     </span>
                   </div>
@@ -2024,7 +2230,13 @@ export const Player: React.FC<PlayerProps> = ({
           </div>
 
           {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
-          <div className={`relative z-20 shrink-0 p-2.5 sm:p-4 pb-4 sm:pb-6 border-t backdrop-blur-2xl space-y-2 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}>
+          <div
+            className={`relative z-20 shrink-0 p-2.5 sm:p-4 pb-4 sm:pb-6 border-t backdrop-blur-2xl space-y-2 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}
+            style={isBespoke ? {
+              background: `linear-gradient(180deg, ${hexToRgba(bespokeColors[0], 0.45)} 0%, rgba(10, 10, 16, 0.9) 100%)`,
+              borderTopColor: hexToRgba(bespokeColors[2], 0.35),
+            } : undefined}
+          >
             {/* Top Row Controls: Like, Add, Prev, Play/Pause, Next, Shuffle, Repeat, Volume */}
             <div className="flex items-center justify-between gap-1.5 sm:gap-2">
               {/* Left Group: Like, Add to Playlist */}
@@ -2036,6 +2248,11 @@ export const Player: React.FC<PlayerProps> = ({
                       ? "bg-rose-500/20 text-rose-500 border-rose-500/30"
                       : fpTheme.ctrlBtn
                   }`}
+                  style={isLiked && isBespoke ? {
+                    backgroundColor: hexToRgba(bespokeColors[1], 0.2),
+                    borderColor: hexToRgba(bespokeColors[1], 0.4),
+                    color: bespokeColors[1],
+                  } : undefined}
                   title="Like track"
                 >
                   <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
@@ -2072,6 +2289,11 @@ export const Player: React.FC<PlayerProps> = ({
                 <button
                   onClick={() => handleUserTogglePlay()}
                   className={`w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-lg ${fpTheme.playBtn}`}
+                  style={isBespoke ? {
+                    background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                    color: calculateWcagText(bespokeColors[1]),
+                    boxShadow: `0 0 26px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                  } : undefined}
                   title={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
@@ -2099,6 +2321,7 @@ export const Player: React.FC<PlayerProps> = ({
                   className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
                     isShuffle ? fpTheme.activeText : fpTheme.mutedText
                   }`}
+                  style={isShuffle && isBespoke ? { color: bespokeColors[1] } : undefined}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
                   <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -2109,6 +2332,7 @@ export const Player: React.FC<PlayerProps> = ({
                   className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
                     repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText
                   }`}
+                  style={repeatMode !== "off" && isBespoke ? { color: bespokeColors[1] } : undefined}
                   title={`Repeat: ${repeatMode}`}
                 >
                   {repeatMode === "one" ? <Repeat1 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />}
@@ -2137,6 +2361,7 @@ export const Player: React.FC<PlayerProps> = ({
                     value={isMuted ? 0 : volume}
                     onChange={(e) => onVolumeChange(Number(e.target.value))}
                     className={`w-16 md:w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
+                    style={isBespoke ? { accentColor: bespokeColors[1] } : undefined}
                   />
                 </div>
               </div>
@@ -2150,6 +2375,7 @@ export const Player: React.FC<PlayerProps> = ({
                 isPlaying={isPlaying}
                 onSeek={handleSeekInternal}
                 designConfig={designConfig}
+                bespokeColors={isBespoke ? bespokeColors : undefined}
                 isMini={false}
               />
 
@@ -2353,6 +2579,7 @@ export const Player: React.FC<PlayerProps> = ({
                 isPlaying={isPlaying}
                 onSeek={handleSeekInternal}
                 designConfig={designConfig}
+                bespokeColors={isBespoke ? bespokeColors : undefined}
                 isMini={true}
               />
 

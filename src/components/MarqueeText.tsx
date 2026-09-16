@@ -9,6 +9,7 @@ interface MarqueeTextProps {
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   as?: "div" | "span" | "h1" | "h2" | "h3" | "h4" | "p";
   pauseOnHover?: boolean;
+  style?: React.CSSProperties;
 }
 
 export const MarqueeText: React.FC<MarqueeTextProps> = ({
@@ -20,6 +21,7 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
   onClick,
   as: Component = "div",
   pauseOnHover = true,
+  style,
 }) => {
   const safeText = text !== undefined && text !== null ? String(text) : "";
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,6 +80,7 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
       ref={containerRef as any}
       title={cleanTitle}
       onClick={onClick}
+      style={style}
       className={`overflow-hidden relative select-none ${containerClassName}`}
     >
       {isOverflowing ? (
