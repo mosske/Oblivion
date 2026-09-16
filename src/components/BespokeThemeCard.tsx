@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Check,
   RotateCcw,
@@ -6,6 +6,10 @@ import {
   Copy,
   ClipboardPaste,
   X,
+  Sliders,
+  Palette,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   FullAppDesignConfig,
@@ -21,6 +25,8 @@ import {
   normalizeHex,
   hexToHsl,
   hslToHex,
+  hexToHwb,
+  hwbToHex,
 } from "../theme/colorUtils";
 
 export interface BespokeThemeCardProps {
@@ -90,10 +96,13 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [inputHex, setInputHex] = useState<string>("");
 
-  // 2D Swatch Hue & Sat/Light
+  // 2D Swatch Hue & Sat/Light & Black/White levels
   const [hue, setHue] = useState<number>(330);
   const [sat, setSat] = useState<number>(100);
   const [light, setLight] = useState<number>(50);
+  const [whiteLevel, setWhiteLevel] = useState<number>(0);
+  const [blackLevel, setBlackLevel] = useState<number>(0);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Keep state in sync with localStorage and external events
   useEffect(() => {
@@ -127,12 +136,15 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
     };
   }, []);
 
-  // Update input text and HSL values when slot or colors change
+  // Update input text, HSL and HWB (Black/White level) values when slot or colors change
   useEffect(() => {
     const currentColor = colors[activeSlot] || "#FF007F";
     setInputHex(currentColor.toUpperCase());
+    const hwb = hexToHwb(currentColor);
+    setHue(hwb.h);
+    setWhiteLevel(hwb.w);
+    setBlackLevel(hwb.b);
     const hsl = hexToHsl(currentColor);
-    setHue(hsl.h);
     setSat(hsl.s);
     setLight(hsl.l);
   }, [activeSlot, colors]);
@@ -142,7 +154,7 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
     setIsExpanded(true);
   };
 
-  const applyColor = (hex: string) => {
+  const applyColor = (hex: string, customHue?: number, customWhite?: number, customBlack?: number) => {
     const valid = normalizeHex(hex);
     if (!valid) return;
 
@@ -151,6 +163,10 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
 
     setColors(updated);
     setInputHex(valid);
+    if (customHue !== undefined) setHue(customHue);
+    if (customWhite !== undefined) setWhiteLevel(customWhite);
+    if (customBlack !== undefined) setBlackLevel(customBlack);
+
     saveBespokeConfig({
       colors: updated,
       mode: contrastMode,
@@ -161,6 +177,68 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
     onColorsChange?.(updated);
   };
 
+  const handleHueChange = (newHue: number) => {
+    setHue(newHue);
+    const newHex = hwbToHex(newHue, whiteLevel, blackLevel);
+    applyColor(newHex, newHue, whiteLevel, blackLevel);
+  };
+
+  const handleWhiteLevelChange = (newWhite: number) => {
+    const clamped = Math.max(0, Math.min(100, newWhite));
+    setWhiteLevel(clamped);
+    const newHex = hwbToHex(hue, clamped, blackLevel);
+    applyColor(newHex, hue, clamped, blackLevel);
+  };
+
+  const handleBlackLevelChange = (newBlack: number) => {
+    const clamped = Math.max(0, Math.min(100, newBlack));
+    setBlackLevel(clamped);
+    const newHex = hwbToHex(hue, whiteLevel, clamped);
+    applyColor(newHex, hue, whiteLevel, clamped);
+  };
+
+  // 2D Interactive Gradient Canvas drag & click pointer handlers
+  const updateFrom2DCanvas = (e: React.PointerEvent<HTMLDivElement> | PointerEvent) => {
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+
+    // Horizontal x: left (0) = 100% white/gray, right (1) = 100% pure saturated hue
+    // Vertical y: top (0) = 0% black (bright), bottom (1) = 100% black (dark void)
+    const val = 1 - y; // 0 to 1
+    const satFrac = x; // 0 to 1
+
+    const newWhite = Math.round(val * (1 - satFrac) * 100);
+    const newBlack = Math.round((1 - val) * 100);
+
+    setWhiteLevel(newWhite);
+    setBlackLevel(newBlack);
+    setSat(Math.round(satFrac * 100));
+    setLight(Math.round(val * (1 - satFrac / 2) * 100));
+
+    const newHex = hwbToHex(hue, newWhite, newBlack);
+    applyColor(newHex, hue, newWhite, newBlack);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {
+      // ignore pointer capture errors in certain browser contexts
+    }
+    updateFrom2DCanvas(e);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.buttons !== 1) return;
+    e.preventDefault();
+    e.stopPropagation();
+    updateFrom2DCanvas(e);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value;
     if (raw && !raw.startsWith("#")) raw = `#${raw}`;
@@ -168,9 +246,9 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
 
     const valid = normalizeHex(raw);
     if (valid) {
-      applyColor(valid);
+      const hwb = hexToHwb(valid);
+      applyColor(valid, hwb.h, hwb.w, hwb.b);
       const hsl = hexToHsl(valid);
-      setHue(hsl.h);
       setSat(hsl.s);
       setLight(hsl.l);
     }
@@ -182,9 +260,9 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
         const text = await navigator.clipboard.readText();
         const valid = normalizeHex(text);
         if (valid) {
-          applyColor(valid);
+          const hwb = hexToHwb(valid);
+          applyColor(valid, hwb.h, hwb.w, hwb.b);
           const hsl = hexToHsl(valid);
-          setHue(hsl.h);
           setSat(hsl.s);
           setLight(hsl.l);
         }
@@ -444,155 +522,375 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
           })}
         </div>
 
-        {/* Dynamic 4-Color Gradient Preview Bar */}
-        <div
-          className="h-3.5 rounded-xl w-full border border-zinc-300/80 shadow-inner mb-3 overflow-hidden relative"
-          onClick={(e) => e.stopPropagation()}
-        >
+        {/* Interactive 4-Color Gradient Swatch Bar with Color Pins */}
+        <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Sliders className="w-3 h-3 text-pink-500" />
+              Interactive Gradient Swatch
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-[10px] font-bold text-pink-600 hover:text-pink-700 flex items-center gap-1 transition-colors bg-pink-50 hover:bg-pink-100 px-2 py-0.5 rounded-full border border-pink-200"
+            >
+              {isExpanded ? (
+                <>
+                  <span>Hide Studio</span>
+                  <ChevronUp className="w-3 h-3" />
+                </>
+              ) : (
+                <>
+                  <span>Open Swatch Studio</span>
+                  <ChevronDown className="w-3 h-3" />
+                </>
+              )}
+            </button>
+          </div>
+
           <div
-            className="w-full h-full"
+            className="h-8 rounded-xl w-full border border-zinc-300 shadow-inner relative overflow-hidden cursor-pointer select-none group"
             style={{
               background: `linear-gradient(90deg, ${colors[0]} 0%, ${colors[1]} 33%, ${colors[2]} 66%, ${colors[3]} 100%)`,
             }}
-          />
+            onClick={() => setIsExpanded(true)}
+            title="Click to open interactive swatch studio"
+          >
+            {/* Color Stop Handles / Pins along the gradient */}
+            <div className="absolute inset-0 flex items-center justify-between px-1.5 pointer-events-none">
+              {[
+                { idx: 0, label: "C1 Base" },
+                { idx: 1, label: "C2 Primary" },
+                { idx: 2, label: "C3 Second" },
+                { idx: 3, label: "C4 Highlight" },
+              ].map(({ idx, label }) => {
+                const isCur = activeSlot === idx && isExpanded;
+                const stopColor = colors[idx];
+                const textColor = calculateWcagText(stopColor);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenSwatchStudio(idx);
+                    }}
+                    className={`pointer-events-auto flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight shadow-md backdrop-blur-sm transition-all ${
+                      isCur
+                        ? "scale-110 ring-2 ring-white shadow-[0_0_12px_rgba(255,255,255,0.9)]"
+                        : "hover:scale-105 opacity-90 hover:opacity-100"
+                    }`}
+                    style={{
+                      backgroundColor: stopColor,
+                      color: textColor,
+                    }}
+                    title={`Click to adjust ${label} (${stopColor})`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Expandable Swatch Studio & Presets */}
+        {/* Expandable Swatch Studio: Interactive 2D Gradient Swatch & Black/White Levels */}
         {isExpanded && (
           <div
-            className="p-3 rounded-xl bg-zinc-900 text-white space-y-3 mb-3 border border-zinc-800 shadow-xl"
+            className="p-3.5 rounded-xl bg-zinc-900 text-white space-y-3.5 mb-3 border border-zinc-800 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with Slot Title, Hex Input & Native Picker */}
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-3.5 h-3.5 rounded-full border border-white/30"
-                  style={{ backgroundColor: colors[activeSlot] }}
-                />
-                <div>
-                  <span className="text-xs font-bold text-white block leading-tight">
-                    Editing {COLOR_SLOT_LABELS[activeSlot].shortTitle}
-                  </span>
-                  <span className="text-[10px] text-zinc-400 block leading-tight">
-                    {COLOR_SLOT_LABELS[activeSlot].title} — {COLOR_SLOT_LABELS[activeSlot].description}
-                  </span>
+            {/* 1. Header with Active Slot Info & Quick 4-Color Tabs */}
+            <div className="space-y-2 border-b border-white/10 pb-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-4 h-4 rounded-full border border-white/40 shadow-sm shrink-0"
+                    style={{ backgroundColor: colors[activeSlot] }}
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-white block leading-tight">
+                      Adjusting {COLOR_SLOT_LABELS[activeSlot].shortTitle} ({COLOR_SLOT_LABELS[activeSlot].title})
+                    </span>
+                    <span className="text-[10px] text-zinc-400 block leading-tight">
+                      {COLOR_SLOT_LABELS[activeSlot].description}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Hex input & native color picker */}
+                <div className="flex items-center gap-1 bg-zinc-800 p-1 rounded-lg border border-zinc-700 shrink-0">
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      value={inputHex}
+                      onChange={handleInputChange}
+                      maxLength={7}
+                      className="w-18 px-1.5 py-0.5 text-[11px] font-mono font-bold uppercase bg-zinc-900 border border-zinc-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-pink-500"
+                      placeholder="#HEX"
+                      title="Type 6-digit hex color"
+                    />
+                    <input
+                      type="color"
+                      value={colors[activeSlot]}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const hwb = hexToHwb(val);
+                        applyColor(val, hwb.h, hwb.w, hwb.b);
+                      }}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      title="Open native color picker"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+                    title="Copy current hex"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handlePasteFromClipboard}
+                    className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+                    title="Paste hex from clipboard"
+                  >
+                    <ClipboardPaste className="w-3 h-3" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsExpanded(false)}
+                    className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors ml-1"
+                    title="Close Studio"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
-              {/* Hex input & native color picker */}
-              <div className="flex items-center gap-1 bg-zinc-800 p-1 rounded-lg border border-zinc-700">
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    value={inputHex}
-                    onChange={handleInputChange}
-                    maxLength={7}
-                    className="w-18 px-1.5 py-0.5 text-[11px] font-mono font-bold uppercase bg-zinc-900 border border-zinc-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-pink-500"
-                    placeholder="#HEX"
-                    title="Type 6-digit hex color"
-                  />
-                  <input
-                    type="color"
-                    value={colors[activeSlot]}
-                    onChange={(e) => applyColor(e.target.value)}
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    title="Open native color picker"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
-                  title="Copy current hex"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handlePasteFromClipboard}
-                  className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
-                  title="Paste hex from clipboard"
-                >
-                  <ClipboardPaste className="w-3 h-3" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded(false)}
-                  className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors ml-1"
-                  title="Close Studio"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+              {/* 4 Color Slot Tabs: Switch between slots with one tap */}
+              <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10">
+                {COLOR_SLOT_LABELS.map((slot) => {
+                  const isCurSlot = activeSlot === slot.index;
+                  const slotColor = colors[slot.index];
+                  return (
+                    <button
+                      key={slot.index}
+                      type="button"
+                      onClick={() => setActiveSlot(slot.index)}
+                      className={`flex items-center justify-center gap-1.5 py-1.5 px-1 rounded-lg text-[10px] font-bold transition-all ${
+                        isCurSlot
+                          ? "bg-white/20 text-white shadow-sm ring-1 ring-white/50"
+                          : "text-white/60 hover:text-white hover:bg-white/5"
+                      }`}
+                      title={slot.description}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full border border-white/40 shrink-0"
+                        style={{ backgroundColor: slotColor }}
+                      />
+                      <span className="truncate">{slot.shortTitle}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Hue Slider */}
+            {/* 2. INTERACTIVE GRADIENT SWATCH (2D Palette Canvas Field) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-medium text-white/80">
+                <span className="flex items-center gap-1 font-bold text-pink-400">
+                  <Palette className="w-3.5 h-3.5" /> Interactive 2D Gradient Swatch
+                </span>
+                <span className="font-mono text-[10px] text-white/60">
+                  Hue {hue}° • White {whiteLevel}% • Black {blackLevel}%
+                </span>
+              </div>
+
+              {/* 2D Interactive Spectrum Field: blends pure Hue with White (left) and Black (bottom) */}
+              {(() => {
+                const curVal = 1 - Math.max(0, Math.min(100, blackLevel)) / 100;
+                const curSatFrac =
+                  curVal > 0.001
+                    ? Math.max(0, Math.min(1, 1 - Math.max(0, Math.min(100, whiteLevel)) / 100 / curVal))
+                    : 0;
+                const cursorLeft = Math.round(curSatFrac * 100);
+                const cursorTop = Math.round((1 - curVal) * 100);
+
+                return (
+                  <div
+                    ref={canvasRef}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    className="relative w-full h-28 rounded-xl cursor-crosshair border border-white/20 shadow-inner overflow-hidden select-none touch-none"
+                    style={{
+                      backgroundColor: `hsl(${hue}, 100%, 50%)`,
+                      backgroundImage:
+                        "linear-gradient(to top, #000 0%, transparent 100%), linear-gradient(to right, #fff 0%, transparent 100%)",
+                    }}
+                    title="Drag or tap to adjust White (horizontal) and Black (vertical) levels interactively"
+                  >
+                    {/* Target Pip Crosshair Cursor */}
+                    <div
+                      className="absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_6px_rgba(0,0,0,0.9)] pointer-events-none transition-transform"
+                      style={{
+                        left: `${cursorLeft}%`,
+                        top: `${cursorTop}%`,
+                        backgroundColor: colors[activeSlot],
+                      }}
+                    />
+
+                    {/* Subtle Overlay Guide Hints */}
+                    <div className="absolute top-1.5 left-2 text-[9px] font-mono text-black/60 font-bold pointer-events-none drop-shadow-sm">
+                      WHITE (TINT)
+                    </div>
+                    <div className="absolute top-1.5 right-2 text-[9px] font-mono text-white/80 font-bold pointer-events-none drop-shadow-sm">
+                      PURE HUE
+                    </div>
+                    <div className="absolute bottom-1.5 left-2 text-[9px] font-mono text-white/50 font-bold pointer-events-none drop-shadow-sm">
+                      BLACK (SHADE)
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* 3. Rainbow Hue Spectrum Slider */}
             <div>
               <div className="flex justify-between text-[10px] font-mono text-zinc-400 mb-1">
-                <span>HUE ({hue}°)</span>
-                <span>COLOR {activeSlot + 1}</span>
+                <span className="font-bold text-zinc-300">HUE SPECTRUM ({hue}°)</span>
+                <span className="text-zinc-500">COLOR {activeSlot + 1}</span>
               </div>
               <input
                 type="range"
                 min={0}
                 max={360}
                 value={hue}
-                onChange={(e) => {
-                  const newHue = parseInt(e.target.value, 10);
-                  setHue(newHue);
-                  const newHex = hslToHex(newHue, sat, light);
-                  applyColor(newHex);
-                }}
-                className="w-full h-2 rounded-lg cursor-pointer appearance-none bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-cyan-500 via-blue-500 via-purple-500 to-red-500"
+                onChange={(e) => handleHueChange(parseInt(e.target.value, 10))}
+                className="w-full h-2.5 rounded-lg cursor-pointer appearance-none bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-cyan-500 via-blue-500 via-purple-500 to-red-500 focus:outline-none"
+                title="Slide to change Hue spectrum (0° - 360°)"
               />
             </div>
 
-            {/* Saturation / Lightness Sliders */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="flex justify-between text-[10px] font-mono text-zinc-400 mb-1">
-                  <span>SAT ({sat}%)</span>
+            {/* 4. BLACK & WHITE LEVEL ADJUSTMENT SLIDERS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2.5 rounded-xl bg-black/40 border border-white/10">
+              {/* White Level Slider (Tint / Highlights) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-mono">
+                  <span className="font-bold text-white flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-white border border-black/30" />
+                    WHITE LEVEL (TINT)
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/10 font-bold text-white">
+                    {whiteLevel}%
+                  </span>
                 </div>
                 <input
                   type="range"
                   min={0}
                   max={100}
-                  value={sat}
-                  onChange={(e) => {
-                    const newSat = parseInt(e.target.value, 10);
-                    setSat(newSat);
-                    const newHex = hslToHex(hue, newSat, light);
-                    applyColor(newHex);
+                  value={whiteLevel}
+                  onChange={(e) => handleWhiteLevelChange(parseInt(e.target.value, 10))}
+                  className="w-full h-2 rounded-lg cursor-pointer appearance-none border border-white/20 focus:outline-none"
+                  style={{
+                    background: `linear-gradient(to right, ${hwbToHex(hue, 0, blackLevel)}, #FFFFFF)`,
                   }}
-                  className="w-full h-1.5 rounded-lg cursor-pointer bg-zinc-700"
+                  title="Adjust white level (0% pure saturation to 100% white tint)"
                 />
+                <div className="flex items-center justify-between text-[9px] text-zinc-400 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleWhiteLevelChange(0)}
+                    className="hover:text-white underline decoration-dotted"
+                  >
+                    0% Pure
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWhiteLevelChange(25)}
+                    className="hover:text-white"
+                  >
+                    25%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWhiteLevelChange(50)}
+                    className="hover:text-white"
+                  >
+                    50%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWhiteLevelChange(80)}
+                    className="hover:text-white underline decoration-dotted"
+                  >
+                    Pastel
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <div className="flex justify-between text-[10px] font-mono text-zinc-400 mb-1">
-                  <span>LIGHT ({light}%)</span>
+              {/* Black Level Slider (Shade / Darkness) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-mono">
+                  <span className="font-bold text-white flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-black border border-white/40" />
+                    BLACK LEVEL (SHADE)
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/10 font-bold text-white">
+                    {blackLevel}%
+                  </span>
                 </div>
                 <input
                   type="range"
-                  min={10}
-                  max={90}
-                  value={light}
-                  onChange={(e) => {
-                    const newLight = parseInt(e.target.value, 10);
-                    setLight(newLight);
-                    const newHex = hslToHex(hue, sat, newLight);
-                    applyColor(newHex);
+                  min={0}
+                  max={100}
+                  value={blackLevel}
+                  onChange={(e) => handleBlackLevelChange(parseInt(e.target.value, 10))}
+                  className="w-full h-2 rounded-lg cursor-pointer appearance-none border border-white/20 focus:outline-none"
+                  style={{
+                    background: `linear-gradient(to right, ${hwbToHex(hue, whiteLevel, 0)}, #000000)`,
                   }}
-                  className="w-full h-1.5 rounded-lg cursor-pointer bg-zinc-700"
+                  title="Adjust black level (0% bright vivid to 100% deep black void)"
                 />
+                <div className="flex items-center justify-between text-[9px] text-zinc-400 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleBlackLevelChange(0)}
+                    className="hover:text-white underline decoration-dotted"
+                  >
+                    0% Bright
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBlackLevelChange(30)}
+                    className="hover:text-white"
+                  >
+                    30%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBlackLevelChange(60)}
+                    className="hover:text-white"
+                  >
+                    60%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBlackLevelChange(90)}
+                    className="hover:text-white underline decoration-dotted"
+                  >
+                    90% Deep Void
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Quick Vibrant Swatches */}
+            {/* 5. Quick Vibrant Swatches */}
             <div>
               <span className="block text-[10px] font-bold text-white/60 uppercase tracking-wider mb-1.5">
                 Quick Vibrant Swatches
@@ -603,9 +901,9 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
                     key={idx}
                     type="button"
                     onClick={() => {
-                      applyColor(swatch);
+                      const hwb = hexToHwb(swatch);
+                      applyColor(swatch, hwb.h, hwb.w, hwb.b);
                       const hsl = hexToHsl(swatch);
-                      setHue(hsl.h);
                       setSat(hsl.s);
                       setLight(hsl.l);
                     }}
@@ -619,7 +917,7 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
               </div>
             </div>
 
-            {/* Presets & Reset & Collapse */}
+            {/* 6. Presets & Reset & Collapse */}
             <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1 overflow-x-auto py-0.5 max-w-[200px] no-scrollbar">
                 <span className="text-[9px] text-white/50 shrink-0 mr-0.5">Presets:</span>
@@ -650,7 +948,7 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsExpanded(false)}
-                  className="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-[10px] font-bold text-white transition-colors"
+                  className="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-[10px] font-bold text-white transition-colors shadow-sm"
                 >
                   Done
                 </button>

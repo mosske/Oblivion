@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Check, Copy, ClipboardPaste, RotateCcw, Sparkles, X, Palette, Sliders } from "lucide-react";
 import { getBespokeColors, saveBespokeColors, DEFAULT_BESPOKE_COLORS } from "../utils/appDesignThemes";
+import { hexToHwb, hwbToHex } from "../theme/colorUtils";
 
 interface BespokeColorPickerProps {
   /** Optional custom trigger render or default inline 4-color dots with code badge */
@@ -132,8 +133,11 @@ export const BespokeColorPicker: React.FC<BespokeColorPickerProps> = ({
   const [hue, setHue] = useState<number>(330);
   const [sat, setSat] = useState<number>(100);
   const [light, setLight] = useState<number>(50);
+  const [whiteLevel, setWhiteLevel] = useState<number>(0);
+  const [blackLevel, setBlackLevel] = useState<number>(0);
 
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Synchronize on mount and whenever external events update custom colors
   useEffect(() => {
@@ -149,12 +153,15 @@ export const BespokeColorPicker: React.FC<BespokeColorPickerProps> = ({
     return () => window.removeEventListener("oblivion_bespoke_colors_updated", handleUpdate);
   }, []);
 
-  // Update input text and HSL when activeSlot or color changes
+  // Update input text and HSL/HWB when activeSlot or color changes
   useEffect(() => {
     const currentColor = colors[activeSlot] || "#FF007F";
     setInputHex(currentColor.toUpperCase());
+    const hwb = hexToHwb(currentColor);
+    setHue(hwb.h);
+    setWhiteLevel(hwb.w);
+    setBlackLevel(hwb.b);
     const hsl = hexToHsl(currentColor);
-    setHue(hsl.h);
     setSat(hsl.s);
     setLight(hsl.l);
   }, [activeSlot, colors]);
@@ -172,7 +179,7 @@ export const BespokeColorPicker: React.FC<BespokeColorPickerProps> = ({
   }, [isPickerOpen]);
 
   // Apply a new color to the currently active slot and save locally
-  const applyColor = (hex: string) => {
+  const applyColor = (hex: string, customHue?: number, customWhite?: number, customBlack?: number) => {
     const valid = normalizeHex(hex);
     if (!valid) return;
 
@@ -181,12 +188,74 @@ export const BespokeColorPicker: React.FC<BespokeColorPickerProps> = ({
 
     setColors(updated);
     setInputHex(valid);
+    if (customHue !== undefined) setHue(customHue);
+    if (customWhite !== undefined) setWhiteLevel(customWhite);
+    if (customBlack !== undefined) setBlackLevel(customBlack);
+
     saveBespokeColors(updated);
     onColorsChange?.(updated);
 
     // Show temporary "Saved" feedback
     setSaveIndicator(true);
     setTimeout(() => setSaveIndicator(false), 1200);
+  };
+
+  const handleHueChange = (newHue: number) => {
+    setHue(newHue);
+    const newHex = hwbToHex(newHue, whiteLevel, blackLevel);
+    applyColor(newHex, newHue, whiteLevel, blackLevel);
+  };
+
+  const handleWhiteLevelChange = (newWhite: number) => {
+    const clamped = Math.max(0, Math.min(100, newWhite));
+    setWhiteLevel(clamped);
+    const newHex = hwbToHex(hue, clamped, blackLevel);
+    applyColor(newHex, hue, clamped, blackLevel);
+  };
+
+  const handleBlackLevelChange = (newBlack: number) => {
+    const clamped = Math.max(0, Math.min(100, newBlack));
+    setBlackLevel(clamped);
+    const newHex = hwbToHex(hue, whiteLevel, clamped);
+    applyColor(newHex, hue, whiteLevel, clamped);
+  };
+
+  const updateFrom2DCanvas = (e: React.PointerEvent<HTMLDivElement> | PointerEvent) => {
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+
+    const val = 1 - y;
+    const satFrac = x;
+    const newWhite = Math.round(val * (1 - satFrac) * 100);
+    const newBlack = Math.round((1 - val) * 100);
+
+    setWhiteLevel(newWhite);
+    setBlackLevel(newBlack);
+    setSat(Math.round(satFrac * 100));
+    setLight(Math.round(val * (1 - satFrac / 2) * 100));
+
+    const newHex = hwbToHex(hue, newWhite, newBlack);
+    applyColor(newHex, hue, newWhite, newBlack);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {
+      // ignore
+    }
+    updateFrom2DCanvas(e);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.buttons !== 1) return;
+    e.preventDefault();
+    e.stopPropagation();
+    updateFrom2DCanvas(e);
   };
 
   // Handle typing or pasting hex directly
@@ -197,9 +266,9 @@ export const BespokeColorPicker: React.FC<BespokeColorPickerProps> = ({
 
     const valid = normalizeHex(raw);
     if (valid) {
-      applyColor(valid);
+      const hwb = hexToHwb(valid);
+      applyColor(valid, hwb.h, hwb.w, hwb.b);
       const hsl = hexToHsl(valid);
-      setHue(hsl.h);
       setSat(hsl.s);
       setLight(hsl.l);
     }
@@ -212,9 +281,9 @@ export const BespokeColorPicker: React.FC<BespokeColorPickerProps> = ({
         const text = await navigator.clipboard.readText();
         const valid = normalizeHex(text);
         if (valid) {
-          applyColor(valid);
+          const hwb = hexToHwb(valid);
+          applyColor(valid, hwb.h, hwb.w, hwb.b);
           const hsl = hexToHsl(valid);
-          setHue(hsl.h);
           setSat(hsl.s);
           setLight(hsl.l);
         }
@@ -376,63 +445,118 @@ export const BespokeColorPicker: React.FC<BespokeColorPickerProps> = ({
           {/* 1. INTERACTIVE GRADIENT SWATCH (2D Palette Canvas / Area) */}
           <div className="mb-3 space-y-2">
             <div className="flex items-center justify-between text-[11px] font-medium text-white/70">
-              <span className="flex items-center gap-1">
-                <Sliders className="w-3 h-3 text-pink-400" /> Gradient Swatch
+              <span className="flex items-center gap-1 font-bold text-pink-400">
+                <Palette className="w-3.5 h-3.5" /> Interactive Gradient Swatch
               </span>
-              <span className="font-mono text-[10px] text-white/50">Hue {hue}° • Light {light}%</span>
+              <span className="font-mono text-[10px] text-white/50">
+                Hue {hue}° • White {whiteLevel}% • Black {blackLevel}%
+              </span>
             </div>
 
-            {/* 2D Interactive Gradient Spectrum Canvas */}
-            <div
-              className="relative w-full h-24 rounded-xl cursor-crosshair border border-white/20 shadow-inner overflow-hidden"
-              style={{
-                backgroundColor: `hsl(${hue}, 100%, 50%)`,
-                backgroundImage:
-                  "linear-gradient(to right, #fff, transparent), linear-gradient(to top, #000, transparent)",
-              }}
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-                const newSat = Math.round(x * 100);
-                const newLight = Math.round((1 - y) * 100 * (1 - x * 0.5));
-                setSat(newSat);
-                setLight(newLight);
-                const hex = hslToHex(hue, newSat, newLight);
-                applyColor(hex);
-              }}
-            >
-              {/* Target Pip Cursor */}
-              <div
-                className="absolute w-3.5 h-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_4px_rgba(0,0,0,0.8)] pointer-events-none"
-                style={{
-                  left: `${sat}%`,
-                  top: `${100 - light}%`,
-                  backgroundColor: colors[activeSlot],
-                }}
-              />
-            </div>
+            {/* 2D Interactive Spectrum Field: blends pure Hue with White (left) and Black (bottom) */}
+            {(() => {
+              const curVal = 1 - Math.max(0, Math.min(100, blackLevel)) / 100;
+              const curSatFrac =
+                curVal > 0.001
+                  ? Math.max(0, Math.min(1, 1 - Math.max(0, Math.min(100, whiteLevel)) / 100 / curVal))
+                  : 0;
+              const cursorLeft = Math.round(curSatFrac * 100);
+              const cursorTop = Math.round((1 - curVal) * 100);
+
+              return (
+                <div
+                  ref={canvasRef}
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  className="relative w-full h-24 rounded-xl cursor-crosshair border border-white/20 shadow-inner overflow-hidden select-none touch-none"
+                  style={{
+                    backgroundColor: `hsl(${hue}, 100%, 50%)`,
+                    backgroundImage:
+                      "linear-gradient(to top, #000 0%, transparent 100%), linear-gradient(to right, #fff 0%, transparent 100%)",
+                  }}
+                  title="Drag or tap to adjust White (horizontal) and Black (vertical) levels interactively"
+                >
+                  {/* Target Pip Cursor */}
+                  <div
+                    className="absolute w-3.5 h-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_4px_rgba(0,0,0,0.8)] pointer-events-none transition-transform"
+                    style={{
+                      left: `${cursorLeft}%`,
+                      top: `${cursorTop}%`,
+                      backgroundColor: colors[activeSlot],
+                    }}
+                  />
+                  <div className="absolute top-1 left-2 text-[8px] font-mono text-black/60 font-bold pointer-events-none">
+                    WHITE
+                  </div>
+                  <div className="absolute top-1 right-2 text-[8px] font-mono text-white/80 font-bold pointer-events-none">
+                    HUE
+                  </div>
+                  <div className="absolute bottom-1 left-2 text-[8px] font-mono text-white/50 font-bold pointer-events-none">
+                    BLACK
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Rainbow Hue Gradient Slider Track */}
             <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-mono text-zinc-400">
+                <span>HUE SPECTRUM ({hue}°)</span>
+              </div>
               <input
                 type="range"
                 min="0"
                 max="360"
                 value={hue}
-                onChange={(e) => {
-                  const newHue = parseInt(e.target.value, 10);
-                  setHue(newHue);
-                  const hex = hslToHex(newHue, sat, light);
-                  applyColor(hex);
-                }}
-                className="w-full h-3 rounded-lg appearance-none cursor-pointer border border-white/20 focus:outline-none"
+                onChange={(e) => handleHueChange(parseInt(e.target.value, 10))}
+                className="w-full h-2.5 rounded-lg appearance-none cursor-pointer border border-white/20 focus:outline-none"
                 style={{
                   background:
                     "linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)",
                 }}
                 title="Slide to adjust Hue spectrum"
               />
+            </div>
+
+            {/* Black & White Levels Sliders */}
+            <div className="grid grid-cols-2 gap-2 p-2 rounded-xl bg-black/40 border border-white/10">
+              <div className="space-y-1">
+                <div className="flex justify-between text-[9px] font-mono text-white/80">
+                  <span>WHITE (TINT)</span>
+                  <span className="font-bold">{whiteLevel}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={whiteLevel}
+                  onChange={(e) => handleWhiteLevelChange(parseInt(e.target.value, 10))}
+                  className="w-full h-1.5 rounded-lg cursor-pointer appearance-none border border-white/20 focus:outline-none"
+                  style={{
+                    background: `linear-gradient(to right, ${hwbToHex(hue, 0, blackLevel)}, #FFFFFF)`,
+                  }}
+                  title="Adjust White Level"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-[9px] font-mono text-white/80">
+                  <span>BLACK (SHADE)</span>
+                  <span className="font-bold">{blackLevel}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={blackLevel}
+                  onChange={(e) => handleBlackLevelChange(parseInt(e.target.value, 10))}
+                  className="w-full h-1.5 rounded-lg cursor-pointer appearance-none border border-white/20 focus:outline-none"
+                  style={{
+                    background: `linear-gradient(to right, ${hwbToHex(hue, whiteLevel, 0)}, #000000)`,
+                  }}
+                  title="Adjust Black Level"
+                />
+              </div>
             </div>
           </div>
 
