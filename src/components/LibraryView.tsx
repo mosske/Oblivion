@@ -368,13 +368,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   key={pl.id}
                   playlist={pl}
                   onSelect={onSelectPlaylist}
-                  onPlay={(playlist) => {
-                    if (playlist.tracks && playlist.tracks.length > 0) {
-                      onPlayQueue(playlist.tracks, 0);
-                    } else {
-                      onSelectPlaylist(playlist);
-                    }
-                  }}
                   onToggleHide={(id, e) => toggleHidePlaylist(e, id)}
                   isHidden={hiddenPlaylistIds.includes(pl.id)}
                   designConfig={designConfig}

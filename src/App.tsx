@@ -561,6 +561,11 @@ export default function App() {
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-theme", activeFullDesign.id);
+      if (activeFullDesign.id === "dynamic-emerald") {
+        document.documentElement.setAttribute("data-theme-alias", "emerald-wilderness");
+      } else if (activeFullDesign.id === "audiophile-gold") {
+        document.documentElement.setAttribute("data-theme-alias", "studio-homme-mosaique");
+      }
       syncDocumentThemeColor(activeFullDesign);
 
       const themeVariables: Record<
@@ -583,7 +588,7 @@ export default function App() {
           sliderFill: "#dfb86c",
         },
         "cyberpunk-neon": {
-          accent: "#00f3ff",
+          accent: "#00f0ff",
           secondary: "#ff007f",
           tertiary: "#7928ca",
           contrastText: "#000000",
@@ -605,20 +610,36 @@ export default function App() {
           sliderFill: "#dc2626",
         },
         "dynamic-emerald": {
-          accent: "#00f5a0",
-          secondary: "#00d9f5",
-          tertiary: "#ffe066",
+          accent: "#10b981",
+          secondary: "#047857",
+          tertiary: "#00f5a0",
           contrastText: "#011a12",
           sliderTrack: "#03281c",
-          sliderFill: "#00f5a0",
+          sliderFill: "#10b981",
+        },
+        "emerald-wilderness": {
+          accent: "#10b981",
+          secondary: "#047857",
+          tertiary: "#065f46",
+          contrastText: "#011a12",
+          sliderTrack: "#03281c",
+          sliderFill: "#10b981",
         },
         "audiophile-gold": {
-          accent: "#8fa7c2",
-          secondary: "#cbd5e1",
-          tertiary: "#4a5f78",
+          accent: "#f59e0b",
+          secondary: "#d97706",
+          tertiary: "#b45309",
           contrastText: "#070b14",
           sliderTrack: "#121a28",
-          sliderFill: "#8fa7c2",
+          sliderFill: "#f59e0b",
+        },
+        "studio-homme-mosaique": {
+          accent: "#f59e0b",
+          secondary: "#d97706",
+          tertiary: "#b45309",
+          contrastText: "#070b14",
+          sliderTrack: "#121a28",
+          sliderFill: "#f59e0b",
         },
         "twilight-vaporwave": {
           accent: "#ff2a8d",
@@ -629,7 +650,7 @@ export default function App() {
           sliderFill: "#ff2a8d",
         },
         "neue-editorial": {
-          accent: "#1F1F1F",
+          accent: "#ffffff",
           secondary: "#3A3530",
           tertiary: "#181816",
           contrastText: "#F2E8D8",

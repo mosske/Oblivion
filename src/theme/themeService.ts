@@ -122,8 +122,8 @@ export function applyBespokeCssVariables(
   // Strictly limit button gradients to a clean 2-color transition using Color 1 & Color 2
   document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${c1}, ${c2})`);
   document.documentElement.style.setProperty('--bespoke-accent-gradient', `linear-gradient(135deg, ${c1}, ${c2})`);
-  document.documentElement.style.setProperty('--accent-primary', c1);
-  document.documentElement.style.setProperty('--accent-secondary', c2);
+  document.documentElement.style.setProperty('--accent-primary', c2);
+  document.documentElement.style.setProperty('--accent-secondary', c3);
 
   // Determine text contrast mode
   const isAuto = bespokeConfig.mode === 'auto';

@@ -11,13 +11,49 @@
   --text-on-accent: #FFFFFF;
   --text-off-accent: #FFFFFF;
   --text-primary: #FFFFFF;
+
+  --nav-inactive-color: rgba(255, 255, 255, 0.70);
+  --nav-inactive-stroke: rgba(255, 255, 255, 0.85);
+  --nav-dock-bg: rgba(15, 23, 42, 0.65);
+  --accent-primary: #00f0ff;
+  --accent-secondary: #ff007f;
+}
+
+/* ================================================================================
+   1. THEME-AWARE INACTIVE COLOR VARIABLES
+   ================================================================================ */
+
+/* A. LIGHT CANVAS THEMES (e.g., Candyland Pastel, Neue Editorial) */
+[data-theme="candyland-pastel"],
+[data-theme="candyland"],
+[data-theme="neue-editorial"] {
+  --nav-inactive-color: rgba(30, 41, 59, 0.75); /* High-contrast slate */
+  --nav-inactive-stroke: #1e293b;
+  --nav-dock-bg: rgba(255, 255, 255, 0.82);
+}
+
+/* B. DARK / NEON CANVAS THEMES (e.g., Cyberpunk, Emerald, Studio Homme, Liquid Glass) */
+[data-theme="cyberpunk-neon"],
+[data-theme="emerald-wilderness"],
+[data-theme="dynamic-emerald"],
+[data-theme="studio-homme-mosaique"],
+[data-theme="audiophile-gold"],
+[data-theme="twilight-vaporwave"],
+[data-theme="nebula-liquid-glass"],
+[data-theme="obsidian-depth"],
+[data-theme="designer"],
+[data-theme="ytmusic-red"],
+[data-theme="bespoke"] {
+  --nav-inactive-color: rgba(255, 255, 255, 0.70); /* Brightened off-white */
+  --nav-inactive-stroke: rgba(255, 255, 255, 0.85);
+  --nav-dock-bg: rgba(15, 23, 42, 0.65);
 }
 
 [data-theme="bespoke"] {
   /* Strictly limit button gradients to a clean 2-color transition using Color 1 & Color 2 */
   --accent-gradient: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
-  --accent-primary: var(--bespoke-c1);
-  --accent-secondary: var(--bespoke-c2);
+  --accent-primary: var(--bespoke-c2);
+  --accent-secondary: var(--bespoke-c3, var(--bespoke-c4));
 
   /* 1. BUTTONS & INTERACTIVE ACCENTS (Color 1 & Color 2) */
   --accent-color: var(--bespoke-c2);
@@ -66,3 +102,383 @@ body,
 .section-heading {
   color: var(--text-primary);
 }
+
+/* ================================================================================
+   CRITICAL UI OVERHAUL: BOTTOM NAV ACTIVE ICON OUTLINE & SOFT NEON GLOW
+   ================================================================================ */
+
+/* 1. REMOVE FILLED BACKGROUND BLOCK & SQUARE BOUNDING BOX ARTIFACTS */
+.nav-item-active,
+.tab-item-active,
+.tab-active,
+.bottom-nav-item.nav-item-active,
+.nav-icon-container,
+.nav-icon-aura {
+  background: transparent !important; /* Remove dark solid circle/block */
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Remove box shadow/filters from SVG container to prevent rectangular bounding box shadows */
+.nav-item-active,
+.nav-item-active svg,
+.tab-item-active svg,
+.tab-active svg {
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
+}
+
+/* 2. SWITCH FROM SOLID FILL TO OUTLINE SVG STROKES & INNER GLOW */
+.nav-item-active svg,
+.nav-item-active svg path,
+.nav-item-active svg polygon,
+.nav-item-active svg rect,
+.nav-item-active svg circle,
+.nav-item-active svg polyline,
+.tab-item-active svg,
+.tab-active svg {
+  fill: none !important;
+  stroke: var(--accent-primary, #00f0ff) !important;
+  stroke-width: 2px;
+  transition: all 0.25s ease-in-out;
+}
+
+/* Target inner SVG elements for clean glow effects without rectangular bounding box */
+.nav-item-active svg path,
+.nav-item-active svg circle,
+.nav-item-active svg polyline,
+.nav-item-active svg polygon,
+.tab-item-active svg path,
+.tab-item-active svg circle,
+.tab-active svg path,
+.tab-active svg circle {
+  filter: drop-shadow(0 0 4px var(--accent-primary, #00f0ff));
+}
+
+/* ================================================================================
+   2. BRIGHT ACTIVE TEXT & SOFT AMBIENT GLOW
+   ================================================================================ */
+
+/* A. ACTIVE TEXT LABEL STYLING */
+.nav-item-active .nav-label,
+.tab-item-active .nav-label,
+.tab-active .nav-label {
+  color: #ffffff !important; /* Bright high-contrast white text */
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--accent-primary, #00f0ff);
+  transition: all 0.25s ease-in-out;
+}
+
+/* B. SOFT AMBIENT GLOW BACKDROP (Disabled to avoid rectangular/pseudo artifacts) */
+.nav-item-active,
+.tab-item-active,
+.bottom-nav-item.nav-item-active {
+  position: relative;
+}
+
+.nav-item-active > *,
+.tab-item-active > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* C. INACTIVE NAVIGATION BASELINE & ADAPTIVE CONTRAST */
+.nav-item:not(.nav-item-active) svg,
+.bottom-nav-item:not(.nav-item-active) svg {
+  fill: none !important;
+  stroke: var(--nav-inactive-stroke, rgba(255, 255, 255, 0.75)) !important;
+  stroke-width: 1.8px;
+  opacity: 1 !important; /* Remove low-opacity washouts */
+  filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.25)); /* Soft contrast lift */
+  transition: stroke 0.25s ease, transform 0.2s ease;
+}
+
+.nav-item:not(.nav-item-active) .nav-label,
+.bottom-nav-item:not(.nav-item-active) .nav-label,
+.nav-item-inactive .nav-label,
+.nav-item-inactive,
+.tab-inactive,
+button.bottom-nav-item:not(.nav-item-active),
+.bottom-nav-item.nav-item-inactive {
+  color: var(--nav-inactive-color, rgba(255, 255, 255, 0.75)) !important;
+  font-weight: 500;
+  opacity: 1 !important;
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+  transition: color 0.25s ease, opacity 0.25s ease;
+}
+
+.nav-item:not(.nav-item-active):hover svg,
+.bottom-nav-item:not(.nav-item-active):hover svg {
+  stroke: var(--nav-inactive-stroke, rgba(255, 255, 255, 0.95)) !important;
+  transform: translateY(-1px);
+}
+
+.nav-item:not(.nav-item-active):hover .nav-label,
+.bottom-nav-item:not(.nav-item-active):hover .nav-label,
+.nav-item-inactive:hover,
+button.bottom-nav-item:not(.nav-item-active):hover {
+  opacity: 1 !important;
+  color: var(--nav-inactive-color, rgba(255, 255, 255, 0.95)) !important;
+}
+
+/* D. BOTTOM NAV CONTAINER DOCK */
+.bottom-nav-dock {
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  background: var(--nav-dock-bg, rgba(15, 23, 42, 0.65)) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="candyland-pastel"] .bottom-nav-dock,
+[data-theme="candyland"] .bottom-nav-dock,
+[data-theme="neue-editorial"] .bottom-nav-dock {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ================================================================================
+   3. THEME-SPECIFIC NAVIGATION OVERRIDES
+   ================================================================================ */
+
+/* A. CYBERPUNK NEON GLASS */
+[data-theme="cyberpunk-neon"] .nav-item-active svg path,
+[data-theme="cyberpunk-neon"] .nav-item-active svg circle,
+[data-theme="cyberpunk-neon"] .nav-item-active svg polyline,
+[data-theme="cyberpunk-neon"] .nav-item-active svg polygon,
+[data-theme="cyberpunk-neon"] .tab-active svg path,
+[data-theme="cyberpunk-neon"] .tab-active svg circle {
+  stroke: #00f0ff !important;
+  filter: drop-shadow(0 0 4px #00f0ff) drop-shadow(0 0 8px #ff007f) !important;
+}
+[data-theme="cyberpunk-neon"] .nav-item-active .nav-label {
+  text-shadow: 0 0 8px #00f0ff;
+}
+
+/* B. EMERALD WILDERNESS */
+[data-theme="emerald-wilderness"] .nav-item-active svg path,
+[data-theme="emerald-wilderness"] .nav-item-active svg circle,
+[data-theme="emerald-wilderness"] .nav-item-active svg polyline,
+[data-theme="emerald-wilderness"] .nav-item-active svg polygon,
+[data-theme="emerald-wilderness"] .tab-active svg path,
+[data-theme="dynamic-emerald"] .nav-item-active svg path,
+[data-theme="dynamic-emerald"] .tab-active svg path {
+  stroke: #10b981 !important;
+  filter: drop-shadow(0 0 4px #10b981) drop-shadow(0 0 8px #047857) !important;
+}
+[data-theme="emerald-wilderness"] .nav-item-active .nav-label,
+[data-theme="dynamic-emerald"] .nav-item-active .nav-label {
+  text-shadow: 0 0 8px #10b981;
+}
+
+/* C. STUDIO HOMME MOSAIQUE */
+[data-theme="studio-homme-mosaique"] .nav-item-active svg path,
+[data-theme="studio-homme-mosaique"] .nav-item-active svg circle,
+[data-theme="studio-homme-mosaique"] .nav-item-active svg polyline,
+[data-theme="studio-homme-mosaique"] .nav-item-active svg polygon,
+[data-theme="studio-homme-mosaique"] .tab-active svg path,
+[data-theme="audiophile-gold"] .nav-item-active svg path,
+[data-theme="audiophile-gold"] .tab-active svg path {
+  stroke: #f59e0b !important;
+  filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 0 8px #d97706) !important;
+}
+[data-theme="studio-homme-mosaique"] .nav-item-active .nav-label,
+[data-theme="audiophile-gold"] .nav-item-active .nav-label {
+  text-shadow: 0 0 8px #f59e0b;
+}
+
+/* D. NEUE EDITORIAL */
+[data-theme="neue-editorial"] .nav-item-active svg path,
+[data-theme="neue-editorial"] .nav-item-active svg circle,
+[data-theme="neue-editorial"] .nav-item-active svg polyline,
+[data-theme="neue-editorial"] .nav-item-active svg polygon,
+[data-theme="neue-editorial"] .tab-active svg path {
+  stroke: #0a0a0a !important; /* Pitch charcoal outline for maximum contrast on pale beige */
+  stroke-width: 2.2px !important;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.45)) !important;
+  transition: all 0.25s ease-in-out;
+}
+[data-theme="neue-editorial"] .nav-item-active .nav-label {
+  color: #0a0a0a !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* E. CANDYLAND PASTEL */
+[data-theme="candyland-pastel"] .nav-item-active .nav-label,
+[data-theme="candyland"] .nav-item-active .nav-label {
+  color: #1e293b !important; /* Matches inactive dark slate text */
+  text-shadow: none !important; /* Removes washing-out white glow from text */
+  font-weight: 700;
+}
+
+[data-theme="candyland-pastel"] .nav-item-active svg path,
+[data-theme="candyland-pastel"] .nav-item-active svg circle,
+[data-theme="candyland-pastel"] .nav-item-active svg polyline,
+[data-theme="candyland-pastel"] .nav-item-active svg polygon,
+[data-theme="candyland"] .nav-item-active svg path,
+[data-theme="candyland"] .nav-item-active svg circle {
+  stroke: #ff2a8d !important; /* Vivid pink active outline */
+  filter: drop-shadow(0 0 4px rgba(255, 42, 141, 0.45)) !important; /* Vibrant soft glow */
+}
+
+/* F. BESPOKE */
+[data-theme="bespoke"] .nav-item-active svg path,
+[data-theme="bespoke"] .nav-item-active svg circle,
+[data-theme="bespoke"] .nav-item-active svg polyline,
+[data-theme="bespoke"] .nav-item-active svg polygon,
+[data-theme="bespoke"] .tab-active svg path,
+[data-theme="bespoke"] .tab-active svg circle {
+  stroke: var(--bespoke-c2, #00f0ff) !important;
+  stroke-width: 2.2px !important;
+  filter: drop-shadow(0 0 4px var(--bespoke-c2, #00f0ff))
+          drop-shadow(0 0 8px var(--bespoke-c3, var(--bespoke-c4, #ff007f))) !important;
+  transition: all 0.25s ease-in-out;
+}
+
+[data-theme="bespoke"] .nav-item-active .nav-label {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 8px var(--bespoke-c2, #00f0ff), 0 0 16px var(--bespoke-c3, #ff007f) !important;
+}
+
+/* ================================================================================
+   4. GENERAL LIGHT-THEME RULESET
+   ================================================================================ */
+.light-theme .nav-item-active .nav-label,
+.light-theme .nav-item:not(.nav-item-active) .nav-label {
+  color: var(--nav-inactive-color, #1e293b) !important;
+}
+
+/* ================================================================================
+   5. ACTIVE EXPLORE ICON WITH BLACK CORE (EXCLUDING NEUE EDITORIAL)
+   ================================================================================ */
+:not([data-theme="neue-editorial"]) [data-nav="explore"].nav-item-active svg path,
+:not([data-theme="neue-editorial"]) [data-nav="explore"].nav-item-active svg circle {
+  fill: #000000 !important;
+  stroke: var(--accent-primary, #00f0ff) !important;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 6px var(--accent-primary, #00f0ff));
+}
+
+[data-theme="neue-editorial"] [data-nav="explore"].nav-item-active svg {
+  fill: none !important;
+  stroke: #1f1f1f !important;
+}
+
+/* ================================================================================
+   6. REMOVE ACTIVE PAGE LABEL UNDERLINES GLOBALLY
+   ================================================================================ */
+.nav-item-active .nav-label,
+.nav-item-active a,
+.nav-item-active span,
+.sidebar-nav-item.nav-item-active .nav-label {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.nav-item-active::after,
+.nav-item-active::before,
+.nav-item-active .nav-label::after,
+.nav-item-active .nav-label::before,
+.sidebar-nav-item.nav-item-active::after,
+.sidebar-nav-item.nav-item-active::before {
+  display: none !important;
+  content: none !important;
+  border-bottom: none !important;
+  height: 0 !important;
+}
+
+/* ================================================================================
+   7. SIDEBAR NAVIGATION MENU (PC & TABLET) CONTRAST & STYLING
+   ================================================================================ */
+.sidebar-nav-item {
+  position: relative;
+  text-decoration: none !important;
+  outline: none;
+}
+
+.sidebar-nav-item.nav-item-active {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Light themes: Neue Editorial, Candyland, Designer Ivory */
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active {
+  background: rgba(0, 0, 0, 0.07) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-label {
+  color: #0a0a0a !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #0a0a0a !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive svg {
+  stroke: #1e293b !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive:hover svg {
+  stroke: #0a0a0a !important;
+}
+
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-active,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-active {
+  background: rgba(255, 112, 166, 0.16) !important;
+  border: 1px solid rgba(255, 112, 166, 0.35) !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-active .nav-label,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-active .nav-label {
+  color: #3b1235 !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive .nav-label,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive .nav-label,
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive {
+  color: #6b2d5f !important;
+  font-weight: 600 !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive:hover,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive:hover {
+  background: rgba(255, 255, 255, 0.65) !important;
+  color: #3b1235 !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive svg,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive svg {
+  stroke: #6b2d5f !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive:hover svg,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive:hover svg {
+  stroke: #3b1235 !important;
+}
+
+/* Dark and Neon themes sidebar item active backgrounds */
+[data-theme="cyberpunk-neon"] .sidebar-nav-item.nav-item-active {
+  background: rgba(0, 240, 255, 0.12) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+}
+[data-theme="emerald-wilderness"] .sidebar-nav-item.nav-item-active,
+[data-theme="dynamic-emerald"] .sidebar-nav-item.nav-item-active {
+  background: rgba(16, 185, 129, 0.14) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+[data-theme="studio-homme-mosaique"] .sidebar-nav-item.nav-item-active,
+[data-theme="audiophile-gold"] .sidebar-nav-item.nav-item-active {
+  background: rgba(245, 158, 11, 0.14) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+[data-theme="bespoke"] .sidebar-nav-item.nav-item-active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--bespoke-c2, #00f0ff) !important;
+}
+
+
+

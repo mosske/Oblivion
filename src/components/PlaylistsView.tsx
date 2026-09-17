@@ -177,7 +177,6 @@ export const PlaylistsView: React.FC<PlaylistsViewProps> = ({
               key={pl.id}
               playlist={pl}
               onSelect={onSelectPlaylist}
-              onPlay={onPlayPlaylist}
               onToggleHide={toggleHidePlaylist}
               isHidden={hiddenIds.includes(pl.id) || hiddenIds.includes(pl.id.replace(/^VL/, ""))}
               designConfig={designConfig}

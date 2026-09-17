@@ -94,58 +94,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Main Navigation */}
-      <nav className="px-3 py-2 space-y-1 shrink-0">
-        <button
-          id="nav-home-btn"
-          onClick={() => setActiveTab("home")}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-            activeTab === "home"
-              ? designConfig.navActive
-              : designConfig.navInactive
-          }`}
-        >
-          <Home className={`w-5 h-5 ${activeTab === "home" ? designConfig.accentText : ""}`} />
-          <span>Home</span>
-        </button>
-
-        <button
-          id="nav-explore-btn"
-          onClick={() => setActiveTab("explore")}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-            activeTab === "explore"
-              ? designConfig.navActive
-              : designConfig.navInactive
-          }`}
-        >
-          <Compass className={`w-5 h-5 ${activeTab === "explore" ? designConfig.accentText : ""}`} />
-          <span>Explore</span>
-        </button>
-
-        <button
-          id="nav-library-btn"
-          onClick={() => setActiveTab("library")}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-            activeTab === "library"
-              ? designConfig.navActive
-              : designConfig.navInactive
-          }`}
-        >
-          <Library className={`w-5 h-5 ${activeTab === "library" ? designConfig.accentText : ""}`} />
-          <span>Library</span>
-        </button>
-
-        <button
-          id="nav-settings-btn"
-          onClick={() => setActiveTab("settings")}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-            activeTab === "settings"
-              ? designConfig.navActive
-              : designConfig.navInactive
-          }`}
-        >
-          <Settings className={`w-5 h-5 ${activeTab === "settings" ? designConfig.accentText : ""}`} />
-          <span>Settings</span>
-        </button>
+      <nav className="px-3 py-2 space-y-1.5 shrink-0" role="tablist" aria-label="Sidebar Navigation">
+        {[
+          { id: "nav-home-btn", tab: "home" as NavTab, label: "Home", icon: Home },
+          { id: "nav-explore-btn", tab: "explore" as NavTab, label: "Explore", icon: Compass },
+          { id: "nav-library-btn", tab: "library" as NavTab, label: "Library", icon: Library },
+          { id: "nav-settings-btn", tab: "settings" as NavTab, label: "Settings", icon: Settings },
+        ].map(({ id, tab, label, icon: Icon }) => {
+          const isActive = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              id={id}
+              data-nav={tab}
+              role="tab"
+              aria-selected={isActive}
+              aria-label={label}
+              onClick={() => setActiveTab(tab)}
+              className={`sidebar-nav-item nav-item w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 select-none cursor-pointer ${
+                isActive
+                  ? `nav-item-active tab-item-active tab-active ${designConfig.navActive}`
+                  : `nav-item-inactive ${designConfig.navInactive}`
+              }`}
+            >
+              <div className="nav-icon-container relative flex items-center justify-center w-6 h-6 shrink-0 transition-transform duration-200 bg-transparent">
+                <Icon className="w-5 h-5 transition-transform duration-200" />
+              </div>
+              <span className="nav-label tracking-tight transition-colors duration-200">
+                {label}
+              </span>
+            </button>
+          );
+        })}
       </nav>
 
       {/* User / Google Sync Section */}

@@ -131,8 +131,16 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
   return (
     <div
       id={`playlist-card-${cleanId}`}
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(playlist)}
-      className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${designConfig.cardBg} ${designConfig.cardHover} border border-transparent hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl ${className}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(playlist);
+        }
+      }}
+      className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${designConfig.cardBg} ${designConfig.cardHover} border border-transparent hover:${designConfig.accentBorder} p-3 flex flex-col shadow-sm hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-color,var(--primary))] ${className}`}
     >
       {/* Cover Art Container */}
       <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-neutral-900 shadow-inner flex items-center justify-center">
