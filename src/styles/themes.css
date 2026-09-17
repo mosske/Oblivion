@@ -2394,29 +2394,121 @@ canvas.animated-theme-bg,
    CRITICAL UI OVERHAUL: BOTTOM NAV ACTIVE ICON OUTLINE & SOFT NEON GLOW
    ================================================================================ */
 
-/* 1. REMOVE FILLED BACKGROUND BLOCK & SQUARE BOUNDING BOX ARTIFACTS */
+/* 1. REMOVE ANY BACKGROUND, BORDER, SHADOW, OR FILTER BOX ARTIFACTS */
 .nav-item-active,
 .tab-item-active,
 .tab-active,
 .bottom-nav-item.nav-item-active,
-.nav-icon-container,
-.nav-icon-aura {
-  background: transparent !important; /* Remove dark solid circle/block */
+.sidebar-nav-item.nav-item-active,
+.nav-icon-container {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
   box-shadow: none !important;
   filter: none !important;
+  -webkit-filter: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Remove box shadow/filters from SVG container to prevent rectangular bounding box shadows */
-.nav-item-active,
+/* Strictly ensure icon containers have no background or borders across all states */
+.bottom-nav-item .nav-icon-container,
+.sidebar-nav-item .nav-icon-container,
+.nav-item .nav-icon-container,
+.nav-icon-container {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* ================================================================================
+   INDEPENDENT RADIAL AURA ELEMENT (Clean background glow layer behind SVG icon)
+   ================================================================================ */
+.nav-icon-aura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--nav-glow-color, var(--nav-aura-color, #00f0ff)) 0%, transparent 70%);
+  filter: blur(8px);
+  -webkit-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 0;
+}
+
+.nav-item-active .nav-icon-aura,
+.tab-item-active .nav-icon-aura,
+.tab-active .nav-icon-aura {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+/* Neue Editorial Active Icon Aura with distinct visible contrast glow */
+[data-theme="neue-editorial"] .nav-icon-aura {
+  width: 32px !important;
+  height: 32px !important;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.16) 50%, transparent 72%) !important;
+  filter: blur(6px) !important;
+  -webkit-filter: blur(6px) !important;
+  display: block !important;
+}
+
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-active .nav-icon-aura {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
+/* Remove any box-shadow or filters from SVG containers to prevent rectangular bounding box shadows */
+.nav-item svg,
+.bottom-nav-item svg,
+.sidebar-nav-item svg,
 .nav-item-active svg,
 .tab-item-active svg,
 .tab-active svg {
   box-shadow: none !important;
   filter: none !important;
+  -webkit-filter: none !important;
   background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  overflow: visible !important; /* Prevents stroke clipping into a rectangular box */
 }
 
-/* 2. SWITCH FROM SOLID FILL TO OUTLINE SVG STROKES & INNER GLOW */
+/* Remove all drop-shadow and filter properties from inner SVG vector elements */
+.nav-item svg path,
+.nav-item svg circle,
+.nav-item svg polyline,
+.nav-item svg polygon,
+.nav-item svg rect,
+.nav-item svg line,
+.nav-item-active svg path,
+.nav-item-active svg circle,
+.nav-item-active svg polyline,
+.nav-item-active svg polygon,
+.nav-item-active svg rect,
+.nav-item-active svg line,
+.tab-item-active svg path,
+.tab-item-active svg circle,
+.tab-active svg path,
+.tab-active svg circle {
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* 2. CRISP OUTLINED ACTIVE ICONS (PURE VECTOR STROKES MATCHING THEME GLOW) */
 .nav-item-active svg,
 .nav-item-active svg path,
 .nav-item-active svg polygon,
@@ -2426,34 +2518,24 @@ canvas.animated-theme-bg,
 .tab-item-active svg,
 .tab-active svg {
   fill: none !important;
-  stroke: var(--accent-primary, #00f0ff) !important;
-  stroke-width: 2px;
-  transition: all 0.25s ease-in-out;
-}
-
-/* Target inner SVG elements for clean glow effects without rectangular bounding box */
-.nav-item-active svg path,
-.nav-item-active svg circle,
-.nav-item-active svg polyline,
-.nav-item-active svg polygon,
-.tab-item-active svg path,
-.tab-item-active svg circle,
-.tab-active svg path,
-.tab-active svg circle {
-  filter: drop-shadow(0 0 4px var(--accent-primary, #00f0ff));
+  stroke: var(--nav-active-stroke, var(--nav-glow-color, #00f0ff)) !important;
+  stroke-width: 2.2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  transition: stroke 0.25s ease-in-out;
 }
 
 /* ================================================================================
-   2. BRIGHT ACTIVE TEXT & SOFT AMBIENT GLOW
+   2. BRIGHT ACTIVE TEXT & MATCHING GLOW COLOR
    ================================================================================ */
 
 /* A. ACTIVE TEXT LABEL STYLING */
 .nav-item-active .nav-label,
 .tab-item-active .nav-label,
 .tab-active .nav-label {
-  color: #ffffff !important; /* Bright high-contrast white text */
+  color: var(--nav-active-text, #ffffff) !important;
   font-weight: 600;
-  text-shadow: 0 0 8px var(--accent-primary, #00f0ff);
+  text-shadow: 0 0 8px var(--nav-glow-color, #00f0ff), 0 0 16px var(--nav-glow-color, #00f0ff);
   transition: all 0.25s ease-in-out;
 }
 
@@ -2506,8 +2588,12 @@ canvas.animated-theme-bg,
   fill: none !important;
   stroke: var(--nav-inactive-stroke, rgba(255, 255, 255, 0.75)) !important;
   stroke-width: 1.8px;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
   opacity: 1 !important; /* Remove low-opacity washouts */
-  filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.25)); /* Soft contrast lift */
+  filter: none !important; /* Strictly no drop-shadow to prevent box artifacts */
+  -webkit-filter: none !important;
+  box-shadow: none !important;
   transition: stroke 0.25s ease, transform 0.2s ease;
 }
 
@@ -2554,7 +2640,7 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 }
 
 /* ================================================================================
-   3. THEME-SPECIFIC NAVIGATION OVERRIDES
+   3. THEME-SPECIFIC NAVIGATION OVERRIDES (MATCHING TEXT GLOW AND ICON AURA)
    ================================================================================ */
 
 /* A. CYBERPUNK NEON GLASS */
@@ -2565,13 +2651,19 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="cyberpunk-neon"] .tab-active svg path,
 [data-theme="cyberpunk-neon"] .tab-active svg circle {
   stroke: #00f0ff !important;
-  filter: drop-shadow(0 0 4px #00f0ff) drop-shadow(0 0 8px #ff007f) !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="cyberpunk-neon"] .nav-icon-aura {
+  background: radial-gradient(circle, #00f0ff 0%, transparent 70%) !important;
 }
 [data-theme="cyberpunk-neon"] .nav-item-active .nav-label {
-  text-shadow: 0 0 8px #00f0ff;
+  color: #ffffff !important;
+  text-shadow: 0 0 8px #00f0ff, 0 0 16px #00f0ff !important;
 }
 
-/* B. EMERALD WILDERNESS */
+/* B. EMERALD WILDERNESS & DYNAMIC EMERALD */
 [data-theme="emerald-wilderness"] .nav-item-active svg path,
 [data-theme="emerald-wilderness"] .nav-item-active svg circle,
 [data-theme="emerald-wilderness"] .nav-item-active svg polyline,
@@ -2580,14 +2672,21 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="dynamic-emerald"] .nav-item-active svg path,
 [data-theme="dynamic-emerald"] .tab-active svg path {
   stroke: #10b981 !important;
-  filter: drop-shadow(0 0 4px #10b981) drop-shadow(0 0 8px #047857) !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="emerald-wilderness"] .nav-icon-aura,
+[data-theme="dynamic-emerald"] .nav-icon-aura {
+  background: radial-gradient(circle, #10b981 0%, transparent 70%) !important;
 }
 [data-theme="emerald-wilderness"] .nav-item-active .nav-label,
 [data-theme="dynamic-emerald"] .nav-item-active .nav-label {
-  text-shadow: 0 0 8px #10b981;
+  color: #ffffff !important;
+  text-shadow: 0 0 8px #10b981, 0 0 16px #10b981 !important;
 }
 
-/* C. STUDIO HOMME MOSAIQUE */
+/* C. STUDIO HOMME MOSAIQUE & AUDIOPHILE GOLD */
 [data-theme="studio-homme-mosaique"] .nav-item-active svg path,
 [data-theme="studio-homme-mosaique"] .nav-item-active svg circle,
 [data-theme="studio-homme-mosaique"] .nav-item-active svg polyline,
@@ -2596,46 +2695,87 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="audiophile-gold"] .nav-item-active svg path,
 [data-theme="audiophile-gold"] .tab-active svg path {
   stroke: #f59e0b !important;
-  filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 0 8px #d97706) !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="studio-homme-mosaique"] .nav-icon-aura,
+[data-theme="audiophile-gold"] .nav-icon-aura {
+  background: radial-gradient(circle, #f59e0b 0%, transparent 70%) !important;
 }
 [data-theme="studio-homme-mosaique"] .nav-item-active .nav-label,
 [data-theme="audiophile-gold"] .nav-item-active .nav-label {
-  text-shadow: 0 0 8px #f59e0b;
+  color: #ffffff !important;
+  text-shadow: 0 0 8px #f59e0b, 0 0 16px #f59e0b !important;
 }
 
 /* D. NEUE EDITORIAL */
+[data-theme="neue-editorial"] .nav-item-active svg,
 [data-theme="neue-editorial"] .nav-item-active svg path,
 [data-theme="neue-editorial"] .nav-item-active svg circle,
 [data-theme="neue-editorial"] .nav-item-active svg polyline,
 [data-theme="neue-editorial"] .nav-item-active svg polygon,
 [data-theme="neue-editorial"] .tab-active svg path {
-  stroke: #0a0a0a !important; /* Pitch charcoal outline for maximum contrast on pale beige */
-  stroke-width: 2.2px !important;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.45)) !important;
+  stroke: #000000 !important;
+  stroke-width: 2.6px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
   transition: all 0.25s ease-in-out;
 }
+[data-theme="neue-editorial"] .nav-icon-aura {
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.16) 50%, transparent 72%) !important;
+  filter: blur(6px) !important;
+  -webkit-filter: blur(6px) !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: block !important;
+}
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-active .nav-icon-aura {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1.18) !important;
+}
 [data-theme="neue-editorial"] .nav-item-active .nav-label {
-  color: #0a0a0a !important;
+  color: #000000 !important;
   font-weight: 800 !important;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2) !important;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 0, 0, 0.25) !important;
+}
+[data-theme="neue-editorial"] .nav-item:not(.nav-item-active) svg,
+[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active) svg {
+  stroke: #78716c !important;
+  opacity: 0.55 !important;
+  stroke-width: 1.8px !important;
+}
+[data-theme="neue-editorial"] .nav-item:not(.nav-item-active) .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active) .nav-label {
+  color: #78716c !important;
+  opacity: 0.60 !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
 }
 
 /* E. CANDYLAND PASTEL */
-[data-theme="candyland-pastel"] .nav-item-active .nav-label,
-[data-theme="candyland"] .nav-item-active .nav-label {
-  color: #1e293b !important; /* Matches inactive dark slate text */
-  text-shadow: none !important; /* Removes washing-out white glow from text */
-  font-weight: 700;
-}
-
 [data-theme="candyland-pastel"] .nav-item-active svg path,
 [data-theme="candyland-pastel"] .nav-item-active svg circle,
 [data-theme="candyland-pastel"] .nav-item-active svg polyline,
 [data-theme="candyland-pastel"] .nav-item-active svg polygon,
 [data-theme="candyland"] .nav-item-active svg path,
 [data-theme="candyland"] .nav-item-active svg circle {
-  stroke: #ff2a8d !important; /* Vivid pink active outline */
-  filter: drop-shadow(0 0 4px rgba(255, 42, 141, 0.45)) !important; /* Vibrant soft glow */
+  stroke: #ff2a8d !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="candyland-pastel"] .nav-icon-aura,
+[data-theme="candyland"] .nav-icon-aura {
+  background: radial-gradient(circle, rgba(255, 42, 141, 0.75) 0%, transparent 70%) !important;
+}
+[data-theme="candyland-pastel"] .nav-item-active .nav-label,
+[data-theme="candyland"] .nav-item-active .nav-label {
+  color: #ff2a8d !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 8px rgba(255, 42, 141, 0.8), 0 0 16px rgba(255, 42, 141, 0.45) !important;
 }
 
 /* F. BESPOKE */
@@ -2647,11 +2787,13 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="bespoke"] .tab-active svg circle {
   stroke: var(--bespoke-c2, #00f0ff) !important;
   stroke-width: 2.2px !important;
-  filter: drop-shadow(0 0 4px var(--bespoke-c2, #00f0ff))
-          drop-shadow(0 0 8px var(--bespoke-c3, var(--bespoke-c4, #ff007f))) !important;
+  filter: none !important;
+  -webkit-filter: none !important;
   transition: all 0.25s ease-in-out;
 }
-
+[data-theme="bespoke"] .nav-icon-aura {
+  background: radial-gradient(circle, var(--bespoke-c2, #00f0ff) 0%, transparent 70%) !important;
+}
 [data-theme="bespoke"] .nav-item-active .nav-label {
   color: #ffffff !important;
   font-weight: 700 !important;
@@ -2672,14 +2814,18 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 :not([data-theme="neue-editorial"]) [data-nav="explore"].nav-item-active svg path,
 :not([data-theme="neue-editorial"]) [data-nav="explore"].nav-item-active svg circle {
   fill: #000000 !important;
-  stroke: var(--accent-primary, #00f0ff) !important;
+  stroke: var(--nav-active-stroke, var(--nav-glow-color, #00f0ff)) !important;
   stroke-width: 2px;
-  filter: drop-shadow(0 0 6px var(--accent-primary, #00f0ff));
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 [data-theme="neue-editorial"] [data-nav="explore"].nav-item-active svg {
   fill: none !important;
-  stroke: #1f1f1f !important;
+  stroke: #000000 !important;
+  stroke-width: 2.6px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 /* ================================================================================
@@ -2721,28 +2867,30 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 
 /* Light themes: Neue Editorial, Candyland, Designer Ivory */
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active {
-  background: rgba(0, 0, 0, 0.07) !important;
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  background: rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(0, 0, 0, 0.16) !important;
 }
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-label {
-  color: #0a0a0a !important;
+  color: #000000 !important;
   font-weight: 800 !important;
-  text-shadow: none !important;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.45) !important;
 }
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive .nav-label,
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive {
-  color: #1e293b !important;
+  color: #78716c !important;
   font-weight: 600 !important;
 }
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive:hover {
   background: rgba(0, 0, 0, 0.04) !important;
-  color: #0a0a0a !important;
+  color: #000000 !important;
 }
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive svg {
-  stroke: #1e293b !important;
+  stroke: #78716c !important;
+  opacity: 0.6 !important;
 }
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive:hover svg {
-  stroke: #0a0a0a !important;
+  stroke: #000000 !important;
+  opacity: 1 !important;
 }
 
 [data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-active,

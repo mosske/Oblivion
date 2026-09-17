@@ -44,14 +44,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             aria-selected={isActive}
             aria-label={label}
             onClick={() => setActiveTab(tab)}
-            className={`bottom-nav-item nav-item relative flex flex-col items-center justify-center gap-0.5 w-16 py-1 cursor-pointer transition-all duration-250 select-none bg-transparent ${
+            className={`bottom-nav-item nav-item relative flex flex-col items-center justify-center gap-0.5 w-16 py-1 cursor-pointer transition-all duration-200 select-none bg-transparent border-0 outline-none shadow-none ${
               isActive ? "nav-item-active tab-item-active tab-active" : "nav-item-inactive"
             }`}
           >
-            <div className="nav-icon-container relative z-10 flex items-center justify-center w-8 h-8 rounded-full transition-all duration-250 bg-transparent">
-              <Icon className="w-5 h-5 transition-transform duration-250" />
+            <div className="nav-icon-container relative z-10 flex items-center justify-center w-7 h-7 bg-transparent border-0 outline-none shadow-none transition-transform duration-200">
+              <span className="nav-icon-aura z-0" aria-hidden="true" />
+              <Icon className="relative z-10 w-5 h-5 transition-transform duration-200 shrink-0 overflow-visible" />
             </div>
-            <span className="nav-label relative z-10 text-[11px] font-medium leading-none tracking-tight transition-all duration-250">
+            <span className="nav-label relative z-10 text-[11px] font-medium leading-none tracking-tight transition-colors duration-200">
               {label}
             </span>
           </button>

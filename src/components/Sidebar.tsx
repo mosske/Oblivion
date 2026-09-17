@@ -111,14 +111,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               aria-selected={isActive}
               aria-label={label}
               onClick={() => setActiveTab(tab)}
-              className={`sidebar-nav-item nav-item w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 select-none cursor-pointer ${
+              className={`sidebar-nav-item nav-item w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 select-none cursor-pointer border-0 outline-none ${
                 isActive
                   ? `nav-item-active tab-item-active tab-active ${designConfig.navActive}`
                   : `nav-item-inactive ${designConfig.navInactive}`
               }`}
             >
-              <div className="nav-icon-container relative flex items-center justify-center w-6 h-6 shrink-0 transition-transform duration-200 bg-transparent">
-                <Icon className="w-5 h-5 transition-transform duration-200" />
+              <div className="nav-icon-container relative flex items-center justify-center w-6 h-6 shrink-0 transition-transform duration-200 bg-transparent border-0 outline-none shadow-none">
+                <span className="nav-icon-aura z-0" aria-hidden="true" />
+                <Icon className="relative z-10 w-5 h-5 transition-transform duration-200 overflow-visible shrink-0" />
               </div>
               <span className="nav-label tracking-tight transition-colors duration-200">
                 {label}
