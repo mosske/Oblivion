@@ -2919,39 +2919,70 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 /* ================================================================================
    8. BESPOKE GRADIENT ARCHITECTURE (Playlist, Album, Genre Views)
    ================================================================================ */
+
+/* 1. DYNAMIC FULL-PAGE CANVAS FROM 4 SELECTED COLORS */
+[data-theme="bespoke"],
+[data-theme="bespoke"] body,
+[data-theme="bespoke"] .page-container,
+[data-theme="bespoke"] .playlist-view-container,
+[data-theme="bespoke"] .playlist-detail-view,
+[data-theme="bespoke"] .album-detail-view,
+[data-theme="bespoke"] .genre-detail-view {
+  background: linear-gradient(
+    160deg,
+    var(--bespoke-c1) 0%,
+    var(--bespoke-c2) 35%,
+    var(--bespoke-c3) 70%,
+    var(--bespoke-c4) 100%
+  ) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+}
+
+/* 2. PALETTIZED LUMINOUS CONTAINER CARDS */
 [data-theme="bespoke"] .playlist-header-card,
 [data-theme="bespoke"] .album-header-card,
 [data-theme="bespoke"] .genre-header-card,
 [data-theme="bespoke"] .view-action-bar {
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--bespoke-c1, #10b981) 22%, #060e1a 78%),
-    color-mix(in srgb, var(--bespoke-c2, #00f0ff) 15%, #0b1329 85%)
+    color-mix(in srgb, var(--bespoke-c1) 80%, white 20%),
+    color-mix(in srgb, var(--bespoke-c2) 75%, white 25%)
   ) !important;
-  border: 1px solid color-mix(in srgb, var(--bespoke-c2, #00f0ff) 30%, transparent) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1.5px solid color-mix(in srgb, var(--bespoke-c2) 60%, white 40%) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
+/* 3. DYNAMICALLY TINTED TRACK ROWS */
 [data-theme="bespoke"] .track-row-item {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--bespoke-c1, #10b981) 12%, #09111e 88%),
-    color-mix(in srgb, var(--bespoke-c3, #8b5cf6) 10%, #0d1726 90%)
-  ) !important;
-  border: 1px solid color-mix(in srgb, var(--bespoke-c2, #00f0ff) 15%, transparent) !important;
+  background: color-mix(in srgb, var(--bespoke-c1) 85%, white 15%) !important;
+  border: 1px solid color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
 }
 
 [data-theme="bespoke"] .track-row-item:hover {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--bespoke-c2, #00f0ff) 25%, #09111e 75%),
-    color-mix(in srgb, var(--bespoke-c4, #3b82f6) 20%, #0d1726 80%)
-  ) !important;
+  background: color-mix(in srgb, var(--bespoke-c2) 70%, white 30%) !important;
+  border-color: var(--bespoke-c2) !important;
+}
+
+/* 4. ADAPTIVE TEXT CONTRAST (LIGHT VS. DARK PALETTES) */
+[data-theme="bespoke"] .playlist-header-card h1,
+[data-theme="bespoke"] .playlist-header-card p,
+[data-theme="bespoke"] .playlist-header-card span,
+[data-theme="bespoke"] .album-header-card h1,
+[data-theme="bespoke"] .album-header-card p,
+[data-theme="bespoke"] .album-header-card span,
+[data-theme="bespoke"] .genre-header-card h1,
+[data-theme="bespoke"] .genre-header-card p,
+[data-theme="bespoke"] .genre-header-card span,
+[data-theme="bespoke"] .track-row-item .track-title,
+[data-theme="bespoke"] .track-row-item .artist-name,
+[data-theme="bespoke"] .track-row-item .track-duration {
+  color: var(--bespoke-text-color, #0f172a) !important;
 }
 
 [data-theme="bespoke"] .btn-primary-action {
-  background: linear-gradient(135deg, var(--bespoke-c2, #00f0ff), var(--bespoke-c3, #8b5cf6)) !important;
-  color: #0b0b0e !important;
+  background: linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3)) !important;
+  color: var(--bespoke-text-on-accent, var(--text-on-accent, #ffffff)) !important;
   font-weight: 700;
 }
 

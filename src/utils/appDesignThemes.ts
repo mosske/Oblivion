@@ -807,7 +807,7 @@ export function createBespokeConfig(customColors?: string[]): FullAppDesignConfi
     swatchColors: [c1, c2, c3, c4],
     themeColorMeta: c1,
     multiAccentGradient: `from-[${c1}] to-[${c2}]`,
-    bgCanvas: `from-[${c1}] via-[#150a2e] to-[#070312]`,
+    bgCanvas: `from-[${c1}] via-[${c2}] to-[${c3}]`,
     accentBg: `bg-gradient-to-r from-[var(--bespoke-c1,${c1})] to-[var(--bespoke-c2,${c2})]`,
     pillActive: `pill-selected bg-gradient-to-r from-[var(--bespoke-c1,${c1})] to-[var(--bespoke-c2,${c2})] text-[var(--text-on-accent,#ffffff)] font-black shadow-lg border-t border-white/50 border-b border-black/40`,
     btnPrimary: `btn-signin button-primary bg-gradient-to-r from-[var(--bespoke-c1,${c1})] to-[var(--bespoke-c2,${c2})] hover:brightness-115 text-[var(--text-on-accent,#ffffff)] font-black shadow-lg border-t border-white/50 border-b border-black/35 active:translate-y-0.5 transition-all`,

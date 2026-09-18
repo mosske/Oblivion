@@ -512,18 +512,18 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         willChange: dragOffsetY > 0 ? "transform" : undefined,
         opacity: isBespoke ? 1 : (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1),
         transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
-        ...(isBespoke ? { backgroundColor: "var(--bespoke-c1, #0a0d1a)", backgroundImage: "linear-gradient(180deg, var(--bespoke-c1, #0a0d1a) 0%, #0d0a1c 35%, #06040d 100%)", opacity: 1 } : {}),
+        ...(isBespoke ? { opacity: 1 } : {}),
       }}
-      className={`playlist-detail-view ${effectiveIsAlbum ? "album-detail-view" : "playlist-view"} ${isBespoke ? "theme-bespoke-solid-view" : ""} flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52`}
+      className={`playlist-view-container playlist-detail-view ${effectiveIsAlbum ? "album-detail-view" : "playlist-view"} ${isBespoke ? "theme-bespoke-solid-view" : ""} flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52`}
     >
       {/* Top Sticky Header with Close (X) / Reorder Controls - Fixed directly below main header */}
       <div
         className={`playlist-action-toolbar sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
           isBespoke
-            ? "bg-[var(--bespoke-c1,#0a0d1a)] border-b border-white/15 shadow-md"
+            ? "border-b border-white/15 shadow-md"
             : `backdrop-blur-2xl ${designConfig.headerBg || "bg-[#141216]/85 backdrop-blur-2xl"} border-b ${designConfig.borderSubtle} shadow-sm`
         } transition-all`}
-        style={isBespoke ? { backgroundColor: "var(--bespoke-c1, #0a0d1a)", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+        style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
       >
         <div className="max-w-6xl mx-auto w-full flex flex-col">
           {/* Subtle pull handle for mobile gesture indicator (only when not reordering) */}
@@ -608,9 +608,9 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                     onChange={(e) => setInViewSearch(e.target.value)}
                     placeholder={canReorder ? "Search playlist songs..." : "Search album tracks..."}
                     className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${
-                      isBespoke ? "bg-[#0c0918] border-white/15 text-white" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary}`
+                      isBespoke ? "bg-white/10 border border-white/20 text-[var(--bespoke-text-color,#0f172a)]" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary}`
                     } placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
-                    style={isBespoke ? { backgroundColor: "#0c0918", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+                    style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
                   />
                   {inViewSearch && (
                     <button

@@ -607,9 +607,9 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
               ...(isBespoke
                 ? {
                     backgroundColor: isLifted
-                      ? "#0a0718"
+                      ? "color-mix(in srgb, var(--bespoke-c1) 70%, white 30%)"
                       : isTarget
-                      ? "#1e163b"
+                      ? "color-mix(in srgb, var(--bespoke-c2) 50%, white 50%)"
                       : undefined,
                     backdropFilter: "none",
                     WebkitBackdropFilter: "none",
@@ -694,7 +694,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
               <div className="flex-1 min-w-0">
                 <MarqueeText
                   text={cleanTrackTitle(track.title, track.artist)}
-                  className={`text-xs sm:text-sm font-semibold ${
+                  className={`track-title text-xs sm:text-sm font-semibold ${
                     isCurrent ? designConfig.accentText : designConfig.textPrimary
                   } group-hover:${designConfig.accentText} transition-colors`}
                   containerClassName="w-full"
@@ -702,7 +702,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                 />
                 <MarqueeText
                   text={track.artist || (isAlbum ? (item as Album).artist : "Unknown Artist")}
-                  className={`text-[11px] sm:text-xs ${designConfig.textMuted}`}
+                  className={`artist-name text-[11px] sm:text-xs ${designConfig.textMuted}`}
                   containerClassName="w-full"
                   speed={26}
                 />
@@ -711,7 +711,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
 
             {/* Right Controls: Duration, Move Arrows, Lift Handle, Add/Remove */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <span className={`text-[11px] sm:text-xs font-mono ${designConfig.textMuted}`}>
+              <span className={`track-duration text-[11px] sm:text-xs font-mono ${designConfig.textMuted}`}>
                 {track.duration && track.duration > 0
                   ? `${Math.floor(track.duration / 60)}:${String(Math.floor(track.duration % 60)).padStart(2, "0")}`
                   : "--:--"}

@@ -139,6 +139,16 @@ export function applyBespokeCssVariables(
   // Additional helper variables
   document.documentElement.style.setProperty('--accent-contrast-text', textOnAccent);
 
+  // Calculate card/container luminance (mixing c1 80% and white 20%) to adaptively choose dark slate (#0f172a) vs light (#f8fafc)
+  const hex1 = (c1 || '#0A0D1A').replace('#', '');
+  const r1 = ((parseInt(hex1.substring(0, 2), 16) || 0) / 255) * 0.8 + 0.2;
+  const g1 = ((parseInt(hex1.substring(2, 4), 16) || 0) / 255) * 0.8 + 0.2;
+  const b1 = ((parseInt(hex1.substring(4, 6), 16) || 0) / 255) * 0.8 + 0.2;
+  const cardLum = 0.2126 * r1 + 0.7152 * g1 + 0.0722 * b1;
+  const bespokeTextColor = cardLum > 0.45 ? '#0f172a' : '#f8fafc';
+  document.documentElement.style.setProperty('--bespoke-text-color', bespokeTextColor);
+  document.documentElement.style.setProperty('--bespoke-text-on-accent', calculateWcagText(c2));
+
   return {
     ...bespokeConfig,
     textOnAccent,

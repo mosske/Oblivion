@@ -206,11 +206,9 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
         opacity: isBespoke ? 1 : (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1),
         transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
         background: isBespoke
-          ? "var(--bespoke-c1, #0a0d1a)"
+          ? undefined
           : "var(--bg-surface-elevated, var(--bg-primary, rgba(18, 16, 22, 0.95)))",
-        backgroundImage: isBespoke
-          ? "linear-gradient(180deg, var(--bespoke-c1, #0a0d1a) 0%, #0d0a1c 35%, #06040d 100%)"
-          : undefined,
+        backgroundImage: undefined,
         color: "var(--text-primary, #ffffff)",
         borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
         backdropFilter: isBespoke ? "none" : "blur(24px)",
@@ -220,14 +218,14 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
     >
       {/* Sticky Action Toolbar */}
       <div
-        className={`sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
+        className={`sticky-action-toolbar sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
           isBespoke
-            ? "bg-[var(--bespoke-c1,#0a0d1a)] border-b border-white/15 shadow-md"
+            ? "border-b border-white/15 shadow-md"
             : `backdrop-blur-2xl ${designConfig.headerBg || "bg-[#141216]/85"} border-b ${designConfig.borderSubtle} shadow-sm`
         } transition-all`}
         style={{
           borderBottomColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
-          ...(isBespoke ? { backgroundColor: "var(--bespoke-c1, #0a0d1a)", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
+          ...(isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
         }}
       >
         <div className="max-w-6xl mx-auto w-full flex flex-col">
@@ -243,9 +241,8 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                 aria-label="Close genre view"
                 className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0 border ${designConfig.borderSubtle}`}
                 style={{
-                  color: "var(--text-primary, #ffffff)",
+                  color: isBespoke ? "var(--bespoke-text-color, #0f172a)" : "var(--text-primary, #ffffff)",
                   borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
-                  ...(isBespoke ? { backgroundColor: "#151128" } : {}),
                 }}
                 title="Close and return (or swipe down)"
               >
@@ -265,12 +262,12 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                   className={`w-full pl-8 sm:pl-10 ${
                     searchTerm ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"
                   } py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${
-                    isBespoke ? "bg-[#0c0918] border-white/15 text-white" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary}`
+                    isBespoke ? "bg-white/10 border border-white/20 text-[var(--bespoke-text-color,#0f172a)]" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary}`
                   } placeholder:text-slate-400 focus:outline-none shadow-sm transition-all`}
                   style={{
                     borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
-                    color: "var(--text-primary, #ffffff)",
-                    ...(isBespoke ? { backgroundColor: "#0c0918", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
+                    color: isBespoke ? "var(--bespoke-text-color, #0f172a)" : "var(--text-primary, #ffffff)",
+                    ...(isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
                   }}
                 />
                 {searchTerm && (
@@ -294,7 +291,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                 onClick={handleRefresh}
                 disabled={isRefreshing || loading}
                 className={`p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle}`}
-                style={isBespoke ? { backgroundColor: "#151128", borderColor: "rgba(255, 255, 255, 0.15)" } : undefined}
+                style={isBespoke ? { borderColor: "rgba(255, 255, 255, 0.15)" } : undefined}
                 title="Refresh tracks"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || loading ? "animate-spin" : ""}`} />
@@ -559,13 +556,13 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                       <div className="flex-1 min-w-0 pr-2">
                         <MarqueeText
                           text={cleanTrackTitle(track.title, track.artist)}
-                          className={`text-xs sm:text-sm font-semibold transition-colors`}
+                          className={`track-title text-xs sm:text-sm font-semibold transition-colors`}
                           containerClassName="w-full"
                           speed={28}
                         />
                         <MarqueeText
                           text={track.artist || "Unknown Artist"}
-                          className={`text-[11px]`}
+                          className={`artist-name text-[11px]`}
                           containerClassName="w-full mt-0.5"
                           speed={24}
                         />
@@ -574,7 +571,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
 
                     {/* Right side: Duration */}
                     <span
-                      className="text-xs font-mono font-medium shrink-0 ml-3"
+                      className="track-duration text-xs font-mono font-medium shrink-0 ml-3"
                       style={{ color: "var(--text-muted, #94a3b8)" }}
                     >
                       {formatDuration(track.duration)}
