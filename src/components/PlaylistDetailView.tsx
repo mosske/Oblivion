@@ -651,10 +651,10 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         <div
           className={`relative overflow-hidden rounded-3xl ${
             isBespoke
-              ? "bg-[#110e20] border border-white/20 shadow-2xl"
+              ? `${effectiveIsAlbum ? "album-header-card playlist-header-card" : "playlist-header-card"}`
               : `${designConfig.cardBg} border ${designConfig.accentBorder} shadow-2xl`
           } p-6 sm:p-8 transition-all`}
-          style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+          style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
         >
           {!isBespoke && (
             <div className="absolute top-0 right-0 w-96 h-96 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[#c89b3c]/40 via-cyan-500/20 to-transparent blur-3xl"></div>
@@ -732,18 +732,18 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
         {/* Action Controls Bar */}
         <div
-          className={`flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl ${
+          className={`view-action-bar flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl ${
             isBespoke
-              ? "bg-[#110e20] border border-white/15 shadow-lg"
+              ? ""
               : `${designConfig.cardBg} border ${designConfig.borderSubtle} shadow-lg`
           }`}
-          style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+          style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
         >
           {/* Left Action Buttons: Play All, Shuffle, Repeat, Reorder */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => onPlayQueue(tracks, 0)}
-              className={`px-5 py-2.5 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95`}
+              className={`btn-primary-action px-5 py-2.5 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95`}
             >
               <Play className="w-4 h-4 fill-current" />
               <span>Play All</span>
@@ -781,7 +781,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             {!effectiveIsAlbum && onEditPlaylist && (
               <button
                 onClick={() => onEditPlaylist(item as Playlist)}
-                className={`flex items-center gap-1.5 px-3 py-2 ${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} rounded-xl border border-transparent transition-colors text-xs font-semibold`}
+                className={`btn-primary-action flex items-center gap-1.5 px-3 py-2 ${isBespoke ? "" : designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} rounded-xl border border-transparent transition-colors text-xs font-semibold`}
                 title="Edit Playlist Details"
               >
                 <Edit className="w-3.5 h-3.5" />
@@ -818,10 +818,10 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             <div
               className={`p-16 text-center rounded-2xl ${
                 isBespoke
-                  ? "bg-[#110e20] border border-white/15"
+                  ? "playlist-header-card border border-white/15"
                   : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
               } space-y-3 animate-fade-in`}
-              style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+              style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
             >
               <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} text-[var(--accent-color,var(--primary))] animate-spin`} stroke="currentColor" />
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
@@ -833,10 +833,10 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             <div
               className={`p-12 text-center rounded-2xl ${
                 isBespoke
-                  ? "bg-[#110e20] border border-white/15"
+                  ? "playlist-header-card border border-white/15"
                   : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
               }`}
-              style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+              style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
             >
               <Music2 className={`w-12 h-12 mx-auto mb-3 ${designConfig.textMuted}`} />
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>This collection has no songs yet.</p>
@@ -846,10 +846,10 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             <div
               className={`p-12 text-center rounded-2xl ${
                 isBespoke
-                  ? "bg-[#110e20] border border-white/15"
+                  ? "playlist-header-card border border-white/15"
                   : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
               } space-y-2`}
-              style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+              style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
             >
               <Search className={`w-8 h-8 mx-auto ${designConfig.textMuted}`} />
               <p className={`text-sm font-bold ${designConfig.textPrimary}`}>No matching tracks found</p>

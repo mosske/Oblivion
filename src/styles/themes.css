@@ -2916,8 +2916,44 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   stroke: #3b1235 !important;
 }
 
+/* ================================================================================
+   8. BESPOKE GRADIENT ARCHITECTURE (Playlist, Album, Genre Views)
+   ================================================================================ */
+[data-theme="bespoke"] .playlist-header-card,
+[data-theme="bespoke"] .album-header-card,
+[data-theme="bespoke"] .genre-header-card,
+[data-theme="bespoke"] .view-action-bar {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--bespoke-c1, #10b981) 22%, #060e1a 78%),
+    color-mix(in srgb, var(--bespoke-c2, #00f0ff) 15%, #0b1329 85%)
+  ) !important;
+  border: 1px solid color-mix(in srgb, var(--bespoke-c2, #00f0ff) 30%, transparent) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
 
+[data-theme="bespoke"] .track-row-item {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--bespoke-c1, #10b981) 12%, #09111e 88%),
+    color-mix(in srgb, var(--bespoke-c3, #8b5cf6) 10%, #0d1726 90%)
+  ) !important;
+  border: 1px solid color-mix(in srgb, var(--bespoke-c2, #00f0ff) 15%, transparent) !important;
+}
 
+[data-theme="bespoke"] .track-row-item:hover {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--bespoke-c2, #00f0ff) 25%, #09111e 75%),
+    color-mix(in srgb, var(--bespoke-c4, #3b82f6) 20%, #0d1726 80%)
+  ) !important;
+}
+
+[data-theme="bespoke"] .btn-primary-action {
+  background: linear-gradient(135deg, var(--bespoke-c2, #00f0ff), var(--bespoke-c3, #8b5cf6)) !important;
+  color: #0b0b0e !important;
+  font-weight: 700;
+}
 
 
 

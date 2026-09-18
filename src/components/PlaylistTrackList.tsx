@@ -610,15 +610,13 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                       ? "#0a0718"
                       : isTarget
                       ? "#1e163b"
-                      : isCurrent
-                      ? "#1a1433"
-                      : "#110e20",
+                      : undefined,
                     backdropFilter: "none",
                     WebkitBackdropFilter: "none",
                   }
                 : {}),
             }}
-            className={`group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all select-none border ${
+            className={`track-row-item group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all select-none border ${
               isLifted
                 ? `opacity-20 scale-[0.98] border-2 border-dashed ${designConfig.accentBorder} bg-black/40 shadow-inner`
                 : isTarget
@@ -626,7 +624,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                 : isBespoke
                 ? isCurrent
                   ? "ring-1.5 border-[var(--bespoke-c2,#ff007f)] shadow-md"
-                  : "border-white/10 hover:border-white/20 hover:bg-[#18132d]"
+                  : ""
                 : isCurrent
                 ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
                 : `${designConfig.cardBg} ${designConfig.cardHover} ${designConfig.borderSubtle}`

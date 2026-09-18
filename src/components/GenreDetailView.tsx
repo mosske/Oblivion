@@ -311,12 +311,12 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
         <div
           className={`relative overflow-hidden rounded-3xl ${
             isBespoke
-              ? "bg-[#110e20] border border-white/20 shadow-2xl"
+              ? "genre-header-card"
               : `${designConfig.cardBg} border ${designConfig.accentBorder} shadow-2xl`
           } p-6 sm:p-8 transition-all`}
           style={{
-            borderColor: isBespoke ? "rgba(255, 255, 255, 0.2)" : "var(--accent-border, rgba(223, 184, 108, 0.45))",
-            ...(isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
+            borderColor: isBespoke ? undefined : "var(--accent-border, rgba(223, 184, 108, 0.45))",
+            ...(isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
           }}
         >
           {!isBespoke && (
@@ -393,10 +393,10 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                   id="genre-play-all-btn"
                   onClick={() => tracks.length > 0 && onPlayQueue(tracks, 0)}
                   disabled={tracks.length === 0}
-                  className={`px-6 sm:px-8 py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2.5 shadow-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50`}
+                  className={`btn-primary-action px-6 sm:px-8 py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2.5 shadow-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50`}
                   style={{
-                    background: "var(--accent-gradient, var(--accent-primary, #dfb86c))",
-                    color: "var(--text-on-accent, #120f14)",
+                    background: isBespoke ? undefined : "var(--accent-gradient, var(--accent-primary, #dfb86c))",
+                    color: isBespoke ? undefined : "var(--text-on-accent, #120f14)",
                   }}
                 >
                   <Play className="w-4 h-4 fill-current" />
@@ -441,12 +441,12 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
             <div
               className={`p-16 text-center rounded-3xl ${
                 isBespoke
-                  ? "bg-[#110e20] border border-white/15"
+                  ? "genre-header-card"
                   : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
               } space-y-3`}
               style={{
-                borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
-                ...(isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
+                borderColor: isBespoke ? undefined : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                ...(isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
               }}
             >
               <Loader2 className="w-7 h-7 mx-auto animate-spin" style={{ color: "var(--accent-primary, #dfb86c)" }} />
@@ -458,12 +458,12 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
             <div
               className={`p-16 text-center rounded-3xl ${
                 isBespoke
-                  ? "bg-[#110e20] border border-white/15"
+                  ? "genre-header-card"
                   : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
               } space-y-2`}
               style={{
-                borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
-                ...(isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
+                borderColor: isBespoke ? undefined : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                ...(isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
               }}
             >
               <p className="text-sm font-semibold" style={{ color: "var(--text-primary, #ffffff)" }}>
@@ -490,11 +490,11 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                     data-track-id={track.id}
                     data-youtube-id={track.youtubeVideoId}
                     onClick={() => onPlayQueue(filteredTracks, idx)}
-                    className={`group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl cursor-pointer transition-all ${
+                    className={`track-row-item group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl cursor-pointer transition-all ${
                       isBespoke
                         ? isCurrent
-                          ? "bg-[#1a1433] ring-1.5 border-[var(--bespoke-c2,#ff007f)] shadow-md"
-                          : "bg-[#110e20] hover:bg-[#18132d] border border-white/10 hover:border-white/20"
+                          ? "ring-1.5 border-[var(--bespoke-c2,#ff007f)] shadow-md"
+                          : ""
                         : isCurrent
                         ? `${designConfig.cardBg} shadow-md`
                         : `${designConfig.cardBg} ${designConfig.cardHover}`
@@ -502,7 +502,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                     style={{
                       borderColor: isCurrent
                         ? (isBespoke ? "var(--bespoke-c2, #ff007f)" : "var(--accent-primary, #dfb86c)")
-                        : (isBespoke ? "rgba(255, 255, 255, 0.1)" : "transparent"),
+                        : (isBespoke ? undefined : "transparent"),
                       ...(isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
                     }}
                   >
