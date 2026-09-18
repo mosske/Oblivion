@@ -83,6 +83,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
   };
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as any });
     setLoading(true);
     loadTracks();
   }, [genre.id, genre.query]);
@@ -218,7 +219,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
     >
       {/* Sticky Action Toolbar */}
       <div
-        className={`sticky-action-toolbar sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
+        className={`view-action-bar playlist-top-bar sticky-action-toolbar sticky top-14 sm:top-16 z-50 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
           isBespoke
             ? "border-b border-white/15 shadow-md"
             : `backdrop-blur-2xl ${designConfig.headerBg || "bg-[#141216]/85"} border-b ${designConfig.borderSubtle} shadow-sm`

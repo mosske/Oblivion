@@ -139,11 +139,12 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
   // Deactivate background canvas and mark media view active to prevent screen flashing
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as any });
     document.body.classList.add("oblivion-media-view-active");
     return () => {
       document.body.classList.remove("oblivion-media-view-active");
     };
-  }, []);
+  }, [item.id]);
 
   const initialCachedTracks = React.useMemo(() => {
     const fromStorage = getCachedPlaylistTracks(item.id);
@@ -518,7 +519,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     >
       {/* Top Sticky Header with Close (X) / Reorder Controls - Fixed directly below main header */}
       <div
-        className={`playlist-action-toolbar sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
+        className={`view-action-bar playlist-top-bar playlist-action-toolbar sticky top-14 sm:top-16 z-50 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
           isBespoke
             ? "border-b border-white/15 shadow-md"
             : `backdrop-blur-2xl ${designConfig.headerBg || "bg-[#141216]/85 backdrop-blur-2xl"} border-b ${designConfig.borderSubtle} shadow-sm`

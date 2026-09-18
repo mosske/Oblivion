@@ -2920,47 +2920,59 @@ button.bottom-nav-item:not(.nav-item-active):hover {
    8. BESPOKE GRADIENT ARCHITECTURE (Playlist, Album, Genre Views)
    ================================================================================ */
 
-/* 1. DYNAMIC FULL-PAGE CANVAS FROM 4 SELECTED COLORS */
-[data-theme="bespoke"],
-[data-theme="bespoke"] body,
-[data-theme="bespoke"] .page-container,
-[data-theme="bespoke"] .playlist-view-container,
-[data-theme="bespoke"] .playlist-detail-view,
-[data-theme="bespoke"] .album-detail-view,
-[data-theme="bespoke"] .genre-detail-view {
+/* 1. SOLID DYNAMIC CANVAS (Normal Document Flow, No Viewport Freezes) */
+[data-theme="bespoke"] {
   background: linear-gradient(
     160deg,
     var(--bespoke-c1) 0%,
     var(--bespoke-c2) 35%,
     var(--bespoke-c3) 70%,
     var(--bespoke-c4) 100%
-  ) !important;
-  background-attachment: fixed !important;
-  min-height: 100vh;
+  );
 }
 
-/* 2. PALETTIZED LUMINOUS CONTAINER CARDS */
-[data-theme="bespoke"] .playlist-header-card,
-[data-theme="bespoke"] .album-header-card,
-[data-theme="bespoke"] .genre-header-card,
-[data-theme="bespoke"] .view-action-bar {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--bespoke-c1) 80%, white 20%),
-    color-mix(in srgb, var(--bespoke-c2) 75%, white 25%)
-  ) !important;
-  border: 1.5px solid color-mix(in srgb, var(--bespoke-c2) 60%, white 40%) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+/* 2. SOLID, OPAQUE TOP STICKY HEADER (Fix Unreadable Overlaps) */
+[data-theme="bespoke"] .view-action-bar,
+[data-theme="bespoke"] .playlist-top-bar {
+  background: color-mix(in srgb, var(--bespoke-c1) 90%, #ffffff 10%) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--bespoke-c2) 50%, #ffffff 50%) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  z-index: 50 !important;
 }
 
-/* 3. DYNAMICALLY TINTED TRACK ROWS */
-[data-theme="bespoke"] .track-row-item {
-  background: color-mix(in srgb, var(--bespoke-c1) 85%, white 15%) !important;
+[data-theme="bespoke"] .view-action-bar input,
+[data-theme="bespoke"] .view-action-bar button,
+[data-theme="bespoke"] .playlist-top-bar input,
+[data-theme="bespoke"] .playlist-top-bar button {
+  background: color-mix(in srgb, var(--bespoke-c1) 70%, #ffffff 30%) !important;
+  color: #0f172a !important;
   border: 1px solid color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
 }
 
+/* 3. SOLID BRIGHT CARDS & TRACK ROWS (100% Opacity) */
+[data-theme="bespoke"] .playlist-header-card,
+[data-theme="bespoke"] .album-header-card,
+[data-theme="bespoke"] .genre-header-card {
+  background: color-mix(in srgb, var(--bespoke-c1) 82%, #ffffff 18%) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1.5px solid color-mix(in srgb, var(--bespoke-c2) 50%, #ffffff 50%) !important;
+}
+
+[data-theme="bespoke"] .track-row-item {
+  background: color-mix(in srgb, var(--bespoke-c1) 88%, #ffffff 12%) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid color-mix(in srgb, var(--bespoke-c2) 30%, transparent) !important;
+}
+
 [data-theme="bespoke"] .track-row-item:hover {
-  background: color-mix(in srgb, var(--bespoke-c2) 70%, white 30%) !important;
+  background: color-mix(in srgb, var(--bespoke-c2) 70%, #ffffff 30%) !important;
   border-color: var(--bespoke-c2) !important;
 }
 
