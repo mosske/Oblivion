@@ -56,6 +56,20 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
   const [dragOffsetY, setDragOffsetY] = useState<number>(0);
   const [isDraggingDown, setIsDraggingDown] = useState<boolean>(false);
 
+  const isBespoke = Boolean(
+    designConfig.id === "bespoke" ||
+    designConfig.isBespoke ||
+    (typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "bespoke")
+  );
+
+  // Deactivate background canvas and mark media view active to prevent screen flashing
+  useEffect(() => {
+    document.body.classList.add("oblivion-media-view-active");
+    return () => {
+      document.body.classList.remove("oblivion-media-view-active");
+    };
+  }, []);
+
   const loadTracks = async () => {
     try {
       const results = await fetchGenreTracks(genre.query || genre.title);
@@ -189,23 +203,31 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
       style={{
         transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
         willChange: dragOffsetY > 0 ? "transform" : undefined,
-        opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
+        opacity: isBespoke ? 1 : (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1),
         transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
-        background: "var(--bg-surface-elevated, var(--bg-primary, rgba(18, 16, 22, 0.95)))",
+        background: isBespoke
+          ? "var(--bespoke-c1, #0a0d1a)"
+          : "var(--bg-surface-elevated, var(--bg-primary, rgba(18, 16, 22, 0.95)))",
+        backgroundImage: isBespoke
+          ? "linear-gradient(180deg, var(--bespoke-c1, #0a0d1a) 0%, #0d0a1c 35%, #06040d 100%)"
+          : undefined,
         color: "var(--text-primary, #ffffff)",
-        borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.1))",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+        borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+        backdropFilter: isBespoke ? "none" : "blur(24px)",
+        WebkitBackdropFilter: isBespoke ? "none" : "blur(24px)",
       }}
-      className="flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52 min-h-screen border-t sm:border-t-0"
+      className={`genre-detail-view genre-view ${isBespoke ? "theme-bespoke-solid-view" : ""} flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52 min-h-screen border-t sm:border-t-0`}
     >
       {/* Sticky Action Toolbar */}
       <div
-        className={`sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 backdrop-blur-2xl ${
-          designConfig.headerBg || "bg-[#141216]/85"
-        } border-b ${designConfig.borderSubtle} shadow-sm transition-all`}
+        className={`sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
+          isBespoke
+            ? "bg-[var(--bespoke-c1,#0a0d1a)] border-b border-white/15 shadow-md"
+            : `backdrop-blur-2xl ${designConfig.headerBg || "bg-[#141216]/85"} border-b ${designConfig.borderSubtle} shadow-sm`
+        } transition-all`}
         style={{
-          borderBottomColor: "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+          borderBottomColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+          ...(isBespoke ? { backgroundColor: "var(--bespoke-c1, #0a0d1a)", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
         }}
       >
         <div className="max-w-6xl mx-auto w-full flex flex-col">
@@ -222,7 +244,8 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                 className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${designConfig.btnSecondary} ${designConfig.textPrimary} text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0 border ${designConfig.borderSubtle}`}
                 style={{
                   color: "var(--text-primary, #ffffff)",
-                  borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                  borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                  ...(isBespoke ? { backgroundColor: "#151128" } : {}),
                 }}
                 title="Close and return (or swipe down)"
               >
@@ -241,12 +264,13 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                   placeholder={`Search in ${genre.title}...`}
                   className={`w-full pl-8 sm:pl-10 ${
                     searchTerm ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"
-                  } py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${
-                    designConfig.borderSubtle
-                  } ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none shadow-sm transition-all`}
+                  } py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${
+                    isBespoke ? "bg-[#0c0918] border-white/15 text-white" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary}`
+                  } placeholder:text-slate-400 focus:outline-none shadow-sm transition-all`}
                   style={{
-                    borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                    borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
                     color: "var(--text-primary, #ffffff)",
+                    ...(isBespoke ? { backgroundColor: "#0c0918", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
                   }}
                 />
                 {searchTerm && (
@@ -270,6 +294,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                 onClick={handleRefresh}
                 disabled={isRefreshing || loading}
                 className={`p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle}`}
+                style={isBespoke ? { backgroundColor: "#151128", borderColor: "rgba(255, 255, 255, 0.15)" } : undefined}
                 title="Refresh tracks"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || loading ? "animate-spin" : ""}`} />
@@ -284,12 +309,19 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
       <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-6xl mx-auto w-full">
         {/* Genre Hero Card */}
         <div
-          className={`relative overflow-hidden rounded-3xl ${designConfig.cardBg} border ${designConfig.accentBorder} p-6 sm:p-8 shadow-2xl transition-all`}
+          className={`relative overflow-hidden rounded-3xl ${
+            isBespoke
+              ? "bg-[#110e20] border border-white/20 shadow-2xl"
+              : `${designConfig.cardBg} border ${designConfig.accentBorder} shadow-2xl`
+          } p-6 sm:p-8 transition-all`}
           style={{
-            borderColor: "var(--accent-border, rgba(223, 184, 108, 0.45))",
+            borderColor: isBespoke ? "rgba(255, 255, 255, 0.2)" : "var(--accent-border, rgba(223, 184, 108, 0.45))",
+            ...(isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
           }}
         >
-          <div className="absolute top-0 right-0 w-96 h-96 opacity-25 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[var(--accent-primary,#dfb86c)] via-transparent to-transparent blur-3xl"></div>
+          {!isBespoke && (
+            <div className="absolute top-0 right-0 w-96 h-96 opacity-25 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[var(--accent-primary,#dfb86c)] via-transparent to-transparent blur-3xl"></div>
+          )}
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
             {/* Genre Visual Cover Tile */}
@@ -407,9 +439,14 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
 
           {loading ? (
             <div
-              className={`p-16 text-center rounded-3xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-3`}
+              className={`p-16 text-center rounded-3xl ${
+                isBespoke
+                  ? "bg-[#110e20] border border-white/15"
+                  : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
+              } space-y-3`}
               style={{
-                borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                ...(isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
               }}
             >
               <Loader2 className="w-7 h-7 mx-auto animate-spin" style={{ color: "var(--accent-primary, #dfb86c)" }} />
@@ -419,9 +456,14 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
             </div>
           ) : filteredTracks.length === 0 ? (
             <div
-              className={`p-16 text-center rounded-3xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-2`}
+              className={`p-16 text-center rounded-3xl ${
+                isBespoke
+                  ? "bg-[#110e20] border border-white/15"
+                  : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
+              } space-y-2`}
               style={{
-                borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                borderColor: isBespoke ? "rgba(255, 255, 255, 0.15)" : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                ...(isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
               }}
             >
               <p className="text-sm font-semibold" style={{ color: "var(--text-primary, #ffffff)" }}>
@@ -449,14 +491,19 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                     data-youtube-id={track.youtubeVideoId}
                     onClick={() => onPlayQueue(filteredTracks, idx)}
                     className={`group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl cursor-pointer transition-all ${
-                      isCurrent
+                      isBespoke
+                        ? isCurrent
+                          ? "bg-[#1a1433] ring-1.5 border-[var(--bespoke-c2,#ff007f)] shadow-md"
+                          : "bg-[#110e20] hover:bg-[#18132d] border border-white/10 hover:border-white/20"
+                        : isCurrent
                         ? `${designConfig.cardBg} shadow-md`
                         : `${designConfig.cardBg} ${designConfig.cardHover}`
-                    } border border-transparent`}
+                    } ${!isBespoke ? "border border-transparent" : ""}`}
                     style={{
                       borderColor: isCurrent
-                        ? "var(--accent-primary, #dfb86c)"
-                        : "transparent",
+                        ? (isBespoke ? "var(--bespoke-c2, #ff007f)" : "var(--accent-primary, #dfb86c)")
+                        : (isBespoke ? "rgba(255, 255, 255, 0.1)" : "transparent"),
+                      ...(isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : {}),
                     }}
                   >
                     <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">

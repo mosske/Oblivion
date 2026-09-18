@@ -131,6 +131,20 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     !effectiveIsAlbum
   );
 
+  const isBespoke = Boolean(
+    designConfig.id === "bespoke" ||
+    designConfig.isBespoke ||
+    (typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "bespoke")
+  );
+
+  // Deactivate background canvas and mark media view active to prevent screen flashing
+  useEffect(() => {
+    document.body.classList.add("oblivion-media-view-active");
+    return () => {
+      document.body.classList.remove("oblivion-media-view-active");
+    };
+  }, []);
+
   const initialCachedTracks = React.useMemo(() => {
     const fromStorage = getCachedPlaylistTracks(item.id);
     if (fromStorage && fromStorage.length > 0) return fromStorage;
@@ -496,16 +510,20 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       style={{
         transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
         willChange: dragOffsetY > 0 ? "transform" : undefined,
-        opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
+        opacity: isBespoke ? 1 : (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1),
         transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
+        ...(isBespoke ? { backgroundColor: "var(--bespoke-c1, #0a0d1a)", backgroundImage: "linear-gradient(180deg, var(--bespoke-c1, #0a0d1a) 0%, #0d0a1c 35%, #06040d 100%)", opacity: 1 } : {}),
       }}
-      className="flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52"
+      className={`playlist-detail-view ${effectiveIsAlbum ? "album-detail-view" : "playlist-view"} ${isBespoke ? "theme-bespoke-solid-view" : ""} flex-1 flex flex-col select-none pb-64 sm:pb-72 md:pb-52`}
     >
       {/* Top Sticky Header with Close (X) / Reorder Controls - Fixed directly below main header */}
       <div
-        className={`playlist-action-toolbar sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 backdrop-blur-2xl ${
-          designConfig.headerBg || "bg-[#141216]/85 backdrop-blur-2xl"
-        } border-b ${designConfig.borderSubtle} shadow-sm transition-all`}
+        className={`playlist-action-toolbar sticky top-14 sm:top-16 z-30 flex flex-col shrink-0 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3.5 ${
+          isBespoke
+            ? "bg-[var(--bespoke-c1,#0a0d1a)] border-b border-white/15 shadow-md"
+            : `backdrop-blur-2xl ${designConfig.headerBg || "bg-[#141216]/85 backdrop-blur-2xl"} border-b ${designConfig.borderSubtle} shadow-sm`
+        } transition-all`}
+        style={isBespoke ? { backgroundColor: "var(--bespoke-c1, #0a0d1a)", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
       >
         <div className="max-w-6xl mx-auto w-full flex flex-col">
           {/* Subtle pull handle for mobile gesture indicator (only when not reordering) */}
@@ -589,7 +607,10 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                     value={inViewSearch}
                     onChange={(e) => setInViewSearch(e.target.value)}
                     placeholder={canReorder ? "Search playlist songs..." : "Search album tracks..."}
-                    className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
+                    className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${
+                      isBespoke ? "bg-[#0c0918] border-white/15 text-white" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary}`
+                    } placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
+                    style={isBespoke ? { backgroundColor: "#0c0918", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
                   />
                   {inViewSearch && (
                     <button
@@ -627,8 +648,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
       <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-6xl mx-auto w-full">
         {/* Fresh Hero Card */}
-        <div className={`relative overflow-hidden rounded-3xl ${designConfig.cardBg} border ${designConfig.accentBorder} p-6 sm:p-8 shadow-2xl transition-all`}>
-          <div className="absolute top-0 right-0 w-96 h-96 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[#c89b3c]/40 via-cyan-500/20 to-transparent blur-3xl"></div>
+        <div
+          className={`relative overflow-hidden rounded-3xl ${
+            isBespoke
+              ? "bg-[#110e20] border border-white/20 shadow-2xl"
+              : `${designConfig.cardBg} border ${designConfig.accentBorder} shadow-2xl`
+          } p-6 sm:p-8 transition-all`}
+          style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+        >
+          {!isBespoke && (
+            <div className="absolute top-0 right-0 w-96 h-96 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[#c89b3c]/40 via-cyan-500/20 to-transparent blur-3xl"></div>
+          )}
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
             {/* Playlist Cover Art */}
@@ -701,7 +731,14 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         </div>
 
         {/* Action Controls Bar */}
-        <div className={`flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} shadow-lg`}>
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl ${
+            isBespoke
+              ? "bg-[#110e20] border border-white/15 shadow-lg"
+              : `${designConfig.cardBg} border ${designConfig.borderSubtle} shadow-lg`
+          }`}
+          style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+        >
           {/* Left Action Buttons: Play All, Shuffle, Repeat, Reorder */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
@@ -778,7 +815,14 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           </div>
 
           {isLoadingTracks ? (
-            <div className={`p-16 text-center rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-3 animate-fade-in`}>
+            <div
+              className={`p-16 text-center rounded-2xl ${
+                isBespoke
+                  ? "bg-[#110e20] border border-white/15"
+                  : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
+              } space-y-3 animate-fade-in`}
+              style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+            >
               <Loader2 className={`w-8 h-8 mx-auto ${designConfig.accentText} text-[var(--accent-color,var(--primary))] animate-spin`} stroke="currentColor" />
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
                 {effectiveIsAlbum ? "Pulling album tracks from YouTube Music..." : "Loading playlist tracks..."}
@@ -786,13 +830,27 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               <p className={`text-xs ${designConfig.textMuted}`}>Fetching lossless audio streams & metadata</p>
             </div>
           ) : tracks.length === 0 ? (
-            <div className={`p-12 text-center rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle}`}>
+            <div
+              className={`p-12 text-center rounded-2xl ${
+                isBespoke
+                  ? "bg-[#110e20] border border-white/15"
+                  : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
+              }`}
+              style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+            >
               <Music2 className={`w-12 h-12 mx-auto mb-3 ${designConfig.textMuted}`} />
               <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>This collection has no songs yet.</p>
               <p className={`text-xs ${designConfig.textMuted} mt-1`}>Search for songs or try refreshing.</p>
             </div>
           ) : filteredTracks.length === 0 ? (
-            <div className={`p-12 text-center rounded-2xl ${designConfig.cardBg} border ${designConfig.borderSubtle} space-y-2`}>
+            <div
+              className={`p-12 text-center rounded-2xl ${
+                isBespoke
+                  ? "bg-[#110e20] border border-white/15"
+                  : `${designConfig.cardBg} border ${designConfig.borderSubtle}`
+              } space-y-2`}
+              style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+            >
               <Search className={`w-8 h-8 mx-auto ${designConfig.textMuted}`} />
               <p className={`text-sm font-bold ${designConfig.textPrimary}`}>No matching tracks found</p>
               <p className={`text-xs ${designConfig.textMuted}`}>

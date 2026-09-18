@@ -2452,13 +2452,14 @@ canvas.animated-theme-bg,
   transform: translate(-50%, -50%) scale(1.12);
 }
 
-/* Neue Editorial Active Icon Aura with distinct visible contrast glow */
+/* Neue Editorial Active Icon Aura with intensified visible contrast glow */
 [data-theme="neue-editorial"] .nav-icon-aura {
-  width: 32px !important;
-  height: 32px !important;
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.16) 50%, transparent 72%) !important;
-  filter: blur(6px) !important;
-  -webkit-filter: blur(6px) !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.45) 45%, transparent 70%) !important;
+  filter: blur(7px) !important;
+  -webkit-filter: blur(7px) !important;
   display: block !important;
 }
 
@@ -2466,7 +2467,7 @@ canvas.animated-theme-bg,
 [data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
 [data-theme="neue-editorial"] .tab-active .nav-icon-aura {
   opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1.15) !important;
+  transform: translate(-50%, -50%) scale(1.22) !important;
 }
 
 /* Remove any box-shadow or filters from SVG containers to prevent rectangular bounding box shadows */
@@ -2717,29 +2718,30 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="neue-editorial"] .nav-item-active svg polygon,
 [data-theme="neue-editorial"] .tab-active svg path {
   stroke: #000000 !important;
-  stroke-width: 2.6px !important;
+  stroke-width: 2.8px !important;
   filter: none !important;
   -webkit-filter: none !important;
   transition: all 0.25s ease-in-out;
 }
 [data-theme="neue-editorial"] .nav-icon-aura {
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.16) 50%, transparent 72%) !important;
-  filter: blur(6px) !important;
-  -webkit-filter: blur(6px) !important;
-  width: 32px !important;
-  height: 32px !important;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.45) 45%, transparent 70%) !important;
+  filter: blur(7px) !important;
+  -webkit-filter: blur(7px) !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
   display: block !important;
 }
 [data-theme="neue-editorial"] .nav-item-active .nav-icon-aura,
 [data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
 [data-theme="neue-editorial"] .tab-active .nav-icon-aura {
   opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1.18) !important;
+  transform: translate(-50%, -50%) scale(1.22) !important;
 }
 [data-theme="neue-editorial"] .nav-item-active .nav-label {
   color: #000000 !important;
   font-weight: 800 !important;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 0, 0, 0.25) !important;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 0, 0, 0.35) !important;
 }
 [data-theme="neue-editorial"] .nav-item:not(.nav-item-active) svg,
 [data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active) svg {
@@ -2769,13 +2771,13 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 }
 [data-theme="candyland-pastel"] .nav-icon-aura,
 [data-theme="candyland"] .nav-icon-aura {
-  background: radial-gradient(circle, rgba(255, 42, 141, 0.75) 0%, transparent 70%) !important;
+  background: radial-gradient(circle, #ff2a8d 0%, transparent 70%) !important;
 }
 [data-theme="candyland-pastel"] .nav-item-active .nav-label,
 [data-theme="candyland"] .nav-item-active .nav-label {
   color: #ff2a8d !important;
   font-weight: 700 !important;
-  text-shadow: 0 0 8px rgba(255, 42, 141, 0.8), 0 0 16px rgba(255, 42, 141, 0.45) !important;
+  text-shadow: 0 0 8px #ff2a8d, 0 0 16px #ff2a8d !important;
 }
 
 /* F. BESPOKE */
@@ -2785,19 +2787,19 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="bespoke"] .nav-item-active svg polygon,
 [data-theme="bespoke"] .tab-active svg path,
 [data-theme="bespoke"] .tab-active svg circle {
-  stroke: var(--bespoke-c2, #00f0ff) !important;
+  stroke: var(--bespoke-c2, #ff007f) !important;
   stroke-width: 2.2px !important;
   filter: none !important;
   -webkit-filter: none !important;
   transition: all 0.25s ease-in-out;
 }
 [data-theme="bespoke"] .nav-icon-aura {
-  background: radial-gradient(circle, var(--bespoke-c2, #00f0ff) 0%, transparent 70%) !important;
+  background: radial-gradient(circle, var(--bespoke-c2, #ff007f) 0%, transparent 70%) !important;
 }
 [data-theme="bespoke"] .nav-item-active .nav-label {
   color: #ffffff !important;
   font-weight: 700 !important;
-  text-shadow: 0 0 8px var(--bespoke-c2, #00f0ff), 0 0 16px var(--bespoke-c3, #ff007f) !important;
+  text-shadow: 0 0 8px var(--bespoke-c2, #ff007f), 0 0 16px var(--bespoke-c2, #ff007f) !important;
 }
 
 /* ================================================================================
@@ -2809,21 +2811,18 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 }
 
 /* ================================================================================
-   5. ACTIVE EXPLORE ICON WITH BLACK CORE (EXCLUDING NEUE EDITORIAL)
+   5. CRISP OUTLINED ACTIVE ICONS ACROSS ALL 4 TABS & ALL THEMES (NO BOX OR FILL)
    ================================================================================ */
-:not([data-theme="neue-editorial"]) [data-nav="explore"].nav-item-active svg path,
-:not([data-theme="neue-editorial"]) [data-nav="explore"].nav-item-active svg circle {
-  fill: #000000 !important;
-  stroke: var(--nav-active-stroke, var(--nav-glow-color, #00f0ff)) !important;
-  stroke-width: 2px;
-  filter: none !important;
-  -webkit-filter: none !important;
-}
-
-[data-theme="neue-editorial"] [data-nav="explore"].nav-item-active svg {
+.nav-item-active svg,
+.nav-item-active svg path,
+.nav-item-active svg circle,
+.nav-item-active svg polyline,
+.nav-item-active svg polygon,
+.nav-item-active svg rect,
+[data-nav].nav-item-active svg,
+[data-nav].nav-item-active svg path,
+[data-nav].nav-item-active svg circle {
   fill: none !important;
-  stroke: #000000 !important;
-  stroke-width: 2.6px !important;
   filter: none !important;
   -webkit-filter: none !important;
 }
@@ -2852,29 +2851,32 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 }
 
 /* ================================================================================
-   7. SIDEBAR NAVIGATION MENU (PC & TABLET) CONTRAST & STYLING
+   7. SIDEBAR NAVIGATION MENU (PC & TABLET) CONTRAST & STYLING (MATCHES BOTTOM NAV)
    ================================================================================ */
 .sidebar-nav-item {
   position: relative;
   text-decoration: none !important;
-  outline: none;
-}
-
-.sidebar-nav-item.nav-item-active {
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
   box-shadow: none !important;
   filter: none !important;
 }
 
-/* Light themes: Neue Editorial, Candyland, Designer Ivory */
-[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active {
-  background: rgba(0, 0, 0, 0.08) !important;
-  border: 1px solid rgba(0, 0, 0, 0.16) !important;
+.sidebar-nav-item.nav-item-active {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
 }
-[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-label {
-  color: #000000 !important;
-  font-weight: 800 !important;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.45) !important;
+
+/* Subtle, smooth hover on inactive items for desktop cursor feedback */
+.sidebar-nav-item.nav-item-inactive:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
 }
+
+/* Inactive text contrast rules across light themes */
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive .nav-label,
 [data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive {
   color: #78716c !important;
@@ -2893,17 +2895,6 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   opacity: 1 !important;
 }
 
-[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-active,
-[data-theme="candyland"] .sidebar-nav-item.nav-item-active {
-  background: rgba(255, 112, 166, 0.16) !important;
-  border: 1px solid rgba(255, 112, 166, 0.35) !important;
-}
-[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-active .nav-label,
-[data-theme="candyland"] .sidebar-nav-item.nav-item-active .nav-label {
-  color: #3b1235 !important;
-  font-weight: 700 !important;
-  text-shadow: none !important;
-}
 [data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive .nav-label,
 [data-theme="candyland"] .sidebar-nav-item.nav-item-inactive .nav-label,
 [data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive,
@@ -2923,26 +2914,6 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive:hover svg,
 [data-theme="candyland"] .sidebar-nav-item.nav-item-inactive:hover svg {
   stroke: #3b1235 !important;
-}
-
-/* Dark and Neon themes sidebar item active backgrounds */
-[data-theme="cyberpunk-neon"] .sidebar-nav-item.nav-item-active {
-  background: rgba(0, 240, 255, 0.12) !important;
-  border: 1px solid rgba(0, 240, 255, 0.4) !important;
-}
-[data-theme="emerald-wilderness"] .sidebar-nav-item.nav-item-active,
-[data-theme="dynamic-emerald"] .sidebar-nav-item.nav-item-active {
-  background: rgba(16, 185, 129, 0.14) !important;
-  border: 1px solid rgba(16, 185, 129, 0.35) !important;
-}
-[data-theme="studio-homme-mosaique"] .sidebar-nav-item.nav-item-active,
-[data-theme="audiophile-gold"] .sidebar-nav-item.nav-item-active {
-  background: rgba(245, 158, 11, 0.14) !important;
-  border: 1px solid rgba(245, 158, 11, 0.35) !important;
-}
-[data-theme="bespoke"] .sidebar-nav-item.nav-item-active {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid var(--bespoke-c2, #00f0ff) !important;
 }
 
 

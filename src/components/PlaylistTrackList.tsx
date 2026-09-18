@@ -51,6 +51,12 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
   onOpenAddToPlaylistModal,
   onAddTrackToPlaylist,
 }) => {
+  const isBespoke = Boolean(
+    designConfig.id === "bespoke" ||
+    designConfig.isBespoke ||
+    (typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "bespoke")
+  );
+
   // Lift & Drag state for reordering
   const [liftedIndex, setLiftedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
@@ -445,7 +451,14 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
 
   if (filteredTracks.length === 0) {
     return (
-      <div className={`p-10 text-center rounded-3xl ${designConfig.cardBg} border border-dashed ${designConfig.borderSubtle} space-y-3`}>
+      <div
+        className={`p-10 text-center rounded-3xl ${
+          isBespoke
+            ? "bg-[#110e20] border border-white/15"
+            : `${designConfig.cardBg} border border-dashed ${designConfig.borderSubtle}`
+        } space-y-3`}
+        style={isBespoke ? { backgroundColor: "#110e20", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+      >
         <Music2 className={`w-10 h-10 ${designConfig.textMuted} mx-auto opacity-40`} />
         <p className={`text-sm font-semibold ${designConfig.textPrimary}`}>
           {isSearchActive ? "No matching songs found in this playlist" : "This playlist is currently empty"}
@@ -461,7 +474,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
 
   return (
     <div ref={containerRef} className="space-y-1.5 w-full relative select-none">
-      {/* Semi-Transparent Floating Ghost Card Portal attached to document.body */}
+      {/* Floating Ghost Card Portal attached to document.body */}
       {typeof document !== "undefined" && isDragging && liftedTrack && createPortal(
         <div
           style={{
@@ -469,15 +482,18 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
             left: `${touchX - cardWidth / 2}px`,
             top: `${touchY - cardHeight / 2}px`,
             width: `${cardWidth}px`,
-            opacity: 0.82,
+            opacity: 0.95,
             transform: "scale(1.04)",
-            boxShadow: "0 16px 32px rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(8px)",
+            boxShadow: "0 16px 32px rgba(0, 0, 0, 0.8)",
+            backdropFilter: isBespoke ? "none" : "blur(8px)",
+            backgroundColor: isBespoke ? "#17132c" : undefined,
             border: "1.5px solid var(--accent-color, #00f3ff)",
             pointerEvents: "none",
             zIndex: 9999,
           }}
-          className={`flex items-center justify-between p-3 rounded-2xl ${designConfig.cardBg} transition-none shadow-2xl`}
+          className={`flex items-center justify-between p-3 rounded-2xl ${
+            isBespoke ? "bg-[#17132c] border border-white/20" : designConfig.cardBg
+          } transition-none shadow-2xl`}
         >
           {/* Left info: Index + Thumbnail + Title + Artist */}
           <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
@@ -586,12 +602,31 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
               if (el) rowRefs.current.set(idx, el);
               else rowRefs.current.delete(idx);
             }}
-            style={{ touchAction: "pan-y" }}
+            style={{
+              touchAction: "pan-y",
+              ...(isBespoke
+                ? {
+                    backgroundColor: isLifted
+                      ? "#0a0718"
+                      : isTarget
+                      ? "#1e163b"
+                      : isCurrent
+                      ? "#1a1433"
+                      : "#110e20",
+                    backdropFilter: "none",
+                    WebkitBackdropFilter: "none",
+                  }
+                : {}),
+            }}
             className={`group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all select-none border ${
               isLifted
                 ? `opacity-20 scale-[0.98] border-2 border-dashed ${designConfig.accentBorder} bg-black/40 shadow-inner`
                 : isTarget
                 ? `ring-2 ring-[var(--accent-color,#00f3ff)] ${designConfig.accentBorder} scale-[1.02] ${designConfig.pillBg} shadow-2xl`
+                : isBespoke
+                ? isCurrent
+                  ? "ring-1.5 border-[var(--bespoke-c2,#ff007f)] shadow-md"
+                  : "border-white/10 hover:border-white/20 hover:bg-[#18132d]"
                 : isCurrent
                 ? `${designConfig.cardBg} ring-1.5 ${designConfig.accentBorder} shadow-md`
                 : `${designConfig.cardBg} ${designConfig.cardHover} ${designConfig.borderSubtle}`
