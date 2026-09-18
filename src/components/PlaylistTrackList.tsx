@@ -652,7 +652,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                     <span className={`w-1 h-2 rounded-full animate-bounce delay-150 bg-gradient-to-t ${designConfig.waveformGradient || "from-[#c59b27] to-[#f59e0b]"} shadow-[0_0_6px_var(--accent-primary)]`} />
                   </div>
                 ) : (
-                  <span className={`text-xs font-mono font-medium ${isCurrent ? designConfig.accentText : designConfig.textMuted}`}>
+                  <span className={`track-index text-xs font-mono font-medium ${isCurrent ? designConfig.accentText : designConfig.textMuted}`}>
                     {idx + 1}
                   </span>
                 )}
@@ -789,7 +789,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                       onAddTrackToPlaylist(track, playlists[0].id);
                     }
                   }}
-                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:${designConfig.accentText} rounded-lg hover:bg-black/10 transition-colors`}
+                  className={`p-1.5 track-action-btn ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:${designConfig.accentText} rounded-lg hover:bg-black/10 transition-colors`}
                   title="Add to another playlist"
                 >
                   <Plus className="w-4 h-4" />
@@ -805,7 +805,7 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                       onRemoveTrack(trId, track);
                     }
                   }}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                  className="p-1.5 track-action-btn text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
                   title="Remove Song"
                 >
                   <Trash2 className="w-4 h-4" />

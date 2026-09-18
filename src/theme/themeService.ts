@@ -1,4 +1,4 @@
-import { calculateWcagText, normalizeHex } from './colorUtils';
+import { calculateWcagText, getRelativeLuminance, normalizeHex } from './colorUtils';
 
 export interface BespokeThemeConfig {
   colors: [string, string, string, string];
@@ -139,15 +139,55 @@ export function applyBespokeCssVariables(
   // Additional helper variables
   document.documentElement.style.setProperty('--accent-contrast-text', textOnAccent);
 
-  // Calculate card/container luminance (mixing c1 80% and white 20%) to adaptively choose dark slate (#0f172a) vs light (#f8fafc)
+  // 1. Calculate Card & Track Row Luminance (mixing c1 82% and white 18%) to choose high-contrast text & icons
   const hex1 = (c1 || '#0A0D1A').replace('#', '');
-  const r1 = ((parseInt(hex1.substring(0, 2), 16) || 0) / 255) * 0.8 + 0.2;
-  const g1 = ((parseInt(hex1.substring(2, 4), 16) || 0) / 255) * 0.8 + 0.2;
-  const b1 = ((parseInt(hex1.substring(4, 6), 16) || 0) / 255) * 0.8 + 0.2;
-  const cardLum = 0.2126 * r1 + 0.7152 * g1 + 0.0722 * b1;
-  const bespokeTextColor = cardLum > 0.45 ? '#0f172a' : '#f8fafc';
+  const r1 = Math.round(((parseInt(hex1.substring(0, 2), 16) || 0) * 0.82) + (255 * 0.18));
+  const g1 = Math.round(((parseInt(hex1.substring(2, 4), 16) || 0) * 0.82) + (255 * 0.18));
+  const b1 = Math.round(((parseInt(hex1.substring(4, 6), 16) || 0) * 0.82) + (255 * 0.18));
+  const cardHex = `#${r1.toString(16).padStart(2, '0')}${g1.toString(16).padStart(2, '0')}${b1.toString(16).padStart(2, '0')}`;
+  const cardLum = getRelativeLuminance(cardHex);
+  const isCardLight = cardLum > 0.35;
+
+  const bespokeTextColor = isCardLight ? '#0f172a' : '#f8fafc';
+  const bespokeTextMuted = isCardLight ? '#334155' : 'rgba(248, 250, 252, 0.75)';
+  const bespokeIconColor = isCardLight ? '#0f172a' : '#f8fafc';
+  const bespokeIconMuted = isCardLight ? '#475569' : 'rgba(248, 250, 252, 0.72)';
+  const bespokeBorderSubtle = isCardLight ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.2)';
+
   document.documentElement.style.setProperty('--bespoke-text-color', bespokeTextColor);
+  document.documentElement.style.setProperty('--bespoke-text-muted', bespokeTextMuted);
+  document.documentElement.style.setProperty('--bespoke-icon-color', bespokeIconColor);
+  document.documentElement.style.setProperty('--bespoke-icon-muted', bespokeIconMuted);
+  document.documentElement.style.setProperty('--bespoke-border-subtle', bespokeBorderSubtle);
   document.documentElement.style.setProperty('--bespoke-text-on-accent', calculateWcagText(c2));
+
+  // 2. Mini Player 2-Color Gradient (Color 2 and Color 3) & Automatic WCAG Contrast Calculation
+  const lum2 = getRelativeLuminance(c2 || '#FF007F');
+  const lum3 = getRelativeLuminance(c3 || '#8B5CF6');
+  const miniLum = (lum2 + lum3) / 2;
+  const isMiniLight = miniLum > 0.35;
+
+  const miniPlayerBg = `linear-gradient(135deg, ${c2}, ${c3})`;
+  const miniTextColor = isMiniLight ? '#0f172a' : '#ffffff';
+  const miniTextMuted = isMiniLight ? '#334155' : 'rgba(255, 255, 255, 0.8)';
+  const miniIconColor = isMiniLight ? '#0f172a' : '#ffffff';
+  const miniIconMuted = isMiniLight ? '#475569' : 'rgba(255, 255, 255, 0.75)';
+  const miniPlayBg = isMiniLight ? '#0f172a' : '#ffffff';
+  const miniPlayIcon = isMiniLight ? '#ffffff' : '#0f172a';
+  const miniWaveInactive = isMiniLight ? 'rgba(15, 23, 42, 0.25)' : 'rgba(255, 255, 255, 0.35)';
+  const miniWaveActive = isMiniLight ? '#0f172a' : '#ffffff';
+  const miniBorder = isMiniLight ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.25)';
+
+  document.documentElement.style.setProperty('--bespoke-mini-player-bg', miniPlayerBg);
+  document.documentElement.style.setProperty('--bespoke-mini-player-text', miniTextColor);
+  document.documentElement.style.setProperty('--bespoke-mini-player-text-muted', miniTextMuted);
+  document.documentElement.style.setProperty('--bespoke-mini-player-icon', miniIconColor);
+  document.documentElement.style.setProperty('--bespoke-mini-player-icon-muted', miniIconMuted);
+  document.documentElement.style.setProperty('--bespoke-mini-player-play-bg', miniPlayBg);
+  document.documentElement.style.setProperty('--bespoke-mini-player-play-icon', miniPlayIcon);
+  document.documentElement.style.setProperty('--bespoke-mini-player-wave-inactive', miniWaveInactive);
+  document.documentElement.style.setProperty('--bespoke-mini-player-wave-active', miniWaveActive);
+  document.documentElement.style.setProperty('--bespoke-mini-player-border', miniBorder);
 
   return {
     ...bespokeConfig,

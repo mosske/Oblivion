@@ -427,10 +427,10 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
         {/* Tracks Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-base sm:text-lg font-bold tracking-tight" style={{ color: "var(--text-primary, #ffffff)" }}>
+            <h2 className="text-base sm:text-lg font-bold tracking-tight tracks-section-heading" style={{ color: isBespoke ? "var(--bespoke-text-color, #0f172a)" : "var(--text-primary, #ffffff)" }}>
               Soundscape Tracks
             </h2>
-            <span className="text-xs font-mono" style={{ color: "var(--text-muted, #94a3b8)" }}>
+            <span className="text-xs font-mono" style={{ color: isBespoke ? "var(--bespoke-text-muted, #334155)" : "var(--text-muted, #94a3b8)" }}>
               {filteredTracks.length} {filteredTracks.length === 1 ? "track" : "tracks"}
             </span>
           </div>
@@ -448,7 +448,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
               }}
             >
               <Loader2 className="w-7 h-7 mx-auto animate-spin" style={{ color: "var(--accent-primary, #dfb86c)" }} />
-              <p className="text-sm font-semibold" style={{ color: "var(--text-primary, #ffffff)" }}>
+              <p className="text-sm font-semibold" style={{ color: isBespoke ? "var(--bespoke-text-color, #0f172a)" : "var(--text-primary, #ffffff)" }}>
                 Loading {genre.title} soundscape...
               </p>
             </div>
@@ -524,8 +524,8 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                           </div>
                         ) : (
                           <span
-                            className="text-xs font-mono group-hover:hidden"
-                            style={{ color: "var(--text-muted, #94a3b8)" }}
+                            className="text-xs font-mono group-hover:hidden track-index"
+                            style={{ color: isBespoke ? "var(--bespoke-text-muted, #334155)" : "var(--text-muted, #94a3b8)" }}
                           >
                             {idx + 1}
                           </span>
@@ -573,7 +573,7 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                     {/* Right side: Duration */}
                     <span
                       className="track-duration text-xs font-mono font-medium shrink-0 ml-3"
-                      style={{ color: "var(--text-muted, #94a3b8)" }}
+                      style={{ color: isBespoke ? "var(--bespoke-text-muted, #334155)" : "var(--text-muted, #94a3b8)" }}
                     >
                       {formatDuration(track.duration)}
                     </span>

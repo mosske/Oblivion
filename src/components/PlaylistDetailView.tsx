@@ -602,22 +602,28 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
                 {/* In-Header Search Field */}
                 <div className="flex-1 max-w-xl relative min-w-0">
-                  <Search className={`w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 ${designConfig.textMuted} pointer-events-none`} />
+                  <Search 
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+                      isBespoke ? "text-[var(--bespoke-icon-color,#0f172a)]" : designConfig.textMuted
+                    }`} 
+                  />
                   <input
                     type="text"
                     value={inViewSearch}
                     onChange={(e) => setInViewSearch(e.target.value)}
                     placeholder={canReorder ? "Search playlist songs..." : "Search album tracks..."}
                     className={`w-full pl-8 sm:pl-10 ${inViewSearch ? "pr-8 sm:pr-9" : "pr-3 sm:pr-4"} py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium ${
-                      isBespoke ? "bg-white/10 border border-white/20 text-[var(--bespoke-text-color,#0f172a)]" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary}`
-                    } placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
+                      isBespoke ? "bg-white/10 border border-white/20 text-[var(--bespoke-text-color,#0f172a)] placeholder:text-[var(--bespoke-text-muted,#334155)]" : `${designConfig.inputBg} border ${designConfig.borderSubtle} ${designConfig.textPrimary} placeholder:text-slate-400`
+                    } focus:outline-none focus:ring-1 focus:ring-[var(--accent-color,var(--primary))] shadow-sm transition-all`}
                     style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
                   />
                   {inViewSearch && (
                     <button
                       type="button"
                       onClick={() => setInViewSearch("")}
-                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors`}
+                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full ${
+                        isBespoke ? "text-[var(--bespoke-icon-color,#0f172a)]" : designConfig.textMuted
+                      } hover:${designConfig.textPrimary} hover:bg-black/10 transition-colors`}
                       title="Clear search filter"
                       aria-label="Clear search filter"
                     >
@@ -634,7 +640,9 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                     type="button"
                     onClick={handleToggleReorderMode}
                     disabled={isSyncingOrder}
-                    className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm whitespace-nowrap ${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle} hover:${designConfig.accentText}`}
+                    className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm whitespace-nowrap ${
+                      isBespoke ? "bg-white/20 text-[var(--bespoke-text-color,#0f172a)] border border-white/20" : `${designConfig.btnSecondary} ${designConfig.textPrimary} border ${designConfig.borderSubtle}`
+                    } hover:${designConfig.accentText}`}
                     title="Reorder songs in this playlist"
                   >
                     <ArrowUpDown className="w-4 h-4 shrink-0" />
@@ -805,11 +813,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         {/* Songs List */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-3 py-1">
-            <h3 className={`text-sm font-bold ${designConfig.headingPrimary} uppercase tracking-wider font-mono`}>
+            <h3 
+              className={`text-sm font-bold ${designConfig.headingPrimary} uppercase tracking-wider font-mono tracks-section-heading`}
+              style={isBespoke ? { color: "var(--bespoke-text-color, #0f172a)", textShadow: "none" } : undefined}
+            >
               Tracks ({filteredTracks.length}{inViewSearch.trim() && filteredTracks.length !== tracks.length ? ` of ${tracks.length}` : ""})
             </h3>
             {isReorderMode && (
-              <span className={`text-[11px] ${designConfig.accentText} font-medium animate-pulse`}>
+              <span 
+                className={`text-[11px] ${designConfig.accentText} font-medium animate-pulse`}
+                style={isBespoke ? { color: "var(--bespoke-text-color, #0f172a)" } : undefined}
+              >
                 Drag handle or tap arrows to reposition songs, then click "Done Reordering"
               </span>
             )}

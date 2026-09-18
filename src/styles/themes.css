@@ -2944,12 +2944,31 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 }
 
 [data-theme="bespoke"] .view-action-bar input,
-[data-theme="bespoke"] .view-action-bar button,
-[data-theme="bespoke"] .playlist-top-bar input,
-[data-theme="bespoke"] .playlist-top-bar button {
-  background: color-mix(in srgb, var(--bespoke-c1) 70%, #ffffff 30%) !important;
-  color: #0f172a !important;
+[data-theme="bespoke"] .playlist-top-bar input {
+  background: color-mix(in srgb, var(--bespoke-c1) 75%, #ffffff 25%) !important;
+  color: var(--bespoke-text-color, #0f172a) !important;
   border: 1px solid color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
+}
+
+[data-theme="bespoke"] .view-action-bar input::placeholder,
+[data-theme="bespoke"] .playlist-top-bar input::placeholder {
+  color: var(--bespoke-text-muted, #334155) !important;
+  opacity: 0.8 !important;
+}
+
+[data-theme="bespoke"] .view-action-bar button,
+[data-theme="bespoke"] .playlist-top-bar button {
+  background: color-mix(in srgb, var(--bespoke-c1) 75%, #ffffff 25%) !important;
+  color: var(--bespoke-text-color, #0f172a) !important;
+  border: 1px solid color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
+}
+
+[data-theme="bespoke"] .view-action-bar button svg,
+[data-theme="bespoke"] .playlist-top-bar button svg,
+[data-theme="bespoke"] .view-action-bar svg,
+[data-theme="bespoke"] .playlist-top-bar svg {
+  color: var(--bespoke-icon-color, #0f172a) !important;
+  stroke: var(--bespoke-icon-color, #0f172a) !important;
 }
 
 /* 3. SOLID BRIGHT CARDS & TRACK ROWS (100% Opacity) */
@@ -2976,26 +2995,127 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   border-color: var(--bespoke-c2) !important;
 }
 
-/* 4. ADAPTIVE TEXT CONTRAST (LIGHT VS. DARK PALETTES) */
+/* 4. ADAPTIVE WCAG TEXT & ICON CONTRAST */
+[data-theme="bespoke"] .tracks-section-heading,
+[data-theme="bespoke"] .playlist-view-container h3,
+[data-theme="bespoke"] .genre-detail-view h2,
+[data-theme="bespoke"] h3.tracks-section-heading {
+  color: var(--bespoke-text-color, #0f172a) !important;
+  text-shadow: none !important;
+}
+
 [data-theme="bespoke"] .playlist-header-card h1,
+[data-theme="bespoke"] .album-header-card h1,
+[data-theme="bespoke"] .genre-header-card h1,
+[data-theme="bespoke"] .track-row-item .track-title {
+  color: var(--bespoke-text-color, #0f172a) !important;
+}
+
 [data-theme="bespoke"] .playlist-header-card p,
 [data-theme="bespoke"] .playlist-header-card span,
-[data-theme="bespoke"] .album-header-card h1,
 [data-theme="bespoke"] .album-header-card p,
 [data-theme="bespoke"] .album-header-card span,
-[data-theme="bespoke"] .genre-header-card h1,
 [data-theme="bespoke"] .genre-header-card p,
 [data-theme="bespoke"] .genre-header-card span,
-[data-theme="bespoke"] .track-row-item .track-title,
 [data-theme="bespoke"] .track-row-item .artist-name,
-[data-theme="bespoke"] .track-row-item .track-duration {
+[data-theme="bespoke"] .track-row-item .track-duration,
+[data-theme="bespoke"] .track-row-item .track-index,
+[data-theme="bespoke"] .track-row-item .font-mono {
+  color: var(--bespoke-text-muted, #334155) !important;
+}
+
+/* Track row action icons (+, trash, drag handle, move arrows) */
+[data-theme="bespoke"] .track-row-item button svg,
+[data-theme="bespoke"] .track-row-item .track-action-btn svg,
+[data-theme="bespoke"] .track-row-item .track-reorder-btn svg,
+[data-theme="bespoke"] .track-row-item .track-drag-handle svg {
+  color: var(--bespoke-icon-color, #0f172a) !important;
+  stroke: var(--bespoke-icon-color, #0f172a) !important;
+}
+
+[data-theme="bespoke"] .track-row-item .track-drag-handle {
+  background: color-mix(in srgb, var(--bespoke-c1) 70%, #ffffff 30%) !important;
   color: var(--bespoke-text-color, #0f172a) !important;
+  border-color: color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
 }
 
 [data-theme="bespoke"] .btn-primary-action {
   background: linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3)) !important;
   color: var(--bespoke-text-on-accent, var(--text-on-accent, #ffffff)) !important;
   font-weight: 700;
+}
+
+/* ================================================================================
+   5. MINI PLAYER: STRICT 2-COLOR GRADIENT & AUTOMATIC WCAG CONTRAST
+   ================================================================================ */
+[data-theme="bespoke"] #app-mini-player-floating-dock {
+  background: var(--bespoke-mini-player-bg, linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3))) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1.5px solid var(--bespoke-mini-player-border, rgba(255, 255, 255, 0.25)) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* Top drag bar handle */
+[data-theme="bespoke"] #app-mini-player-floating-dock > div:first-child {
+  background: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.4)) !important;
+}
+
+/* Mini player track title */
+[data-theme="bespoke"] #app-mini-player-floating-dock .track-title,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-bold {
+  color: var(--bespoke-mini-player-text, #ffffff) !important;
+}
+
+/* Mini player artist & studio info, timestamps */
+[data-theme="bespoke"] #app-mini-player-floating-dock .artist-name,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono span,
+[data-theme="bespoke"] #app-mini-player-floating-dock .text-[10px],
+[data-theme="bespoke"] #app-mini-player-floating-dock .text-[11px] {
+  color: var(--bespoke-mini-player-text-muted, rgba(255, 255, 255, 0.8)) !important;
+}
+
+/* Mini player action buttons & icons */
+[data-theme="bespoke"] #app-mini-player-floating-dock button svg {
+  color: var(--bespoke-mini-player-icon, #ffffff) !important;
+  stroke: var(--bespoke-mini-player-icon, #ffffff) !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(:hover):not(.rounded-full) svg {
+  color: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.75)) !important;
+  stroke: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.75)) !important;
+}
+
+/* Mini player center Play/Pause button */
+[data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full {
+  background: var(--bespoke-mini-player-play-bg, #0f172a) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full svg {
+  fill: var(--bespoke-mini-player-play-icon, #ffffff) !important;
+  color: var(--bespoke-mini-player-play-icon, #ffffff) !important;
+  stroke: var(--bespoke-mini-player-play-icon, #ffffff) !important;
+}
+
+/* Mini player waveform scrubber container */
+[data-theme="bespoke"] #app-mini-player-floating-dock .group.relative.flex-1 {
+  background: rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid var(--bespoke-mini-player-border, rgba(255, 255, 255, 0.2)) !important;
+}
+
+/* Mini player waveform inactive bars */
+[data-theme="bespoke"] #app-mini-player-floating-dock .waveform-inactive-bar {
+  background: var(--bespoke-mini-player-wave-inactive, rgba(255, 255, 255, 0.35)) !important;
+}
+
+/* Mini player waveform active / progress bars */
+[data-theme="bespoke"] #app-mini-player-floating-dock .progress-gradient-animated,
+[data-theme="bespoke"] #app-mini-player-floating-dock span[style*="linear-gradient"] {
+  background: var(--bespoke-mini-player-wave-active, #ffffff) !important;
+  box-shadow: 0 0 8px var(--bespoke-mini-player-wave-active, #ffffff) !important;
 }
 
 

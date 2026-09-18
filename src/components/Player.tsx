@@ -2415,6 +2415,15 @@ export const Player: React.FC<PlayerProps> = ({
               transition: isMiniDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease-out",
               touchAction: "pan-x",
               cursor: isMiniDraggingDown ? "grabbing" : "default",
+              ...(isBespoke
+                ? {
+                    background: "var(--bespoke-mini-player-bg, linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3)))",
+                    opacity: 1,
+                    backdropFilter: "none",
+                    WebkitBackdropFilter: "none",
+                    borderColor: "var(--bespoke-mini-player-border, rgba(255, 255, 255, 0.25))",
+                  }
+                : {}),
             }}
             data-theme={designConfig.id}
             className={`fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
@@ -2493,13 +2502,21 @@ export const Player: React.FC<PlayerProps> = ({
 
                   <button
                     onClick={() => handleUserTogglePlay()}
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isBespoke ? "" : designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                    style={
+                      isBespoke
+                        ? {
+                            background: "var(--bespoke-mini-player-play-bg, #0f172a)",
+                            color: "var(--bespoke-mini-player-play-icon, #ffffff)",
+                          }
+                        : undefined
+                    }
                     title={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
-                      <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white" />
+                      <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5" style={isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" }} />
                     ) : (
-                      <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-white ml-0.5" />
+                      <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5" style={isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" }} />
                     )}
                   </button>
 
@@ -2579,7 +2596,7 @@ export const Player: React.FC<PlayerProps> = ({
                 isPlaying={isPlaying}
                 onSeek={handleSeekInternal}
                 designConfig={designConfig}
-                bespokeColors={isBespoke ? bespokeColors : undefined}
+                bespokeColors={isBespoke && bespokeColors && bespokeColors.length >= 3 ? [bespokeColors[1], bespokeColors[2]] : (isBespoke ? bespokeColors : undefined)}
                 isMini={true}
               />
 
