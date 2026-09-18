@@ -782,23 +782,48 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   );
 }
 
-/* 2. SOLID, OPAQUE TOP STICKY HEADER (Fix Unreadable Overlaps) */
+/* 2. SOLID, OPAQUE TOP STICKY HEADER WITH 3D SHELF EDGE */
 [data-theme="bespoke"] .view-action-bar,
 [data-theme="bespoke"] .playlist-top-bar {
   background: color-mix(in srgb, var(--bespoke-c1) 90%, #ffffff 10%) !important;
   opacity: 1 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--bespoke-c2) 50%, #ffffff 50%) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.28) !important;
+  box-shadow: 0 6px 18px -2px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1.5px 0 rgba(0, 0, 0, 0.25) !important;
   z-index: 50 !important;
 }
 
+/* 3. 3D TEXT INPUT FIELDS & SEARCH BARS (Recessed Sunken Bevel) */
+[data-theme="bespoke"] input[type="text"],
+[data-theme="bespoke"] input[type="search"],
+[data-theme="bespoke"] input[type="password"],
+[data-theme="bespoke"] textarea,
+[data-theme="bespoke"] select,
+[data-theme="bespoke"] .search-input-field,
 [data-theme="bespoke"] .view-action-bar input,
 [data-theme="bespoke"] .playlist-top-bar input {
   background: color-mix(in srgb, var(--bespoke-c1) 75%, #ffffff 25%) !important;
   color: var(--bespoke-text-color, #0f172a) !important;
-  border: 1px solid color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
+  position: relative;
+  box-shadow: inset 0 2.5px 6px rgba(0, 0, 0, 0.22), inset 0 1px 2px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border-top: 1.5px solid rgba(0, 0, 0, 0.28) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38) !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.18) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+[data-theme="bespoke"] input[type="text"]:focus,
+[data-theme="bespoke"] input[type="search"]:focus,
+[data-theme="bespoke"] input[type="password"]:focus,
+[data-theme="bespoke"] textarea:focus,
+[data-theme="bespoke"] select:focus,
+[data-theme="bespoke"] .search-input-field:focus,
+[data-theme="bespoke"] .view-action-bar input:focus,
+[data-theme="bespoke"] .playlist-top-bar input:focus {
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--bespoke-c2), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  border-top-color: var(--bespoke-c2) !important;
 }
 
 [data-theme="bespoke"] .view-action-bar input::placeholder,
@@ -807,11 +832,72 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   opacity: 0.8 !important;
 }
 
+/* 4. 3D BUTTONS (Tactile Raised Bevel with Specular Highlight & Depth Shadow) */
+[data-theme="bespoke"] button,
+[data-theme="bespoke"] .btn-primary,
+[data-theme="bespoke"] .button-primary,
+[data-theme="bespoke"] .btn-signin,
+[data-theme="bespoke"] .btn-secondary,
+[data-theme="bespoke"] .button-secondary,
+[data-theme="bespoke"] .btn-primary-action,
 [data-theme="bespoke"] .view-action-bar button,
-[data-theme="bespoke"] .playlist-top-bar button {
-  background: color-mix(in srgb, var(--bespoke-c1) 75%, #ffffff 25%) !important;
-  color: var(--bespoke-text-color, #0f172a) !important;
-  border: 1px solid color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
+[data-theme="bespoke"] .playlist-top-bar button,
+[data-theme="bespoke"] .track-action-btn,
+[data-theme="bespoke"] .track-reorder-btn,
+[data-theme="bespoke"] .track-drag-handle {
+  position: relative;
+  background: color-mix(in srgb, var(--bespoke-c1) 75%, #ffffff 25%);
+  color: var(--bespoke-text-color, #0f172a);
+  box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.24), 0 2px 4px -1px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 rgba(0, 0, 0, 0.25) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.3) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.18) !important;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), filter 0.18s ease;
+}
+
+[data-theme="bespoke"] button:hover,
+[data-theme="bespoke"] .btn-primary:hover,
+[data-theme="bespoke"] .button-primary:hover,
+[data-theme="bespoke"] .btn-signin:hover,
+[data-theme="bespoke"] .btn-secondary:hover,
+[data-theme="bespoke"] .button-secondary:hover,
+[data-theme="bespoke"] .btn-primary-action:hover,
+[data-theme="bespoke"] .view-action-bar button:hover,
+[data-theme="bespoke"] .playlist-top-bar button:hover,
+[data-theme="bespoke"] .track-action-btn:hover,
+[data-theme="bespoke"] .track-reorder-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.3), 0 3px 6px -1px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="bespoke"] button:active,
+[data-theme="bespoke"] .btn-primary:active,
+[data-theme="bespoke"] .button-primary:active,
+[data-theme="bespoke"] .btn-signin:active,
+[data-theme="bespoke"] .btn-secondary:active,
+[data-theme="bespoke"] .button-secondary:active,
+[data-theme="bespoke"] .btn-primary-action:active,
+[data-theme="bespoke"] .view-action-bar button:active,
+[data-theme="bespoke"] .playlist-top-bar button:active,
+[data-theme="bespoke"] .track-action-btn:active,
+[data-theme="bespoke"] .track-reorder-btn:active {
+  transform: translateY(1.5px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.25) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Primary Highlight Action Buttons */
+[data-theme="bespoke"] .btn-primary-action,
+[data-theme="bespoke"] .button-primary,
+[data-theme="bespoke"] .btn-signin {
+  background: linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3)) !important;
+  color: var(--bespoke-text-on-accent, var(--text-on-accent, #ffffff)) !important;
+  font-weight: 700;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.6) !important;
+  border-bottom: 2.5px solid rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 4px 14px -1px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.35) !important;
 }
 
 [data-theme="bespoke"] .view-action-bar button svg,
@@ -822,31 +908,115 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   stroke: var(--bespoke-icon-color, #0f172a) !important;
 }
 
-/* 3. SOLID BRIGHT CARDS & TRACK ROWS (100% Opacity) */
+/* 5. 3D SOLID CARDS, BLOCKS & SURFACES (Spec-Bevel & Ambient Occlusion Depth) */
 [data-theme="bespoke"] .playlist-header-card,
 [data-theme="bespoke"] .album-header-card,
-[data-theme="bespoke"] .genre-header-card {
+[data-theme="bespoke"] .genre-header-card,
+[data-theme="bespoke"] .playlist-card,
+[data-theme="bespoke"] .album-card,
+[data-theme="bespoke"] .stat-card,
+[data-theme="bespoke"] .settings-card,
+[data-theme="bespoke"] .library-card,
+[data-theme="bespoke"] .quick-pick-card,
+[data-theme="bespoke"] .bespoke-customizer-card,
+[data-theme="bespoke"] .color-slot-card,
+[data-theme="bespoke"] .bespoke-preset-card {
+  position: relative;
   background: color-mix(in srgb, var(--bespoke-c1) 82%, #ffffff 18%) !important;
   opacity: 1 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border: 1.5px solid color-mix(in srgb, var(--bespoke-c2) 50%, #ffffff 50%) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.26), 0 2px 6px -1px rgba(0, 0, 0, 0.14), inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.45), inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.22) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.26) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.16) !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme="bespoke"] .playlist-card:hover,
+[data-theme="bespoke"] .album-card:hover,
+[data-theme="bespoke"] .quick-pick-card:hover,
+[data-theme="bespoke"] .bespoke-preset-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.34), 0 4px 10px -1px rgba(0, 0, 0, 0.18), inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 3D Track Row Plates */
 [data-theme="bespoke"] .track-row-item {
+  position: relative;
   background: color-mix(in srgb, var(--bespoke-c1) 88%, #ffffff 12%) !important;
   opacity: 1 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border: 1px solid color-mix(in srgb, var(--bespoke-c2) 30%, transparent) !important;
+  box-shadow: 0 3px 8px -2px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.15) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.35) !important;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.2) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 [data-theme="bespoke"] .track-row-item:hover {
+  transform: translateY(-1px);
   background: color-mix(in srgb, var(--bespoke-c2) 70%, #ffffff 30%) !important;
   border-color: var(--bespoke-c2) !important;
+  box-shadow: 0 6px 14px -2px rgba(0, 0, 0, 0.24), inset 0 1px 1px rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.2) !important;
 }
 
-/* 4. ADAPTIVE WCAG TEXT & ICON CONTRAST */
+/* 6. 3D BADGES, CHIPS & PILLS (Pill Edge Depth) */
+[data-theme="bespoke"] .pill,
+[data-theme="bespoke"] .badge,
+[data-theme="bespoke"] .chip,
+[data-theme="bespoke"] [class*="pill-"],
+[data-theme="bespoke"] .category-pill {
+  position: relative;
+  box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 1px rgba(0, 0, 0, 0.2) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.24) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+[data-theme="bespoke"] .pill:hover,
+[data-theme="bespoke"] .category-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Active / Selected Pill */
+[data-theme="bespoke"] .pill-selected,
+[data-theme="bespoke"] .pill-active,
+[data-theme="bespoke"] button.pill-selected {
+  background: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.32), inset 0 1.5px 1px rgba(255, 255, 255, 0.65), inset 0 -2px 1px rgba(0, 0, 0, 0.32) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.6) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.38) !important;
+}
+
+/* 7. 3D MODALS & DIALOGS (Floating 3D Elevation with Crisp Specular Edge) */
+[data-theme="bespoke"] [role="dialog"],
+[data-theme="bespoke"] .modal,
+[data-theme="bespoke"] .modal-surface,
+[data-theme="bespoke"] .modal-content,
+[data-theme="bespoke"] .fixed.inset-0 > div:not(.bg-black):not(.fixed) {
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.65), 0 8px 24px -4px rgba(0, 0, 0, 0.38), inset 0 2px 2px rgba(255, 255, 255, 0.5), inset 0 -2.5px 3px rgba(0, 0, 0, 0.35) !important;
+  border-top: 2px solid rgba(255, 255, 255, 0.55) !important;
+  border-bottom: 2.5px solid rgba(0, 0, 0, 0.45) !important;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  border-right: 1.5px solid rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 8. 3D BOTTOM NAV DOCK */
+[data-theme="bespoke"] nav.fixed.bottom-0,
+[data-theme="bespoke"] .bottom-nav-dock,
+[data-theme="bespoke"] .bottom-nav {
+  box-shadow: 0 -8px 32px -4px rgba(0, 0, 0, 0.45), inset 0 1.5px 1px rgba(255, 255, 255, 0.42), inset 0 -1px 0 rgba(0, 0, 0, 0.25) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+}
+
+/* 9. ADAPTIVE WCAG TEXT & ICON CONTRAST */
 [data-theme="bespoke"] .tracks-section-heading,
 [data-theme="bespoke"] .playlist-view-container h3,
 [data-theme="bespoke"] .genre-detail-view h2,
@@ -890,12 +1060,6 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   border-color: color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
 }
 
-[data-theme="bespoke"] .btn-primary-action {
-  background: linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3)) !important;
-  color: var(--bespoke-text-on-accent, var(--text-on-accent, #ffffff)) !important;
-  font-weight: 700;
-}
-
 /* ================================================================================
    5. MINI PLAYER: STRICT 2-COLOR GRADIENT & AUTOMATIC WCAG CONTRAST
    ================================================================================ */
@@ -904,8 +1068,11 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   opacity: 1 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border: 1.5px solid var(--bespoke-mini-player-border, rgba(255, 255, 255, 0.25)) !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28) !important;
+  box-shadow: 0 20px 48px -6px rgba(0, 0, 0, 0.42), 0 6px 16px -2px rgba(0, 0, 0, 0.25), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -2px 2px rgba(0, 0, 0, 0.3) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.35) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Top drag bar handle */
@@ -942,7 +1109,9 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 /* Mini player center Play/Pause button */
 [data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full {
   background: var(--bespoke-mini-player-play-bg, #0f172a) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1.5px 1px rgba(255, 255, 255, 0.55), inset 0 -2px 1px rgba(0, 0, 0, 0.35) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.35) !important;
 }
 
 [data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full svg {
@@ -951,10 +1120,12 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   stroke: var(--bespoke-mini-player-play-icon, #ffffff) !important;
 }
 
-/* Mini player waveform scrubber container */
+/* Mini player waveform scrubber container with 3D sunken depth */
 [data-theme="bespoke"] #app-mini-player-floating-dock .group.relative.flex-1 {
   background: rgba(0, 0, 0, 0.15) !important;
-  border: 1px solid var(--bespoke-mini-player-border, rgba(255, 255, 255, 0.2)) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 1px rgba(255, 255, 255, 0.15) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.3) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Mini player waveform inactive bars */
