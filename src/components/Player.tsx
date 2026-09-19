@@ -1788,6 +1788,7 @@ export const Player: React.FC<PlayerProps> = ({
                 }
               : {}),
           }}
+          id="player-fullscreen-dock"
           data-theme={designConfig.id}
           className={`full-player-overlay fixed inset-0 z-[100] w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in`}
         >
@@ -2426,7 +2427,7 @@ export const Player: React.FC<PlayerProps> = ({
                 : {}),
             }}
             data-theme={designConfig.id}
-            className={`fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} backdrop-blur-2xl border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
+            className={`fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} ${isBespoke ? "" : "backdrop-blur-2xl"} border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
           >
             {/* Top Drag-Down Bar Handle */}
             <div

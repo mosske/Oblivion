@@ -2982,7 +2982,8 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 }
 
 /* 4. 3D BUTTONS (Tactile Raised Bevel with Specular Highlight & Depth Shadow) */
-[data-theme="bespoke"] button,
+/* Exclude navigation buttons and player buttons from the blocky 3D button look */
+[data-theme="bespoke"] button:not(.bottom-nav-item):not(.sidebar-nav-item):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button):not(#app-mini-player-floating-dock button):not(.mini-player button):not(#player-fullscreen-dock button):not(.full-player-overlay button):not(.fullscreen-player button),
 [data-theme="bespoke"] .btn-primary,
 [data-theme="bespoke"] .button-primary,
 [data-theme="bespoke"] .btn-signin,
@@ -3005,7 +3006,7 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), filter 0.18s ease;
 }
 
-[data-theme="bespoke"] button:hover,
+[data-theme="bespoke"] button:not(.bottom-nav-item):not(.sidebar-nav-item):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button):not(#app-mini-player-floating-dock button):not(.mini-player button):not(#player-fullscreen-dock button):not(.full-player-overlay button):not(.fullscreen-player button):hover,
 [data-theme="bespoke"] .btn-primary:hover,
 [data-theme="bespoke"] .button-primary:hover,
 [data-theme="bespoke"] .btn-signin:hover,
@@ -3020,7 +3021,7 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.3), 0 3px 6px -1px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
-[data-theme="bespoke"] button:active,
+[data-theme="bespoke"] button:not(.bottom-nav-item):not(.sidebar-nav-item):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button):not(#app-mini-player-floating-dock button):not(.mini-player button):not(#player-fullscreen-dock button):not(.full-player-overlay button):not(.fullscreen-player button):active,
 [data-theme="bespoke"] .btn-primary:active,
 [data-theme="bespoke"] .button-primary:active,
 [data-theme="bespoke"] .btn-signin:active,
@@ -3035,6 +3036,134 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
   border-top: 1px solid rgba(0, 0, 0, 0.25) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ================================================================================
+   NAVIGATION BUTTONS (Mobile Bottom & Tablet/PC Left Margin Sidebar)
+   Remove box/border/shadow - clean inscribed depth on icons and labels
+   ================================================================================ */
+[data-theme="bespoke"] #bottom-navigation-bar button,
+[data-theme="bespoke"] .bottom-nav-dock button,
+[data-theme="bespoke"] .bottom-nav-item,
+[data-theme="bespoke"] .bottom-nav button,
+[data-theme="bespoke"] #app-sidebar-nav nav button,
+[data-theme="bespoke"] .sidebar-nav-item,
+[data-theme="bespoke"] #nav-home-btn,
+[data-theme="bespoke"] #nav-explore-btn,
+[data-theme="bespoke"] #nav-library-btn,
+[data-theme="bespoke"] #nav-settings-btn {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="bespoke"] #bottom-navigation-bar button:hover,
+[data-theme="bespoke"] .bottom-nav-item:hover,
+[data-theme="bespoke"] #app-sidebar-nav nav button:hover,
+[data-theme="bespoke"] .sidebar-nav-item:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: none !important;
+}
+
+[data-theme="bespoke"] #bottom-navigation-bar button:active,
+[data-theme="bespoke"] .bottom-nav-item:active,
+[data-theme="bespoke"] #app-sidebar-nav nav button:active,
+[data-theme="bespoke"] .sidebar-nav-item:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: translateY(0.5px) !important;
+}
+
+/* ================================================================================
+   MINI PLAYER & FULL PLAYER BUTTONS (No ugly square/rectangle 3D boxes)
+   ================================================================================ */
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(.rounded-full),
+[data-theme="bespoke"] .mini-player button:not(.rounded-full),
+[data-theme="bespoke"] #player-fullscreen-dock button:not(.rounded-full),
+[data-theme="bespoke"] .full-player-overlay button:not(.rounded-full),
+[data-theme="bespoke"] .fullscreen-player button:not(.rounded-full),
+[data-theme="bespoke"] #player-fullscreen-add-playlist-btn {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(.rounded-full):hover,
+[data-theme="bespoke"] #player-fullscreen-dock button:not(.rounded-full):hover,
+[data-theme="bespoke"] .full-player-overlay button:not(.rounded-full):hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: none !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(.rounded-full):active,
+[data-theme="bespoke"] #player-fullscreen-dock button:not(.rounded-full):active,
+[data-theme="bespoke"] .full-player-overlay button:not(.rounded-full):active {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: translateY(0.5px) !important;
+}
+
+/* ================================================================================
+   INSCRIBED DEPTH (Light + Dark combination for carved / etched depth)
+   ================================================================================ */
+[data-theme="bespoke"] #app-mini-player-floating-dock button svg,
+[data-theme="bespoke"] .mini-player button svg,
+[data-theme="bespoke"] #player-fullscreen-dock button svg,
+[data-theme="bespoke"] .full-player-overlay button svg,
+[data-theme="bespoke"] .fullscreen-player button svg,
+[data-theme="bespoke"] #bottom-navigation-bar button svg,
+[data-theme="bespoke"] .bottom-nav-item svg,
+[data-theme="bespoke"] #app-sidebar-nav nav button svg,
+[data-theme="bespoke"] .sidebar-nav-item svg {
+  filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 1px 0.5px rgba(255, 255, 255, 0.5)) !important;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:hover svg,
+[data-theme="bespoke"] #player-fullscreen-dock button:hover svg,
+[data-theme="bespoke"] .full-player-overlay button:hover svg,
+[data-theme="bespoke"] .bottom-nav-item:hover svg,
+[data-theme="bespoke"] .sidebar-nav-item:hover svg {
+  filter: drop-shadow(0 -1.5px 0.5px rgba(0, 0, 0, 0.9)) drop-shadow(0 1px 1px rgba(255, 255, 255, 0.65)) !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:active svg,
+[data-theme="bespoke"] #player-fullscreen-dock button:active svg,
+[data-theme="bespoke"] .full-player-overlay button:active svg,
+[data-theme="bespoke"] .bottom-nav-item:active svg,
+[data-theme="bespoke"] .sidebar-nav-item:active svg {
+  transform: translateY(0.5px) !important;
+  filter: drop-shadow(0 -0.5px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 1px 0 rgba(255, 255, 255, 0.4)) !important;
+}
+
+/* Inscribed text on mini player, full player & navigation */
+[data-theme="bespoke"] #app-mini-player-floating-dock .track-title,
+[data-theme="bespoke"] #app-mini-player-floating-dock .artist-name,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-bold,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono span,
+[data-theme="bespoke"] #player-fullscreen-dock .stage-title,
+[data-theme="bespoke"] #player-fullscreen-dock .stage-artist,
+[data-theme="bespoke"] #player-fullscreen-dock .font-mono,
+[data-theme="bespoke"] #player-fullscreen-dock button span,
+[data-theme="bespoke"] .full-player-overlay button span,
+[data-theme="bespoke"] .bottom-nav-item .nav-label,
+[data-theme="bespoke"] .sidebar-nav-item .nav-label {
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.7), 0 1px 0.5px rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Primary Highlight Action Buttons */
@@ -3217,11 +3346,16 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   opacity: 1 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  box-shadow: 0 20px 48px -6px rgba(0, 0, 0, 0.42), 0 6px 16px -2px rgba(0, 0, 0, 0.25), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -2px 2px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.2), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3) !important;
   border-top: 1.5px solid rgba(255, 255, 255, 0.5) !important;
   border-bottom: 2px solid rgba(0, 0, 0, 0.35) !important;
   border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
   border-right: 1px solid rgba(0, 0, 0, 0.2) !important;
+  box-sizing: border-box !important;
+  width: calc(100% - 24px) !important;
+  max-width: 680px !important;
+  overflow: visible !important;
+  isolation: isolate !important;
 }
 
 /* Top drag bar handle */
@@ -3255,12 +3389,12 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   stroke: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.75)) !important;
 }
 
-/* Mini player center Play/Pause button */
+/* Mini player center Play/Pause circular button (sleek circle, no square corners) */
 [data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full {
   background: var(--bespoke-mini-player-play-bg, #0f172a) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1.5px 1px rgba(255, 255, 255, 0.55), inset 0 -2px 1px rgba(0, 0, 0, 0.35) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45), inset 0 -1.5px 1px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 9999px !important;
 }
 
 [data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full svg {
