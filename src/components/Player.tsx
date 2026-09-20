@@ -549,6 +549,34 @@ const WAVEFORM_BARS = [
   75, 50, 35, 65, 80, 60, 40, 25, 18, 12
 ];
 
+const calculateTargetTime = (
+  event: React.PointerEvent | PointerEvent | React.MouseEvent | MouseEvent | React.TouchEvent | TouchEvent,
+  container: HTMLDivElement | null,
+  duration: number
+): number => {
+  if (!container || !duration || isNaN(duration) || duration <= 0) return 0;
+
+  const rect = container.getBoundingClientRect();
+  if (rect.width <= 0) return 0;
+
+  let clientX: number;
+  if ("touches" in event && event.touches && event.touches.length > 0) {
+    clientX = event.touches[0].clientX;
+  } else if ("changedTouches" in event && event.changedTouches && event.changedTouches.length > 0) {
+    clientX = event.changedTouches[0].clientX;
+  } else if ("clientX" in event) {
+    clientX = (event as PointerEvent | MouseEvent).clientX;
+  } else {
+    return 0;
+  }
+
+  // Clamp click coordinates within bounds (0 to 1)
+  const offsetX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+  const percentage = offsetX / rect.width;
+
+  return percentage * duration;
+};
+
 interface WaveformScrubberProps {
   currentTime: number;
   duration: number;
@@ -558,6 +586,7 @@ interface WaveformScrubberProps {
   bespokeColors?: [string, string, string, string] | string[];
   className?: string;
   isMini?: boolean;
+  onScrubbingChange?: (isScrubbing: boolean, scrubTime: number | null) => void;
 }
 
 const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
@@ -569,57 +598,70 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   bespokeColors,
   className = "",
   isMini = false,
+  onScrubbingChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragTime, setDragTime] = useState<number | null>(null);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubTime, setScrubTime] = useState<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  const effectiveTime = isDragging && dragTime !== null ? dragTime : currentTime;
+  // Sync ref for access inside window event listeners
+  const isScrubbingRef = useRef(false);
+  isScrubbingRef.current = isScrubbing;
+
+  const effectiveTime = isScrubbing && scrubTime !== null ? scrubTime : currentTime;
   const effectiveDuration = duration > 0 ? duration : 1;
   const progressPercent = Math.max(0, Math.min(100, (effectiveTime / effectiveDuration) * 100));
 
-  const calculateTimeFromEvent = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return 0;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
-    const ratio = rect.width > 0 ? x / rect.width : 0;
-    return ratio * (duration > 0 ? duration : 0);
-  };
-
+  // Pointer Down (Direct jump and start scrubbing session)
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    const newTime = calculateTimeFromEvent(e);
-    setDragTime(newTime);
+    e.stopPropagation();
+    setIsScrubbing(true);
+    const newTime = calculateTargetTime(e, containerRef.current, duration);
+    setScrubTime(newTime);
+    onScrubbingChange?.(true, newTime);
   };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    const newTime = calculateTimeFromEvent(e);
-    setDragTime(newTime);
-  };
+  // Dragging movement and release via global window listeners while scrubbing
+  useEffect(() => {
+    if (!isScrubbing) return;
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isDragging) {
-      const finalTime = calculateTimeFromEvent(e);
-      setIsDragging(false);
-      setDragTime(null);
-      onSeek(finalTime);
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch {}
-    }
-  };
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      if (!isScrubbingRef.current) return;
+      const newTime = calculateTargetTime(e, containerRef.current, duration);
+      setScrubTime(newTime);
+      onScrubbingChange?.(true, newTime);
+    };
 
-  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
-    setIsDragging(false);
-    setDragTime(null);
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
-  };
+    const handleWindowPointerUp = (e: PointerEvent) => {
+      if (!isScrubbingRef.current) return;
+      const finalTime = calculateTargetTime(e, containerRef.current, duration);
+      setIsScrubbing(false);
+      setScrubTime(null);
+      onScrubbingChange?.(false, null);
+      if (!isNaN(finalTime) && finalTime >= 0) {
+        onSeek(finalTime);
+      }
+    };
+
+    const handleWindowPointerCancel = () => {
+      if (!isScrubbingRef.current) return;
+      setIsScrubbing(false);
+      setScrubTime(null);
+      onScrubbingChange?.(false, null);
+    };
+
+    window.addEventListener("pointermove", handleWindowPointerMove, { passive: false });
+    window.addEventListener("pointerup", handleWindowPointerUp, { passive: false });
+    window.addEventListener("pointercancel", handleWindowPointerCancel, { passive: false });
+
+    return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerUp);
+      window.removeEventListener("pointercancel", handleWindowPointerCancel);
+    };
+  }, [isScrubbing, duration, onSeek, onScrubbingChange]);
 
   const hasBespokeColors = Boolean(bespokeColors && bespokeColors.length >= 2);
 
@@ -627,12 +669,13 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     <div
       ref={containerRef}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-all ${className}`}
+      style={{
+        touchAction: "none",
+        ...(hasBespokeColors ? ({ "--accent-primary": bespokeColors![1] } as React.CSSProperties) : {}),
+      }}
+      className={`progress-waveform-container group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-all ${className}`}
       title="Click or drag anywhere on waveform to seek"
     >
       {/* Waveform Bars */}
@@ -646,18 +689,13 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
             className="flex-1 flex items-center justify-center h-full min-w-[2px] pointer-events-none"
           >
             <span
-              className={`w-full rounded-full transition-[height,background-color] duration-150 ${
+              className={`progress-waveform-bar ${
                 isPassed
-                  ? "progress-gradient-animated shadow-[0_0_8px_var(--accent-primary)]"
-                  : "waveform-inactive-bar"
-              } ${isPlaying && isPassed && !isDragging ? "animate-pulse" : ""}`}
+                  ? "is-played progress-waveform-active progress-gradient-animated shadow-[0_0_8px_var(--accent-primary)]"
+                  : "progress-bar-track-unplayed waveform-inactive-bar"
+              } w-full rounded-full transition-[height,background-color] duration-150`}
               style={{
-                height: `${Math.max(
-                  15,
-                  isPlaying && !isDragging
-                    ? heightPct * (0.7 + Math.sin(idx + currentTime * 3) * 0.3)
-                    : heightPct
-                )}%`,
+                height: `${heightPct}%`,
                 ...(hasBespokeColors && isPassed
                   ? {
                       background: `linear-gradient(90deg, ${bespokeColors![0]}, ${bespokeColors![1]})`,
@@ -672,8 +710,8 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
       {/* Interactive Scrubber Knob */}
       <div
-        className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full pointer-events-none transition-all duration-75 ${
-          isDragging || isHovered
+        className={`progress-thumb-knob progress-handle-active ${isScrubbing ? "is-dragging opacity-100 scale-125" : ""} absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full pointer-events-none transition-all duration-75 ${
+          isScrubbing || isHovered
             ? "opacity-100 scale-125"
             : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
         }`}
@@ -727,7 +765,19 @@ export const Player: React.FC<PlayerProps> = ({
     audioCtxRef,
     sourceNodeRef,
     filtersRef,
+    analyserRef,
+    getAnalyser,
   } = useEqualizer();
+
+  const fullPlayerContainerRef = useRef<HTMLDivElement | null>(null);
+  const miniPlayerContainerRef = useRef<HTMLDivElement | null>(null);
+  const currentBeatRef = useRef<number>(0);
+  const rafBeatIdRef = useRef<number | null>(null);
+
+  // Seek synchronization refs to prevent stale time updates and player clock collisions
+  const lastSeekTimeRef = useRef<number | null>(null);
+  const lastSeekTimestampRef = useRef<number>(0);
+  const activeAudioSourceRef = useRef<"audio" | "youtube">("youtube");
 
   // Attach main <audio> element to Web Audio pipeline on mount
   useEffect(() => {
@@ -741,8 +791,16 @@ export const Player: React.FC<PlayerProps> = ({
   const [videoRect, setVideoRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
-  const [isSeeking, setIsSeeking] = useState(false);
-  const [seekValue, setSeekValue] = useState<number>(0);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubTime, setScrubTime] = useState<number | null>(null);
+  const isScrubbingRef = useRef(false);
+  isScrubbingRef.current = isScrubbing;
+
+  const handleScrubbingChange = useCallback((scrubbing: boolean, time: number | null) => {
+    setIsScrubbing(scrubbing);
+    setScrubTime(time);
+    isScrubbingRef.current = scrubbing;
+  }, []);
 
   // Dedicated radioSeedTrack state that locks to the song that initiated the radio station
   const [radioSeedTrack, setRadioSeedTrack] = useState<Track | null>(null);
@@ -1011,6 +1069,165 @@ export const Player: React.FC<PlayerProps> = ({
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
+  // Real-Time Audio Analyzer Beat-Reactive Loop (AudioContext & AnalyserNode)
+  useEffect(() => {
+    // Automatically freeze animation loops when audio is paused or muted to save CPU/GPU cycles
+    if (!isPlaying || isMuted || volume === 0) {
+      if (rafBeatIdRef.current) {
+        cancelAnimationFrame(rafBeatIdRef.current);
+        rafBeatIdRef.current = null;
+      }
+      currentBeatRef.current = 0;
+      const resetContainer = (el: HTMLElement | null) => {
+        if (!el) return;
+        el.style.setProperty("--beat-glow", "0");
+        el.style.setProperty("--beat-scale", "0");
+        el.classList.remove("beat-fallback-active");
+      };
+      resetContainer(fullPlayerContainerRef.current);
+      resetContainer(miniPlayerContainerRef.current);
+      return;
+    }
+
+    let isSubscribed = true;
+    let silentFrameCount = 0;
+    const energyHistory: number[] = [];
+    const HISTORY_SIZE = 35; // ~0.5s sliding window at 60fps
+
+    const renderBeatFrame = () => {
+      if (!isSubscribed) return;
+
+      const analyser = getAnalyser() || audioPlayer.getAnalyser();
+      let beatIntensity = 0;
+      let hasRealSignal = false;
+
+      if (analyser) {
+        try {
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          analyser.getByteFrequencyData(dataArray);
+
+          const sampleRate = audioCtxRef.current?.sampleRate || 44100;
+          const binWidth = sampleRate / analyser.fftSize;
+
+          // Band 1: Sub & Bass Kick (30Hz - 160Hz)
+          const minBassBin = Math.max(0, Math.floor(30 / binWidth));
+          const maxBassBin = Math.min(bufferLength - 1, Math.ceil(160 / binWidth));
+          let bassSum = 0;
+          let bassCount = 0;
+          for (let i = minBassBin; i <= maxBassBin; i++) {
+            bassSum += dataArray[i];
+            bassCount++;
+          }
+          const bassVal = bassCount > 0 ? bassSum / bassCount : 0;
+
+          // Band 2: Punch & Snare / Rhythm Guitars (160Hz - 500Hz)
+          const minMidBin = maxBassBin + 1;
+          const maxMidBin = Math.min(bufferLength - 1, Math.ceil(500 / binWidth));
+          let midSum = 0;
+          let midCount = 0;
+          for (let i = minMidBin; i <= maxMidBin; i++) {
+            midSum += dataArray[i];
+            midCount++;
+          }
+          const midVal = midCount > 0 ? midSum / midCount : 0;
+
+          // Weighted combined rhythm energy
+          const instantEnergy = bassVal * 0.7 + midVal * 0.3;
+
+          if (instantEnergy > 2) {
+            hasRealSignal = true;
+
+            // Maintain rolling average of recent energy
+            energyHistory.push(instantEnergy);
+            if (energyHistory.length > HISTORY_SIZE) {
+              energyHistory.shift();
+            }
+            const avgEnergy = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
+
+            // Transient detection: Energy flux compared to rolling average
+            // In heavy rock/metal, avgEnergy will be high, but kick drum or guitar onsets will still spike above average!
+            const variance = Math.max(7, avgEnergy * 0.16);
+            const flux = instantEnergy - avgEnergy;
+
+            if (flux > variance) {
+              // Hit / Transient detected!
+              const hitStrength = Math.min(1, Math.max(0.45, flux / (variance * 2.0)));
+              currentBeatRef.current = Math.max(currentBeatRef.current, hitStrength);
+            } else {
+              // Exponential decay between hits
+              currentBeatRef.current = Math.max(0, currentBeatRef.current * 0.84 - 0.015);
+            }
+
+            // Also blend a subtle baseline energy so loud sections glow warmly
+            const baselineGlow = Math.min(0.22, (instantEnergy / 255) * 0.22);
+            beatIntensity = Math.min(1, Math.max(baselineGlow, currentBeatRef.current));
+          }
+        } catch (err) {
+          console.warn("Analyser reading error:", err);
+        }
+      }
+
+      if (!hasRealSignal) {
+        silentFrameCount++;
+        // If AnalyserNode is unavailable due to browser restrictions or iframe fallback,
+        // drive active musical pulse at standard tempo (128 BPM = ~468ms period)
+        if (silentFrameCount > 15) {
+          fullPlayerContainerRef.current?.classList.add("beat-fallback-active");
+          miniPlayerContainerRef.current?.classList.add("beat-fallback-active");
+
+          const now = performance.now();
+          const cycle = (now % 468) / 468;
+          // Sharp attack at downbeat, exponential decay
+          const pulse = Math.pow(Math.max(0, 1 - cycle * 1.8), 2.2);
+          beatIntensity = Math.min(1, pulse * 0.85);
+        } else {
+          currentBeatRef.current = Math.max(0, currentBeatRef.current * 0.85);
+          beatIntensity = currentBeatRef.current;
+        }
+      } else {
+        silentFrameCount = 0;
+        fullPlayerContainerRef.current?.classList.remove("beat-fallback-active");
+        miniPlayerContainerRef.current?.classList.remove("beat-fallback-active");
+      }
+
+      // Bind beatIntensity as CSS Custom Variable (--beat-scale and --beat-glow)
+      const formattedBeat = beatIntensity.toFixed(3);
+      if (fullPlayerContainerRef.current) {
+        fullPlayerContainerRef.current.style.setProperty("--beat-glow", formattedBeat);
+        fullPlayerContainerRef.current.style.setProperty("--beat-scale", formattedBeat);
+      }
+      if (miniPlayerContainerRef.current) {
+        miniPlayerContainerRef.current.style.setProperty("--beat-glow", formattedBeat);
+        miniPlayerContainerRef.current.style.setProperty("--beat-scale", formattedBeat);
+      }
+      document.documentElement.style.setProperty("--beat-glow", formattedBeat);
+      document.documentElement.style.setProperty("--beat-scale", formattedBeat);
+
+      rafBeatIdRef.current = requestAnimationFrame(renderBeatFrame);
+    };
+
+    rafBeatIdRef.current = requestAnimationFrame(renderBeatFrame);
+
+    return () => {
+      isSubscribed = false;
+      if (rafBeatIdRef.current) {
+        cancelAnimationFrame(rafBeatIdRef.current);
+        rafBeatIdRef.current = null;
+      }
+      const resetContainer = (el: HTMLElement | null) => {
+        if (!el) return;
+        el.style.setProperty("--beat-glow", "0");
+        el.style.setProperty("--beat-scale", "0");
+        el.classList.remove("beat-fallback-active");
+      };
+      resetContainer(fullPlayerContainerRef.current);
+      resetContainer(miniPlayerContainerRef.current);
+      document.documentElement.style.setProperty("--beat-glow", "0");
+      document.documentElement.style.setProperty("--beat-scale", "0");
+    };
+  }, [isPlaying, isMuted, volume, getAnalyser]);
+
   const repeatModeRef = useRef<"off" | "one" | "all">(repeatMode);
   useEffect(() => {
     repeatModeRef.current = repeatMode;
@@ -1130,11 +1347,13 @@ export const Player: React.FC<PlayerProps> = ({
           audioRef.current
             .play()
             .then(() => {
+              activeAudioSourceRef.current = "audio";
               if (isYtReadyRef.current && ytPlayerRef.current) {
                 ytPlayerRef.current.mute?.();
               }
             })
             .catch(() => {
+              activeAudioSourceRef.current = "youtube";
               if (isYtReadyRef.current && ytPlayerRef.current) {
                 ytPlayerRef.current.unMute?.();
                 ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
@@ -1352,6 +1571,7 @@ export const Player: React.FC<PlayerProps> = ({
         audioRef.current
           .play()
           .then(() => {
+            activeAudioSourceRef.current = "audio";
             // Real audio stream is playing through <audio> and the 7-band Web Audio Equalizer!
             // Mute YouTube iframe video to prevent dual-audio echo
             if (isYtReadyRef.current && ytPlayerRef.current) {
@@ -1360,6 +1580,7 @@ export const Player: React.FC<PlayerProps> = ({
             }
           })
           .catch((err) => {
+            activeAudioSourceRef.current = "youtube";
             console.warn("[Player] <audio> play fallback to YouTube:", err);
             // Fallback: If audio stream couldn't play directly, unmute YouTube iframe so music still plays
             if (isYtReadyRef.current && ytPlayerRef.current) {
@@ -1408,11 +1629,30 @@ export const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     const pollRate = (showLyrics || isFullscreen) ? 100 : 250;
     const interval = setInterval(() => {
+      // Suspend polling updates to UI when user is actively scrubbing
+      if (isScrubbingRef.current) return;
       if (isPlaying && isYtReadyRef.current && ytPlayerRef.current) {
         try {
           const curTime = ytPlayerRef.current.getCurrentTime?.();
           const ytDur = ytPlayerRef.current.getDuration?.();
           const validDur = (ytDur && ytDur > 0) ? ytDur : (currentTrack?.duration || 0);
+
+          // If recently sought, ignore YouTube updates until it settles close to seek target
+          if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1200) {
+            if (typeof curTime === "number" && Math.abs(curTime - lastSeekTimeRef.current) > 2) {
+              return; // Wait for YouTube seekTo to land
+            }
+          }
+
+          // If <audio> is currently the active audio source AND is playing normally in sync, let <audio> drive time
+          if (activeAudioSourceRef.current === "audio" && audioRef.current && !audioRef.current.paused && audioRef.current.currentTime > 0) {
+            // Still check duration fallback
+            if (validDur > 3 && typeof curTime === "number" && curTime >= validDur - 0.25 && !isChangingTrackRef.current) {
+              handleEndedRef.current?.();
+            }
+            return;
+          }
+
           if (typeof curTime === "number" && !isNaN(curTime) && curTime >= 0) {
             setPlayerState((prev) => ({
               ...prev,
@@ -1577,7 +1817,13 @@ export const Player: React.FC<PlayerProps> = ({
 
   // Time update event handler for HTML5 audio
   const handleTimeUpdate = () => {
+    // Suspend real-time audio position updates to UI when user is actively scrubbing
+    if (isScrubbingRef.current) return;
     if (!audioRef.current) return;
+
+    // If YouTube is active audio source, ignore HTML5 audio time updates
+    if (activeAudioSourceRef.current === "youtube") return;
+
     const src = audioRef.current.src || "";
     // NEVER overwrite currentTime/duration if audio element is playing the silent keepalive WAV or data URL!
     if (!src || src.startsWith("data:audio/wav") || src.startsWith("blob:") || (cachedSilentUrl && src === cachedSilentUrl)) {
@@ -1585,6 +1831,14 @@ export const Player: React.FC<PlayerProps> = ({
     }
     const audCur = audioRef.current.currentTime;
     const audDur = audioRef.current.duration;
+
+    // Ignore stale updates during seek cooldown window
+    if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1200) {
+      if (Math.abs(audCur - lastSeekTimeRef.current) > 2) {
+        return; // Ignore stale pre-seek timeupdate
+      }
+    }
+
     if (typeof audCur === "number" && !isNaN(audCur) && audCur >= 0) {
       setPlayerState((prev) => ({
         ...prev,
@@ -1601,20 +1855,66 @@ export const Player: React.FC<PlayerProps> = ({
     if (src.startsWith("data:audio/wav") || src.startsWith("blob:") || (cachedSilentUrl && src === cachedSilentUrl)) {
       return;
     }
+    // Ignore accidental ended event right after a seek
+    if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1500) {
+      return;
+    }
     handleEndedRef.current?.();
   };
 
   // Custom seek forward/back
   const handleSeekInternal = (time: number) => {
+    if (isNaN(time) || time < 0) return;
     resumeAudioContext();
+
+    // Set seek cooldown and record intended target time
+    lastSeekTimeRef.current = time;
+    lastSeekTimestampRef.current = Date.now();
+
+    // Immediately update player state optimistically
+    setPlayerState((prev) => ({ ...prev, currentTime: time }));
+
+    // Seek YouTube player directly
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
         ytPlayerRef.current.seekTo?.(time, true);
       } catch {}
     }
+
+    // Seek HTML5 audio element
     if (audioRef.current) {
-      audioRef.current.currentTime = time;
+      try {
+        audioRef.current.currentTime = time;
+      } catch {}
     }
+
+    // Seek verification check:
+    // If audio element failed to seek to the requested timestamp (e.g. snapped to 0:00),
+    // immediately unmute YouTube and set YouTube as active source so user hears the music from `time`, NOT 0:00!
+    setTimeout(() => {
+      if (lastSeekTimeRef.current !== null && Math.abs(time - lastSeekTimeRef.current) < 0.1) {
+        if (audioRef.current) {
+          const audCur = audioRef.current.currentTime;
+          // If sought forward (> 3s) but audio element is stuck near start (< 2s)
+          if (time > 3 && audCur < 2) {
+            console.warn("[Player] <audio> seek didn't advance, switching audio source to YouTube");
+            activeAudioSourceRef.current = "youtube";
+            try {
+              audioRef.current.pause();
+            } catch {}
+            if (isYtReadyRef.current && ytPlayerRef.current) {
+              try {
+                ytPlayerRef.current.unMute?.();
+                ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
+                ytPlayerRef.current.seekTo?.(time, true);
+                ytPlayerRef.current.playVideo?.();
+              } catch {}
+            }
+          }
+        }
+      }
+    }, 400);
+
     onSeek(time);
   };
 
@@ -1841,6 +2141,7 @@ export const Player: React.FC<PlayerProps> = ({
       )}      {/* Fullscreen Player Modal / Expansion - 100% Full-Screen Opaque Immersive Studio */}
       {isFullscreen && (
         <div
+          ref={fullPlayerContainerRef}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -2443,19 +2744,20 @@ export const Player: React.FC<PlayerProps> = ({
             {/* Bottom Row: Waveform Scrubber & Timestamps matching Mini Player */}
             <div className="flex items-center gap-3 pt-0.5">
               <WaveformScrubber
-                currentTime={currentTime}
-                duration={duration || currentTrack?.duration || 0}
+                currentTime={isScrubbing && scrubTime !== null ? scrubTime : currentTime}
+                duration={(duration && duration > 0) ? duration : (currentTrack?.duration || 0)}
                 isPlaying={isPlaying}
                 onSeek={handleSeekInternal}
+                onScrubbingChange={handleScrubbingChange}
                 designConfig={designConfig}
                 bespokeColors={isBespoke ? bespokeColors : undefined}
                 isMini={false}
               />
 
-              <div className={`text-[11px] sm:text-xs font-mono font-medium ${designConfig.textMuted || fpTheme.timeText || "text-slate-400"} shrink-0 whitespace-nowrap`}>
-                <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
+              <div className={`player-time-display text-[11px] sm:text-xs font-mono font-medium ${designConfig.textMuted || fpTheme.timeText || "text-slate-400"} shrink-0 whitespace-nowrap`}>
+                <span>{Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) / 60)}:{String(Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) % 60)).padStart(2, "0")}</span>
                 <span className="mx-1">/</span>
-                <span>{Math.floor((duration || currentTrack?.duration || 0) / 60)}:{String(Math.floor((duration || currentTrack?.duration || 0) % 60)).padStart(2, "0")}</span>
+                <span>{Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) / 60)}:{String(Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) % 60)).padStart(2, "0")}</span>
               </div>
             </div>
           </div>
@@ -2473,6 +2775,7 @@ export const Player: React.FC<PlayerProps> = ({
 
         return (
           <div
+            ref={miniPlayerContainerRef}
             id="app-mini-player-floating-dock"
             onTouchStart={handleMiniTouchStart}
             onTouchMove={handleMiniTouchMove}
@@ -2664,19 +2967,20 @@ export const Player: React.FC<PlayerProps> = ({
             {/* Bottom Row: Waveform Scrubber & Timestamps */}
             <div className="flex items-center gap-3 pt-0.5">
               <WaveformScrubber
-                currentTime={currentTime}
-                duration={duration || currentTrack?.duration || 0}
+                currentTime={isScrubbing && scrubTime !== null ? scrubTime : currentTime}
+                duration={(duration && duration > 0) ? duration : (currentTrack?.duration || 0)}
                 isPlaying={isPlaying}
                 onSeek={handleSeekInternal}
+                onScrubbingChange={handleScrubbingChange}
                 designConfig={designConfig}
                 bespokeColors={isBespoke && bespokeColors && bespokeColors.length >= 3 ? [bespokeColors[1], bespokeColors[2]] : (isBespoke ? bespokeColors : undefined)}
                 isMini={true}
               />
 
-              <div className={`text-[11px] font-mono font-medium ${designConfig.textMuted} shrink-0 whitespace-nowrap`}>
-                <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
+              <div className={`player-time-display text-[11px] font-mono font-medium ${designConfig.textMuted} shrink-0 whitespace-nowrap`}>
+                <span>{Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) / 60)}:{String(Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) % 60)).padStart(2, "0")}</span>
                 <span className="mx-1">/</span>
-                <span>{Math.floor((duration || currentTrack?.duration || 0) / 60)}:{String(Math.floor((duration || currentTrack?.duration || 0) % 60)).padStart(2, "0")}</span>
+                <span>{Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) / 60)}:{String(Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) % 60)).padStart(2, "0")}</span>
               </div>
             </div>
           </div>

@@ -20,6 +20,8 @@ export interface EqualizerContextValue {
   audioCtxRef: React.MutableRefObject<AudioContext | null>;
   sourceNodeRef: React.MutableRefObject<MediaElementAudioSourceNode | null>;
   filtersRef: React.MutableRefObject<BiquadFilterNode[]>;
+  analyserRef: React.MutableRefObject<AnalyserNode | null>;
+  getAnalyser: () => AnalyserNode | null;
   attachAudioElement: (audioElement: HTMLAudioElement) => void;
   setGain: (index: number, newGainValue: number) => void;
   setPreset: (presetName: string) => void;
@@ -37,6 +39,7 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const filtersRef = useRef<BiquadFilterNode[]>([]);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const attachedAudioElementRef = useRef<HTMLAudioElement | null>(null);
 
   // Resume helper for autoplay restriction handling
@@ -46,6 +49,20 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
         console.warn("AudioContext resume error:", err);
       });
     }
+  }, []);
+
+  const getAnalyser = useCallback((): AnalyserNode | null => {
+    if (analyserRef.current) return analyserRef.current;
+    if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+      try {
+        const analyser = audioCtxRef.current.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
+        analyserRef.current = analyser;
+        return analyser;
+      } catch {}
+    }
+    return null;
   }, []);
 
   // 1. Connect the Audio Graph Correctly & 2. Prevent Duplicate Source Node Errors
@@ -112,14 +129,30 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
         filtersRef.current = filters;
 
         // 1. Route the node chain:
-        // <audio> -> MediaElementSourceNode -> Filter 1 (60Hz) -> Filter 2 (150Hz) -> ... -> Filter 7 (15kHz) -> AudioContext.destination
+        // <audio> -> MediaElementSourceNode -> Filter 1 (60Hz) -> Filter 2 (150Hz) -> ... -> Filter 7 (15kHz) -> AnalyserNode -> AudioContext.destination
+        if (!analyserRef.current) {
+          try {
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.8;
+            analyserRef.current = analyser;
+          } catch {}
+        }
+
         let prevNode: AudioNode = sourceNodeRef.current;
         for (const filter of filters) {
           prevNode.connect(filter);
           prevNode = filter;
         }
-        prevNode.connect(audioCtx.destination);
-        audioPlayer.setWebAudioPipeline(audioCtx, filters, sourceNodeRef.current);
+
+        if (analyserRef.current) {
+          prevNode.connect(analyserRef.current);
+          analyserRef.current.connect(audioCtx.destination);
+        } else {
+          prevNode.connect(audioCtx.destination);
+        }
+
+        audioPlayer.setWebAudioPipeline(audioCtx, filters, sourceNodeRef.current, analyserRef.current || undefined);
       }
     } catch (err) {
       console.warn("Failed to attach audio element to Web Audio equalizer pipeline:", err);
@@ -207,6 +240,8 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
         audioCtxRef,
         sourceNodeRef,
         filtersRef,
+        analyserRef,
+        getAnalyser,
         attachAudioElement,
         setGain,
         setPreset,

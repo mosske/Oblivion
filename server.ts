@@ -4890,10 +4890,34 @@ async function getSCClientIdGlobal(): Promise<string> {
   return scClientIdPromiseGlobal;
 }
 
+const AUDIO_CACHE_DIR = path.join("/tmp", "audio_cache");
+try {
+  if (!fs.existsSync(AUDIO_CACHE_DIR)) {
+    fs.mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
+  }
+} catch {}
+
 app.get("/api/youtube/stream/:id", async (req, res) => {
   const { id } = req.params;
   const titleQuery = req.query.title as string | undefined;
   const artistQuery = req.query.artist as string | undefined;
+
+  const safeId = (id || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  const cachedFilePath = path.join(AUDIO_CACHE_DIR, `${safeId}.mp3`);
+
+  // 1. If fully cached file exists on disk, serve it with native Express Range/seek support (HTTP 206)
+  if (fs.existsSync(cachedFilePath)) {
+    try {
+      const stat = fs.statSync(cachedFilePath);
+      if (stat.size > 100000) {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        return res.sendFile(cachedFilePath, { acceptRanges: true });
+      }
+    } catch {}
+  }
 
   try {
     let query = "";
@@ -4929,7 +4953,6 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
       const audioStream = await play.stream(track.url);
 
       res.setHeader("Content-Type", "audio/mpeg");
-      res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
@@ -4939,16 +4962,46 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
         return res.status(200).end();
       }
 
+      // Stream simultaneously to client and to cache file for instant seeking on future seeks
+      const tempFilePath = `${cachedFilePath}.tmp`;
+      let fileWriteStream: fs.WriteStream | null = null;
+      try {
+        fileWriteStream = fs.createWriteStream(tempFilePath);
+      } catch {}
+
       req.on("close", () => {
         try {
           audioStream.stream.destroy?.();
+          if (fileWriteStream) {
+            fileWriteStream.destroy();
+          }
         } catch {}
       });
 
       audioStream.stream.on("error", (err) => {
         console.warn("[Stream] Stream pipe error:", err);
+        try {
+          if (fileWriteStream) fileWriteStream.destroy();
+          if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+        } catch {}
         if (!res.headersSent) res.status(500).end();
       });
+
+      if (fileWriteStream) {
+        fileWriteStream.on("finish", () => {
+          try {
+            if (fs.existsSync(tempFilePath)) {
+              fs.renameSync(tempFilePath, cachedFilePath);
+            }
+          } catch {}
+        });
+        fileWriteStream.on("error", () => {
+          try {
+            if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+          } catch {}
+        });
+        audioStream.stream.pipe(fileWriteStream);
+      }
 
       audioStream.stream.pipe(res);
       return;

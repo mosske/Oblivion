@@ -52,6 +52,7 @@ export class AudioPlayerService {
   public audioCtx: AudioContext | null = null;
   public sourceNode: MediaElementAudioSourceNode | null = null;
   public filters: BiquadFilterNode[] = [];
+  public analyser: AnalyserNode | null = null;
   private currentGains: number[] = [0, 0, 0, 0, 0, 0, 0];
   private currentPreset: string = "Flat";
   private listeners: Set<(settings: EqualizerSettings) => void> = new Set();
@@ -84,12 +85,36 @@ export class AudioPlayerService {
     this.listeners.forEach((cb) => cb(settings));
   }
 
-  public setWebAudioPipeline(audioCtx: AudioContext, filters: BiquadFilterNode[], sourceNode?: MediaElementAudioSourceNode): void {
+  public setWebAudioPipeline(
+    audioCtx: AudioContext,
+    filters: BiquadFilterNode[],
+    sourceNode?: MediaElementAudioSourceNode,
+    analyser?: AnalyserNode
+  ): void {
     this.audioCtx = audioCtx;
     this.filters = filters;
     if (sourceNode) {
       this.sourceNode = sourceNode;
     }
+    if (analyser) {
+      this.analyser = analyser;
+    }
+  }
+
+  public getAnalyser(): AnalyserNode | null {
+    if (!this.analyser && this.audioCtx) {
+      try {
+        const analyser = this.audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
+        this.analyser = analyser;
+      } catch {}
+    }
+    return this.analyser;
+  }
+
+  public getAudioContext(): AudioContext | null {
+    return this.audioCtx;
   }
 
   /**
@@ -162,12 +187,25 @@ export class AudioPlayerService {
         return filter;
       });
 
+      if (!this.analyser) {
+        try {
+          this.analyser = this.audioCtx.createAnalyser();
+          this.analyser.fftSize = 256;
+          this.analyser.smoothingTimeConstant = 0.8;
+        } catch {}
+      }
+
       let prevNode: AudioNode = this.sourceNode;
       for (const filter of this.filters) {
         prevNode.connect(filter);
         prevNode = filter;
       }
-      prevNode.connect(this.audioCtx.destination);
+      if (this.analyser) {
+        prevNode.connect(this.analyser);
+        this.analyser.connect(this.audioCtx.destination);
+      } else {
+        prevNode.connect(this.audioCtx.destination);
+      }
     }
   }
 

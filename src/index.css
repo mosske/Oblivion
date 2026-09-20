@@ -432,5 +432,81 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   contain: paint;
 }
 
+/* Progress Waveform Scrubber Touch & Pointer Lock */
+.progress-waveform-container {
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+
+/* ==========================================================================
+   BEAT-REACTIVE AUDIO VISUALIZER EFFECT (Mini Player & Full Player)
+   Dynamic CSS variable bindings: --beat-glow & --beat-scale
+   ========================================================================== */
+
+/* Reactive Glow & Dynamic Height for Active Progress Waveform */
+.progress-waveform-active,
+.progress-waveform-bar.is-played {
+  filter: drop-shadow(
+    0 0 calc(4px + (var(--beat-glow, 0) * 10px)) var(--accent-primary, #ff0055)
+  ) !important;
+  opacity: calc(0.85 + (var(--beat-glow, 0) * 0.15)) !important;
+  transform: scaleY(calc(1 + (var(--beat-scale, 0) * 0.28))) !important;
+  transform-origin: center !important;
+  transition: filter 0.05s ease-out, transform 0.05s ease-out; /* Ultra-fast, smooth interpolation */
+}
+
+/* Reactive Indicator Knob / Thumb Handle */
+.progress-thumb-knob,
+.progress-handle-active {
+  box-shadow: 0 0 calc(6px + (var(--beat-glow, 0) * 14px)) var(--accent-primary, #ff0055) !important;
+  transform: translate(-50%, -50%) scale(calc(1 + (var(--beat-glow, 0) * 0.16))) !important;
+  transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
+}
+
+/* Exclude Inactive Waveform Elements */
+.progress-waveform-bar:not(.is-played),
+.progress-bar-track-unplayed,
+.player-time-display {
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Fallback Keyframes when Web Audio API cross-origin security prevents AnalyserNode */
+@keyframes subtle-beat-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px var(--accent-primary, #ff0055)) !important;
+    opacity: 0.85 !important;
+  }
+  50% {
+    filter: drop-shadow(0 0 12px var(--accent-primary, #ff0055)) !important;
+    opacity: 1 !important;
+  }
+}
+
+@keyframes subtle-thumb-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px var(--accent-primary, #ff0055) !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
+  50% {
+    box-shadow: 0 0 18px var(--accent-primary, #ff0055) !important;
+    transform: translate(-50%, -50%) scale(1.12) !important;
+  }
+}
+
+.beat-fallback-active .progress-waveform-active,
+.beat-fallback-active .progress-waveform-bar.is-played {
+  animation: subtle-beat-pulse 0.75s ease-in-out infinite !important;
+}
+
+.beat-fallback-active .progress-thumb-knob,
+.beat-fallback-active .progress-handle-active {
+  animation: subtle-thumb-pulse 0.75s ease-in-out infinite !important;
+}
+
+
 
 
