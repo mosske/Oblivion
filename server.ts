@@ -4871,31 +4871,64 @@ app.get("/api/youtube/explore", async (req, res) => {
 let scClientIdGlobal: string | null = null;
 let scClientIdPromiseGlobal: Promise<string> | null = null;
 
-async function getSCClientIdGlobal(): Promise<string> {
-  if (scClientIdGlobal) return scClientIdGlobal;
-  if (!scClientIdPromiseGlobal) {
-    scClientIdPromiseGlobal = (async () => {
-      try {
-        const id = await play.getFreeClientID();
-        scClientIdGlobal = id;
-        await play.setToken({ soundcloud: { client_id: id } });
-        return id;
-      } catch (e) {
-        console.warn("[Stream] Failed to get SoundCloud client ID:", e);
-        scClientIdPromiseGlobal = null;
-        throw e;
-      }
-    })();
-  }
-  return scClientIdPromiseGlobal;
-}
-
 const AUDIO_CACHE_DIR = path.join("/tmp", "audio_cache");
 try {
   if (!fs.existsSync(AUDIO_CACHE_DIR)) {
     fs.mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
   }
 } catch {}
+
+const SC_ID_CACHE_FILE = path.join(AUDIO_CACHE_DIR, "sc_id.txt");
+
+async function getSCClientIdGlobal(): Promise<string> {
+  if (scClientIdGlobal) return scClientIdGlobal;
+
+  // Check disk cache first
+  try {
+    if (fs.existsSync(SC_ID_CACHE_FILE)) {
+      const cached = fs.readFileSync(SC_ID_CACHE_FILE, "utf-8").trim();
+      if (cached && cached.length > 10) {
+        scClientIdGlobal = cached;
+        await play.setToken({ soundcloud: { client_id: cached } });
+        return cached;
+      }
+    }
+  } catch {}
+
+  if (!scClientIdPromiseGlobal) {
+    scClientIdPromiseGlobal = (async () => {
+      try {
+        const id = await Promise.race([
+          play.getFreeClientID(),
+          new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout getting SC client id")), 8000)),
+        ]);
+        scClientIdGlobal = id;
+        try {
+          fs.writeFileSync(SC_ID_CACHE_FILE, id, "utf-8");
+        } catch {}
+        await play.setToken({ soundcloud: { client_id: id } });
+        return id;
+      } catch (e) {
+        console.warn("[Stream] Failed to get fresh SoundCloud client ID, using fallback:", e);
+        const fallbackId = "Pb72ranhoyt6gw7hM7TkzUItXlMWSNso";
+        scClientIdGlobal = fallbackId;
+        try {
+          await play.setToken({ soundcloud: { client_id: fallbackId } });
+        } catch {}
+        return fallbackId;
+      }
+    })();
+  }
+  return scClientIdPromiseGlobal;
+}
+
+app.options("/api/youtube/stream/:id", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  res.status(204).end();
+});
 
 app.get("/api/youtube/stream/:id", async (req, res) => {
   const { id } = req.params;
@@ -4909,10 +4942,11 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
   if (fs.existsSync(cachedFilePath)) {
     try {
       const stat = fs.statSync(cachedFilePath);
-      if (stat.size > 100000) {
+      if (stat.size > 50000) {
         res.setHeader("Access-Control-Allow-Origin", "*");
         res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
         res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+        res.setHeader("Accept-Ranges", "bytes");
         res.setHeader("Cache-Control", "public, max-age=86400");
         return res.sendFile(cachedFilePath, { acceptRanges: true });
       }
@@ -4956,6 +4990,7 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+      res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("Cache-Control", "public, max-age=7200");
 
       if (req.method === "HEAD") {
@@ -4965,43 +5000,40 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
       // Stream simultaneously to client and to cache file for instant seeking on future seeks
       const tempFilePath = `${cachedFilePath}.tmp`;
       let fileWriteStream: fs.WriteStream | null = null;
-      try {
-        fileWriteStream = fs.createWriteStream(tempFilePath);
-      } catch {}
+      if (!fs.existsSync(cachedFilePath)) {
+        try {
+          fileWriteStream = fs.createWriteStream(tempFilePath);
+          fileWriteStream.on("finish", () => {
+            try {
+              if (fs.existsSync(tempFilePath)) {
+                const stat = fs.statSync(tempFilePath);
+                if (stat.size > 50000) {
+                  fs.renameSync(tempFilePath, cachedFilePath);
+                } else {
+                  fs.unlinkSync(tempFilePath);
+                }
+              }
+            } catch {}
+          });
+          fileWriteStream.on("error", () => {
+            try {
+              if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+            } catch {}
+          });
+          audioStream.stream.pipe(fileWriteStream);
+        } catch {}
+      }
 
       req.on("close", () => {
         try {
-          audioStream.stream.destroy?.();
-          if (fileWriteStream) {
-            fileWriteStream.destroy();
-          }
+          audioStream.stream.unpipe(res);
         } catch {}
       });
 
       audioStream.stream.on("error", (err) => {
         console.warn("[Stream] Stream pipe error:", err);
-        try {
-          if (fileWriteStream) fileWriteStream.destroy();
-          if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-        } catch {}
         if (!res.headersSent) res.status(500).end();
       });
-
-      if (fileWriteStream) {
-        fileWriteStream.on("finish", () => {
-          try {
-            if (fs.existsSync(tempFilePath)) {
-              fs.renameSync(tempFilePath, cachedFilePath);
-            }
-          } catch {}
-        });
-        fileWriteStream.on("error", () => {
-          try {
-            if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-          } catch {}
-        });
-        audioStream.stream.pipe(fileWriteStream);
-      }
 
       audioStream.stream.pipe(res);
       return;

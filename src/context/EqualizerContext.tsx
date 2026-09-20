@@ -42,28 +42,94 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
   const analyserRef = useRef<AnalyserNode | null>(null);
   const attachedAudioElementRef = useRef<HTMLAudioElement | null>(null);
 
+  // Helper to ensure the Web Audio pipeline and filter chain are eagerly and reliably initialized
+  const ensurePipeline = useCallback((): AudioContext | null => {
+    if (typeof window === "undefined") return null;
+    const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtxClass) return null;
+
+    if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+      audioCtxRef.current = new AudioCtxClass();
+    }
+    const audioCtx = audioCtxRef.current;
+
+    // Create the 7 BiquadFilterNode peaking/shelf filters chain if not yet built
+    if (filtersRef.current.length !== EQ_FREQUENCIES.length) {
+      const initialGains = loadSavedEQState().gains;
+      const filters = EQ_FREQUENCIES.map((freq, idx) => {
+        const filter = audioCtx.createBiquadFilter();
+        if (idx === 0) {
+          filter.type = "lowshelf";
+        } else if (idx === EQ_FREQUENCIES.length - 1) {
+          filter.type = "highshelf";
+        } else {
+          filter.type = "peaking";
+          filter.Q.value = 1.4;
+        }
+        filter.frequency.value = freq;
+        filter.gain.value = initialGains[idx] ?? 0;
+        return filter;
+      });
+      filtersRef.current = filters;
+
+      // Create analyser node
+      if (!analyserRef.current) {
+        try {
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.8;
+          analyserRef.current = analyser;
+        } catch {}
+      }
+
+      // Chain: Filter 0 -> Filter 1 -> ... -> Filter 6 -> Analyser -> AudioContext.destination
+      for (let i = 0; i < filters.length - 1; i++) {
+        try {
+          filters[i].connect(filters[i + 1]);
+        } catch {}
+      }
+
+      const lastFilter = filters[filters.length - 1];
+      if (analyserRef.current) {
+        try {
+          lastFilter.connect(analyserRef.current);
+          analyserRef.current.connect(audioCtx.destination);
+        } catch {}
+      } else {
+        try {
+          lastFilter.connect(audioCtx.destination);
+        } catch {}
+      }
+
+      audioPlayer.setWebAudioPipeline(audioCtx, filters, sourceNodeRef.current || undefined, analyserRef.current || undefined);
+    }
+
+    return audioCtx;
+  }, []);
+
+  // Eagerly initialize pipeline on component mount so filters and context exist immediately
+  React.useEffect(() => {
+    ensurePipeline();
+  }, [ensurePipeline]);
+
   // Resume helper for autoplay restriction handling
   const resumeAudioContext = useCallback(() => {
-    if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume().catch((err) => {
-        console.warn("AudioContext resume error:", err);
+    const audioCtx = audioCtxRef.current || ensurePipeline();
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume().catch((err) => {
+        console.warn("[EqualizerContext] AudioContext resume note:", err);
       });
     }
-  }, []);
+  }, [ensurePipeline]);
 
   const getAnalyser = useCallback((): AnalyserNode | null => {
     if (analyserRef.current) return analyserRef.current;
-    if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
-      try {
-        const analyser = audioCtxRef.current.createAnalyser();
-        analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.8;
-        analyserRef.current = analyser;
-        return analyser;
-      } catch {}
+    const audioCtx = ensurePipeline();
+    if (audioCtx) {
+      return analyserRef.current;
     }
     return null;
-  }, []);
+  }, [ensurePipeline]);
 
   // 1. Connect the Audio Graph Correctly & 2. Prevent Duplicate Source Node Errors
   const attachAudioElement = useCallback((audioElement: HTMLAudioElement) => {
@@ -76,109 +142,71 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     } catch {}
 
+    const audioCtx = ensurePipeline();
+    if (!audioCtx) return;
+
+    // 4. AudioContext State Management:
+    // Handle browser autoplay restrictions by adding event listeners on play/seek actions
+    // to automatically call audioCtx.resume() if audioCtx.state === 'suspended'.
+    const handleResume = () => {
+      if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume().catch(() => {});
+      }
+    };
+    audioElement.removeEventListener("play", handleResume);
+    audioElement.removeEventListener("playing", handleResume);
+    audioElement.removeEventListener("seeking", handleResume);
+    audioElement.removeEventListener("seeked", handleResume);
+    audioElement.addEventListener("play", handleResume);
+    audioElement.addEventListener("playing", handleResume);
+    audioElement.addEventListener("seeking", handleResume);
+    audioElement.addEventListener("seeked", handleResume);
+
     // 2. createMediaElementSource(audioRef) can only be called ONCE per HTMLMediaElement instance.
-    // If sourceNodeRef.current already exists, reuse it instead of instantiating a new MediaElementSourceNode on component re-renders.
-    if (sourceNodeRef.current && attachedAudioElementRef.current === audioElement) {
-      return;
-    }
-
-    attachedAudioElementRef.current = audioElement;
-
-    try {
-      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtxClass) return;
-
-      if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
-        audioCtxRef.current = new AudioCtxClass();
-      }
-      const audioCtx = audioCtxRef.current;
-
-      // 4. AudioContext State Management:
-      // Handle browser autoplay restrictions by adding event listeners on play/seek actions
-      // to automatically call audioCtx.resume() if audioCtx.state === 'suspended'.
-      const handleResume = () => {
-        if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
-          audioCtxRef.current.resume().catch(() => {});
-        }
-      };
-      audioElement.removeEventListener("play", handleResume);
-      audioElement.removeEventListener("playing", handleResume);
-      audioElement.removeEventListener("seeking", handleResume);
-      audioElement.removeEventListener("seeked", handleResume);
-      audioElement.addEventListener("play", handleResume);
-      audioElement.addEventListener("playing", handleResume);
-      audioElement.addEventListener("seeking", handleResume);
-      audioElement.addEventListener("seeked", handleResume);
-
-      // Create MediaElementSourceNode once if not already created
-      if (!sourceNodeRef.current) {
+    if (!sourceNodeRef.current) {
+      try {
         sourceNodeRef.current = audioCtx.createMediaElementSource(audioElement);
+        attachedAudioElementRef.current = audioElement;
+      } catch (err: any) {
+        console.warn("[EqualizerContext] createMediaElementSource note:", err);
       }
-
-      // Build the 7 BiquadFilterNode peaking filters chain if not yet built
-      if (filtersRef.current.length !== EQ_FREQUENCIES.length) {
-        const initialGains = loadSavedEQState().gains;
-        const filters = EQ_FREQUENCIES.map((freq, idx) => {
-          const filter = audioCtx.createBiquadFilter();
-          filter.type = "peaking";
-          filter.frequency.value = freq;
-          filter.Q.value = 1.4; // standard bandwidth for 7-band EQ
-          filter.gain.value = initialGains[idx] ?? 0;
-          return filter;
-        });
-        filtersRef.current = filters;
-
-        // 1. Route the node chain:
-        // <audio> -> MediaElementSourceNode -> Filter 1 (60Hz) -> Filter 2 (150Hz) -> ... -> Filter 7 (15kHz) -> AnalyserNode -> AudioContext.destination
-        if (!analyserRef.current) {
-          try {
-            const analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            analyser.smoothingTimeConstant = 0.8;
-            analyserRef.current = analyser;
-          } catch {}
-        }
-
-        let prevNode: AudioNode = sourceNodeRef.current;
-        for (const filter of filters) {
-          prevNode.connect(filter);
-          prevNode = filter;
-        }
-
-        if (analyserRef.current) {
-          prevNode.connect(analyserRef.current);
-          analyserRef.current.connect(audioCtx.destination);
-        } else {
-          prevNode.connect(audioCtx.destination);
-        }
-
-        audioPlayer.setWebAudioPipeline(audioCtx, filters, sourceNodeRef.current, analyserRef.current || undefined);
-      }
-    } catch (err) {
-      console.warn("Failed to attach audio element to Web Audio equalizer pipeline:", err);
     }
-  }, []);
+
+    // Connect source to first filter
+    if (sourceNodeRef.current && filtersRef.current[0]) {
+      try {
+        sourceNodeRef.current.connect(filtersRef.current[0]);
+      } catch {}
+    }
+
+    audioPlayer.setWebAudioPipeline(audioCtx, filtersRef.current, sourceNodeRef.current || undefined, analyserRef.current || undefined);
+  }, [ensurePipeline]);
 
   // 3. Live Slider Gain Updates:
-  // In the slider onChange handler, directly update the target BiquadFilterNode gain:
-  // filtersRef.current[index].gain.value = newGainValue;
+  // In the slider onChange handler, directly update the target BiquadFilterNode gain
   const setGain = useCallback((index: number, newGainValue: number) => {
     if (index < 0 || index >= EQ_FREQUENCIES.length) return;
     const clamped = Math.max(-12, Math.min(12, newGainValue));
 
-    // Direct update on BiquadFilterNode gain for real-time responsiveness
+    const audioCtx = ensurePipeline();
+    resumeAudioContext();
+
+    // Direct update on BiquadFilterNode gain for immediate, glitch-free sculpting
     if (filtersRef.current[index]) {
-      const audioCtx = audioCtxRef.current;
-      if (audioCtx) {
-        try {
-          filtersRef.current[index].gain.setTargetAtTime(clamped, audioCtx.currentTime, 0.01);
-        } catch {
-          filtersRef.current[index].gain.value = clamped;
+      const filter = filtersRef.current[index];
+      try {
+        if (audioCtx && audioCtx.state === "running") {
+          filter.gain.cancelScheduledValues(audioCtx.currentTime);
+          filter.gain.setValueAtTime(clamped, audioCtx.currentTime);
+        } else {
+          filter.gain.value = clamped;
         }
-      } else {
-        filtersRef.current[index].gain.value = clamped;
+      } catch {
+        filter.gain.value = clamped;
       }
     }
+
+    audioPlayer.setBandGain(index, clamped);
 
     setEqState((prev) => {
       const nextGains = [...prev.gains];
@@ -199,27 +227,33 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
       saveEQState(nextState);
       return nextState;
     });
-  }, []);
+  }, [ensurePipeline, resumeAudioContext]);
 
   // 3. Ensure changing presets updates all 7 filterNode.gain.value properties in real time
   const setPreset = useCallback((presetName: string) => {
     const presetGains = EQ_PRESETS[presetName];
     if (!presetGains) return;
 
+    const audioCtx = ensurePipeline();
+    resumeAudioContext();
+
     presetGains.forEach((gain, idx) => {
       if (filtersRef.current[idx]) {
-        const audioCtx = audioCtxRef.current;
-        if (audioCtx) {
-          try {
-            filtersRef.current[idx].gain.setTargetAtTime(gain, audioCtx.currentTime, 0.01);
-          } catch {
-            filtersRef.current[idx].gain.value = gain;
+        const filter = filtersRef.current[idx];
+        try {
+          if (audioCtx && audioCtx.state === "running") {
+            filter.gain.cancelScheduledValues(audioCtx.currentTime);
+            filter.gain.setValueAtTime(gain, audioCtx.currentTime);
+          } else {
+            filter.gain.value = gain;
           }
-        } else {
-          filtersRef.current[idx].gain.value = gain;
+        } catch {
+          filter.gain.value = gain;
         }
       }
     });
+
+    audioPlayer.setPreset(presetName);
 
     const nextState: EQState = {
       preset: presetName,
@@ -227,7 +261,7 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
     };
     saveEQState(nextState);
     setEqState(nextState);
-  }, []);
+  }, [ensurePipeline, resumeAudioContext]);
 
   const resetEQ = useCallback(() => {
     setPreset("Flat");

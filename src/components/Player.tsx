@@ -1133,8 +1133,9 @@ export const Player: React.FC<PlayerProps> = ({
 
     let isSubscribed = true;
     let silentFrameCount = 0;
+    let prevEnergy = 0;
     const energyHistory: number[] = [];
-    const HISTORY_SIZE = 35; // ~0.5s sliding window at 60fps
+    const HISTORY_SIZE = 20; // Tight ~300ms window for responsive beat detection at high BPM
 
     const renderBeatFrame = () => {
       if (!isSubscribed) return;
@@ -1152,9 +1153,9 @@ export const Player: React.FC<PlayerProps> = ({
           const sampleRate = audioCtxRef.current?.sampleRate || 44100;
           const binWidth = sampleRate / analyser.fftSize;
 
-          // Band 1: Sub & Bass Kick (30Hz - 160Hz)
-          const minBassBin = Math.max(0, Math.floor(30 / binWidth));
-          const maxBassBin = Math.min(bufferLength - 1, Math.ceil(160 / binWidth));
+          // Band 1: Sub & Bass Kick (35Hz - 140Hz)
+          const minBassBin = Math.max(0, Math.floor(35 / binWidth));
+          const maxBassBin = Math.min(bufferLength - 1, Math.ceil(140 / binWidth));
           let bassSum = 0;
           let bassCount = 0;
           for (let i = minBassBin; i <= maxBassBin; i++) {
@@ -1163,9 +1164,9 @@ export const Player: React.FC<PlayerProps> = ({
           }
           const bassVal = bassCount > 0 ? bassSum / bassCount : 0;
 
-          // Band 2: Punch & Snare / Rhythm Guitars (160Hz - 500Hz)
+          // Band 2: Snare / Rhythm Guitars & Punch (140Hz - 480Hz)
           const minMidBin = maxBassBin + 1;
-          const maxMidBin = Math.min(bufferLength - 1, Math.ceil(500 / binWidth));
+          const maxMidBin = Math.min(bufferLength - 1, Math.ceil(480 / binWidth));
           let midSum = 0;
           let midCount = 0;
           for (let i = minMidBin; i <= maxMidBin; i++) {
@@ -1174,8 +1175,10 @@ export const Player: React.FC<PlayerProps> = ({
           }
           const midVal = midCount > 0 ? midSum / midCount : 0;
 
-          // Weighted combined rhythm energy
-          const instantEnergy = bassVal * 0.7 + midVal * 0.3;
+          // Weighted combined rhythm energy with strong bass punch bias
+          const instantEnergy = bassVal * 0.75 + midVal * 0.25;
+          const delta = instantEnergy - prevEnergy;
+          prevEnergy = instantEnergy;
 
           if (instantEnergy > 2) {
             hasRealSignal = true;
@@ -1187,22 +1190,22 @@ export const Player: React.FC<PlayerProps> = ({
             }
             const avgEnergy = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
 
-            // Transient detection: Energy flux compared to rolling average
-            // In heavy rock/metal, avgEnergy will be high, but kick drum or guitar onsets will still spike above average!
-            const variance = Math.max(7, avgEnergy * 0.16);
+            // Highly responsive onset detection for all genres including fast rock/heavy metal
+            const variance = Math.max(3.5, avgEnergy * 0.08);
             const flux = instantEnergy - avgEnergy;
 
-            if (flux > variance) {
-              // Hit / Transient detected!
-              const hitStrength = Math.min(1, Math.max(0.45, flux / (variance * 2.0)));
+            // Trigger hit on energy surge above average OR sudden upward transient delta
+            if (flux > variance || (delta > 3.2 && instantEnergy > 12)) {
+              const hitRatio = Math.max(flux / (variance * 1.8), delta / 10);
+              const hitStrength = Math.min(1, Math.max(0.48, hitRatio));
               currentBeatRef.current = Math.max(currentBeatRef.current, hitStrength);
             } else {
-              // Exponential decay between hits
-              currentBeatRef.current = Math.max(0, currentBeatRef.current * 0.84 - 0.015);
+              // Rapid decay so consecutive beats at high BPM (e.g. 160-220+ BPM rock/metal) flash distinctly
+              currentBeatRef.current = Math.max(0, currentBeatRef.current * 0.78 - 0.022);
             }
 
-            // Also blend a subtle baseline energy so loud sections glow warmly
-            const baselineGlow = Math.min(0.22, (instantEnergy / 255) * 0.22);
+            // Blend subtle baseline energy so loud sections glow warmly
+            const baselineGlow = Math.min(0.2, (instantEnergy / 255) * 0.2);
             beatIntensity = Math.min(1, Math.max(baselineGlow, currentBeatRef.current));
           }
         } catch (err) {
@@ -1686,8 +1689,8 @@ export const Player: React.FC<PlayerProps> = ({
             }
           }
 
-          // If <audio> is currently the active audio source AND is playing normally in sync, let <audio> drive time
-          if (activeAudioSourceRef.current === "audio" && audioRef.current && !audioRef.current.paused && audioRef.current.currentTime > 0) {
+          // If <audio> is currently the active audio source, let <audio> be the sole clock driver
+          if (activeAudioSourceRef.current === "audio" && audioRef.current) {
             // Still check duration fallback
             if (validDur > 3 && typeof curTime === "number" && curTime >= validDur - 0.25 && !isChangingTrackRef.current) {
               handleEndedRef.current?.();
@@ -1970,9 +1973,12 @@ export const Player: React.FC<PlayerProps> = ({
     const audDur = audioRef.current.duration;
 
     // Ignore stale updates during seek cooldown window
-    if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1200) {
+    if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1500) {
       if (Math.abs(audCur - lastSeekTimeRef.current) > 2) {
-        return; // Ignore stale pre-seek timeupdate
+        return; // Ignore stale pre-seek timeupdate while audio element buffers target position
+      } else {
+        // Seek target has successfully landed
+        lastSeekTimeRef.current = null;
       }
     }
 
@@ -2022,49 +2028,28 @@ export const Player: React.FC<PlayerProps> = ({
     lastSeekTimeRef.current = time;
     lastSeekTimestampRef.current = Date.now();
 
-    // Immediately update player state optimistically
+    // Immediately update player state optimistically so UI slider updates instantly without lag
     setPlayerState((prev) => ({ ...prev, currentTime: time }));
 
-    // Seek YouTube player directly
-    if (isYtReadyRef.current && ytPlayerRef.current) {
-      try {
-        ytPlayerRef.current.seekTo?.(time, true);
-      } catch {}
-    }
-
-    // Seek HTML5 audio element
+    // Seek HTML5 audio element directly
     if (audioRef.current) {
       try {
         audioRef.current.currentTime = time;
+        if (isPlaying && audioRef.current.paused) {
+          audioRef.current.play().catch(() => {});
+        }
       } catch {}
     }
 
-    // Seek verification check:
-    // If audio element failed to seek to the requested timestamp (e.g. snapped to 0:00),
-    // immediately unmute YouTube and set YouTube as active source so user hears the music from `time`, NOT 0:00!
-    setTimeout(() => {
-      if (lastSeekTimeRef.current !== null && Math.abs(time - lastSeekTimeRef.current) < 0.1) {
-        if (audioRef.current) {
-          const audCur = audioRef.current.currentTime;
-          // If sought forward (> 3s) but audio element is stuck near start (< 2s)
-          if (time > 3 && audCur < 2) {
-            console.warn("[Player] <audio> seek didn't advance, switching audio source to YouTube");
-            activeAudioSourceRef.current = "youtube";
-            try {
-              audioRef.current.pause();
-            } catch {}
-            if (isYtReadyRef.current && ytPlayerRef.current) {
-              try {
-                ytPlayerRef.current.unMute?.();
-                ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
-                ytPlayerRef.current.seekTo?.(time, true);
-                ytPlayerRef.current.playVideo?.();
-              } catch {}
-            }
-          }
+    // Seek YouTube player background visual
+    if (isYtReadyRef.current && ytPlayerRef.current) {
+      try {
+        ytPlayerRef.current.seekTo?.(time, true);
+        if (activeAudioSourceRef.current === "audio") {
+          ytPlayerRef.current.mute?.();
         }
-      }
-    }, 400);
+      } catch {}
+    }
 
     onSeek(time);
   };
