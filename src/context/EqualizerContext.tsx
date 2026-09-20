@@ -13,6 +13,7 @@ import {
   loadSavedEQState,
   saveEQState,
 } from "../utils/equalizerEngine";
+import { audioPlayer } from "../services/audioPlayer";
 
 export interface EqualizerContextValue {
   eqState: EQState;
@@ -118,6 +119,7 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
           prevNode = filter;
         }
         prevNode.connect(audioCtx.destination);
+        audioPlayer.setWebAudioPipeline(audioCtx, filters, sourceNodeRef.current);
       }
     } catch (err) {
       console.warn("Failed to attach audio element to Web Audio equalizer pipeline:", err);

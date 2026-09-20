@@ -1114,17 +1114,49 @@ export const Player: React.FC<PlayerProps> = ({
         : null;
 
     const executePlay = (targetVid: string) => {
+      // Connect and start actual audio stream through HTML5 audio element & Web Audio 7-band Equalizer
+      if (audioRef.current) {
+        const streamUrl = `/api/youtube/stream/${targetVid}?title=${encodeURIComponent(currentTrack.title || "")}&artist=${encodeURIComponent(currentTrack.artist || "")}`;
+        audioRef.current.crossOrigin = "anonymous";
+        if (audioRef.current.getAttribute("data-track-vid") !== targetVid) {
+          audioRef.current.setAttribute("data-track-vid", targetVid);
+          audioRef.current.src = streamUrl;
+          audioRef.current.load();
+        }
+        attachAudioElement(audioRef.current);
+        if (isPlayingRef.current && !userManualPauseRef.current) {
+          resumeAudioContext();
+          audioRef.current.volume = isMuted ? 0 : volume;
+          audioRef.current
+            .play()
+            .then(() => {
+              if (isYtReadyRef.current && ytPlayerRef.current) {
+                ytPlayerRef.current.mute?.();
+              }
+            })
+            .catch(() => {
+              if (isYtReadyRef.current && ytPlayerRef.current) {
+                ytPlayerRef.current.unMute?.();
+                ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
+              }
+            });
+        }
+      }
+
       if (!isYtReadyRef.current || !ytPlayerRef.current) return;
       try {
-        ytPlayerRef.current.unMute?.();
-        ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
         if (isPlayingRef.current && !userManualPauseRef.current) {
           ytPlayerRef.current.loadVideoById({
             videoId: targetVid,
             startSeconds: 0,
           });
-          ytPlayerRef.current.unMute?.();
-          ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
+          // If audio element is already playing, mute YouTube to prevent dual-audio
+          if (audioRef.current && !audioRef.current.paused && audioRef.current.currentTime > 0) {
+            ytPlayerRef.current.mute?.();
+          } else {
+            ytPlayerRef.current.unMute?.();
+            ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
+          }
           ytPlayerRef.current.playVideo?.();
         } else {
           if (typeof ytPlayerRef.current.cueVideoById === "function") {
@@ -1204,8 +1236,12 @@ export const Player: React.FC<PlayerProps> = ({
           events: {
             onReady: (event: any) => {
               isYtReadyRef.current = true;
-              event.target.unMute?.();
-              event.target.setVolume?.(isMuted ? 0 : volume * 100);
+              if (audioRef.current && !audioRef.current.paused) {
+                event.target.mute?.();
+              } else {
+                event.target.unMute?.();
+                event.target.setVolume?.(isMuted ? 0 : volume * 100);
+              }
               if (isPlayingRef.current && !userManualPauseRef.current) {
                 event.target.playVideo();
               } else {
@@ -1218,8 +1254,12 @@ export const Player: React.FC<PlayerProps> = ({
               // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING, 5 = CUED, -1 = UNSTARTED
               if (event.data === 1) {
                 isChangingTrackRef.current = false;
-                event.target.unMute?.();
-                event.target.setVolume?.(isMuted ? 0 : volume * 100);
+                if (audioRef.current && !audioRef.current.paused) {
+                  event.target.mute?.();
+                } else {
+                  event.target.unMute?.();
+                  event.target.setVolume?.(isMuted ? 0 : volume * 100);
+                }
                 const dur = event.target.getDuration?.() || 0;
                 setPlayerState((prev) => ({
                   ...prev,
@@ -1286,48 +1326,80 @@ export const Player: React.FC<PlayerProps> = ({
     resolveAndPlay();
   }, [currentTrack?.id, currentTrack?.youtubeVideoId]);
 
-  // Sync isPlaying state to players and maintain background audio keepalive
+  // Sync isPlaying state to players and route real audio stream to HTML5 <audio> & 7-band Equalizer
   useEffect(() => {
-    if (isYtReadyRef.current && ytPlayerRef.current) {
-      try {
-        if (isPlaying) {
-          ytPlayerRef.current.playVideo?.();
-        } else if (!isChangingTrackRef.current) {
-          ytPlayerRef.current.pauseVideo?.();
-        }
-      } catch {}
-    }
+    const finalVid = currentTrack?.youtubeVideoId || currentTrack?.id;
 
     if (audioRef.current) {
       if (audioRef.current.crossOrigin !== "anonymous") {
         audioRef.current.crossOrigin = "anonymous";
       }
       attachAudioElement(audioRef.current);
-      audioPlayer.attachAudioElement(audioRef.current);
+
+      if (finalVid) {
+        const streamUrl = `/api/youtube/stream/${finalVid}?title=${encodeURIComponent(currentTrack?.title || "")}&artist=${encodeURIComponent(currentTrack?.artist || "")}`;
+        if (audioRef.current.getAttribute("data-track-vid") !== finalVid) {
+          audioRef.current.setAttribute("data-track-vid", finalVid);
+          audioRef.current.src = streamUrl;
+          audioRef.current.load();
+        }
+      }
+
       if (isPlaying) {
         resumeAudioContext();
         audioPlayer.resumeContext();
-        // Play silent audio loop with valid PCM frames so Chrome registers active audio session for background playback & notification controls
-        const silentUrl = getSilentAudioUrl();
-        if (audioRef.current.src !== silentUrl) {
-          audioRef.current.crossOrigin = "anonymous";
-          audioRef.current.src = silentUrl;
-          audioRef.current.loop = true;
-          audioRef.current.volume = 0.001;
-        }
-        audioRef.current.play().catch(() => {});
+        audioRef.current.volume = isMuted ? 0 : volume;
+        audioRef.current
+          .play()
+          .then(() => {
+            // Real audio stream is playing through <audio> and the 7-band Web Audio Equalizer!
+            // Mute YouTube iframe video to prevent dual-audio echo
+            if (isYtReadyRef.current && ytPlayerRef.current) {
+              ytPlayerRef.current.mute?.();
+              ytPlayerRef.current.playVideo?.();
+            }
+          })
+          .catch((err) => {
+            console.warn("[Player] <audio> play fallback to YouTube:", err);
+            // Fallback: If audio stream couldn't play directly, unmute YouTube iframe so music still plays
+            if (isYtReadyRef.current && ytPlayerRef.current) {
+              ytPlayerRef.current.unMute?.();
+              ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
+              ytPlayerRef.current.playVideo?.();
+            }
+          });
       } else if (!isChangingTrackRef.current) {
         audioRef.current.pause();
+        if (isYtReadyRef.current && ytPlayerRef.current) {
+          try {
+            ytPlayerRef.current.pauseVideo?.();
+          } catch {}
+        }
+      }
+    } else {
+      if (isYtReadyRef.current && ytPlayerRef.current) {
+        try {
+          if (isPlaying) {
+            ytPlayerRef.current.playVideo?.();
+          } else if (!isChangingTrackRef.current) {
+            ytPlayerRef.current.pauseVideo?.();
+          }
+        } catch {}
       }
     }
-  }, [isPlaying, attachAudioElement, resumeAudioContext]);
+  }, [isPlaying, currentTrack?.id, currentTrack?.youtubeVideoId, attachAudioElement, resumeAudioContext, volume, isMuted]);
 
   // Sync volume state to players
   useEffect(() => {
     const effectiveVolume = isMuted ? 0 : volume;
+    if (audioRef.current) {
+      audioRef.current.volume = effectiveVolume;
+    }
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
-        ytPlayerRef.current.setVolume?.(effectiveVolume * 100);
+        if (typeof ytPlayerRef.current.isMuted === "function" && !ytPlayerRef.current.isMuted()) {
+          ytPlayerRef.current.setVolume?.(effectiveVolume * 100);
+        }
       } catch {}
     }
   }, [volume, isMuted]);

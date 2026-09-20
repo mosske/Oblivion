@@ -84,6 +84,14 @@ export class AudioPlayerService {
     this.listeners.forEach((cb) => cb(settings));
   }
 
+  public setWebAudioPipeline(audioCtx: AudioContext, filters: BiquadFilterNode[], sourceNode?: MediaElementAudioSourceNode): void {
+    this.audioCtx = audioCtx;
+    this.filters = filters;
+    if (sourceNode) {
+      this.sourceNode = sourceNode;
+    }
+  }
+
   /**
    * Connects the master HTML5 Audio element to the Web Audio pipeline ONCE.
    * Prevents "InvalidStateError" on track changes by reusing the initialized nodes.

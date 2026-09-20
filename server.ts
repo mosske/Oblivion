@@ -7,6 +7,7 @@ import session from "express-session";
 import crypto from "crypto";
 import { GoogleGenAI } from "@google/genai";
 import { DecodedSignature, recognizeBytes } from "shazamio-core";
+import play from "play-dl";
 
 // Prefer IPv4 connections to prevent dual-stack IPv6 ConnectTimeoutError in cloud containers
 if (typeof (dns as any).setDefaultResultOrder === "function") {
@@ -4867,15 +4868,99 @@ app.get("/api/youtube/explore", async (req, res) => {
   }
 });
 
+let scClientIdGlobal: string | null = null;
+let scClientIdPromiseGlobal: Promise<string> | null = null;
+
+async function getSCClientIdGlobal(): Promise<string> {
+  if (scClientIdGlobal) return scClientIdGlobal;
+  if (!scClientIdPromiseGlobal) {
+    scClientIdPromiseGlobal = (async () => {
+      try {
+        const id = await play.getFreeClientID();
+        scClientIdGlobal = id;
+        await play.setToken({ soundcloud: { client_id: id } });
+        return id;
+      } catch (e) {
+        console.warn("[Stream] Failed to get SoundCloud client ID:", e);
+        scClientIdPromiseGlobal = null;
+        throw e;
+      }
+    })();
+  }
+  return scClientIdPromiseGlobal;
+}
+
 app.get("/api/youtube/stream/:id", async (req, res) => {
   const { id } = req.params;
-  // Return stream info or direct YouTube watch redirect
-  res.json({
-    id,
-    youtubeVideoId: id,
-    streamUrl: `https://www.youtube.com/watch?v=${id}`,
-    playerEmbed: `https://www.youtube.com/embed/${id}?autoplay=1&enablejsapi=1`
-  });
+  const titleQuery = req.query.title as string | undefined;
+  const artistQuery = req.query.artist as string | undefined;
+
+  try {
+    let query = "";
+    if (titleQuery && titleQuery.trim()) {
+      const cleanT = titleQuery
+        .replace(/\([^)]*\)|\[[^\]]*\]/g, "")
+        .replace(/official (music )?video/gi, "")
+        .trim();
+      query = `${cleanT} ${artistQuery || ""}`.trim();
+    } else {
+      try {
+        const oembedRes = await fetch(
+          `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`,
+          { signal: AbortSignal.timeout(4000) }
+        );
+        if (oembedRes.ok) {
+          const oembed = await oembedRes.json();
+          const cleanTitle = (oembed.title || "")
+            .replace(/\([^)]*\)|\[[^\]]*\]/g, "")
+            .replace(/official (music )?video/gi, "")
+            .trim();
+          query = `${cleanTitle} ${oembed.author_name || ""}`.trim();
+        }
+      } catch {}
+    }
+
+    if (!query) query = id;
+
+    await getSCClientIdGlobal();
+    const searchResults = await play.search(query, { source: { soundcloud: "tracks" }, limit: 1 });
+    if (searchResults && searchResults.length > 0) {
+      const track = searchResults[0];
+      const audioStream = await play.stream(track.url);
+
+      res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Accept-Ranges", "bytes");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+      res.setHeader("Cache-Control", "public, max-age=7200");
+
+      if (req.method === "HEAD") {
+        return res.status(200).end();
+      }
+
+      req.on("close", () => {
+        try {
+          audioStream.stream.destroy?.();
+        } catch {}
+      });
+
+      audioStream.stream.on("error", (err) => {
+        console.warn("[Stream] Stream pipe error:", err);
+        if (!res.headersSent) res.status(500).end();
+      });
+
+      audioStream.stream.pipe(res);
+      return;
+    }
+  } catch (err: any) {
+    console.warn(`[Stream] Failed to get audio stream for ${id}:`, err?.message || err);
+  }
+
+  // If audio stream extraction failed, return 404
+  if (!res.headersSent) {
+    res.status(404).json({ error: "Audio stream unavailable", id });
+  }
 });
 
 app.get("/api/youtube/recommendations", async (req, res) => {
