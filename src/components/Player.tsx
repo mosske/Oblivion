@@ -777,7 +777,8 @@ export const Player: React.FC<PlayerProps> = ({
   // Seek synchronization refs to prevent stale time updates and player clock collisions
   const lastSeekTimeRef = useRef<number | null>(null);
   const lastSeekTimestampRef = useRef<number>(0);
-  const activeAudioSourceRef = useRef<"audio" | "youtube">("youtube");
+  const isAudioSeekingRef = useRef<boolean>(false);
+  const activeAudioSourceRef = useRef<"audio" | "youtube">("audio");
 
   // Attach main <audio> element to Web Audio pipeline on mount
   useEffect(() => {
@@ -1397,12 +1398,11 @@ export const Player: React.FC<PlayerProps> = ({
                 ytPlayerRef.current.mute?.();
               }
             })
-            .catch(() => {
-              activeAudioSourceRef.current = "youtube";
-              if (isYtReadyRef.current && ytPlayerRef.current) {
-                ytPlayerRef.current.unMute?.();
-                ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
+            .catch((err) => {
+              if (err?.name === "AbortError") {
+                return;
               }
+              console.warn("[Player] <audio> play notice:", err);
             });
         }
       }
@@ -1414,8 +1414,8 @@ export const Player: React.FC<PlayerProps> = ({
             videoId: targetVid,
             startSeconds: 0,
           });
-          // If audio element is already playing, mute YouTube to prevent dual-audio
-          if (audioRef.current && !audioRef.current.paused && audioRef.current.currentTime > 0) {
+          // Ensure YouTube audio stays muted so audio flows strictly through HTML5 <audio> and the 7-band Equalizer
+          if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
             ytPlayerRef.current.mute?.();
           } else {
             ytPlayerRef.current.unMute?.();
@@ -1518,7 +1518,7 @@ export const Player: React.FC<PlayerProps> = ({
               // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING, 5 = CUED, -1 = UNSTARTED
               if (event.data === 1) {
                 isChangingTrackRef.current = false;
-                if (audioRef.current && !audioRef.current.paused) {
+                if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
                   event.target.mute?.();
                 } else {
                   event.target.unMute?.();
@@ -1554,8 +1554,12 @@ export const Player: React.FC<PlayerProps> = ({
               } else if (event.data === 5 || event.data === -1) {
                 if (isPlayingRef.current && !userManualPauseRef.current) {
                   try {
-                    event.target.unMute?.();
-                    event.target.setVolume?.(isMuted ? 0 : volume * 100);
+                    if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
+                      event.target.mute?.();
+                    } else {
+                      event.target.unMute?.();
+                      event.target.setVolume?.(isMuted ? 0 : volume * 100);
+                    }
                     event.target.playVideo();
                   } catch {}
                 }
@@ -1625,14 +1629,10 @@ export const Player: React.FC<PlayerProps> = ({
             }
           })
           .catch((err) => {
-            activeAudioSourceRef.current = "youtube";
-            console.warn("[Player] <audio> play fallback to YouTube:", err);
-            // Fallback: If audio stream couldn't play directly, unmute YouTube iframe so music still plays
-            if (isYtReadyRef.current && ytPlayerRef.current) {
-              ytPlayerRef.current.unMute?.();
-              ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
-              ytPlayerRef.current.playVideo?.();
+            if (err?.name === "AbortError") {
+              return;
             }
+            console.warn("[Player] <audio> play notice:", err);
           });
       } else if (!isChangingTrackRef.current) {
         audioRef.current.pause();
@@ -1964,6 +1964,11 @@ export const Player: React.FC<PlayerProps> = ({
     // If YouTube is active audio source, ignore HTML5 audio time updates
     if (activeAudioSourceRef.current === "youtube") return;
 
+    // If currently scrubbing or seeking, do not let old timeupdates override UI position
+    if (isAudioSeekingRef.current) {
+      return;
+    }
+
     const src = audioRef.current.src || "";
     // NEVER overwrite currentTime/duration if audio element is playing the silent keepalive WAV or data URL!
     if (!src || src.startsWith("data:audio/wav") || src.startsWith("blob:") || (cachedSilentUrl && src === cachedSilentUrl)) {
@@ -1973,9 +1978,11 @@ export const Player: React.FC<PlayerProps> = ({
     const audDur = audioRef.current.duration;
 
     // Ignore stale updates during seek cooldown window
-    if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1500) {
+    if (lastSeekTimeRef.current !== null) {
       if (Math.abs(audCur - lastSeekTimeRef.current) > 2) {
-        return; // Ignore stale pre-seek timeupdate while audio element buffers target position
+        if (Date.now() - lastSeekTimestampRef.current < 2500) {
+          return; // Ignore stale pre-seek timeupdate while audio element buffers target position
+        }
       } else {
         // Seek target has successfully landed
         lastSeekTimeRef.current = null;
@@ -2024,34 +2031,40 @@ export const Player: React.FC<PlayerProps> = ({
     if (isNaN(time) || time < 0) return;
     resumeAudioContext();
 
-    // Set seek cooldown and record intended target time
-    lastSeekTimeRef.current = time;
+    const maxDur = (duration && duration > 0) ? duration : (currentTrack?.duration || 1000);
+    const targetTime = Math.max(0, Math.min(time, maxDur));
+
+    // Set seek flags and record intended target time
+    isAudioSeekingRef.current = true;
+    lastSeekTimeRef.current = targetTime;
     lastSeekTimestampRef.current = Date.now();
 
     // Immediately update player state optimistically so UI slider updates instantly without lag
-    setPlayerState((prev) => ({ ...prev, currentTime: time }));
+    setPlayerState((prev) => ({ ...prev, currentTime: targetTime }));
 
     // Seek HTML5 audio element directly
     if (audioRef.current) {
       try {
-        audioRef.current.currentTime = time;
+        audioRef.current.currentTime = targetTime;
         if (isPlaying && audioRef.current.paused) {
           audioRef.current.play().catch(() => {});
         }
-      } catch {}
+      } catch (err) {
+        console.warn("[Player] Seek audioRef notice:", err);
+      }
     }
 
     // Seek YouTube player background visual
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
-        ytPlayerRef.current.seekTo?.(time, true);
-        if (activeAudioSourceRef.current === "audio") {
+        ytPlayerRef.current.seekTo?.(targetTime, true);
+        if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
           ytPlayerRef.current.mute?.();
         }
       } catch {}
     }
 
-    onSeek(time);
+    onSeek(targetTime);
   };
 
   // Cycle Repeat Mode
@@ -2207,6 +2220,10 @@ export const Player: React.FC<PlayerProps> = ({
         playsInline
         autoPlay
         onPlay={() => {
+          activeAudioSourceRef.current = "audio";
+          if (isYtReadyRef.current && ytPlayerRef.current) {
+            ytPlayerRef.current.mute?.();
+          }
           resumeAudioContext();
           if ("mediaSession" in navigator) {
             navigator.mediaSession.playbackState = "playing";
@@ -2218,20 +2235,27 @@ export const Player: React.FC<PlayerProps> = ({
           }
         }}
         onPlaying={() => {
+          activeAudioSourceRef.current = "audio";
+          if (isYtReadyRef.current && ytPlayerRef.current) {
+            ytPlayerRef.current.mute?.();
+          }
           resumeAudioContext();
           if ("mediaSession" in navigator) {
             navigator.mediaSession.playbackState = "playing";
           }
         }}
         onSeeking={() => {
+          isAudioSeekingRef.current = true;
           resumeAudioContext();
         }}
         onSeeked={() => {
+          isAudioSeekingRef.current = false;
+          lastSeekTimeRef.current = null;
           resumeAudioContext();
         }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleAudioEnded}
-        onError={() => console.warn("Audio element fallback")}
+        onError={() => console.warn("Audio element notice")}
         preload="auto"
       />
 

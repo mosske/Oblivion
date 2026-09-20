@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import dns from "dns";
+import { Readable } from "stream";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import crypto from "crypto";
@@ -4879,6 +4880,7 @@ try {
 } catch {}
 
 const SC_ID_CACHE_FILE = path.join(AUDIO_CACHE_DIR, "sc_id.txt");
+const VERIFIED_FALLBACK_SC_ID = "Pb72ranhoyt6gw7hM7TkzUItXlMWSNSo";
 
 async function getSCClientIdGlobal(): Promise<string> {
   if (scClientIdGlobal) return scClientIdGlobal;
@@ -4887,9 +4889,11 @@ async function getSCClientIdGlobal(): Promise<string> {
   try {
     if (fs.existsSync(SC_ID_CACHE_FILE)) {
       const cached = fs.readFileSync(SC_ID_CACHE_FILE, "utf-8").trim();
-      if (cached && cached.length > 10) {
+      if (cached && cached.length > 15) {
         scClientIdGlobal = cached;
-        await play.setToken({ soundcloud: { client_id: cached } });
+        try {
+          await play.setToken({ soundcloud: { client_id: cached } });
+        } catch {}
         return cached;
       }
     }
@@ -4900,32 +4904,160 @@ async function getSCClientIdGlobal(): Promise<string> {
       try {
         const id = await Promise.race([
           play.getFreeClientID(),
-          new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout getting SC client id")), 8000)),
+          new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout getting SC client id")), 5000)),
         ]);
-        scClientIdGlobal = id;
-        try {
-          fs.writeFileSync(SC_ID_CACHE_FILE, id, "utf-8");
-        } catch {}
-        await play.setToken({ soundcloud: { client_id: id } });
-        return id;
+        if (id && id.length > 15) {
+          scClientIdGlobal = id;
+          try {
+            fs.writeFileSync(SC_ID_CACHE_FILE, id, "utf-8");
+          } catch {}
+          await play.setToken({ soundcloud: { client_id: id } });
+          return id;
+        }
       } catch (e) {
-        console.warn("[Stream] Failed to get fresh SoundCloud client ID, using fallback:", e);
-        const fallbackId = "Pb72ranhoyt6gw7hM7TkzUItXlMWSNso";
-        scClientIdGlobal = fallbackId;
-        try {
-          await play.setToken({ soundcloud: { client_id: fallbackId } });
-        } catch {}
-        return fallbackId;
+        console.warn("[Stream] Failed to get fresh SoundCloud client ID, using verified fallback:", e);
       }
+      scClientIdGlobal = VERIFIED_FALLBACK_SC_ID;
+      try {
+        fs.writeFileSync(SC_ID_CACHE_FILE, VERIFIED_FALLBACK_SC_ID, "utf-8");
+        await play.setToken({ soundcloud: { client_id: VERIFIED_FALLBACK_SC_ID } });
+      } catch {}
+      return VERIFIED_FALLBACK_SC_ID;
     })();
   }
   return scClientIdPromiseGlobal;
+}
+
+interface ResolvedAudio {
+  url: string;
+  type: "progressive" | "hls";
+  trackUrl: string;
+  duration?: number;
+}
+
+const activeAudioResolutions = new Map<string, Promise<ResolvedAudio | null>>();
+const activeDiskDownloads = new Map<string, Promise<boolean>>();
+
+function cleanQueryTitle(title: string): string {
+  return (title || "")
+    .replace(/\b(official\s+(music\s+)?video|official\s+audio|lyrics?|lyric\s+video|4k|hd|remastered?|hq|extended|visualizer)\b/gi, "")
+    .replace(/[\(\[\{][^\)\]\}]*[\)\]\}]/g, " ")
+    .replace(/["'#]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function resolveSoundCloudAudio(id: string, titleQuery?: string, artistQuery?: string): Promise<ResolvedAudio | null> {
+  const safeId = id.replace(/[^a-zA-Z0-9_-]/g, "");
+  if (activeAudioResolutions.has(safeId)) {
+    return activeAudioResolutions.get(safeId)!;
+  }
+
+  const promise = (async (): Promise<ResolvedAudio | null> => {
+    const clientId = await getSCClientIdGlobal();
+
+    let cleanTitle = cleanQueryTitle(titleQuery || "");
+    let cleanArtist = cleanQueryTitle(artistQuery || "");
+
+    // If title or artist is empty, fetch YouTube video metadata
+    if (!cleanTitle) {
+      try {
+        const oembedRes = await fetch(
+          `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`,
+          { signal: AbortSignal.timeout(3500) }
+        );
+        if (oembedRes.ok) {
+          const oembed = await oembedRes.json();
+          cleanTitle = cleanQueryTitle(oembed.title || "");
+          if (!cleanArtist) {
+            cleanArtist = cleanQueryTitle(oembed.author_name || "");
+          }
+        }
+      } catch {}
+    }
+
+    const candidateQueries: string[] = [];
+    if (cleanTitle && cleanArtist) {
+      candidateQueries.push(`${cleanTitle} ${cleanArtist}`.trim());
+      candidateQueries.push(`${cleanArtist} ${cleanTitle}`.trim());
+    }
+    if (cleanTitle) {
+      candidateQueries.push(cleanTitle);
+      if (cleanTitle.includes(" - ")) {
+        const parts = cleanTitle.split(" - ");
+        candidateQueries.push(`${parts[0]} ${parts[1]}`.trim());
+        candidateQueries.push(parts[1].trim());
+      }
+    }
+    if (titleQuery) {
+      candidateQueries.push(titleQuery.trim());
+    }
+
+    const uniqueQueries = Array.from(new Set(candidateQueries.filter(Boolean)));
+
+    for (const q of uniqueQueries) {
+      try {
+        const searchResults = await play.search(q, { source: { soundcloud: "tracks" }, limit: 6 });
+        if (!searchResults || searchResults.length === 0) continue;
+
+        for (const track of searchResults) {
+          try {
+            const info = (await play.soundcloud(track.url)) as any;
+            if (!info || !info.formats || info.formats.length === 0) continue;
+
+            const isFullLength = !info.durationInSec || info.durationInSec > 45;
+            if (!isFullLength) continue;
+
+            // Prioritize progressive MP3 format (CloudFront CDN direct streaming with Range 206 support)
+            const prog = info.formats.find((f: any) => f.format?.protocol === "progressive" && !f.snipped);
+            if (prog && prog.url) {
+              const metaRes = await fetch(`${prog.url}?client_id=${clientId}`, { signal: AbortSignal.timeout(5000) });
+              if (metaRes.ok) {
+                const meta = await metaRes.json();
+                if (meta.url) {
+                  return {
+                    url: meta.url,
+                    type: "progressive",
+                    trackUrl: track.url,
+                    duration: info.durationInSec,
+                  };
+                }
+              }
+            }
+
+            // Fallback to non-snipped HLS format if progressive format is unavailable
+            const anyValid = info.formats.find((f: any) => !f.snipped);
+            if (anyValid) {
+              return {
+                url: track.url,
+                type: "hls",
+                trackUrl: track.url,
+                duration: info.durationInSec,
+              };
+            }
+          } catch {}
+        }
+      } catch (err) {
+        console.warn(`[Stream] Search error for query "${q}":`, err);
+      }
+    }
+
+    return null;
+  })();
+
+  activeAudioResolutions.set(safeId, promise);
+  try {
+    return await promise;
+  } finally {
+    setTimeout(() => activeAudioResolutions.delete(safeId), 60000);
+  }
 }
 
 app.options("/api/youtube/stream/:id", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+  res.setHeader("Access-Control-Expose-Headers", "Content-Range, Accept-Ranges, Content-Length");
   res.setHeader("Access-Control-Max-Age", "86400");
   res.status(204).end();
 });
@@ -4938,66 +5070,166 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
   const safeId = (id || "").replace(/[^a-zA-Z0-9_-]/g, "");
   const cachedFilePath = path.join(AUDIO_CACHE_DIR, `${safeId}.mp3`);
 
+  // Common CORS and streaming headers
+  const setStreamHeaders = (extraHeaders?: Record<string, string>) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+    res.setHeader("Access-Control-Expose-Headers", "Content-Range, Accept-Ranges, Content-Length");
+    res.setHeader("Accept-Ranges", "bytes");
+    if (extraHeaders) {
+      for (const [k, v] of Object.entries(extraHeaders)) {
+        res.setHeader(k, v);
+      }
+    }
+  };
+
   // 1. If fully cached file exists on disk, serve it with native Express Range/seek support (HTTP 206)
   if (fs.existsSync(cachedFilePath)) {
     try {
       const stat = fs.statSync(cachedFilePath);
       if (stat.size > 50000) {
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
-        res.setHeader("Accept-Ranges", "bytes");
-        res.setHeader("Cache-Control", "public, max-age=86400");
+        setStreamHeaders({ "Cache-Control": "public, max-age=86400" });
         return res.sendFile(cachedFilePath, { acceptRanges: true });
       }
     } catch {}
   }
 
   try {
-    let query = "";
-    if (titleQuery && titleQuery.trim()) {
-      const cleanT = titleQuery
-        .replace(/\([^)]*\)|\[[^\]]*\]/g, "")
-        .replace(/official (music )?video/gi, "")
-        .trim();
-      query = `${cleanT} ${artistQuery || ""}`.trim();
-    } else {
-      try {
-        const oembedRes = await fetch(
-          `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`,
-          { signal: AbortSignal.timeout(4000) }
-        );
-        if (oembedRes.ok) {
-          const oembed = await oembedRes.json();
-          const cleanTitle = (oembed.title || "")
-            .replace(/\([^)]*\)|\[[^\]]*\]/g, "")
-            .replace(/official (music )?video/gi, "")
-            .trim();
-          query = `${cleanTitle} ${oembed.author_name || ""}`.trim();
-        }
-      } catch {}
+    const resolved = await resolveSoundCloudAudio(id, titleQuery, artistQuery);
+    if (!resolved) {
+      setStreamHeaders();
+      return res.status(404).json({ error: "Audio stream unavailable", id });
     }
 
-    if (!query) query = id;
+    if (resolved.type === "progressive") {
+      const cdnUrl = resolved.url;
 
-    await getSCClientIdGlobal();
-    const searchResults = await play.search(query, { source: { soundcloud: "tracks" }, limit: 1 });
-    if (searchResults && searchResults.length > 0) {
-      const track = searchResults[0];
-      const audioStream = await play.stream(track.url);
+      // Start background download to disk cache if not already running
+      if (!activeDiskDownloads.has(safeId)) {
+        const dlPromise = (async (): Promise<boolean> => {
+          const tempFile = `${cachedFilePath}.tmp`;
+          try {
+            const resp = await fetch(cdnUrl, { signal: AbortSignal.timeout(30000) });
+            if (resp.ok) {
+              const arrayBuf = await resp.arrayBuffer();
+              const buf = Buffer.from(arrayBuf);
+              if (buf.length > 50000) {
+                fs.writeFileSync(tempFile, buf);
+                fs.renameSync(tempFile, cachedFilePath);
+                return true;
+              }
+            }
+          } catch (e) {
+            console.warn(`[Stream] Download cache error for ${safeId}:`, e);
+            try {
+              if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+            } catch {}
+          } finally {
+            activeDiskDownloads.delete(safeId);
+          }
+          return false;
+        })();
+        activeDiskDownloads.set(safeId, dlPromise);
+      }
 
-      res.setHeader("Content-Type", "audio/mpeg");
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
-      res.setHeader("Accept-Ranges", "bytes");
-      res.setHeader("Cache-Control", "public, max-age=7200");
+      // If client made a Range request (seeking forward or backward):
+      if (req.headers.range) {
+        // If file finished saving in cache, immediately serve locally with 206 Partial Content
+        if (fs.existsSync(cachedFilePath)) {
+          try {
+            const stat = fs.statSync(cachedFilePath);
+            if (stat.size > 50000) {
+              setStreamHeaders({ "Cache-Control": "public, max-age=86400" });
+              return res.sendFile(cachedFilePath, { acceptRanges: true });
+            }
+          } catch {}
+        }
+
+        // Forward Range header directly to CloudFront CDN - CloudFront returns 206 Partial Content instantly
+        try {
+          const rangeHeaders: Record<string, string> = { Range: req.headers.range as string };
+          const cdnRangeRes = await fetch(cdnUrl, {
+            headers: rangeHeaders,
+            signal: AbortSignal.timeout(12000),
+          });
+
+          setStreamHeaders({
+            "Cache-Control": "public, max-age=7200",
+            "Content-Type": cdnRangeRes.headers.get("content-type") || "audio/mpeg",
+          });
+
+          const cr = cdnRangeRes.headers.get("content-range");
+          if (cr) res.setHeader("Content-Range", cr);
+          const cl = cdnRangeRes.headers.get("content-length");
+          if (cl) res.setHeader("Content-Length", cl);
+
+          res.status(cdnRangeRes.status);
+          if (req.method === "HEAD") {
+            return res.end();
+          }
+
+          if (cdnRangeRes.body) {
+            Readable.fromWeb(cdnRangeRes.body as any).pipe(res);
+          } else {
+            res.end();
+          }
+          return;
+        } catch (err) {
+          console.warn("[Stream] CDN Range proxy failed, falling back:", err);
+        }
+      }
+
+      // For non-range initial request: give background download up to 600ms to finish (it typically takes ~400ms)
+      const downloadTask = activeDiskDownloads.get(safeId);
+      if (downloadTask) {
+        try {
+          await Promise.race([
+            downloadTask,
+            new Promise((resolve) => setTimeout(resolve, 600)),
+          ]);
+          if (fs.existsSync(cachedFilePath)) {
+            const stat = fs.statSync(cachedFilePath);
+            if (stat.size > 50000) {
+              setStreamHeaders({ "Cache-Control": "public, max-age=86400" });
+              return res.sendFile(cachedFilePath, { acceptRanges: true });
+            }
+          }
+        } catch {}
+      }
+
+      // Stream directly from CloudFront CDN while download completes
+      const cdnStreamRes = await fetch(cdnUrl, { signal: AbortSignal.timeout(15000) });
+      setStreamHeaders({
+        "Content-Type": cdnStreamRes.headers.get("content-type") || "audio/mpeg",
+        "Cache-Control": "public, max-age=7200",
+      });
+
+      const cl = cdnStreamRes.headers.get("content-length");
+      if (cl) res.setHeader("Content-Length", cl);
 
       if (req.method === "HEAD") {
         return res.status(200).end();
       }
 
-      // Stream simultaneously to client and to cache file for instant seeking on future seeks
+      if (cdnStreamRes.body) {
+        Readable.fromWeb(cdnStreamRes.body as any).pipe(res);
+      } else {
+        res.end();
+      }
+      return;
+    } else {
+      // HLS format fallback
+      const audioStream = await play.stream(resolved.trackUrl);
+      setStreamHeaders({
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "public, max-age=7200",
+      });
+
+      if (req.method === "HEAD") {
+        return res.status(200).end();
+      }
+
       const tempFilePath = `${cachedFilePath}.tmp`;
       let fileWriteStream: fs.WriteStream | null = null;
       if (!fs.existsSync(cachedFilePath)) {
@@ -5044,6 +5276,7 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
 
   // If audio stream extraction failed, return 404
   if (!res.headersSent) {
+    setStreamHeaders();
     res.status(404).json({ error: "Audio stream unavailable", id });
   }
 });
