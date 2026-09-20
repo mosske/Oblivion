@@ -786,6 +786,48 @@ export const Player: React.FC<PlayerProps> = ({
     }
   }, [attachAudioElement]);
 
+  // Synchronize HTML5 <audio> element events directly with Android OS Media Session
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    if (!audioElement) return;
+
+    const handlePlay = () => {
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+      }
+    };
+
+    const handlePause = () => {
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+      }
+    };
+
+    const handleTimeUpdateForMediaSession = () => {
+      if ("mediaSession" in navigator && "setPositionState" in navigator.mediaSession) {
+        if (audioElement.duration && !isNaN(audioElement.duration) && audioElement.duration > 0) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: audioElement.duration,
+              playbackRate: audioElement.playbackRate || 1,
+              position: Math.min(Math.max(audioElement.currentTime, 0), audioElement.duration),
+            });
+          } catch {}
+        }
+      }
+    };
+
+    audioElement.addEventListener("play", handlePlay);
+    audioElement.addEventListener("pause", handlePause);
+    audioElement.addEventListener("timeupdate", handleTimeUpdateForMediaSession);
+
+    return () => {
+      audioElement.removeEventListener("play", handlePlay);
+      audioElement.removeEventListener("pause", handlePause);
+      audioElement.removeEventListener("timeupdate", handleTimeUpdateForMediaSession);
+    };
+  }, []);
+
   // Video placeholder ref and dynamic screen bounds to prevent any overlap across PC, tablet, and mobile
   const videoPlaceholderRef = useRef<HTMLDivElement | null>(null);
   const [videoRect, setVideoRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
@@ -1738,7 +1780,9 @@ export const Player: React.FC<PlayerProps> = ({
 
   // MediaSession API Integration for background playback & Android pull-down notification controls
   useEffect(() => {
-    if ("mediaSession" in navigator && currentTrack) {
+    if (!("mediaSession" in navigator)) return;
+
+    if (currentTrack) {
       const cover = currentTrack.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80";
       
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -1754,66 +1798,159 @@ export const Player: React.FC<PlayerProps> = ({
           { src: cover, sizes: "512x512", type: "image/jpeg" },
         ],
       });
-
-      navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
-
-      // Register full action handlers so Android pulls down Prev, Next, Play, Pause, Seek controls
-      const mediaActions: [MediaSessionAction, MediaSessionActionHandler][] = [
-        ["play", () => {
-          userManualPauseRef.current = false;
-          if (!isPlaying) onTogglePlay();
-        }],
-        ["pause", () => {
-          userManualPauseRef.current = true;
-          if (isPlaying) onTogglePlay();
-        }],
-        ["previoustrack", () => {
-          userManualPauseRef.current = false;
-          onPrevTrack();
-        }],
-        ["nexttrack", () => {
-          userManualPauseRef.current = false;
-          onNextTrack();
-        }],
-        ["seekto", (details) => {
-          if (details.seekTime !== undefined && !isNaN(details.seekTime)) {
-            handleSeekInternal(details.seekTime);
-          }
-        }],
-        ["seekbackward", (details) => {
-          const offset = details.seekOffset || 10;
-          handleSeekInternal(Math.max(0, currentTime - offset));
-        }],
-        ["seekforward", (details) => {
-          const offset = details.seekOffset || 10;
-          handleSeekInternal(Math.min(duration || 1000, currentTime + offset));
-        }],
-        ["stop", () => {
-          userManualPauseRef.current = true;
-          onTogglePlay();
-        }],
-      ];
-
-      mediaActions.forEach(([action, handler]) => {
-        try {
-          navigator.mediaSession.setActionHandler(action, handler);
-        } catch {
-          // Ignore unsupported action on browser
-        }
-      });
-
-      // Update position state for Android notification scrubber
-      if ("setPositionState" in navigator.mediaSession && duration > 0 && !isNaN(duration) && !isNaN(currentTime)) {
-        try {
-          navigator.mediaSession.setPositionState({
-            duration: Math.max(duration, 1),
-            playbackRate: 1,
-            position: Math.min(Math.max(currentTime, 0), duration),
-          });
-        } catch {}
-      }
     }
-  }, [currentTrack?.id, currentTrack?.title, currentTrack?.artist, isPlaying, duration, currentTime, onPrevTrack, onNextTrack, onTogglePlay]);
+
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+
+    // Register explicit action handlers for Android OS Notification Control Shade
+    const mediaActions: [MediaSessionAction, MediaSessionActionHandler][] = [
+      // PAUSE COMMAND (Fixes Android Shade Pause Button)
+      ["pause", () => {
+        userManualPauseRef.current = true;
+        const audioElement = audioRef.current;
+        if (audioElement) {
+          try {
+            audioElement.pause();
+          } catch {}
+        }
+        if (isYtReadyRef.current && ytPlayerRef.current) {
+          try {
+            ytPlayerRef.current.pauseVideo?.();
+          } catch {}
+        }
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.playbackState = "paused";
+        }
+        if (isPlayingRef.current) {
+          onTogglePlayRef.current?.();
+        }
+      }],
+
+      // PLAY COMMAND
+      ["play", () => {
+        userManualPauseRef.current = false;
+        resumeAudioContext();
+        const audioElement = audioRef.current;
+        if (audioElement) {
+          try {
+            audioElement.play().catch(() => {});
+          } catch {}
+        }
+        if (isYtReadyRef.current && ytPlayerRef.current) {
+          try {
+            ytPlayerRef.current.playVideo?.();
+          } catch {}
+        }
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.playbackState = "playing";
+        }
+        if (!isPlayingRef.current) {
+          onTogglePlayRef.current?.();
+        }
+      }],
+
+      // PREVIOUS TRACK COMMAND
+      ["previoustrack", () => {
+        userManualPauseRef.current = false;
+        onPrevTrackRef.current?.();
+      }],
+
+      // NEXT TRACK COMMAND
+      ["nexttrack", () => {
+        userManualPauseRef.current = false;
+        onNextTrackRef.current?.();
+      }],
+
+      // SEEK TO COMMAND (For OS progress bar scrubbing)
+      ["seekto", (details) => {
+        if (details.seekTime !== undefined && !isNaN(details.seekTime)) {
+          const audioElement = audioRef.current;
+          if (details.fastSeek && audioElement && "fastSeek" in audioElement) {
+            try {
+              (audioElement as any).fastSeek(details.seekTime);
+            } catch {
+              if (audioElement) audioElement.currentTime = details.seekTime;
+            }
+          } else if (audioElement) {
+            try {
+              audioElement.currentTime = details.seekTime;
+            } catch {}
+          }
+
+          handleSeekInternal(details.seekTime);
+
+          if ("mediaSession" in navigator && "setPositionState" in navigator.mediaSession) {
+            try {
+              const curDur = (audioElement?.duration && !isNaN(audioElement.duration) && audioElement.duration > 0)
+                ? audioElement.duration
+                : (duration || currentTrack?.duration || 1);
+              navigator.mediaSession.setPositionState({
+                duration: Math.max(curDur, 1),
+                playbackRate: audioElement?.playbackRate || 1,
+                position: Math.min(Math.max(details.seekTime, 0), curDur),
+              });
+            } catch {}
+          }
+        }
+      }],
+
+      // SEEK BACKWARD & FORWARD COMMANDS
+      ["seekbackward", (details) => {
+        const offset = details.seekOffset || 10;
+        handleSeekInternal(Math.max(0, currentTime - offset));
+      }],
+
+      ["seekforward", (details) => {
+        const offset = details.seekOffset || 10;
+        handleSeekInternal(Math.min(duration || 1000, currentTime + offset));
+      }],
+
+      // STOP COMMAND
+      ["stop", () => {
+        userManualPauseRef.current = true;
+        const audioElement = audioRef.current;
+        if (audioElement) {
+          try {
+            audioElement.pause();
+          } catch {}
+        }
+        if (isYtReadyRef.current && ytPlayerRef.current) {
+          try {
+            ytPlayerRef.current.pauseVideo?.();
+          } catch {}
+        }
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.playbackState = "none";
+        }
+        if (isPlayingRef.current) {
+          onTogglePlayRef.current?.();
+        }
+      }],
+    ];
+
+    mediaActions.forEach(([action, handler]) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch {
+        // Ignore unsupported action on browser
+      }
+    });
+
+    // Update position state for Android notification scrubber
+    const curDur = (audioRef.current?.duration && !isNaN(audioRef.current.duration) && audioRef.current.duration > 0)
+      ? audioRef.current.duration
+      : (duration || currentTrack?.duration || 0);
+
+    if ("setPositionState" in navigator.mediaSession && curDur > 0 && !isNaN(curDur) && typeof currentTime === "number" && !isNaN(currentTime)) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: Math.max(curDur, 1),
+          playbackRate: audioRef.current?.playbackRate || 1,
+          position: Math.min(Math.max(currentTime, 0), curDur),
+        });
+      } catch {}
+    }
+  }, [currentTrack?.id, currentTrack?.title, currentTrack?.artist, isPlaying, duration, currentTime]);
 
   // Time update event handler for HTML5 audio
   const handleTimeUpdate = () => {
@@ -1845,6 +1982,20 @@ export const Player: React.FC<PlayerProps> = ({
         currentTime: audCur,
         duration: (audDur && audDur > 0) ? audDur : (currentTrack?.duration || prev.duration),
       }));
+
+      // Update position state for Android OS notification shade scrubber
+      if ("mediaSession" in navigator && "setPositionState" in navigator.mediaSession) {
+        const validDuration = (audDur && audDur > 0) ? audDur : (currentTrack?.duration || duration || 0);
+        if (validDuration > 0 && !isNaN(validDuration)) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: Math.max(validDuration, 1),
+              playbackRate: audioRef.current?.playbackRate || 1,
+              position: Math.min(Math.max(audCur, 0), validDuration),
+            });
+          } catch {}
+        }
+      }
     }
   };
 
@@ -2072,9 +2223,20 @@ export const Player: React.FC<PlayerProps> = ({
         autoPlay
         onPlay={() => {
           resumeAudioContext();
+          if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "playing";
+          }
+        }}
+        onPause={() => {
+          if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "paused";
+          }
         }}
         onPlaying={() => {
           resumeAudioContext();
+          if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "playing";
+          }
         }}
         onSeeking={() => {
           resumeAudioContext();
