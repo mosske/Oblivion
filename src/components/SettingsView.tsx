@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { User, UserSettings, AudioQuality, PlayerBackgroundAnimation } from "../types";
+import { User, UserSettings, PlayerBackgroundAnimation } from "../types";
 import { FULL_APP_DESIGNS, FULL_APP_DESIGNS_LIST, FullAppDesignConfig } from "../utils/appDesignThemes";
 import {
   Settings,
-  Sliders,
   Sparkles,
   Check,
   Smartphone,
@@ -21,7 +20,6 @@ import {
   AlignCenter
 } from "lucide-react";
 import { OblivionLogo } from "./OblivionLogo";
-import { AudioEqualizer } from "./AudioEqualizer";
 import { BespokeThemeCard } from "./BespokeThemeCard";
 
 interface SettingsViewProps {
@@ -768,106 +766,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* 7-Band Audio Equalizer Section */}
-      <section>
-        <AudioEqualizer designConfig={designConfig} />
-      </section>
-
-      {/* Player Engine Controls */}
-      <section className={`p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-6 shadow-md`}>
-        <div className={`flex items-center gap-2 font-bold text-sm ${designConfig.textPrimary}`}>
-          <Sliders className={`w-4 h-4 ${designConfig.accentText}`} />
-          <span>Player Audio Engine</span>
-        </div>
-
-        {/* Audio Quality */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className={`block text-xs font-bold uppercase ${designConfig.textPrimary} mb-2`}>
-              Streaming Audio Quality
-            </label>
-            <select
-              value={settings.audioQuality}
-              onChange={(e) => onUpdateSettings({ audioQuality: e.target.value as AudioQuality })}
-              className={`w-full px-4 py-2.5 ${designConfig.isLight ? "bg-white border-zinc-300 text-zinc-900" : "bg-slate-900/90 border-slate-700 text-white"} rounded-xl text-sm font-semibold focus:outline-none shadow-sm transition-all`}
-              style={{
-                borderColor: "var(--border-subtle)",
-              }}
-            >
-              <option value="normal" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>Normal (160 kbps AAC)</option>
-              <option value="high" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>High Quality (320 kbps MP3)</option>
-              <option value="lossless" className={designConfig.isLight ? "text-zinc-900" : "text-white bg-slate-900"}>Lossless (24-bit / 96kHz FLAC)</option>
-            </select>
-          </div>
-
-          {/* Crossfade Duration */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className={`text-xs font-bold uppercase ${designConfig.textPrimary}`}>
-                Crossfade Tracks
-              </label>
-              <span className="text-xs font-mono font-bold" style={{ color: "var(--accent-primary)" }}>
-                {settings.crossfadeDuration}s
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={10}
-              value={settings.crossfadeDuration}
-              onChange={(e) => onUpdateSettings({ crossfadeDuration: Number(e.target.value) })}
-              style={{ accentColor: "var(--accent-primary)" }}
-              className="w-full h-2 bg-zinc-200 dark:bg-slate-700/60 rounded-lg appearance-none cursor-pointer"
-            />
-          </div>
-        </div>
-
-        {/* Toggles */}
-        <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t ${designConfig.isLight ? "border-zinc-200" : "border-white/10"}`}>
-          <label className={`flex items-center justify-between p-3 ${designConfig.isLight ? "bg-zinc-50 border-zinc-200" : "bg-white/5 border-white/10 hover:bg-white/10"} rounded-xl border cursor-pointer shadow-sm transition-colors`}>
-            <div>
-              <span className={`text-xs font-bold ${designConfig.textPrimary} block`}>Background Play</span>
-              <span className={`text-[10px] ${designConfig.textMuted} font-medium`}>Play in bg tab / screen locked</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.backgroundPlay ?? true}
-              onChange={(e) => onUpdateSettings({ backgroundPlay: e.target.checked })}
-              style={{ accentColor: "var(--accent-primary)" }}
-              className="w-4 h-4 cursor-pointer ml-2 shrink-0"
-            />
-          </label>
-
-          <label className={`flex items-center justify-between p-3 ${designConfig.isLight ? "bg-zinc-50 border-zinc-200" : "bg-white/5 border-white/10 hover:bg-white/10"} rounded-xl border cursor-pointer shadow-sm transition-colors`}>
-            <div>
-              <span className={`text-xs font-bold ${designConfig.textPrimary} block`}>Volume Normalization</span>
-              <span className={`text-[10px] ${designConfig.textMuted} font-medium`}>Even volume loudness</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.normalizeVolume}
-              onChange={(e) => onUpdateSettings({ normalizeVolume: e.target.checked })}
-              style={{ accentColor: "var(--accent-primary)" }}
-              className="w-4 h-4 cursor-pointer ml-2 shrink-0"
-            />
-          </label>
-
-          <label className={`flex items-center justify-between p-3 ${designConfig.isLight ? "bg-zinc-50 border-zinc-200" : "bg-white/5 border-white/10 hover:bg-white/10"} rounded-xl border cursor-pointer shadow-sm transition-colors`}>
-            <div>
-              <span className={`text-xs font-bold ${designConfig.textPrimary} block`}>Autoplay Similar Radio</span>
-              <span className={`text-[10px] ${designConfig.textMuted} font-medium`}>Continuous queue stream</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.autoPlaySimilar}
-              onChange={(e) => onUpdateSettings({ autoPlaySimilar: e.target.checked })}
-              style={{ accentColor: "var(--accent-primary)" }}
-              className="w-4 h-4 cursor-pointer ml-2 shrink-0"
-            />
-          </label>
         </div>
       </section>
 

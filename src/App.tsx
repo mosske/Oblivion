@@ -22,7 +22,6 @@ import { HommeMosaicBackground } from "./components/HommeMosaicBackground";
 import { CyberpunkCityRainBackground } from "./components/CyberpunkCityRainBackground";
 import { BespokeCanvas } from "./components/BespokeCanvas";
 import { applyBespokeCssVariables } from "./theme/themeService";
-import { EqualizerProvider } from "./context/EqualizerContext";
 import {
   getCachedPlaylistsFromDB,
   savePlaylistsToDBCache,
@@ -2361,8 +2360,7 @@ export default function App() {
   }, [activeTab, selectedPlaylist?.id]);
 
   return (
-    <EqualizerProvider>
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
+    <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
 
@@ -2706,6 +2704,5 @@ export default function App() {
         designConfig={activeFullDesign}
       />
       </div>
-    </EqualizerProvider>
   );
 }

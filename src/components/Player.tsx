@@ -27,9 +27,6 @@ import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { MarqueeText } from "./MarqueeText";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
-import { equalizerManager } from "../utils/equalizerEngine";
-import { useEqualizer } from "../context/EqualizerContext";
-import { audioPlayer } from "../services/audioPlayer";
 import { calculateWcagText, hexToRgba } from "../theme/colorUtils";
 import { getBespokeColors, getBespokeConfig } from "../theme/themeService";
 
@@ -625,6 +622,9 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     const newTime = calculateTargetTime(e, containerRef.current, duration);
     setScrubTime(newTime);
     onScrubbingChange?.(true, newTime);
+    if (!isNaN(newTime) && newTime >= 0) {
+      onSeek(newTime);
+    }
   };
 
   // Dragging movement and release via global window listeners while scrubbing
@@ -779,19 +779,6 @@ export const Player: React.FC<PlayerProps> = ({
   const isChangingTrackRef = useRef<boolean>(false);
   const isChangingTrackTimeoutRef = useRef<any>(null);
   const userManualPauseRef = useRef<boolean>(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-
-  // Equalizer Web Audio context & refs hook
-  const {
-    attachAudioElement,
-    resumeAudioContext,
-    audioCtxRef,
-    sourceNodeRef,
-    filtersRef,
-    analyserRef,
-    getAnalyser,
-  } = useEqualizer();
-
   const fullPlayerContainerRef = useRef<HTMLDivElement | null>(null);
   const miniPlayerContainerRef = useRef<HTMLDivElement | null>(null);
   const currentBeatRef = useRef<number>(0);
@@ -802,13 +789,6 @@ export const Player: React.FC<PlayerProps> = ({
   const lastSeekTimestampRef = useRef<number>(0);
   const isAudioSeekingRef = useRef<boolean>(false);
   const activeAudioSourceRef = useRef<"audio" | "youtube">("audio");
-
-  // Attach main <audio> element to Web Audio pipeline on mount
-  useEffect(() => {
-    if (audioRef.current) {
-      attachAudioElement(audioRef.current);
-    }
-  }, [attachAudioElement]);
 
   // Synchronize HTML5 <audio> element events directly with Android OS Media Session
   useEffect(() => {
@@ -1160,109 +1140,15 @@ export const Player: React.FC<PlayerProps> = ({
     }
 
     let isSubscribed = true;
-    let silentFrameCount = 0;
-    let prevEnergy = 0;
-    const energyHistory: number[] = [];
-    const HISTORY_SIZE = 20; // Tight ~300ms window for responsive beat detection at high BPM
 
     const renderBeatFrame = () => {
       if (!isSubscribed) return;
 
-      const analyser = getAnalyser() || audioPlayer.getAnalyser();
-      let beatIntensity = 0;
-      let hasRealSignal = false;
-
-      if (analyser) {
-        try {
-          const bufferLength = analyser.frequencyBinCount;
-          const dataArray = new Uint8Array(bufferLength);
-          analyser.getByteFrequencyData(dataArray);
-
-          const sampleRate = audioCtxRef.current?.sampleRate || 44100;
-          const binWidth = sampleRate / analyser.fftSize;
-
-          // Band 1: Sub & Bass Kick (35Hz - 140Hz)
-          const minBassBin = Math.max(0, Math.floor(35 / binWidth));
-          const maxBassBin = Math.min(bufferLength - 1, Math.ceil(140 / binWidth));
-          let bassSum = 0;
-          let bassCount = 0;
-          for (let i = minBassBin; i <= maxBassBin; i++) {
-            bassSum += dataArray[i];
-            bassCount++;
-          }
-          const bassVal = bassCount > 0 ? bassSum / bassCount : 0;
-
-          // Band 2: Snare / Rhythm Guitars & Punch (140Hz - 480Hz)
-          const minMidBin = maxBassBin + 1;
-          const maxMidBin = Math.min(bufferLength - 1, Math.ceil(480 / binWidth));
-          let midSum = 0;
-          let midCount = 0;
-          for (let i = minMidBin; i <= maxMidBin; i++) {
-            midSum += dataArray[i];
-            midCount++;
-          }
-          const midVal = midCount > 0 ? midSum / midCount : 0;
-
-          // Weighted combined rhythm energy with strong bass punch bias
-          const instantEnergy = bassVal * 0.75 + midVal * 0.25;
-          const delta = instantEnergy - prevEnergy;
-          prevEnergy = instantEnergy;
-
-          if (instantEnergy > 2) {
-            hasRealSignal = true;
-
-            // Maintain rolling average of recent energy
-            energyHistory.push(instantEnergy);
-            if (energyHistory.length > HISTORY_SIZE) {
-              energyHistory.shift();
-            }
-            const avgEnergy = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
-
-            // Highly responsive onset detection for all genres including fast rock/heavy metal
-            const variance = Math.max(3.5, avgEnergy * 0.08);
-            const flux = instantEnergy - avgEnergy;
-
-            // Trigger hit on energy surge above average OR sudden upward transient delta
-            if (flux > variance || (delta > 3.2 && instantEnergy > 12)) {
-              const hitRatio = Math.max(flux / (variance * 1.8), delta / 10);
-              const hitStrength = Math.min(1, Math.max(0.48, hitRatio));
-              currentBeatRef.current = Math.max(currentBeatRef.current, hitStrength);
-            } else {
-              // Rapid decay so consecutive beats at high BPM (e.g. 160-220+ BPM rock/metal) flash distinctly
-              currentBeatRef.current = Math.max(0, currentBeatRef.current * 0.78 - 0.022);
-            }
-
-            // Blend subtle baseline energy so loud sections glow warmly
-            const baselineGlow = Math.min(0.2, (instantEnergy / 255) * 0.2);
-            beatIntensity = Math.min(1, Math.max(baselineGlow, currentBeatRef.current));
-          }
-        } catch (err) {
-          console.warn("Analyser reading error:", err);
-        }
-      }
-
-      if (!hasRealSignal) {
-        silentFrameCount++;
-        // If AnalyserNode is unavailable due to browser restrictions or iframe fallback,
-        // drive active musical pulse at standard tempo (128 BPM = ~468ms period)
-        if (silentFrameCount > 15) {
-          fullPlayerContainerRef.current?.classList.add("beat-fallback-active");
-          miniPlayerContainerRef.current?.classList.add("beat-fallback-active");
-
-          const now = performance.now();
-          const cycle = (now % 468) / 468;
-          // Sharp attack at downbeat, exponential decay
-          const pulse = Math.pow(Math.max(0, 1 - cycle * 1.8), 2.2);
-          beatIntensity = Math.min(1, pulse * 0.85);
-        } else {
-          currentBeatRef.current = Math.max(0, currentBeatRef.current * 0.85);
-          beatIntensity = currentBeatRef.current;
-        }
-      } else {
-        silentFrameCount = 0;
-        fullPlayerContainerRef.current?.classList.remove("beat-fallback-active");
-        miniPlayerContainerRef.current?.classList.remove("beat-fallback-active");
-      }
+      const now = performance.now();
+      const cycle = (now % 468) / 468;
+      // Sharp rhythmic attack with smooth exponential decay
+      const pulse = Math.pow(Math.max(0, 1 - cycle * 1.8), 2.2);
+      const beatIntensity = Math.min(1, pulse * 0.85);
 
       // Bind beatIntensity as CSS Custom Variable (--beat-scale and --beat-glow)
       const formattedBeat = beatIntensity.toFixed(3);
@@ -1299,7 +1185,7 @@ export const Player: React.FC<PlayerProps> = ({
       document.documentElement.style.setProperty("--beat-glow", "0");
       document.documentElement.style.setProperty("--beat-scale", "0");
     };
-  }, [isPlaying, isMuted, volume, getAnalyser]);
+  }, [isPlaying, isMuted, volume]);
 
   const repeatModeRef = useRef<"off" | "one" | "all">(repeatMode);
   useEffect(() => {
@@ -1404,31 +1290,53 @@ export const Player: React.FC<PlayerProps> = ({
         : null;
 
     const executePlay = (targetVid: string) => {
-      // Direct high-fidelity YouTube audio stream: authentic pitch, zero nightcore speedup, 100% reliable
-      activeAudioSourceRef.current = "youtube";
-
-      // Stop any pending or previous HTML5 audio stream so it never clashes or comb-filters
+      // Clean native HTML5 audio stream playback
       if (audioRef.current) {
-        try {
-          audioRef.current.pause();
-          audioRef.current.removeAttribute("src");
-          audioRef.current.removeAttribute("data-track-vid");
-        } catch {}
+        const streamUrl = `/api/youtube/stream/${targetVid}?title=${encodeURIComponent(currentTrack.title || "")}&artist=${encodeURIComponent(currentTrack.artist || "")}`;
+        if (audioRef.current.getAttribute("data-track-vid") !== targetVid) {
+          audioRef.current.setAttribute("data-track-vid", targetVid);
+          audioRef.current.src = streamUrl;
+          try {
+            audioRef.current.playbackRate = 1.0;
+            audioRef.current.defaultPlaybackRate = 1.0;
+            audioRef.current.preservesPitch = true;
+          } catch {}
+          audioRef.current.load();
+        }
+        if (isPlayingRef.current && !userManualPauseRef.current) {
+          audioRef.current.volume = isMuted ? 0 : volume;
+          try {
+            audioRef.current.playbackRate = 1.0;
+            audioRef.current.defaultPlaybackRate = 1.0;
+            audioRef.current.preservesPitch = true;
+          } catch {}
+          audioRef.current
+            .play()
+            .then(() => {
+              activeAudioSourceRef.current = "audio";
+              if (audioRef.current) {
+                audioRef.current.playbackRate = 1.0;
+              }
+              if (isYtReadyRef.current && ytPlayerRef.current) {
+                ytPlayerRef.current.mute?.();
+              }
+            })
+            .catch((err) => {
+              if (err?.name === "AbortError") return;
+              console.warn("[Player] <audio> play notice:", err);
+            });
+        }
       }
 
       if (!isYtReadyRef.current || !ytPlayerRef.current) return;
       try {
+        ytPlayerRef.current.mute?.();
         if (isPlayingRef.current && !userManualPauseRef.current) {
           ytPlayerRef.current.loadVideoById({
             videoId: targetVid,
             startSeconds: 0,
           });
-          if (isMuted) {
-            ytPlayerRef.current.mute?.();
-          } else {
-            ytPlayerRef.current.unMute?.();
-            ytPlayerRef.current.setVolume?.(volume * 100);
-          }
+          ytPlayerRef.current.mute?.();
           ytPlayerRef.current.playVideo?.();
         } else {
           if (typeof ytPlayerRef.current.cueVideoById === "function") {
@@ -1443,6 +1351,7 @@ export const Player: React.FC<PlayerProps> = ({
             });
             ytPlayerRef.current.pauseVideo?.();
           }
+          ytPlayerRef.current.mute?.();
         }
       } catch (e) {
         console.warn("YT executePlay error:", e);
@@ -1508,7 +1417,9 @@ export const Player: React.FC<PlayerProps> = ({
           events: {
             onReady: (event: any) => {
               isYtReadyRef.current = true;
-              if (isMuted) {
+              if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
+                event.target.mute?.();
+              } else if (isMuted) {
                 event.target.mute?.();
               } else {
                 event.target.unMute?.();
@@ -1524,14 +1435,12 @@ export const Player: React.FC<PlayerProps> = ({
             },
             onStateChange: (event: any) => {
               // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING, 5 = CUED, -1 = UNSTARTED
+              // YouTube iframe is strictly for background/video render and MUST remain muted to prevent ghost audio
+              try {
+                event.target.mute?.();
+              } catch {}
               if (event.data === 1) {
                 isChangingTrackRef.current = false;
-                if (isMuted) {
-                  event.target.mute?.();
-                } else {
-                  event.target.unMute?.();
-                  event.target.setVolume?.(volume * 100);
-                }
                 const dur = event.target.getDuration?.() || 0;
                 setPlayerState((prev) => ({
                   ...prev,
@@ -1539,15 +1448,7 @@ export const Player: React.FC<PlayerProps> = ({
                   duration: dur > 0 ? dur : prev.duration,
                 }));
               } else if (event.data === 2) {
-                // If YouTube emits pause during track transitions, ignore
                 if (isChangingTrackRef.current) {
-                  return;
-                }
-                const curTime = event.target.getCurrentTime?.() || 0;
-                const dur = event.target.getDuration?.() || 0;
-                // If video reached near the end and paused, trigger track completion
-                if (dur > 0 && curTime >= dur - 1) {
-                  handleEndedRef.current?.();
                   return;
                 }
                 if (!userManualPauseRef.current && isPlayingRef.current) {
@@ -1562,18 +1463,11 @@ export const Player: React.FC<PlayerProps> = ({
               } else if (event.data === 5 || event.data === -1) {
                 if (isPlayingRef.current && !userManualPauseRef.current) {
                   try {
-                    if (isMuted) {
-                      event.target.mute?.();
-                    } else {
-                      event.target.unMute?.();
-                      event.target.setVolume?.(volume * 100);
-                    }
                     event.target.playVideo();
                   } catch {}
                 }
-              } else if (event.data === 0) {
-                handleEndedRef.current?.();
               }
+              // Track end is handled exclusively by the global HTML5 audio element's onEnded event
             },
             onError: (err: any) => {
               console.warn("YouTube stream notice:", err);
@@ -1602,18 +1496,40 @@ export const Player: React.FC<PlayerProps> = ({
     resolveAndPlay();
   }, [currentTrack?.id, currentTrack?.youtubeVideoId]);
 
-  // Sync isPlaying state to players and route real audio stream to HTML5 <audio> & 7-band Equalizer
-  // Sync isPlaying state to YouTube player
+  // Sync isPlaying state to players and route audio stream directly to native HTML5 <audio>
   useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        try {
+          audioRef.current.playbackRate = 1.0;
+          audioRef.current.defaultPlaybackRate = 1.0;
+          audioRef.current.preservesPitch = true;
+        } catch {}
+        audioRef.current.volume = isMuted ? 0 : volume;
+        audioRef.current
+          .play()
+          .then(() => {
+            activeAudioSourceRef.current = "audio";
+            if (audioRef.current) {
+              audioRef.current.playbackRate = 1.0;
+            }
+            if (isYtReadyRef.current && ytPlayerRef.current) {
+              ytPlayerRef.current.mute?.();
+            }
+          })
+          .catch((err) => {
+            if (err?.name === "AbortError") return;
+            console.warn("[Player] <audio> play notice:", err);
+          });
+      } else if (!isChangingTrackRef.current) {
+        audioRef.current.pause();
+      }
+    }
+
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
+        ytPlayerRef.current.mute?.();
         if (isPlaying) {
-          if (isMuted) {
-            ytPlayerRef.current.mute?.();
-          } else {
-            ytPlayerRef.current.unMute?.();
-            ytPlayerRef.current.setVolume?.(volume * 100);
-          }
           ytPlayerRef.current.playVideo?.();
         } else if (!isChangingTrackRef.current) {
           ytPlayerRef.current.pauseVideo?.();
@@ -1630,43 +1546,26 @@ export const Player: React.FC<PlayerProps> = ({
     }
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
-        if (isMuted) {
-          ytPlayerRef.current.mute?.();
-        } else {
-          ytPlayerRef.current.unMute?.();
-          ytPlayerRef.current.setVolume?.(effectiveVolume * 100);
-        }
+        ytPlayerRef.current.mute?.();
       } catch {}
     }
   }, [volume, isMuted]);
 
-  // Timer loop for YouTube current timestamp & progress (100ms when lyrics/fullscreen are visible for fluid sync)
+  // Timer loop for video frame sync (when <audio> is playing, <audio> onTimeUpdate is the sole clock driver)
   useEffect(() => {
     const pollRate = (showLyrics || isFullscreen) ? 100 : 250;
     const interval = setInterval(() => {
       // Suspend polling updates to UI when user is actively scrubbing
       if (isScrubbingRef.current) return;
+
+      // If <audio> is active with a src, <audio>'s onTimeUpdate drives the time and UI
+      if (audioRef.current && audioRef.current.src) return;
+
       if (isPlaying && isYtReadyRef.current && ytPlayerRef.current) {
         try {
           const curTime = ytPlayerRef.current.getCurrentTime?.();
           const ytDur = ytPlayerRef.current.getDuration?.();
           const validDur = (ytDur && ytDur > 0) ? ytDur : (currentTrack?.duration || 0);
-
-          // If recently sought, ignore YouTube updates until it settles close to seek target
-          if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1200) {
-            if (typeof curTime === "number" && Math.abs(curTime - lastSeekTimeRef.current) > 2) {
-              return; // Wait for YouTube seekTo to land
-            }
-          }
-
-          // If <audio> is currently the active audio source, let <audio> be the sole clock driver
-          if (activeAudioSourceRef.current === "audio" && audioRef.current) {
-            // Still check duration fallback
-            if (validDur > 3 && typeof curTime === "number" && curTime >= validDur - 0.25 && !isChangingTrackRef.current) {
-              handleEndedRef.current?.();
-            }
-            return;
-          }
 
           if (typeof curTime === "number" && !isNaN(curTime) && curTime >= 0) {
             setPlayerState((prev) => ({
@@ -1674,11 +1573,6 @@ export const Player: React.FC<PlayerProps> = ({
               currentTime: curTime,
               duration: validDur > 0 ? validDur : prev.duration,
             }));
-
-            // Fallback safety: If track reaches duration and YouTube did not fire state 0
-            if (validDur > 3 && curTime >= validDur - 0.25 && !isChangingTrackRef.current) {
-              handleEndedRef.current?.();
-            }
           }
         } catch {}
       }
@@ -1689,20 +1583,13 @@ export const Player: React.FC<PlayerProps> = ({
 
   // User manual play/pause toggle handler
   const handleUserTogglePlay = (explicitPlay?: boolean) => {
-    // Wake up / resume AudioContext on user gesture for reliable background playback and Web Audio EQ
-    try {
-      resumeAudioContext();
-      equalizerManager.resume();
-      if (!audioContextRef.current) {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioCtx) {
-          audioContextRef.current = new AudioCtx();
-        }
-      }
-      if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-        audioContextRef.current.resume().catch(() => {});
-      }
-    } catch {}
+    if (audioRef.current) {
+      try {
+        audioRef.current.playbackRate = 1.0;
+        audioRef.current.defaultPlaybackRate = 1.0;
+        audioRef.current.preservesPitch = true;
+      } catch {}
+    }
 
     if (explicitPlay !== undefined) {
       userManualPauseRef.current = !explicitPlay;
@@ -1722,10 +1609,6 @@ export const Player: React.FC<PlayerProps> = ({
           // Keep audio element active
           if (audioRef.current) {
             audioRef.current.play().catch(() => {});
-          }
-          // Keep AudioContext active
-          if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-            audioContextRef.current.resume().catch(() => {});
           }
         } catch {}
       }
@@ -1802,10 +1685,12 @@ export const Player: React.FC<PlayerProps> = ({
       // PLAY COMMAND
       ["play", () => {
         userManualPauseRef.current = false;
-        resumeAudioContext();
         const audioElement = audioRef.current;
         if (audioElement) {
           try {
+            audioElement.playbackRate = 1.0;
+            audioElement.defaultPlaybackRate = 1.0;
+            audioElement.preservesPitch = true;
             audioElement.play().catch(() => {});
           } catch {}
         }
@@ -2009,7 +1894,6 @@ export const Player: React.FC<PlayerProps> = ({
   // Custom seek forward/back
   const handleSeekInternal = (time: number) => {
     if (isNaN(time) || time < 0) return;
-    resumeAudioContext();
 
     const maxDur = (duration && duration > 0) ? duration : (currentTrack?.duration || 1000);
     const targetTime = Math.max(0, Math.min(time, maxDur));
@@ -2022,32 +1906,40 @@ export const Player: React.FC<PlayerProps> = ({
     // Immediately update player state optimistically so UI slider updates instantly without lag
     setPlayerState((prev) => ({ ...prev, currentTime: targetTime }));
 
-    // Seek HTML5 audio element directly
+    // Seek HTML5 audio element directly:
+    // DO NOT re-assign audioElement.src or trigger a load() call when seeking within the same track.
+    // Seeking MUST ONLY mutate the existing audio timestamp: audioElement.currentTime = targetTime.
     if (audioRef.current) {
       try {
-        audioRef.current.currentTime = targetTime;
-        audioRef.current.playbackRate = 1.0;
-        audioRef.current.defaultPlaybackRate = 1.0;
-        audioRef.current.preservesPitch = true;
-        if (isPlaying && audioRef.current.paused) {
-          audioRef.current.play().catch(() => {});
+        const audioElement = audioRef.current;
+        const wasPaused = audioElement.paused;
+        
+        // Mutate existing audio timestamp directly
+        audioElement.currentTime = targetTime;
+
+        // Error checking:
+        // If audioElement.paused before seeking, keep it paused at targetTime.
+        // If audioElement.playing (not paused) before seeking, resume playback smoothly after setting currentTime.
+        if (wasPaused || !isPlayingRef.current) {
+          audioElement.pause();
+        } else {
+          audioElement.play().catch((err) => {
+            if (err?.name !== "AbortError") {
+              console.warn("[Player] Seek audio play notice:", err);
+            }
+          });
         }
       } catch (err) {
         console.warn("[Player] Seek audioRef notice:", err);
       }
     }
 
-    // Seek YouTube player directly
+    // Seek YouTube player directly (visual sync only, permanently muted)
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
         ytPlayerRef.current.seekTo?.(targetTime, true);
-        if (isMuted) {
-          ytPlayerRef.current.mute?.();
-        } else {
-          ytPlayerRef.current.unMute?.();
-          ytPlayerRef.current.setVolume?.(volume * 100);
-        }
-        if (isPlaying) {
+        ytPlayerRef.current.mute?.();
+        if (isPlayingRef.current) {
           ytPlayerRef.current.playVideo?.();
         }
       } catch {}
@@ -2201,24 +2093,24 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      {/* Hidden Native Audio Element for Offline Local Blobs */}
+      {/* Clean Native HTML5 Audio Element */}
       <audio
         ref={audioRef}
-        crossOrigin="anonymous"
         playsInline
         onPlay={() => {
-          if (activeAudioSourceRef.current === "audio") {
-            if (audioRef.current) {
-              try {
-                audioRef.current.playbackRate = 1.0;
-                audioRef.current.defaultPlaybackRate = 1.0;
-                audioRef.current.preservesPitch = true;
-              } catch {}
-            }
-            resumeAudioContext();
-            if ("mediaSession" in navigator) {
-              navigator.mediaSession.playbackState = "playing";
-            }
+          activeAudioSourceRef.current = "audio";
+          if (audioRef.current) {
+            try {
+              audioRef.current.playbackRate = 1.0;
+              audioRef.current.defaultPlaybackRate = 1.0;
+              audioRef.current.preservesPitch = true;
+            } catch {}
+          }
+          if (isYtReadyRef.current && ytPlayerRef.current) {
+            ytPlayerRef.current.mute?.();
+          }
+          if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "playing";
           }
         }}
         onPause={() => {
@@ -2227,23 +2119,23 @@ export const Player: React.FC<PlayerProps> = ({
           }
         }}
         onPlaying={() => {
-          if (activeAudioSourceRef.current === "audio") {
-            if (audioRef.current) {
-              try {
-                audioRef.current.playbackRate = 1.0;
-                audioRef.current.defaultPlaybackRate = 1.0;
-                audioRef.current.preservesPitch = true;
-              } catch {}
-            }
-            resumeAudioContext();
-            if ("mediaSession" in navigator) {
-              navigator.mediaSession.playbackState = "playing";
-            }
+          activeAudioSourceRef.current = "audio";
+          if (audioRef.current) {
+            try {
+              audioRef.current.playbackRate = 1.0;
+              audioRef.current.defaultPlaybackRate = 1.0;
+              audioRef.current.preservesPitch = true;
+            } catch {}
+          }
+          if (isYtReadyRef.current && ytPlayerRef.current) {
+            ytPlayerRef.current.mute?.();
+          }
+          if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "playing";
           }
         }}
         onSeeking={() => {
           isAudioSeekingRef.current = true;
-          resumeAudioContext();
         }}
         onSeeked={() => {
           isAudioSeekingRef.current = false;
@@ -2255,7 +2147,6 @@ export const Player: React.FC<PlayerProps> = ({
               audioRef.current.preservesPitch = true;
             } catch {}
           }
-          resumeAudioContext();
         }}
         onWaiting={() => {
           // Buffering active - prevent premature skip
@@ -2265,7 +2156,9 @@ export const Player: React.FC<PlayerProps> = ({
         }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleAudioEnded}
-        onError={() => console.warn("Audio element notice")}
+        onError={(err) => {
+          console.warn("[Player] <audio> element stream notice:", err);
+        }}
         preload="auto"
       />
 

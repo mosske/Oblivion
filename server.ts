@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import dns from "dns";
 import { Readable } from "stream";
+import { execFile } from "child_process";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import crypto from "crypto";
@@ -5059,6 +5060,61 @@ async function resolveSoundCloudAudio(id: string, titleQuery?: string, artistQue
   }
 }
 
+const ytAudioCache = new Map<string, { url: string; mimeType: string; expires: number }>();
+const ytResolvingPromises = new Map<string, Promise<{ url: string; mimeType: string } | null>>();
+
+async function resolveYouTubeAudio(videoId: string): Promise<{ url: string; mimeType: string } | null> {
+  const safeId = (videoId || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!safeId || safeId.length !== 11) return null;
+
+  const cached = ytAudioCache.get(safeId);
+  if (cached && cached.expires > Date.now()) {
+    return cached;
+  }
+
+  if (ytResolvingPromises.has(safeId)) {
+    return ytResolvingPromises.get(safeId)!;
+  }
+
+  const promise = (async () => {
+    try {
+      const ytDlpPath = path.join(process.cwd(), "bin", "yt-dlp");
+      if (!fs.existsSync(ytDlpPath)) {
+        return null;
+      }
+
+      const stdout = await new Promise<string>((resolve, reject) => {
+        execFile(
+          ytDlpPath,
+          ["-g", "-f", "140/ba/b", "--no-warnings", `https://www.youtube.com/watch?v=${safeId}`],
+          { timeout: 10000 },
+          (err, out) => {
+            if (err) return reject(err);
+            resolve(out);
+          }
+        );
+      });
+
+      const streamUrl = stdout.trim().split("\n")[0];
+      if (streamUrl && streamUrl.startsWith("http")) {
+        const mimeType = streamUrl.includes("mime=audio%2Fwebm") ? "audio/webm" : "audio/mp4";
+        const entry = { url: streamUrl, mimeType, expires: Date.now() + 4 * 3600 * 1000 };
+        ytAudioCache.set(safeId, entry);
+        return entry;
+      }
+      return null;
+    } catch (err) {
+      console.warn(`[Stream] Direct YouTube audio extraction note for ${safeId}:`, err);
+      return null;
+    } finally {
+      ytResolvingPromises.delete(safeId);
+    }
+  })();
+
+  ytResolvingPromises.set(safeId, promise);
+  return promise;
+}
+
 app.options("/api/youtube/stream/:id", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
@@ -5074,7 +5130,9 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
   const artistQuery = req.query.artist as string | undefined;
 
   const safeId = (id || "").replace(/[^a-zA-Z0-9_-]/g, "");
-  const cachedFilePath = path.join(AUDIO_CACHE_DIR, `${safeId}.mp3`);
+  const cachedM4aPath = path.join(AUDIO_CACHE_DIR, `${safeId}.m4a`);
+  const cachedMp3Path = path.join(AUDIO_CACHE_DIR, `${safeId}.mp3`);
+  const cachedFilePath = cachedMp3Path;
 
   // Common CORS and streaming headers
   const setStreamHeaders = (extraHeaders?: Record<string, string>) => {
@@ -5091,14 +5149,86 @@ app.get("/api/youtube/stream/:id", async (req, res) => {
   };
 
   // 1. If fully cached file exists on disk, serve it with native Express Range/seek support (HTTP 206)
-  if (fs.existsSync(cachedFilePath)) {
+  for (const diskPath of [cachedM4aPath, cachedMp3Path]) {
+    if (fs.existsSync(diskPath)) {
+      try {
+        const stat = fs.statSync(diskPath);
+        if (stat.size > 50000) {
+          setStreamHeaders({ "Cache-Control": "public, max-age=86400" });
+          return res.sendFile(diskPath, { acceptRanges: true });
+        }
+      } catch {}
+    }
+  }
+
+  // 2. Direct official YouTube audio stream resolution (authentic pitch, studio fidelity, zero nightcore speedup)
+  const ytResult = await resolveYouTubeAudio(safeId);
+  if (ytResult && ytResult.url) {
+    const streamUrl = ytResult.url;
+    const mimeType = ytResult.mimeType || "audio/mp4";
+
+    // Download to disk cache in background
+    if (!activeDiskDownloads.has(safeId)) {
+      const dlPromise = (async (): Promise<boolean> => {
+        const tempFile = `${cachedM4aPath}.tmp`;
+        try {
+          const resp = await fetch(streamUrl, { signal: AbortSignal.timeout(35000) });
+          if (resp.ok) {
+            const arrayBuf = await resp.arrayBuffer();
+            const buf = Buffer.from(arrayBuf);
+            if (buf.length > 50000) {
+              fs.writeFileSync(tempFile, buf);
+              fs.renameSync(tempFile, cachedM4aPath);
+              return true;
+            }
+          }
+        } catch (e) {
+          try {
+            if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+          } catch {}
+        } finally {
+          activeDiskDownloads.delete(safeId);
+        }
+        return false;
+      })();
+      activeDiskDownloads.set(safeId, dlPromise);
+    }
+
     try {
-      const stat = fs.statSync(cachedFilePath);
-      if (stat.size > 50000) {
-        setStreamHeaders({ "Cache-Control": "public, max-age=86400" });
-        return res.sendFile(cachedFilePath, { acceptRanges: true });
+      const fetchHeaders: Record<string, string> = {};
+      if (req.headers.range) {
+        fetchHeaders["Range"] = req.headers.range as string;
       }
-    } catch {}
+
+      const streamRes = await fetch(streamUrl, {
+        headers: fetchHeaders,
+        signal: AbortSignal.timeout(15000),
+      });
+
+      setStreamHeaders({
+        "Content-Type": streamRes.headers.get("content-type") || mimeType,
+        "Cache-Control": "public, max-age=7200",
+      });
+
+      const cr = streamRes.headers.get("content-range");
+      if (cr) res.setHeader("Content-Range", cr);
+      const cl = streamRes.headers.get("content-length");
+      if (cl) res.setHeader("Content-Length", cl);
+
+      res.status(streamRes.status);
+      if (req.method === "HEAD") {
+        return res.end();
+      }
+
+      if (streamRes.body) {
+        Readable.fromWeb(streamRes.body as any).pipe(res);
+      } else {
+        res.end();
+      }
+      return;
+    } catch (streamErr) {
+      console.warn(`[Stream] Direct stream proxy error for ${safeId}:`, streamErr);
+    }
   }
 
   try {

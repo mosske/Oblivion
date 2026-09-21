@@ -120,7 +120,7 @@ export const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
               <div>
                 <span className={`font-bold block ${designConfig.textPrimary}`}>Settings Returned to Default</span>
                 <span className={`${designConfig.textMuted} text-[11px]`}>
-                  Audio quality (High), crossfade (2s), volume normalization, and background playback reset to factory defaults.
+                  Display animations, lyrics alignment, and theme preferences reset to factory defaults.
                 </span>
               </div>
             </div>
