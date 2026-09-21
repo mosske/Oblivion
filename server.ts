@@ -5002,6 +5002,12 @@ async function resolveSoundCloudAudio(id: string, titleQuery?: string, artistQue
 
         for (const track of searchResults) {
           try {
+            const rawTitle = ((track as any).name || (track as any).title || "").toLowerCase();
+            // Filter out nightcore, sped up, chipmunk, pitched, karaoke, slowed bootlegs that corrupt original pitch
+            if (/\b(sped\s*up|speed\s*up|nightcore|pitched|pitch\s*shift|chipmunk|slowed|reverb|karaoke|cover|tribute|instrumental|mashup|bootleg)\b/i.test(rawTitle)) {
+              continue;
+            }
+
             const info = (await play.soundcloud(track.url)) as any;
             if (!info || !info.formats || info.formats.length === 0) continue;
 

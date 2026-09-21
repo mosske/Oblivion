@@ -1404,34 +1404,16 @@ export const Player: React.FC<PlayerProps> = ({
         : null;
 
     const executePlay = (targetVid: string) => {
-      // Connect and start actual audio stream through HTML5 audio element & Web Audio 7-band Equalizer
+      // Direct high-fidelity YouTube audio stream: authentic pitch, zero nightcore speedup, 100% reliable
+      activeAudioSourceRef.current = "youtube";
+
+      // Stop any pending or previous HTML5 audio stream so it never clashes or comb-filters
       if (audioRef.current) {
-        const streamUrl = `/api/youtube/stream/${targetVid}?title=${encodeURIComponent(currentTrack.title || "")}&artist=${encodeURIComponent(currentTrack.artist || "")}`;
-        audioRef.current.crossOrigin = "anonymous";
-        if (audioRef.current.getAttribute("data-track-vid") !== targetVid) {
-          audioRef.current.setAttribute("data-track-vid", targetVid);
-          audioRef.current.src = streamUrl;
-          audioRef.current.load();
-        }
-        attachAudioElement(audioRef.current);
-        if (isPlayingRef.current && !userManualPauseRef.current) {
-          resumeAudioContext();
-          audioRef.current.volume = isMuted ? 0 : volume;
-          audioRef.current
-            .play()
-            .then(() => {
-              activeAudioSourceRef.current = "audio";
-              if (isYtReadyRef.current && ytPlayerRef.current) {
-                ytPlayerRef.current.mute?.();
-              }
-            })
-            .catch((err) => {
-              if (err?.name === "AbortError") {
-                return;
-              }
-              console.warn("[Player] <audio> play notice:", err);
-            });
-        }
+        try {
+          audioRef.current.pause();
+          audioRef.current.removeAttribute("src");
+          audioRef.current.removeAttribute("data-track-vid");
+        } catch {}
       }
 
       if (!isYtReadyRef.current || !ytPlayerRef.current) return;
@@ -1441,12 +1423,11 @@ export const Player: React.FC<PlayerProps> = ({
             videoId: targetVid,
             startSeconds: 0,
           });
-          // Ensure YouTube audio stays muted so audio flows strictly through HTML5 <audio> and the 7-band Equalizer
-          if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
+          if (isMuted) {
             ytPlayerRef.current.mute?.();
           } else {
             ytPlayerRef.current.unMute?.();
-            ytPlayerRef.current.setVolume?.(isMuted ? 0 : volume * 100);
+            ytPlayerRef.current.setVolume?.(volume * 100);
           }
           ytPlayerRef.current.playVideo?.();
         } else {
@@ -1527,11 +1508,11 @@ export const Player: React.FC<PlayerProps> = ({
           events: {
             onReady: (event: any) => {
               isYtReadyRef.current = true;
-              if (audioRef.current && !audioRef.current.paused) {
+              if (isMuted) {
                 event.target.mute?.();
               } else {
                 event.target.unMute?.();
-                event.target.setVolume?.(isMuted ? 0 : volume * 100);
+                event.target.setVolume?.(volume * 100);
               }
               if (isPlayingRef.current && !userManualPauseRef.current) {
                 event.target.playVideo();
@@ -1545,11 +1526,11 @@ export const Player: React.FC<PlayerProps> = ({
               // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING, 5 = CUED, -1 = UNSTARTED
               if (event.data === 1) {
                 isChangingTrackRef.current = false;
-                if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
+                if (isMuted) {
                   event.target.mute?.();
                 } else {
                   event.target.unMute?.();
-                  event.target.setVolume?.(isMuted ? 0 : volume * 100);
+                  event.target.setVolume?.(volume * 100);
                 }
                 const dur = event.target.getDuration?.() || 0;
                 setPlayerState((prev) => ({
@@ -1581,11 +1562,11 @@ export const Player: React.FC<PlayerProps> = ({
               } else if (event.data === 5 || event.data === -1) {
                 if (isPlayingRef.current && !userManualPauseRef.current) {
                   try {
-                    if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
+                    if (isMuted) {
                       event.target.mute?.();
                     } else {
                       event.target.unMute?.();
-                      event.target.setVolume?.(isMuted ? 0 : volume * 100);
+                      event.target.setVolume?.(volume * 100);
                     }
                     event.target.playVideo();
                   } catch {}
@@ -1622,75 +1603,24 @@ export const Player: React.FC<PlayerProps> = ({
   }, [currentTrack?.id, currentTrack?.youtubeVideoId]);
 
   // Sync isPlaying state to players and route real audio stream to HTML5 <audio> & 7-band Equalizer
+  // Sync isPlaying state to YouTube player
   useEffect(() => {
-    const finalVid = currentTrack?.youtubeVideoId || currentTrack?.id;
-
-    if (audioRef.current) {
-      if (audioRef.current.crossOrigin !== "anonymous") {
-        audioRef.current.crossOrigin = "anonymous";
-      }
-      attachAudioElement(audioRef.current);
-
-      if (finalVid) {
-        const streamUrl = `/api/youtube/stream/${finalVid}?title=${encodeURIComponent(currentTrack?.title || "")}&artist=${encodeURIComponent(currentTrack?.artist || "")}`;
-        if (audioRef.current.getAttribute("data-track-vid") !== finalVid) {
-          audioRef.current.setAttribute("data-track-vid", finalVid);
-          audioRef.current.src = streamUrl;
-          try {
-            audioRef.current.playbackRate = 1.0;
-            audioRef.current.defaultPlaybackRate = 1.0;
-            audioRef.current.preservesPitch = true;
-          } catch {}
-          audioRef.current.load();
-        }
-      }
-
-      if (isPlaying) {
-        resumeAudioContext();
-        audioPlayer.resumeContext();
-        try {
-          audioRef.current.playbackRate = 1.0;
-          audioRef.current.defaultPlaybackRate = 1.0;
-          audioRef.current.preservesPitch = true;
-        } catch {}
-        audioRef.current.volume = isMuted ? 0 : volume;
-        audioRef.current
-          .play()
-          .then(() => {
-            activeAudioSourceRef.current = "audio";
-            // Real audio stream is playing through <audio> and the 7-band Web Audio Equalizer!
-            // Mute YouTube iframe video to prevent dual-audio echo
-            if (isYtReadyRef.current && ytPlayerRef.current) {
-              ytPlayerRef.current.mute?.();
-              ytPlayerRef.current.playVideo?.();
-            }
-          })
-          .catch((err) => {
-            if (err?.name === "AbortError") {
-              return;
-            }
-            console.warn("[Player] <audio> play notice:", err);
-          });
-      } else if (!isChangingTrackRef.current) {
-        audioRef.current.pause();
-        if (isYtReadyRef.current && ytPlayerRef.current) {
-          try {
-            ytPlayerRef.current.pauseVideo?.();
-          } catch {}
-        }
-      }
-    } else {
-      if (isYtReadyRef.current && ytPlayerRef.current) {
-        try {
-          if (isPlaying) {
-            ytPlayerRef.current.playVideo?.();
-          } else if (!isChangingTrackRef.current) {
-            ytPlayerRef.current.pauseVideo?.();
+    if (isYtReadyRef.current && ytPlayerRef.current) {
+      try {
+        if (isPlaying) {
+          if (isMuted) {
+            ytPlayerRef.current.mute?.();
+          } else {
+            ytPlayerRef.current.unMute?.();
+            ytPlayerRef.current.setVolume?.(volume * 100);
           }
-        } catch {}
-      }
+          ytPlayerRef.current.playVideo?.();
+        } else if (!isChangingTrackRef.current) {
+          ytPlayerRef.current.pauseVideo?.();
+        }
+      } catch {}
     }
-  }, [isPlaying, currentTrack?.id, currentTrack?.youtubeVideoId, attachAudioElement, resumeAudioContext, volume, isMuted]);
+  }, [isPlaying, isMuted, volume]);
 
   // Sync volume state to players
   useEffect(() => {
@@ -1700,7 +1630,10 @@ export const Player: React.FC<PlayerProps> = ({
     }
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
-        if (typeof ytPlayerRef.current.isMuted === "function" && !ytPlayerRef.current.isMuted()) {
+        if (isMuted) {
+          ytPlayerRef.current.mute?.();
+        } else {
+          ytPlayerRef.current.unMute?.();
           ytPlayerRef.current.setVolume?.(effectiveVolume * 100);
         }
       } catch {}
@@ -2104,12 +2037,18 @@ export const Player: React.FC<PlayerProps> = ({
       }
     }
 
-    // Seek YouTube player background visual
+    // Seek YouTube player directly
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
         ytPlayerRef.current.seekTo?.(targetTime, true);
-        if (activeAudioSourceRef.current === "audio" || (audioRef.current && audioRef.current.src)) {
+        if (isMuted) {
           ytPlayerRef.current.mute?.();
+        } else {
+          ytPlayerRef.current.unMute?.();
+          ytPlayerRef.current.setVolume?.(volume * 100);
+        }
+        if (isPlaying) {
+          ytPlayerRef.current.playVideo?.();
         }
       } catch {}
     }
@@ -2231,18 +2170,17 @@ export const Player: React.FC<PlayerProps> = ({
                 position: "fixed",
                 bottom: 0,
                 right: 0,
-                width: "2px",
-                height: "2px",
+                width: "120px",
+                height: "120px",
                 opacity: 0.001,
-                zIndex: -10,
+                zIndex: -1,
                 pointerEvents: "none",
-                visibility: "hidden",
               }
         }
-        className={`transition-[opacity,border-color] duration-300 ${
+        className={`transition-opacity duration-300 ${
           isVideoModeActive
-            ? "pointer-events-auto opacity-100 visible"
-            : "pointer-events-none opacity-0 invisible"
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         }`}
       >
         {/* Ambient Depth Shadow & Dynamic Glow for Video */}
@@ -2263,27 +2201,24 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      {/* Hidden Native Audio Element for Offline Cache & Mobile Background Audio Session */}
+      {/* Hidden Native Audio Element for Offline Local Blobs */}
       <audio
         ref={audioRef}
         crossOrigin="anonymous"
         playsInline
-        autoPlay
         onPlay={() => {
-          activeAudioSourceRef.current = "audio";
-          if (audioRef.current) {
-            try {
-              audioRef.current.playbackRate = 1.0;
-              audioRef.current.defaultPlaybackRate = 1.0;
-              audioRef.current.preservesPitch = true;
-            } catch {}
-          }
-          if (isYtReadyRef.current && ytPlayerRef.current) {
-            ytPlayerRef.current.mute?.();
-          }
-          resumeAudioContext();
-          if ("mediaSession" in navigator) {
-            navigator.mediaSession.playbackState = "playing";
+          if (activeAudioSourceRef.current === "audio") {
+            if (audioRef.current) {
+              try {
+                audioRef.current.playbackRate = 1.0;
+                audioRef.current.defaultPlaybackRate = 1.0;
+                audioRef.current.preservesPitch = true;
+              } catch {}
+            }
+            resumeAudioContext();
+            if ("mediaSession" in navigator) {
+              navigator.mediaSession.playbackState = "playing";
+            }
           }
         }}
         onPause={() => {
@@ -2292,20 +2227,18 @@ export const Player: React.FC<PlayerProps> = ({
           }
         }}
         onPlaying={() => {
-          activeAudioSourceRef.current = "audio";
-          if (audioRef.current) {
-            try {
-              audioRef.current.playbackRate = 1.0;
-              audioRef.current.defaultPlaybackRate = 1.0;
-              audioRef.current.preservesPitch = true;
-            } catch {}
-          }
-          if (isYtReadyRef.current && ytPlayerRef.current) {
-            ytPlayerRef.current.mute?.();
-          }
-          resumeAudioContext();
-          if ("mediaSession" in navigator) {
-            navigator.mediaSession.playbackState = "playing";
+          if (activeAudioSourceRef.current === "audio") {
+            if (audioRef.current) {
+              try {
+                audioRef.current.playbackRate = 1.0;
+                audioRef.current.defaultPlaybackRate = 1.0;
+                audioRef.current.preservesPitch = true;
+              } catch {}
+            }
+            resumeAudioContext();
+            if ("mediaSession" in navigator) {
+              navigator.mediaSession.playbackState = "playing";
+            }
           }
         }}
         onSeeking={() => {
