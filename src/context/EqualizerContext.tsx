@@ -49,7 +49,11 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (!AudioCtxClass) return null;
 
     if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
-      audioCtxRef.current = new AudioCtxClass();
+      try {
+        audioCtxRef.current = new AudioCtxClass({ latencyHint: "interactive" });
+      } catch {
+        audioCtxRef.current = new AudioCtxClass();
+      }
     }
     const audioCtx = audioCtxRef.current;
 
@@ -94,7 +98,11 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
         try {
           lastFilter.connect(analyserRef.current);
           analyserRef.current.connect(audioCtx.destination);
-        } catch {}
+        } catch {
+          try {
+            lastFilter.connect(audioCtx.destination);
+          } catch {}
+        }
       } else {
         try {
           lastFilter.connect(audioCtx.destination);
@@ -163,12 +171,12 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
     audioElement.addEventListener("seeked", handleResume);
 
     // 2. createMediaElementSource(audioRef) can only be called ONCE per HTMLMediaElement instance.
-    if (!sourceNodeRef.current) {
+    if (!sourceNodeRef.current || attachedAudioElementRef.current !== audioElement) {
       try {
         sourceNodeRef.current = audioCtx.createMediaElementSource(audioElement);
         attachedAudioElementRef.current = audioElement;
       } catch (err: any) {
-        console.warn("[EqualizerContext] createMediaElementSource note:", err);
+        console.warn("[EqualizerContext] createMediaElementSource note (direct audio fallback):", err);
       }
     }
 
@@ -176,7 +184,9 @@ export const EqualizerProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (sourceNodeRef.current && filtersRef.current[0]) {
       try {
         sourceNodeRef.current.connect(filtersRef.current[0]);
-      } catch {}
+      } catch (err: any) {
+        console.warn("[EqualizerContext] source connect note:", err);
+      }
     }
 
     audioPlayer.setWebAudioPipeline(audioCtx, filtersRef.current, sourceNodeRef.current || undefined, analyserRef.current || undefined);

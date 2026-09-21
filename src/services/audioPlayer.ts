@@ -135,10 +135,14 @@ export class AudioPlayerService {
 
     // B. SINGLETON NODE INITIALIZATION:
     // Initialize the AudioContext and MediaElementAudioSourceNode ONCE to avoid "InvalidStateError" on track changes
-    if (!this.audioCtx) {
+    if (!this.audioCtx || this.audioCtx.state === "closed") {
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtxClass) return;
-      this.audioCtx = new AudioCtxClass();
+      try {
+        this.audioCtx = new AudioCtxClass({ latencyHint: "interactive" });
+      } catch {
+        this.audioCtx = new AudioCtxClass();
+      }
     }
 
     if (!this.sourceNode && !this.attachedElementSet.has(element)) {
@@ -147,7 +151,7 @@ export class AudioPlayerService {
         this.attachedElementSet.add(element);
         this.setupEqualizerFilters();
       } catch (err) {
-        console.warn("[audioPlayer] createMediaElementSource note:", err);
+        console.warn("[audioPlayer] createMediaElementSource note (direct audio fallback):", err);
       }
     }
 
@@ -216,6 +220,11 @@ export class AudioPlayerService {
     if (!this.audioElement) return;
     // A. CORS SETTING: BEFORE setting audioElement.src, explicitly set:
     this.audioElement.crossOrigin = "anonymous";
+    try {
+      this.audioElement.playbackRate = 1.0;
+      this.audioElement.defaultPlaybackRate = 1.0;
+      this.audioElement.preservesPitch = true;
+    } catch {}
     if (this.audioElement.src !== srcUrl) {
       this.audioElement.src = srcUrl;
       this.audioElement.load();

@@ -617,6 +617,10 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     e.stopPropagation();
+    e.preventDefault();
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {}
     setIsScrubbing(true);
     const newTime = calculateTargetTime(e, containerRef.current, duration);
     setScrubTime(newTime);
@@ -629,6 +633,8 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
     const handleWindowPointerMove = (e: PointerEvent) => {
       if (!isScrubbingRef.current) return;
+      e.stopPropagation();
+      e.preventDefault();
       const newTime = calculateTargetTime(e, containerRef.current, duration);
       setScrubTime(newTime);
       onScrubbingChange?.(true, newTime);
@@ -636,6 +642,8 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
     const handleWindowPointerUp = (e: PointerEvent) => {
       if (!isScrubbingRef.current) return;
+      e.stopPropagation();
+      e.preventDefault();
       const finalTime = calculateTargetTime(e, containerRef.current, duration);
       setIsScrubbing(false);
       setScrubTime(null);
@@ -645,21 +653,22 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
       }
     };
 
-    const handleWindowPointerCancel = () => {
+    const handleWindowPointerCancel = (e?: PointerEvent) => {
       if (!isScrubbingRef.current) return;
+      e?.stopPropagation();
       setIsScrubbing(false);
       setScrubTime(null);
       onScrubbingChange?.(false, null);
     };
 
-    window.addEventListener("pointermove", handleWindowPointerMove, { passive: false });
-    window.addEventListener("pointerup", handleWindowPointerUp, { passive: false });
-    window.addEventListener("pointercancel", handleWindowPointerCancel, { passive: false });
+    window.addEventListener("pointermove", handleWindowPointerMove, { passive: false, capture: true });
+    window.addEventListener("pointerup", handleWindowPointerUp, { passive: false, capture: true });
+    window.addEventListener("pointercancel", handleWindowPointerCancel, { passive: false, capture: true });
 
     return () => {
-      window.removeEventListener("pointermove", handleWindowPointerMove);
-      window.removeEventListener("pointerup", handleWindowPointerUp);
-      window.removeEventListener("pointercancel", handleWindowPointerCancel);
+      window.removeEventListener("pointermove", handleWindowPointerMove, { capture: true });
+      window.removeEventListener("pointerup", handleWindowPointerUp, { capture: true });
+      window.removeEventListener("pointercancel", handleWindowPointerCancel, { capture: true });
     };
   }, [isScrubbing, duration, onSeek, onScrubbingChange]);
 
@@ -668,7 +677,18 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   return (
     <div
       ref={containerRef}
+      data-scrubber="true"
       onPointerDown={handlePointerDown}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+      }}
+      onTouchStart={(e) => {
+        e.stopPropagation();
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -710,6 +730,9 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
       {/* Interactive Scrubber Knob */}
       <div
+        data-scrubber-thumb="true"
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
         className={`progress-thumb-knob progress-handle-active ${isScrubbing ? "is-dragging opacity-100 scale-125" : ""} absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full pointer-events-none transition-all duration-75 ${
           isScrubbing || isHovered
             ? "opacity-100 scale-125"
@@ -897,6 +920,10 @@ export const Player: React.FC<PlayerProps> = ({
   };
 
   const handleMiniTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest("button, input, a, [role='slider'], .progress-waveform-container, .progress-thumb-knob, .progress-waveform-bar, [data-scrubber='true'], [data-scrubber-thumb='true'], [data-interactive='true']")) {
+      return;
+    }
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     setMiniTouchStartY(touch.clientY);
@@ -948,7 +975,7 @@ export const Player: React.FC<PlayerProps> = ({
     if (e.button !== 0) return;
     // Don't initiate drag when clicking on interactive controls (buttons, sliders, inputs, scrubber, artwork)
     const target = e.target as HTMLElement | null;
-    if (target?.closest("button, input, a, [role='slider'], .waveform-bar, [data-interactive='true']")) {
+    if (target?.closest("button, input, a, [role='slider'], .progress-waveform-container, .progress-thumb-knob, .progress-waveform-bar, [data-scrubber='true'], [data-scrubber-thumb='true'], [data-interactive='true']")) {
       return;
     }
 
@@ -1609,6 +1636,11 @@ export const Player: React.FC<PlayerProps> = ({
         if (audioRef.current.getAttribute("data-track-vid") !== finalVid) {
           audioRef.current.setAttribute("data-track-vid", finalVid);
           audioRef.current.src = streamUrl;
+          try {
+            audioRef.current.playbackRate = 1.0;
+            audioRef.current.defaultPlaybackRate = 1.0;
+            audioRef.current.preservesPitch = true;
+          } catch {}
           audioRef.current.load();
         }
       }
@@ -1616,6 +1648,11 @@ export const Player: React.FC<PlayerProps> = ({
       if (isPlaying) {
         resumeAudioContext();
         audioPlayer.resumeContext();
+        try {
+          audioRef.current.playbackRate = 1.0;
+          audioRef.current.defaultPlaybackRate = 1.0;
+          audioRef.current.preservesPitch = true;
+        } catch {}
         audioRef.current.volume = isMuted ? 0 : volume;
         audioRef.current
           .play()
@@ -2020,9 +2057,19 @@ export const Player: React.FC<PlayerProps> = ({
       return;
     }
     // Ignore accidental ended event right after a seek
-    if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 1500) {
+    if (lastSeekTimeRef.current !== null && Date.now() - lastSeekTimestampRef.current < 2000) {
       return;
     }
+    // Strict duration check: ensure playback reached within 0.5s of the actual duration before triggering onEnded
+    const cur = audioRef.current?.currentTime || 0;
+    const dur = (audioRef.current?.duration && !isNaN(audioRef.current.duration) && audioRef.current.duration > 0)
+      ? audioRef.current.duration
+      : (duration || currentTrack?.duration || 0);
+
+    if (dur > 2 && cur < dur - 0.5) {
+      return;
+    }
+
     handleEndedRef.current?.();
   };
 
@@ -2046,6 +2093,9 @@ export const Player: React.FC<PlayerProps> = ({
     if (audioRef.current) {
       try {
         audioRef.current.currentTime = targetTime;
+        audioRef.current.playbackRate = 1.0;
+        audioRef.current.defaultPlaybackRate = 1.0;
+        audioRef.current.preservesPitch = true;
         if (isPlaying && audioRef.current.paused) {
           audioRef.current.play().catch(() => {});
         }
@@ -2221,6 +2271,13 @@ export const Player: React.FC<PlayerProps> = ({
         autoPlay
         onPlay={() => {
           activeAudioSourceRef.current = "audio";
+          if (audioRef.current) {
+            try {
+              audioRef.current.playbackRate = 1.0;
+              audioRef.current.defaultPlaybackRate = 1.0;
+              audioRef.current.preservesPitch = true;
+            } catch {}
+          }
           if (isYtReadyRef.current && ytPlayerRef.current) {
             ytPlayerRef.current.mute?.();
           }
@@ -2236,6 +2293,13 @@ export const Player: React.FC<PlayerProps> = ({
         }}
         onPlaying={() => {
           activeAudioSourceRef.current = "audio";
+          if (audioRef.current) {
+            try {
+              audioRef.current.playbackRate = 1.0;
+              audioRef.current.defaultPlaybackRate = 1.0;
+              audioRef.current.preservesPitch = true;
+            } catch {}
+          }
           if (isYtReadyRef.current && ytPlayerRef.current) {
             ytPlayerRef.current.mute?.();
           }
@@ -2251,7 +2315,20 @@ export const Player: React.FC<PlayerProps> = ({
         onSeeked={() => {
           isAudioSeekingRef.current = false;
           lastSeekTimeRef.current = null;
+          if (audioRef.current) {
+            try {
+              audioRef.current.playbackRate = 1.0;
+              audioRef.current.defaultPlaybackRate = 1.0;
+              audioRef.current.preservesPitch = true;
+            } catch {}
+          }
           resumeAudioContext();
+        }}
+        onWaiting={() => {
+          // Buffering active - prevent premature skip
+        }}
+        onStalled={() => {
+          // Network stall - prevent premature skip
         }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleAudioEnded}

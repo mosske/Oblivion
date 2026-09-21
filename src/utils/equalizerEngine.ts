@@ -104,7 +104,11 @@ class EqualizerManager {
       if (!AudioContextClass) return;
 
       if (!this.audioContext || this.audioContext.state === "closed") {
-        this.audioContext = new AudioContextClass();
+        try {
+          this.audioContext = new AudioContextClass({ latencyHint: "interactive" });
+        } catch {
+          this.audioContext = new AudioContextClass();
+        }
       }
 
       // 4. Handle browser autoplay restrictions by automatically calling audioCtx.resume()
