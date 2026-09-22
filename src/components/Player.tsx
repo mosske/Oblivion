@@ -1309,11 +1309,11 @@ export const Player: React.FC<PlayerProps> = ({
     const executePlay = (targetVid: string) => {
       if (!isYtReadyRef.current || !ytPlayerRef.current) return;
       try {
-        if (!isMuted) {
-          ytPlayerRef.current.unMute?.();
-          ytPlayerRef.current.setVolume?.(volume * 100);
-        } else {
-          ytPlayerRef.current.mute?.();
+        if (typeof ytPlayerRef.current.unMute === "function") {
+          ytPlayerRef.current.unMute();
+        }
+        if (typeof ytPlayerRef.current.setVolume === "function") {
+          ytPlayerRef.current.setVolume(100);
         }
 
         if (isPlayingRef.current && !userManualPauseRef.current) {
@@ -1364,12 +1364,14 @@ export const Player: React.FC<PlayerProps> = ({
           events: {
             onReady: (event: any) => {
               isYtReadyRef.current = true;
-              if (isMuted) {
-                event.target.mute?.();
-              } else {
-                event.target.unMute?.();
-                event.target.setVolume?.(volume * 100);
-              }
+              try {
+                if (typeof event.target.unMute === "function") {
+                  event.target.unMute();
+                }
+                if (typeof event.target.setVolume === "function") {
+                  event.target.setVolume(100);
+                }
+              } catch {}
               if (isPlayingRef.current && !userManualPauseRef.current) {
                 event.target.playVideo();
               } else {
@@ -1383,6 +1385,14 @@ export const Player: React.FC<PlayerProps> = ({
               if (event.data === 1) { // PLAYING
                 isChangingTrackRef.current = false;
                 userManualPauseRef.current = false;
+                try {
+                  if (typeof event.target.unMute === "function") {
+                    event.target.unMute();
+                  }
+                  if (typeof event.target.setVolume === "function") {
+                    event.target.setVolume(100);
+                  }
+                } catch {}
                 const dur = event.target.getDuration?.() || 0;
                 const curTime = event.target.getCurrentTime?.() || 0;
                 setPlayerState((prev) => ({
@@ -1477,6 +1487,14 @@ export const Player: React.FC<PlayerProps> = ({
         const state = typeof player.getPlayerState === "function" ? player.getPlayerState() : -1;
         // YT.PlayerState: 1 = PLAYING, 2 = PAUSED, 0 = ENDED
         if (state === 1) { // PLAYING
+          // Continuously verify that isMuted() remains false and volume is at 100
+          if (typeof player.isMuted === "function" && player.isMuted()) {
+            player.unMute();
+          }
+          if (typeof player.getVolume === "function" && player.getVolume() < 100) {
+            player.setVolume(100);
+          }
+
           const curTime = player.getCurrentTime?.();
           const ytDur = player.getDuration?.();
           const validDur = (ytDur && ytDur > 0) ? ytDur : (currentTrack?.duration || 0);
@@ -1504,6 +1522,28 @@ export const Player: React.FC<PlayerProps> = ({
     return () => clearInterval(interval);
   }, [currentTrack?.id, currentTrack?.youtubeVideoId, currentTrack?.duration]);
 
+  // Section 2: Enforce unmuted state & max volume on YouTube player to prevent background auto-mute
+  const enforceUnmutedState = useCallback(() => {
+    const player = ytPlayerRef.current;
+    if (player && isYtReadyRef.current) {
+      try {
+        if (typeof player.isMuted === "function" && player.isMuted()) {
+          player.unMute();
+        }
+        if (typeof player.setVolume === "function") {
+          player.setVolume(100);
+        }
+      } catch (err) {
+        console.warn("[Player] enforceUnmutedState error:", err);
+      }
+    }
+  }, []);
+
+  // Section 3: Continuously verify unmuted state across navigation view transitions
+  useEffect(() => {
+    enforceUnmutedState();
+  }, [isFullscreen, playerState.mediaMode, showLyrics, showSimilar, enforceUnmutedState]);
+
   // User manual play/pause toggle handler
   const handleUserTogglePlay = (explicitPlay?: boolean) => {
     const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlaying;
@@ -1512,11 +1552,11 @@ export const Player: React.FC<PlayerProps> = ({
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
         if (nextPlay) {
-          if (!isMuted) {
-            ytPlayerRef.current.unMute?.();
-            ytPlayerRef.current.setVolume?.(volume * 100);
-          } else {
-            ytPlayerRef.current.mute?.();
+          if (typeof ytPlayerRef.current.unMute === "function") {
+            ytPlayerRef.current.unMute();
+          }
+          if (typeof ytPlayerRef.current.setVolume === "function") {
+            ytPlayerRef.current.setVolume(100);
           }
           ytPlayerRef.current.playVideo?.();
         } else {
@@ -1533,17 +1573,14 @@ export const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  // Background play & minimize listener for mobile Android Chrome
+  // Section 2: PC & Mobile visibility and blur listeners to prevent browser background auto-mute
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.hidden && isPlaying && !userManualPauseRef.current) {
+      enforceUnmutedState();
+      if (isPlayingRef.current && !userManualPauseRef.current) {
         try {
-          // Keep YouTube stream active
+          // Keep YouTube stream active & playing
           ytPlayerRef.current?.playVideo?.();
-          // Keep audio element active
-          if (audioRef.current) {
-            audioRef.current.play().catch(() => {});
-          }
         } catch {}
       }
     };
@@ -1560,13 +1597,15 @@ export const Player: React.FC<PlayerProps> = ({
       document.addEventListener("visibilitychange", handleVisibility);
       window.addEventListener("pagehide", handleVisibility);
       window.addEventListener("blur", handleVisibility);
+      window.addEventListener("focus", handleVisibility);
       return () => {
         document.removeEventListener("visibilitychange", handleVisibility);
         window.removeEventListener("pagehide", handleVisibility);
         window.removeEventListener("blur", handleVisibility);
+        window.removeEventListener("focus", handleVisibility);
       };
     }
-  }, [settings.backgroundPlay, isPlaying]);
+  }, [settings.backgroundPlay, isPlaying, enforceUnmutedState]);
 
   // MediaSession API Integration for background playback & Android pull-down notification controls
   useEffect(() => {
@@ -1960,22 +1999,13 @@ export const Player: React.FC<PlayerProps> = ({
                 maxHeight: "44vh",
                 zIndex: 105,
               }
-            : {
-                position: "fixed",
-                bottom: 0,
-                right: 0,
-                width: "120px",
-                height: "120px",
-                opacity: 0.001,
-                zIndex: -1,
-                pointerEvents: "none",
-              }
+            : undefined
         }
-        className={`transition-opacity duration-300 ${
+        className={
           isVideoModeActive
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
-        }`}
+            ? "transition-opacity duration-300 pointer-events-auto opacity-100"
+            : "yt-iframe-hidden-container"
+        }
       >
         {/* Ambient Depth Shadow & Dynamic Glow for Video */}
         {isVideoModeActive && (
@@ -1987,7 +2017,7 @@ export const Player: React.FC<PlayerProps> = ({
           </>
         )}
 
-        <div className="relative w-full h-full rounded-2xl sm:rounded-3xl border-2 border-white/25 overflow-hidden bg-black shadow-2xl">
+        <div className={`relative w-full h-full ${isVideoModeActive ? "rounded-2xl sm:rounded-3xl border-2 border-white/25 overflow-hidden bg-black shadow-2xl" : "overflow-hidden"}`}>
           <div
             id="oblivion-yt-stream-engine"
             className="w-full h-full"
@@ -2008,9 +2038,7 @@ export const Player: React.FC<PlayerProps> = ({
               audioRef.current.preservesPitch = true;
             } catch {}
           }
-          if (isYtReadyRef.current && ytPlayerRef.current) {
-            ytPlayerRef.current.mute?.();
-          }
+          enforceUnmutedState();
           if ("mediaSession" in navigator) {
             navigator.mediaSession.playbackState = "playing";
           }
@@ -2029,9 +2057,7 @@ export const Player: React.FC<PlayerProps> = ({
               audioRef.current.preservesPitch = true;
             } catch {}
           }
-          if (isYtReadyRef.current && ytPlayerRef.current) {
-            ytPlayerRef.current.mute?.();
-          }
+          enforceUnmutedState();
           if ("mediaSession" in navigator) {
             navigator.mediaSession.playbackState = "playing";
           }

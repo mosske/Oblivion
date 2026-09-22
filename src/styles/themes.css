@@ -3704,6 +3704,22 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   font-weight: 600 !important;
 }
 
+/* ================================================================================
+   YOUTUBE IFRAME BACKGROUND STREAM ENGINE POSITIONING
+   Prevent Browser Auto-Mute in Audio/Mini Mode across Desktop & Mobile
+   ================================================================================ */
+.yt-iframe-hidden-container {
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0.01 !important;
+  pointer-events: none !important;
+  z-index: -100 !important;
+}
+
+
 
 
 
