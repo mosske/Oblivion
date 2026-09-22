@@ -1,5 +1,6 @@
 export interface Track {
   id: string;
+  youtubeId?: string;
   youtubeVideoId?: string;
   playlistItemId?: string;
   title: string;

@@ -15,6 +15,14 @@ import { apiFetch } from "./apiClient";
 export const OBLIVION_PLAYLIST_CACHE_KEY = "OBLIVION_PLAYLIST_CACHE";
 const LEGACY_PLAYLIST_CACHE_KEY = "oblivion_saved_playlists";
 
+export const cleanVideoId = (id?: string): string => {
+  if (!id) return "";
+  let clean = id.trim();
+  if (clean.includes("watch?v=")) clean = clean.split("watch?v=")[1].split("&")[0];
+  else if (clean.includes("youtu.be/")) clean = clean.split("youtu.be/")[1].split("?")[0];
+  return clean.replace(/[^a-zA-Z0-9_-]/g, "");
+};
+
 /**
  * 0. Read playlists synchronously from perpetual client-side cache
  */
@@ -105,7 +113,18 @@ export function getCachedPlaylistTracks(playlistId: string): Track[] {
 export function setCachedPlaylistTracks(playlistId: string, tracks: Track[]): void {
   if (!playlistId || !Array.isArray(tracks)) return;
   const cleanId = playlistId.replace(/^VL/, "");
-  const cleanTracks = tracks.filter(Boolean).filter((t: any) => Boolean(t && (t.id || t.youtubeVideoId || t.title)));
+  const cleanTracks = tracks
+    .filter(Boolean)
+    .filter((t: any) => Boolean(t && (t.id || t.youtubeVideoId || t.youtubeId || t.title)))
+    .map((t: any) => {
+      const vId = cleanVideoId(t.youtubeId || t.youtubeVideoId || t.id);
+      return {
+        ...t,
+        id: t.id || vId,
+        youtubeVideoId: vId || t.youtubeVideoId || t.id,
+        youtubeId: vId || t.youtubeId || t.youtubeVideoId || t.id,
+      };
+    });
 
   // ZERO-OVERWRITE GUARD:
   // If the incoming tracks array is empty, check if we already have valid cached tracks for this playlist.
@@ -520,19 +539,11 @@ export function checkTrackDuplicateInPlaylist(
     return { isDuplicate: false };
   }
 
-  const cleanVideoId = (id?: string) => {
-    if (!id) return "";
-    let clean = id.trim();
-    if (clean.includes("watch?v=")) clean = clean.split("watch?v=")[1].split("&")[0];
-    else if (clean.includes("youtu.be/")) clean = clean.split("youtu.be/")[1].split("?")[0];
-    return clean.replace(/[^a-zA-Z0-9_-]/g, "");
-  };
-
-  const targetVid = cleanVideoId(track.youtubeVideoId || track.id);
+  const targetVid = cleanVideoId((track as any).youtubeId || track.youtubeVideoId || track.id);
   if (!targetVid) return { isDuplicate: false };
 
   const existingTrack = playlist.tracks.find((t) => {
-    const tVid = cleanVideoId(t.youtubeVideoId || t.id);
+    const tVid = cleanVideoId((t as any).youtubeId || t.youtubeVideoId || t.id);
     return tVid === targetVid || t.id === track.id;
   });
 
@@ -602,7 +613,16 @@ export async function fetchPlaylistItems(
 
     if (res.ok) {
       const data = await res.json().catch(() => ({ tracks: [] }));
-      const tracks: Track[] = Array.isArray(data.tracks) ? data.tracks : [];
+      const rawTracks: any[] = Array.isArray(data.tracks) ? data.tracks : [];
+      const tracks: Track[] = rawTracks.map((t: any) => {
+        const vId = cleanVideoId(t.youtubeId || t.youtubeVideoId || t.id);
+        return {
+          ...t,
+          id: t.id || vId,
+          youtubeVideoId: vId || t.youtubeVideoId || t.id,
+          youtubeId: vId || t.youtubeId || t.youtubeVideoId || t.id,
+        };
+      });
       return {
         tracks,
         coverUrl: data.coverUrl || data.customCoverUrl,

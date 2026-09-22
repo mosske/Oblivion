@@ -1456,13 +1456,29 @@ export default function App() {
     }
   }, [selectedPlaylist?.id]);
 
+  const cleanTrackVideoId = (track: Track): Track => {
+    let raw = (track as any).youtubeId || track.youtubeVideoId || track.id || "";
+    if (typeof raw === "string") {
+      if (raw.includes("watch?v=")) raw = raw.split("watch?v=")[1].split("&")[0];
+      else if (raw.includes("youtu.be/")) raw = raw.split("youtu.be/")[1].split("?")[0];
+      raw = raw.replace(/[^a-zA-Z0-9_-]/g, "");
+    }
+    const finalVid = raw || track.youtubeVideoId || track.id;
+    return {
+      ...track,
+      id: track.id || finalVid,
+      youtubeVideoId: finalVid,
+      youtubeId: finalVid,
+    };
+  };
+
   // Immediate Auto-play single track
   const handlePlayTrack = (track: Track) => {
-    const trId = track.id || track.youtubeVideoId;
-    const cleanTrack = { ...track, id: trId };
+    const cleanTrack = cleanTrackVideoId(track);
+    const trId = cleanTrack.id || cleanTrack.youtubeVideoId;
     recordPlaybackHistory(cleanTrack, cleanTrack.isVideo ? "video" : "song");
     setPlayerState((prev) => {
-      const existingIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId) === trId);
+      const existingIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId || (t as any).youtubeId) === trId);
       let newQueue = [...prev.queue];
       let newIdx = existingIdx;
 
@@ -1489,10 +1505,11 @@ export default function App() {
     const cleanTracks: Track[] = [];
     for (const t of tracks) {
       if (!t) continue;
-      const trId = t.id || t.youtubeVideoId;
+      const clean = cleanTrackVideoId(t);
+      const trId = clean.id || clean.youtubeVideoId || clean.youtubeId;
       if (!trId || seen.has(trId)) continue;
       seen.add(trId);
-      cleanTracks.push({ ...t, id: trId });
+      cleanTracks.push(clean);
     }
     if (cleanTracks.length === 0) return;
     const validIdx = Math.min(Math.max(0, startIndex), cleanTracks.length - 1);
@@ -1512,8 +1529,7 @@ export default function App() {
 
   // Launch track directly in Oblivion's built-in video player mode
   const handlePlayVideo = (track: Track) => {
-    const trId = track.id || track.youtubeVideoId;
-    const cleanTrack = { ...track, id: trId, isVideo: true };
+    const cleanTrack = { ...cleanTrackVideoId(track), isVideo: true };
     recordPlaybackHistory(cleanTrack, "video");
     handlePlayTrack(cleanTrack);
     setPlayerState((prev) => ({
@@ -1526,11 +1542,11 @@ export default function App() {
 
   // Add to queue
   const handleAddToQueue = (track: Track) => {
-    const trId = track.id || track.youtubeVideoId;
+    const cleanTrack = cleanTrackVideoId(track);
+    const trId = cleanTrack.id || cleanTrack.youtubeVideoId;
     if (!trId) return;
-    const cleanTrack = { ...track, id: trId };
     setPlayerState((prev) => {
-      const exists = prev.queue.some((t) => (t.id || t.youtubeVideoId) === trId);
+      const exists = prev.queue.some((t) => (t.id || t.youtubeVideoId || (t as any).youtubeId) === trId);
       if (exists) return prev;
       return {
         ...prev,
