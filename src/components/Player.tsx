@@ -1694,12 +1694,17 @@ export const Player: React.FC<PlayerProps> = ({
       }
     }
 
-    setPlayerState((prev) => ({ ...prev, isPlaying: nextPlay }));
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.playbackState = nextPlay ? "playing" : "paused";
+    if (audioRef.current && activeAudioSourceRef.current === "audio") {
+      if (nextPlay) {
+        audioRef.current.play().catch(() => {});
+      } else {
+        audioRef.current.pause();
+      }
     }
-    if (nextPlay !== isPlaying) {
-      onTogglePlay();
+
+    setPlayerState((prev) => ({ ...prev, isPlaying: nextPlay }));
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      navigator.mediaSession.playbackState = nextPlay ? "playing" : "paused";
     }
   };
 
@@ -1739,131 +1744,234 @@ export const Player: React.FC<PlayerProps> = ({
     }
   }, [settings.backgroundPlay, isPlaying, enforceUnmutedState, handleFocusReturn]);
 
-  // MediaSession API Integration for background playback & Android pull-down notification controls
+  // Helper function to resolve absolute URLs for Android OS lockscreen & notification shade artwork
+  const getAbsoluteImageUrl = (url?: string): string => {
+    if (!url) return "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=512&q=85";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    if (typeof window !== "undefined" && window.location?.origin) {
+      return window.location.origin + (url.startsWith("/") ? url : "/" + url);
+    }
+    return url;
+  };
+
+  // Section 1: Register Media Session Action Handlers with STALE-PROOF references
   useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+
+    // PAUSE COMMAND (Directly stops YouTube / HTML5 stream and notifies Android OS)
+    try {
+      navigator.mediaSession.setActionHandler("pause", () => {
+        try {
+          userManualPauseRef.current = true;
+          interruptedWhilePlayingRef.current = false;
+          if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
+            ytPlayerRef.current.pauseVideo();
+            navigator.mediaSession.playbackState = "paused";
+          }
+          if (audioRef.current) {
+            try {
+              audioRef.current.pause();
+            } catch {}
+          }
+          setPlayerState((prev) => ({ ...prev, isPlaying: false }));
+          navigator.mediaSession.playbackState = "paused";
+        } catch (err) {
+          console.error("MediaSession pause error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession pause handler:", err);
+    }
+
+    // PLAY COMMAND (Resumes stream and enforces volume & unmuted state)
+    try {
+      navigator.mediaSession.setActionHandler("play", () => {
+        try {
+          userManualPauseRef.current = false;
+          interruptedWhilePlayingRef.current = false;
+          if (ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === "function") {
+            try {
+              if (typeof ytPlayerRef.current.unMute === "function") {
+                ytPlayerRef.current.unMute();
+              }
+              if (typeof ytPlayerRef.current.setVolume === "function") {
+                ytPlayerRef.current.setVolume(100);
+              }
+            } catch {}
+            ytPlayerRef.current.playVideo();
+            navigator.mediaSession.playbackState = "playing";
+          }
+          if (audioRef.current && activeAudioSourceRef.current === "audio") {
+            try {
+              audioRef.current.play().catch(() => {});
+            } catch {}
+          }
+          setPlayerState((prev) => ({ ...prev, isPlaying: true }));
+          navigator.mediaSession.playbackState = "playing";
+        } catch (err) {
+          console.error("MediaSession play error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession play handler:", err);
+    }
+
+    // PREVIOUS TRACK (MUST BE EXPLICITLY BOUND TO RESTORE OS SHADE BUTTON)
+    try {
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        try {
+          userManualPauseRef.current = false;
+          interruptedWhilePlayingRef.current = false;
+          onPrevTrackRef.current?.();
+        } catch (err) {
+          console.error("MediaSession prev error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession previoustrack handler:", err);
+    }
+
+    // NEXT TRACK (MUST BE EXPLICITLY BOUND TO RESTORE OS SHADE BUTTON)
+    try {
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        try {
+          userManualPauseRef.current = false;
+          interruptedWhilePlayingRef.current = false;
+          onNextTrackRef.current?.();
+        } catch (err) {
+          console.error("MediaSession next error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession nexttrack handler:", err);
+    }
+
+    // SEEKING
+    try {
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        try {
+          if (details.seekTime !== undefined && !isNaN(details.seekTime)) {
+            if (ytPlayerRef.current && typeof ytPlayerRef.current.seekTo === "function") {
+              ytPlayerRef.current.seekTo(details.seekTime, true);
+            }
+            if (audioRef.current) {
+              audioRef.current.currentTime = details.seekTime;
+            }
+            handleSeekInternal(details.seekTime);
+            updatePositionState(details.seekTime);
+          }
+        } catch (err) {
+          console.error("MediaSession seek error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession seekto handler:", err);
+    }
+
+    // SEEK BACKWARD
+    try {
+      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+        try {
+          const offset = details.seekOffset || 10;
+          const target = Math.max((currentTimeRef.current || 0) - offset, 0);
+          handleSeekInternal(target);
+          updatePositionState(target);
+        } catch (err) {
+          console.error("MediaSession seekbackward error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession seekbackward handler:", err);
+    }
+
+    // SEEK FORWARD
+    try {
+      navigator.mediaSession.setActionHandler("seekforward", (details) => {
+        try {
+          const offset = details.seekOffset || 10;
+          const curDur = (durationRef.current && durationRef.current > 0) ? durationRef.current : (currentTrack?.duration || 1000);
+          const target = Math.min((currentTimeRef.current || 0) + offset, curDur);
+          handleSeekInternal(target);
+          updatePositionState(target);
+        } catch (err) {
+          console.error("MediaSession seekforward error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession seekforward handler:", err);
+    }
+
+    // STOP
+    try {
+      navigator.mediaSession.setActionHandler("stop", () => {
+        try {
+          userManualPauseRef.current = true;
+          interruptedWhilePlayingRef.current = false;
+          if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
+            ytPlayerRef.current.pauseVideo();
+          }
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+          setPlayerState((prev) => ({ ...prev, isPlaying: false }));
+          navigator.mediaSession.playbackState = "none";
+        } catch (err) {
+          console.error("MediaSession stop error:", err);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to bind mediaSession stop handler:", err);
+    }
+  }, [handleSeekInternal, updatePositionState, setPlayerState]);
+
+  // Section 2: Synchronize Absolute URL MediaMetadata for rich cover art & OS vignette colors
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
 
     if (currentTrack) {
-      const rawCover = currentTrack.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=512&q=85";
-      const cover = getHdCoverUrl(rawCover) || rawCover;
-      
+      const rawCover = (currentTrack as any).coverArtUrl || currentTrack.coverUrl || currentTrack.thumbnail;
+      const hdCover = getHdCoverUrl(rawCover) || rawCover;
+      const fullArtUrl = getAbsoluteImageUrl(hdCover);
+
+      const title = cleanTrackTitle(currentTrack.title, currentTrack.artist) || currentTrack.title || "Oblivion Track";
+      const artist = `${currentTrack.artist || "Unknown Artist"} • Oblivion`;
+      const album = currentTrack.album ? `${currentTrack.album} • Oblivion` : "Oblivion";
+
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: cleanTrackTitle(currentTrack.title, currentTrack.artist) || currentTrack.title || "Oblivion Track",
-        artist: `${currentTrack.artist || "Artist"} • Oblivion`,
-        album: currentTrack.album ? `${currentTrack.album} • Oblivion Music` : "Oblivion Music",
+        title,
+        artist,
+        album,
         artwork: [
-          { src: cover, sizes: "96x96", type: "image/jpeg" },
-          { src: cover, sizes: "128x128", type: "image/jpeg" },
-          { src: cover, sizes: "192x192", type: "image/jpeg" },
-          { src: cover, sizes: "256x256", type: "image/jpeg" },
-          { src: cover, sizes: "384x384", type: "image/jpeg" },
-          { src: cover, sizes: "512x512", type: "image/jpeg" },
+          { src: fullArtUrl, sizes: "96x96", type: "image/jpeg" },
+          { src: fullArtUrl, sizes: "128x128", type: "image/jpeg" },
+          { src: fullArtUrl, sizes: "192x192", type: "image/jpeg" },
+          { src: fullArtUrl, sizes: "256x256", type: "image/jpeg" },
+          { src: fullArtUrl, sizes: "384x384", type: "image/jpeg" },
+          { src: fullArtUrl, sizes: "512x512", type: "image/jpeg" },
         ],
       });
     }
-
-    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
-
-    // Register explicit action handlers for Android OS Notification Control Shade
-    const mediaActions: [MediaSessionAction, MediaSessionActionHandler][] = [
-      // PLAY COMMAND
-      ["play", () => {
-        userManualPauseRef.current = false;
-        interruptedWhilePlayingRef.current = false;
-        handleUserTogglePlay(true);
-      }],
-
-      // PAUSE COMMAND (Fixes Android Shade Pause Button)
-      ["pause", () => {
-        userManualPauseRef.current = true;
-        interruptedWhilePlayingRef.current = false;
-        handleUserTogglePlay(false);
-      }],
-
-      // PREVIOUS TRACK COMMAND
-      ["previoustrack", () => {
-        userManualPauseRef.current = false;
-        interruptedWhilePlayingRef.current = false;
-        onPrevTrackRef.current?.();
-      }],
-
-      // NEXT TRACK COMMAND
-      ["nexttrack", () => {
-        userManualPauseRef.current = false;
-        interruptedWhilePlayingRef.current = false;
-        onNextTrackRef.current?.();
-      }],
-
-      // SEEK TO COMMAND (For OS progress bar scrubbing)
-      ["seekto", (details) => {
-        if (details.seekTime !== undefined && !isNaN(details.seekTime)) {
-          const audioElement = audioRef.current;
-          if (details.fastSeek && audioElement && "fastSeek" in audioElement) {
-            try {
-              (audioElement as any).fastSeek(details.seekTime);
-            } catch {
-              if (audioElement) audioElement.currentTime = details.seekTime;
-            }
-          } else if (audioElement) {
-            try {
-              audioElement.currentTime = details.seekTime;
-            } catch {}
-          }
-
-          handleSeekInternal(details.seekTime);
-          updatePositionState(details.seekTime);
-        }
-      }],
-
-      // SEEK BACKWARD & FORWARD COMMANDS
-      ["seekbackward", (details) => {
-        const offset = details.seekOffset || 10;
-        const target = Math.max((currentTimeRef.current || 0) - offset, 0);
-        handleSeekInternal(target);
-        updatePositionState(target);
-      }],
-
-      ["seekforward", (details) => {
-        const offset = details.seekOffset || 10;
-        const curDur = (durationRef.current && durationRef.current > 0) ? durationRef.current : (currentTrack?.duration || 1000);
-        const target = Math.min((currentTimeRef.current || 0) + offset, curDur);
-        handleSeekInternal(target);
-        updatePositionState(target);
-      }],
-
-      // STOP COMMAND
-      ["stop", () => {
-        userManualPauseRef.current = true;
-        interruptedWhilePlayingRef.current = false;
-        handleUserTogglePlay(false);
-        if ("mediaSession" in navigator) {
-          navigator.mediaSession.playbackState = "none";
-        }
-      }],
-    ];
-
-    mediaActions.forEach(([action, handler]) => {
-      try {
-        navigator.mediaSession.setActionHandler(action, handler);
-      } catch {
-        // Ignore unsupported action on browser
-      }
-    });
-
-    // Continuously sync playback position to Android OS so the notification progress bar updates smoothly
-    updatePositionState(currentTime, duration);
   }, [
     currentTrack?.id,
     currentTrack?.title,
     currentTrack?.artist,
     currentTrack?.coverUrl,
     currentTrack?.album,
-    isPlaying,
-    duration,
-    currentTime,
-    handleSeekInternal,
-    updatePositionState
+    (currentTrack as any)?.coverArtUrl,
+    currentTrack?.thumbnail,
   ]);
+
+  // Section 3: Synchronize Playback State Dynamically
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+    }
+  }, [isPlaying]);
+
+  // Section 4: Continuously sync playback position for Android OS notification shade scrubber
+  useEffect(() => {
+    updatePositionState(currentTime, duration);
+  }, [currentTime, duration, updatePositionState]);
 
   // Time update event handler for HTML5 audio
   const handleTimeUpdate = () => {
