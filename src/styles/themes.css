@@ -215,9 +215,9 @@
   --border-color: rgba(31, 31, 31, 0.12);
   --border-subtle: rgba(31, 31, 31, 0.12);
   --border-active: var(--accent-primary);
-  --glow-color-1: rgba(31, 31, 31, 0.15);
+  --glow-color-1: rgba(212, 175, 55, 0.25);
   --glow-color-2: rgba(242, 232, 216, 0.60);
-  --waveform-inactive: rgba(31, 31, 31, 0.18);
+  --waveform-inactive: rgba(184, 134, 11, 0.18);
   --glass-blur: blur(16px);
   --glass-bg: rgba(250, 245, 237, 0.96);
   --glass-border: rgba(31, 31, 31, 0.12);
@@ -3547,6 +3547,161 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 [data-theme="bespoke"] #app-mini-player-floating-dock span[style*="linear-gradient"] {
   background: var(--bespoke-mini-player-wave-active, #ffffff) !important;
   box-shadow: 0 0 8px var(--bespoke-mini-player-wave-active, #ffffff) !important;
+}
+
+/* ================================================================================
+   NEUE EDITORIAL: WARM GOLDEN MINI PLAYER & FULL PLAYER OVERHAUL
+   ================================================================================ */
+
+/* 1. SUNKEN 3D DEEP PILL CONTAINER (High Contrast Slot) */
+[data-theme="neue-editorial"] .progress-waveform-container,
+[data-theme="neue-editorial"] .progress-bar-track-housing,
+.theme-neue-editorial .progress-waveform-container,
+.theme-neue-editorial .progress-bar-track-housing {
+  background: linear-gradient(180deg, #2a2520 0%, #363028 100%) !important;
+  border: 1px solid rgba(212, 175, 55, 0.25) !important;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.6),
+              inset 0 1px 3px rgba(0, 0, 0, 0.8),
+              0 1px 2px rgba(255, 255, 255, 0.5) !important;
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+}
+
+/* 2. HIGH-CONTRAST GOLDEN ACTIVE WAVEFORM & UNPLAYED BARS */
+[data-theme="neue-editorial"] .progress-waveform-bar.is-played,
+[data-theme="neue-editorial"] .progress-bar-fill-active,
+[data-theme="neue-editorial"] .progress-waveform-active,
+.theme-neue-editorial .progress-waveform-bar.is-played,
+.theme-neue-editorial .progress-bar-fill-active,
+.theme-neue-editorial .progress-waveform-active {
+  background: linear-gradient(135deg, #ffd700 0%, #ffae00 50%, #e6c667 100%) !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.85)) 
+          drop-shadow(0 0 14px rgba(255, 174, 0, 0.5)) !important;
+}
+
+/* Unplayed Waveform Bars */
+[data-theme="neue-editorial"] .progress-waveform-bar:not(.is-played),
+[data-theme="neue-editorial"] .progress-bar-track-unplayed,
+[data-theme="neue-editorial"] .waveform-inactive-bar,
+.theme-neue-editorial .progress-waveform-bar:not(.is-played),
+.theme-neue-editorial .progress-bar-track-unplayed,
+.theme-neue-editorial .waveform-inactive-bar {
+  background: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Progress Handle Knob / Thumb */
+[data-theme="neue-editorial"] .progress-thumb-knob,
+[data-theme="neue-editorial"] .progress-handle-active,
+.theme-neue-editorial .progress-thumb-knob,
+.theme-neue-editorial .progress-handle-active {
+  background: #ffffff !important;
+  border: 2px solid #d4af37 !important;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.7),
+              0 0 18px rgba(230, 198, 103, 0.4) !important;
+}
+
+/* 2. WARM GOLDEN PLAYER BUTTONS & PLAY/PAUSE AURA */
+/* Primary Play/Pause Button */
+[data-theme="neue-editorial"] .player-play-btn,
+[data-theme="neue-editorial"] .mini-player-play-btn,
+[data-theme="neue-editorial"] .full-player-play-btn,
+.theme-neue-editorial .player-play-btn,
+.theme-neue-editorial .mini-player-play-btn,
+.theme-neue-editorial .full-player-play-btn {
+  background: linear-gradient(135deg, #b8860b 0%, #d4af37 50%, #e6c667 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.45),
+              0 0 20px rgba(230, 198, 103, 0.25) !important;
+}
+
+[data-theme="neue-editorial"] .player-play-btn:hover,
+[data-theme="neue-editorial"] .mini-player-play-btn:hover,
+[data-theme="neue-editorial"] .full-player-play-btn:hover,
+.theme-neue-editorial .player-play-btn:hover,
+.theme-neue-editorial .mini-player-play-btn:hover,
+.theme-neue-editorial .full-player-play-btn:hover {
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.65),
+              0 0 28px rgba(230, 198, 103, 0.45) !important;
+  transform: scale(1.04);
+}
+
+[data-theme="neue-editorial"] .player-play-btn svg,
+[data-theme="neue-editorial"] .mini-player-play-btn svg,
+[data-theme="neue-editorial"] .full-player-play-btn svg,
+.theme-neue-editorial .player-play-btn svg,
+.theme-neue-editorial .mini-player-play-btn svg,
+.theme-neue-editorial .full-player-play-btn svg {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Secondary Control Icons (Next, Prev, Shuffle, Repeat, Plus, Expand) */
+[data-theme="neue-editorial"] .player-control-btn,
+[data-theme="neue-editorial"] .mini-player .control-icon,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn),
+.theme-neue-editorial .player-control-btn,
+.theme-neue-editorial .mini-player .control-icon {
+  color: #8b6508 !important;
+  filter: none !important;
+}
+
+[data-theme="neue-editorial"] .player-control-btn svg,
+[data-theme="neue-editorial"] .mini-player .control-icon,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+.theme-neue-editorial .player-control-btn svg,
+.theme-neue-editorial .mini-player .control-icon {
+  color: #8b6508 !important;
+  stroke: #8b6508 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+[data-theme="neue-editorial"] .player-control-btn:hover,
+[data-theme="neue-editorial"] .mini-player .control-icon:hover,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn):hover,
+.theme-neue-editorial .player-control-btn:hover,
+.theme-neue-editorial .mini-player .control-icon:hover {
+  color: #b8860b !important;
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5)) !important;
+}
+
+[data-theme="neue-editorial"] .player-control-btn:hover svg,
+[data-theme="neue-editorial"] .mini-player .control-icon:hover,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn):hover svg,
+.theme-neue-editorial .player-control-btn:hover svg,
+.theme-neue-editorial .mini-player .control-icon:hover {
+  color: #b8860b !important;
+  stroke: #b8860b !important;
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5)) !important;
+  -webkit-filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5)) !important;
+}
+
+/* 3. CLEAN MINI PLAYER CARD & FULL PLAYER BOTTOM BAR BACKGROUND */
+[data-theme="neue-editorial"] .mini-player-container,
+[data-theme="neue-editorial"] .full-player-bottom-bar,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock,
+.theme-neue-editorial .mini-player-container,
+.theme-neue-editorial .full-player-bottom-bar,
+.theme-neue-editorial #app-mini-player-floating-dock {
+  background: rgba(253, 251, 247, 0.92) !important;
+  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  box-shadow: 0 10px 30px rgba(184, 134, 11, 0.12) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* 3. SUNKEN PILL TIMESTAMP CONTRAST */
+[data-theme="neue-editorial"] .player-time-display,
+.theme-neue-editorial .player-time-display {
+  color: #6b583e !important;
+  font-weight: 600 !important;
 }
 
 

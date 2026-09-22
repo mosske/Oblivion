@@ -426,40 +426,40 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
     case "neue-editorial":
       return {
         bgCanvas: "bg-[#F2E8D8]",
-        orb1: "bg-[#3A3530]/20",
-        orb2: "bg-[#1F1F1F]/15",
-        auroraBeam1: "bg-gradient-to-r from-[#1F1F1F]/20 via-[#3A3530]/15 to-[#524B44]/20",
-        auroraBeam2: "bg-gradient-to-r from-[#3A3530]/20 via-[#1F1F1F]/15 to-[#FAF5ED]/30",
-        orbitalGlow1: "bg-gradient-to-tr from-[#1F1F1F]/25 via-[#3A3530]/20 to-[#524B44]/25",
-        orbitalGlow2: "bg-gradient-to-bl from-[#3A3530]/25 via-[#1F1F1F]/20 to-[#FAF5ED]/30",
-        driftAuraGlow: "bg-gradient-to-br from-[#1F1F1F]/10 via-[#3A3530]/8 to-transparent",
-        veil: "bg-gradient-to-b from-black/10 via-transparent to-black/30",
-        topBar: "bg-[#FAF5ED]/95 border-[#1F1F1F]/12 text-[#1F1F1F] shadow-sm rounded-full",
-        minimizeBtn: "bg-[#F2E8D8] hover:bg-[#EFE5D4] text-[#1F1F1F] border-[#1F1F1F]/15 shadow-sm rounded-full",
-        nowPlayingDot: "bg-[#1F1F1F]",
-        nowPlayingLabel: "text-[#1F1F1F]",
+        orb1: "bg-[#d4af37]/20",
+        orb2: "bg-[#b8860b]/15",
+        auroraBeam1: "bg-gradient-to-r from-[#d4af37]/20 via-[#f3e5ab]/25 to-[#e6c667]/20",
+        auroraBeam2: "bg-gradient-to-r from-[#e6c667]/20 via-[#d4af37]/15 to-[#FAF5ED]/30",
+        orbitalGlow1: "bg-gradient-to-tr from-[#d4af37]/25 via-[#e6c667]/20 to-[#b8860b]/25",
+        orbitalGlow2: "bg-gradient-to-bl from-[#b8860b]/25 via-[#d4af37]/20 to-[#FAF5ED]/30",
+        driftAuraGlow: "bg-gradient-to-br from-[#d4af37]/10 via-[#e6c667]/8 to-transparent",
+        veil: "bg-gradient-to-b from-black/5 via-transparent to-black/15",
+        topBar: "bg-[#FAF5ED]/95 border-[#d4af37]/25 text-[#1F1F1F] shadow-sm rounded-full",
+        minimizeBtn: "player-control-btn bg-[#F2E8D8] hover:bg-[#EFE5D4] text-[#8b6508] border-[#d4af37]/30 shadow-sm rounded-full",
+        nowPlayingDot: "bg-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.6)]",
+        nowPlayingLabel: "text-[#b8860b] font-bold tracking-widest",
         nowPlayingTitle: "text-[#1F1F1F]",
-        tabActive: "bg-[#1F1F1F] text-[#F2E8D8] border-[#1F1F1F] shadow-md font-bold rounded-full",
-        tabInactive: "bg-[#F2E8D8] hover:bg-[#EFE5D4] text-[#1F1F1F] border-[#1F1F1F]/15 rounded-full",
-        artGlowRing: "from-[#1F1F1F]/30 via-[#3A3530]/20 to-[#1F1F1F]/30",
-        artBorder: "border-[#1F1F1F]/15 shadow-[0_25px_60px_rgba(31,31,31,0.25)] rounded-3xl",
+        tabActive: "bg-gradient-to-r from-[#b8860b] via-[#d4af37] to-[#e6c667] text-white border-t border-white/60 border-b border-[#b8860b]/40 shadow-[0_4px_14px_rgba(212,175,55,0.45)] font-bold rounded-full",
+        tabInactive: "bg-[#F2E8D8] hover:bg-[#EFE5D4] text-[#8b6508] border-[#d4af37]/25 rounded-full",
+        artGlowRing: "from-[#d4af37]/35 via-[#f3e5ab]/25 to-[#e6c667]/35",
+        artBorder: "border-[#d4af37]/30 shadow-[0_25px_60px_rgba(184,134,11,0.2)] rounded-3xl",
         stageTitle: "text-[#1F1F1F] drop-shadow-sm font-bold",
-        stageArtist: "text-[#3A3530] font-medium",
-        stageTagAccent: "bg-[#1F1F1F]/10 border-[#1F1F1F]/20 text-[#1F1F1F] rounded-full",
-        stageTagNeutral: "bg-[#FAF5ED] border-[#1F1F1F]/15 text-[#666055] rounded-full",
-        bottomDeck: "bg-[#FAF5ED]/98 border-[#1F1F1F]/15 text-[#1F1F1F] shadow-2xl ring-1 ring-[#1F1F1F]/10 rounded-3xl",
-        seekbarTrack: "bg-[#1F1F1F]/18",
-        seekbarFill: "bg-gradient-to-r from-[#1F1F1F] via-[#3A3530] to-[#1F1F1F]",
-        seekbarThumb: "bg-[#1F1F1F] border-2 border-[#FAF5ED] shadow-[0_0_10px_rgba(31,31,31,0.5)]",
-        seekbarGlow: "shadow-[#1F1F1F]/25",
-        seekbarAccent: "accent-[#1F1F1F]",
-        timeText: "text-[#666055]",
-        playBtn: "bg-[#1F1F1F] hover:bg-[#3A3530] text-[#F2E8D8] shadow-[0_0_20px_rgba(31,31,31,0.3)] ring-4 ring-[#1F1F1F]/20 rounded-full",
-        playIconFill: "fill-[#F2E8D8]",
-        ctrlBtn: "bg-[#F2E8D8] hover:bg-[#EFE5D4] text-[#1F1F1F] border-[#1F1F1F]/15 shadow-sm rounded-full",
-        activeText: "text-[#1F1F1F]",
-        mutedText: "text-[#666055] hover:text-[#1F1F1F]",
-        volSlider: "bg-[#F2E8D8] accent-[#1F1F1F]",
+        stageArtist: "text-[#b8860b] font-semibold",
+        stageTagAccent: "bg-[#d4af37]/15 border-[#d4af37]/35 text-[#8b6508] rounded-full",
+        stageTagNeutral: "bg-[#FAF5ED] border-[#d4af37]/20 text-[#8b6508] rounded-full",
+        bottomDeck: "full-player-bottom-bar bg-[#FDFBF7]/95 border-[#d4af37]/30 text-[#1F1F1F] shadow-[0_10px_30px_rgba(184,134,11,0.12)] rounded-3xl",
+        seekbarTrack: "progress-bar-track-unplayed bg-[#b8860b]/18",
+        seekbarFill: "progress-bar-fill-active bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#e6c667]",
+        seekbarThumb: "progress-thumb-knob bg-white border-2 border-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.7),0_0_18px_rgba(230,198,103,0.4)]",
+        seekbarGlow: "shadow-[#d4af37]/40",
+        seekbarAccent: "accent-[#d4af37]",
+        timeText: "player-time-display text-[#8b6508]",
+        playBtn: "player-play-btn full-player-play-btn bg-gradient-to-r from-[#b8860b] via-[#d4af37] to-[#e6c667] text-white shadow-[0_4px_14px_rgba(212,175,55,0.45),0_0_20px_rgba(230,198,103,0.25)] rounded-full",
+        playIconFill: "fill-white text-white",
+        ctrlBtn: "player-control-btn bg-[#FDFBF7] hover:bg-[#FAF5ED] text-[#8b6508] hover:text-[#b8860b] border-[#d4af37]/25 shadow-sm rounded-full",
+        activeText: "text-[#b8860b] drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]",
+        mutedText: "text-[#8b6508] hover:text-[#b8860b]",
+        volSlider: "bg-[#FAF5ED] accent-[#d4af37]",
       };
     case "obsidian-depth":
       return {
@@ -695,7 +695,7 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
         touchAction: "none",
         ...(hasBespokeColors ? ({ "--accent-primary": bespokeColors![1] } as React.CSSProperties) : {}),
       }}
-      className={`progress-waveform-container group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-all ${className}`}
+      className={`progress-waveform-container progress-bar-track-housing group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-all ${className}`}
       title="Click or drag anywhere on waveform to seek"
     >
       {/* Waveform Bars */}
@@ -2581,7 +2581,7 @@ export const Player: React.FC<PlayerProps> = ({
 
           {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
           <div
-            className={`relative z-20 shrink-0 p-2.5 sm:p-4 pb-4 sm:pb-6 border-t backdrop-blur-2xl space-y-2 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}
+            className={`full-player-bottom-bar relative z-20 shrink-0 p-2.5 sm:p-4 pb-4 sm:pb-6 border-t backdrop-blur-2xl space-y-2 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}
             style={isBespoke ? {
               background: `linear-gradient(180deg, ${hexToRgba(bespokeColors[0], 0.45)} 0%, rgba(10, 10, 16, 0.9) 100%)`,
               borderTopColor: hexToRgba(bespokeColors[2], 0.35),
@@ -2593,7 +2593,7 @@ export const Player: React.FC<PlayerProps> = ({
               <div className="flex-1 flex items-center justify-start gap-1 sm:gap-1.5">
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
-                  className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${
+                  className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${
                     isLiked
                       ? "bg-rose-500/20 text-rose-500 border-rose-500/30"
                       : fpTheme.ctrlBtn
@@ -2605,7 +2605,7 @@ export const Player: React.FC<PlayerProps> = ({
                   } : undefined}
                   title="Like track"
                 >
-                  <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <Heart className={`control-icon w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
                 </button>
 
                 {/* Add to Playlist Button */}
@@ -2618,10 +2618,10 @@ export const Player: React.FC<PlayerProps> = ({
                       setShowAddToPlaylistModal(true);
                     }
                   }}
-                  className={`p-2 sm:p-2.5 rounded-xl border transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Add to Playlist"
                 >
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Plus className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="hidden md:inline">Add</span>
                 </button>
               </div>
@@ -2630,15 +2630,15 @@ export const Player: React.FC<PlayerProps> = ({
               <div className="flex items-center justify-center gap-2 sm:gap-4 shrink-0">
                 <button
                   onClick={onPrevTrack}
-                  className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Previous Song"
                 >
-                  <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <SkipBack className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 <button
                   onClick={() => handleUserTogglePlay()}
-                  className={`w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-lg ${fpTheme.playBtn}`}
+                  className={`player-play-btn full-player-play-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-lg ${fpTheme.playBtn}`}
                   style={isBespoke ? {
                     background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
                     color: calculateWcagText(bespokeColors[1]),
@@ -2655,10 +2655,10 @@ export const Player: React.FC<PlayerProps> = ({
 
                 <button
                   onClick={onNextTrack}
-                  className={`p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Next Song"
                 >
-                  <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <SkipForward className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
@@ -2668,24 +2668,24 @@ export const Player: React.FC<PlayerProps> = ({
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
-                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
+                  className={`player-control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
                     isShuffle ? fpTheme.activeText : fpTheme.mutedText
                   }`}
                   style={isShuffle && isBespoke ? { color: bespokeColors[1] } : undefined}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
-                  <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Shuffle className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 <button
                   onClick={cycleRepeatMode}
-                  className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
+                  className={`player-control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
                     repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText
                   }`}
                   style={repeatMode !== "off" && isBespoke ? { color: bespokeColors[1] } : undefined}
                   title={`Repeat: ${repeatMode}`}
                 >
-                  {repeatMode === "one" ? <Repeat1 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  {repeatMode === "one" ? <Repeat1 className="control-icon w-4 h-4 sm:w-5 sm:h-5" /> : <Repeat className="control-icon w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
 
                 {/* Volume Slider on sm+ screens */}
@@ -2694,13 +2694,13 @@ export const Player: React.FC<PlayerProps> = ({
                     onClick={() =>
                       setPlayerState((prev) => ({ ...prev, isMuted: !prev.isMuted }))
                     }
-                    className={`p-1.5 transition-colors ${fpTheme.mutedText}`}
+                    className={`player-control-btn p-1.5 transition-colors ${fpTheme.mutedText}`}
                     title={isMuted ? "Unmute" : "Mute"}
                   >
                     {isMuted || volume === 0 ? (
-                      <VolumeX className="w-4 h-4 text-rose-400" />
+                      <VolumeX className="control-icon w-4 h-4 text-rose-400" />
                     ) : (
-                      <Volume2 className="w-4 h-4" />
+                      <Volume2 className="control-icon w-4 h-4" />
                     )}
                   </button>
                   <input
@@ -2778,7 +2778,7 @@ export const Player: React.FC<PlayerProps> = ({
                 : {}),
             }}
             data-theme={designConfig.id}
-            className={`fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} ${isBespoke ? "" : "backdrop-blur-2xl"} border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
+            className={`mini-player-container mini-player fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} ${isBespoke ? "" : "backdrop-blur-2xl"} border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
           >
             {/* Top Drag-Down Bar Handle */}
             <div
@@ -2816,7 +2816,7 @@ export const Player: React.FC<PlayerProps> = ({
                   }}
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <Maximize2 className="w-3.5 h-3.5 text-white" />
+                  <Maximize2 className="control-icon w-3.5 h-3.5 text-white" />
                 </div>
               </div>
 
@@ -2846,15 +2846,15 @@ export const Player: React.FC<PlayerProps> = ({
                 <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 shrink-0">
                   <button
                     onClick={onPrevTrack}
-                    className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                    className={`player-control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
                     title="Previous"
                   >
-                    <SkipBack className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    <SkipBack className="control-icon w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   </button>
 
                   <button
                     onClick={() => handleUserTogglePlay()}
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isBespoke ? "" : designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                    className={`player-play-btn mini-player-play-btn w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isBespoke ? "" : designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
                     style={
                       isBespoke
                         ? {
@@ -2874,10 +2874,10 @@ export const Player: React.FC<PlayerProps> = ({
 
                   <button
                     onClick={onNextTrack}
-                    className={`p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                    className={`player-control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
                     title="Next"
                   >
-                    <SkipForward className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    <SkipForward className="control-icon w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   </button>
                 </div>
               </div>
@@ -2888,30 +2888,30 @@ export const Player: React.FC<PlayerProps> = ({
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
-                  className={`p-1.5 transition-colors ${
+                  className={`player-control-btn p-1.5 transition-colors ${
                     isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
                   }`}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
-                  <Shuffle className="w-3.5 h-3.5" />
+                  <Shuffle className="control-icon w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={cycleRepeatMode}
-                  className={`p-1.5 transition-colors ${
+                  className={`player-control-btn p-1.5 transition-colors ${
                     repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
                   }`}
                   title={`Repeat: ${repeatMode}`}
                 >
-                  {repeatMode === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
+                  {repeatMode === "one" ? <Repeat1 className="control-icon w-3.5 h-3.5" /> : <Repeat className="control-icon w-3.5 h-3.5" />}
                 </button>
 
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
+                  className="player-control-btn p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
                   title="Favorite"
                 >
-                  <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <Heart className={`control-icon w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
                 </button>
 
                 {/* Add to Playlist button on Mini Player */}
@@ -2924,18 +2924,18 @@ export const Player: React.FC<PlayerProps> = ({
                       setShowAddToPlaylistModal(true);
                     }
                   }}
-                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors`}
+                  className={`player-control-btn p-1.5 ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors`}
                   title="Add to Playlist"
                 >
-                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Plus className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
 
                 <button
                   onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                  className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
+                  className={`player-control-btn p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
                   title="Full View"
                 >
-                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Maximize2 className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>
