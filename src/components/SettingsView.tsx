@@ -442,7 +442,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   });
                 }}
                 style={{ accentColor: "var(--accent-primary)" }}
-                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-0"
               />
               <div className="flex justify-between text-[9px] text-zinc-600 font-mono font-medium">
                 <span>Fast (3s)</span>
@@ -529,7 +529,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   });
                 }}
                 style={{ accentColor: "var(--accent-primary)" }}
-                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-0"
               />
               <div className="flex justify-between text-[9px] text-zinc-600 font-mono font-medium">
                 <span>Fast (3s)</span>
@@ -616,7 +616,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   });
                 }}
                 style={{ accentColor: "var(--accent-primary)" }}
-                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-1.5 bg-zinc-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-0"
               />
               <div className="flex justify-between text-[9px] text-zinc-600 font-mono font-medium">
                 <span>Fast (3s)</span>

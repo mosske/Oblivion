@@ -39,12 +39,12 @@
   --nav-dock-bg: rgba(255, 255, 255, 0.85);
 }
 
-/* B. NEUE EDITORIAL (Swiss High-Contrast Monochrome) */
+/* B. NEUE EDITORIAL (Swiss High-Contrast Monochrome & Warm Golden Glow) */
 [data-theme="neue-editorial"] {
-  --nav-glow-color: rgba(0, 0, 0, 0.45);
-  --nav-aura-color: rgba(0, 0, 0, 0.45);
-  --nav-active-stroke: #000000;
-  --nav-active-text: #000000;
+  --nav-glow-color: #d4af37;
+  --nav-aura-color: #d4af37;
+  --nav-active-stroke: #b8860b;
+  --nav-active-text: #b8860b;
   --nav-inactive-color: #78716c;
   --nav-inactive-stroke: #78716c;
   --nav-dock-bg: rgba(250, 245, 237, 0.95);
@@ -271,20 +271,36 @@ body,
   transform: translate(-50%, -50%) scale(1.12);
 }
 
-/* Neue Editorial Active Icon Aura with intensified visible contrast glow */
-[data-theme="neue-editorial"] .nav-icon-aura {
+/* Neue Editorial Active Icon Aura with warm golden ambient aura */
+[data-theme="neue-editorial"] .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-aura {
   width: 36px !important;
   height: 36px !important;
   border-radius: 50% !important;
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.45) 45%, transparent 70%) !important;
+  background: radial-gradient(
+    circle,
+    rgba(230, 198, 103, 0.45) 0%,
+    rgba(212, 175, 55, 0.15) 60%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4) !important;
   filter: blur(7px) !important;
   -webkit-filter: blur(7px) !important;
   display: block !important;
 }
 
+[data-theme="neue-editorial"] .nav-item.active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .nav-item.active::before,
 [data-theme="neue-editorial"] .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item-active .nav-aura,
+[data-theme="neue-editorial"] .nav-item-active::before,
 [data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
-[data-theme="neue-editorial"] .tab-active .nav-icon-aura {
+[data-theme="neue-editorial"] .tab-item-active .nav-aura,
+[data-theme="neue-editorial"] .tab-item-active::before,
+[data-theme="neue-editorial"] .tab-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-active .nav-aura,
+[data-theme="neue-editorial"] .tab-active::before {
   opacity: 1 !important;
   transform: translate(-50%, -50%) scale(1.22) !important;
 }
@@ -561,51 +577,126 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   text-shadow: 0 0 8px #ff007f, 0 0 16px #ff007f !important;
 }
 
-/* G. NEUE EDITORIAL - High-Contrast Visible Active Glow for Icon and Text */
+/* G. NEUE EDITORIAL - Warm Golden Glow for Active Navigation Button (Icon, Text, and Aura) */
+[data-theme="neue-editorial"] .nav-item.active,
+[data-theme="neue-editorial"] .nav-item.active .nav-icon,
+[data-theme="neue-editorial"] .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .nav-item-active,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-container,
+[data-theme="neue-editorial"] .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .tab-item-active,
+[data-theme="neue-editorial"] .tab-active,
+[data-theme="neue-editorial"] .bottom-nav-item.nav-item-active .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-label {
+  color: #b8860b !important; /* Rich warm gold/amber */
+}
+
+/* Active Icon Stroke & Fill */
+[data-theme="neue-editorial"] .nav-item.active svg,
+[data-theme="neue-editorial"] .nav-item.active svg path,
+[data-theme="neue-editorial"] .nav-item.active svg circle,
+[data-theme="neue-editorial"] .nav-item.active svg polyline,
+[data-theme="neue-editorial"] .nav-item.active svg polygon,
 [data-theme="neue-editorial"] .nav-item-active svg,
 [data-theme="neue-editorial"] .nav-item-active svg path,
 [data-theme="neue-editorial"] .nav-item-active svg circle,
 [data-theme="neue-editorial"] .nav-item-active svg polyline,
 [data-theme="neue-editorial"] .nav-item-active svg polygon,
-[data-theme="neue-editorial"] .tab-active svg path {
-  stroke: #000000 !important;
-  stroke-width: 2.8px !important;
-  filter: none !important;
-  -webkit-filter: none !important;
+[data-theme="neue-editorial"] .tab-active svg,
+[data-theme="neue-editorial"] .tab-active svg path,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active svg,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active svg,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active svg,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active svg {
+  stroke: #b8860b !important;
+  color: #b8860b !important;
+  stroke-width: 2.4px !important;
   transition: all 0.25s ease-in-out;
 }
-[data-theme="neue-editorial"] .nav-icon-aura {
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.45) 45%, transparent 70%) !important;
-  filter: blur(7px) !important;
-  -webkit-filter: blur(7px) !important;
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 50% !important;
-  display: block !important;
+
+/* Active Icon & Text Warm Golden Drop-Shadow */
+[data-theme="neue-editorial"] .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .nav-item.active svg,
+[data-theme="neue-editorial"] .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon svg,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-container svg,
+[data-theme="neue-editorial"] .nav-item-active svg,
+[data-theme="neue-editorial"] .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .tab-active .nav-label,
+[data-theme="neue-editorial"] .tab-active svg,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-icon-container svg,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-icon-container svg,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-label {
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.65)) 
+          drop-shadow(0 0 16px rgba(230, 198, 103, 0.35)) !important;
+  -webkit-filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.65)) 
+                  drop-shadow(0 0 16px rgba(230, 198, 103, 0.35)) !important;
+  text-shadow: none !important;
 }
+
+/* Independent Warm Golden Background Aura Layer */
+[data-theme="neue-editorial"] .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .nav-item.active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item.active::before,
+[data-theme="neue-editorial"] .nav-item-active .nav-aura,
 [data-theme="neue-editorial"] .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item-active::before,
+[data-theme="neue-editorial"] .tab-item-active .nav-aura,
 [data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
-[data-theme="neue-editorial"] .tab-active .nav-icon-aura {
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1.22) !important;
+[data-theme="neue-editorial"] .tab-active .nav-icon-aura,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active::before,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active::before,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active::before,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-icon-aura {
+  background: radial-gradient(
+    circle,
+    rgba(230, 198, 103, 0.45) 0%,
+    rgba(212, 175, 55, 0.15) 60%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4) !important;
+  border-radius: 50% !important;
 }
+
+[data-theme="neue-editorial"] .nav-item.active .nav-label,
 [data-theme="neue-editorial"] .nav-item-active .nav-label {
-  color: #000000 !important;
   font-weight: 800 !important;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 0, 0, 0.35) !important;
 }
-[data-theme="neue-editorial"] .nav-item:not(.nav-item-active) svg,
-[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active) svg {
+
+[data-theme="neue-editorial"] .nav-item:not(.nav-item-active):not(.active) svg,
+[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active):not(.active) svg,
+[data-theme="neue-editorial"] .sidebar-nav-item:not(.nav-item-active):not(.active) svg {
   stroke: #78716c !important;
   opacity: 0.55 !important;
   stroke-width: 1.8px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 }
-[data-theme="neue-editorial"] .nav-item:not(.nav-item-active) .nav-label,
-[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active) .nav-label {
+[data-theme="neue-editorial"] .nav-item:not(.nav-item-active):not(.active) .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active):not(.active) .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item:not(.nav-item-active):not(.active) .nav-label {
   color: #78716c !important;
   opacity: 0.60 !important;
   font-weight: 500 !important;
   text-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 /* H. CANDYLAND & CANDYLAND PASTEL - Vivid Pink Glow Matching Text & Icon */
