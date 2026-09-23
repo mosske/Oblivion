@@ -774,6 +774,7 @@ export const Player: React.FC<PlayerProps> = ({
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const ytPlayerRef = useRef<any>(null);
   const isYtReadyRef = useRef<boolean>(false);
   const isChangingTrackRef = useRef<boolean>(false);
@@ -788,7 +789,58 @@ export const Player: React.FC<PlayerProps> = ({
   const lastSeekTimeRef = useRef<number | null>(null);
   const lastSeekTimestampRef = useRef<number>(0);
   const isAudioSeekingRef = useRef<boolean>(false);
-  const activeAudioSourceRef = useRef<"audio" | "youtube">("audio");
+  const activeAudioSourceRef = useRef<"audio" | "youtube">("youtube");
+
+  // SECTION 1: HIDDEN SILENT HTML5 AUDIO ANCHOR (Permanent Android MediaSession Fix)
+  useEffect(() => {
+    // Generate valid PCM silent WAV fallback or remote blank audio
+    const silentSrc = getSilentAudioUrl() || "https://raw.githubusercontent.com/anars/blank-audio/master/10-seconds-of-silence.mp3";
+    const audio = new Audio(silentSrc);
+    audio.loop = true;
+    audio.setAttribute("playsinline", "true");
+    audio.volume = 0.01;
+    silentAudioRef.current = audio;
+
+    return () => {
+      try {
+        audio.pause();
+      } catch {}
+      silentAudioRef.current = null;
+    };
+  }, []);
+
+  const startSilentAnchor = useCallback(() => {
+    try {
+      if (silentAudioRef.current && silentAudioRef.current.paused) {
+        silentAudioRef.current.play().catch(() => {});
+      }
+      if (audioRef.current && audioRef.current.paused) {
+        audioRef.current.play().catch(() => {});
+      }
+    } catch {}
+  }, []);
+
+  const stopSilentAnchor = useCallback(() => {
+    try {
+      if (silentAudioRef.current && !silentAudioRef.current.paused) {
+        silentAudioRef.current.pause();
+      }
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause();
+      }
+    } catch {}
+  }, []);
+
+  // Unlock audio anchor on first user touch/click gesture for strict mobile browsers
+  useEffect(() => {
+    const handleFirstGesture = () => {
+      if (isPlayingRef.current) {
+        startSilentAnchor();
+      }
+    };
+    window.addEventListener("pointerdown", handleFirstGesture, { passive: true });
+    return () => window.removeEventListener("pointerdown", handleFirstGesture);
+  }, [startSilentAnchor]);
 
   // Synchronize HTML5 <audio> element events directly with Android OS Media Session
   useEffect(() => {
@@ -808,6 +860,10 @@ export const Player: React.FC<PlayerProps> = ({
     };
 
     const handleTimeUpdateForMediaSession = () => {
+      const src = audioElement.src || "";
+      if (src.startsWith("data:audio/wav") || src.startsWith("blob:") || (cachedSilentUrl && src === cachedSilentUrl)) {
+        return;
+      }
       if ("mediaSession" in navigator && "setPositionState" in navigator.mediaSession) {
         if (audioElement.duration && !isNaN(audioElement.duration) && audioElement.duration > 0) {
           try {
@@ -1319,6 +1375,7 @@ export const Player: React.FC<PlayerProps> = ({
   const handleFocusReturn = useCallback(() => {
     if (interruptedWhilePlayingRef.current && ytPlayerRef.current) {
       try {
+        startSilentAnchor();
         ytPlayerRef.current.playVideo?.();
         ytPlayerRef.current.unMute?.();
         ytPlayerRef.current.setVolume?.(100);
@@ -1329,7 +1386,7 @@ export const Player: React.FC<PlayerProps> = ({
         navigator.mediaSession.playbackState = "playing";
       }
     }
-  }, [setPlayerState]);
+  }, [setPlayerState, startSilentAnchor]);
 
   // Custom seek forward/back: execute youtubePlayer.seekTo directly
   const handleSeekInternal = useCallback((time: number) => {
@@ -1484,6 +1541,7 @@ export const Player: React.FC<PlayerProps> = ({
                 isChangingTrackRef.current = false;
                 userManualPauseRef.current = false;
                 interruptedWhilePlayingRef.current = false;
+                startSilentAnchor();
                 try {
                   if (typeof event.target.unMute === "function") {
                     event.target.unMute();
@@ -1506,30 +1564,13 @@ export const Player: React.FC<PlayerProps> = ({
                 updatePositionState(curTime, dur);
               } else if (event.data === 2) { // PAUSED
                 if (isChangingTrackRef.current) return;
-                // If browser/OS pauses stream due to transient focus loss (e.g. WhatsApp message chime)
-                if (!userManualPauseRef.current) {
-                  if (isPlayingRef.current) {
-                    interruptedWhilePlayingRef.current = true;
-                  }
-                  // Auto-resume playback as soon as the notification sound finishes (staggered retry window)
-                  [400, 800, 1400, 2200].forEach((delay) => {
-                    setTimeout(() => {
-                      if (interruptedWhilePlayingRef.current && !userManualPauseRef.current && ytPlayerRef.current) {
-                        try {
-                          ytPlayerRef.current.playVideo?.();
-                          ytPlayerRef.current.unMute?.();
-                          ytPlayerRef.current.setVolume?.(100);
-                        } catch {}
-                      }
-                    }, delay);
-                  });
-                  return;
-                }
+                stopSilentAnchor();
                 setPlayerState((prev) => (!prev.isPlaying ? prev : { ...prev, isPlaying: false }));
                 if ("mediaSession" in navigator) {
                   navigator.mediaSession.playbackState = "paused";
                 }
               } else if (event.data === 0) { // ENDED
+                stopSilentAnchor();
                 if (!isChangingTrackRef.current) {
                   handleEndedRef.current?.();
                 }
@@ -1559,11 +1600,12 @@ export const Player: React.FC<PlayerProps> = ({
     }
   }, [currentTrack?.id, currentTrack?.youtubeVideoId, (currentTrack as any)?.youtubeId]);
 
-  // 2. SYNCHRONIZED PLAY/PAUSE CONTROLS: Sync isPlaying state directly to YouTube player
+  // 2. SYNCHRONIZED PLAY/PAUSE CONTROLS: Sync isPlaying state directly to YouTube player & silent anchor
   useEffect(() => {
     if (isYtReadyRef.current && ytPlayerRef.current) {
       try {
         if (isPlaying) {
+          startSilentAnchor();
           if (!isMuted) {
             ytPlayerRef.current.unMute?.();
             ytPlayerRef.current.setVolume?.(volume * 100);
@@ -1572,11 +1614,18 @@ export const Player: React.FC<PlayerProps> = ({
           }
           ytPlayerRef.current.playVideo?.();
         } else if (!isChangingTrackRef.current) {
+          stopSilentAnchor();
           ytPlayerRef.current.pauseVideo?.();
         }
       } catch {}
+    } else {
+      if (isPlaying) {
+        startSilentAnchor();
+      } else {
+        stopSilentAnchor();
+      }
     }
-  }, [isPlaying]);
+  }, [isPlaying, isMuted, volume, startSilentAnchor, stopSilentAnchor]);
 
   // Sync volume state directly to YouTube IFrame player
   useEffect(() => {
@@ -1635,18 +1684,9 @@ export const Player: React.FC<PlayerProps> = ({
           }
         } else if (state === 2) { // PAUSED
           if (!isChangingTrackRef.current) {
-            if (!userManualPauseRef.current) {
-              // Transient audio focus loss from incoming chime/notification (e.g. WhatsApp)
-              if (isPlayingRef.current) {
-                interruptedWhilePlayingRef.current = true;
-              }
-              try {
-                player.playVideo?.();
-                player.unMute?.();
-                player.setVolume?.(100);
-              } catch {}
-            } else {
+            if (isPlayingRef.current) {
               setPlayerState((prev) => (prev.isPlaying ? { ...prev, isPlaying: false } : prev));
+              stopSilentAnchor();
               if ("mediaSession" in navigator) {
                 navigator.mediaSession.playbackState = "paused";
               }
@@ -1661,7 +1701,7 @@ export const Player: React.FC<PlayerProps> = ({
     }, pollRate);
 
     return () => clearInterval(interval);
-  }, [currentTrack?.id, currentTrack?.youtubeVideoId, currentTrack?.duration, updatePositionState]);
+  }, [currentTrack?.id, currentTrack?.youtubeVideoId, currentTrack?.duration, updatePositionState, stopSilentAnchor]);
 
   // Continuously verify unmuted state across navigation view transitions
   useEffect(() => {
@@ -1674,6 +1714,9 @@ export const Player: React.FC<PlayerProps> = ({
     userManualPauseRef.current = !nextPlay;
     if (nextPlay) {
       interruptedWhilePlayingRef.current = false;
+      startSilentAnchor();
+    } else {
+      stopSilentAnchor();
     }
 
     if (isYtReadyRef.current && ytPlayerRef.current) {
@@ -1691,14 +1734,6 @@ export const Player: React.FC<PlayerProps> = ({
         }
       } catch (err) {
         console.warn("[Player] Toggle play error:", err);
-      }
-    }
-
-    if (audioRef.current && activeAudioSourceRef.current === "audio") {
-      if (nextPlay) {
-        audioRef.current.play().catch(() => {});
-      } else {
-        audioRef.current.pause();
       }
     }
 
@@ -1745,28 +1780,35 @@ export const Player: React.FC<PlayerProps> = ({
   }, [settings.backgroundPlay, isPlaying, enforceUnmutedState, handleFocusReturn]);
 
   // Helper function to resolve absolute URLs for Android OS lockscreen & notification shade artwork
-  const getAbsoluteImageUrl = (url?: string): string => {
-    if (!url) return "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=512&q=85";
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    if (typeof window !== "undefined" && window.location?.origin) {
-      return window.location.origin + (url.startsWith("/") ? url : "/" + url);
+  const formatArtworkUrl = (url?: string, track?: Track | null): string => {
+    let target = url;
+    if (!target && track) {
+      const vid = (track as any).youtubeId || track.youtubeVideoId || track.id;
+      if (vid && vid.length === 11) {
+        target = `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+      }
     }
-    return url;
+    if (!target) return "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=512&q=85";
+    if (target.startsWith("http://") || target.startsWith("https://")) return target;
+    if (typeof window !== "undefined" && window.location?.origin) {
+      return `${window.location.origin}${target.startsWith("/") ? "" : "/"}${target}`;
+    }
+    return target;
   };
 
   // Section 1: Register Media Session Action Handlers with STALE-PROOF references
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
 
-    // PAUSE COMMAND (Directly stops YouTube / HTML5 stream and notifies Android OS)
+    // PAUSE COMMAND (Directly stops YouTube and silent anchor, notifies Android OS)
     try {
       navigator.mediaSession.setActionHandler("pause", () => {
         try {
           userManualPauseRef.current = true;
           interruptedWhilePlayingRef.current = false;
+          stopSilentAnchor();
           if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
             ytPlayerRef.current.pauseVideo();
-            navigator.mediaSession.playbackState = "paused";
           }
           if (audioRef.current) {
             try {
@@ -1783,12 +1825,13 @@ export const Player: React.FC<PlayerProps> = ({
       console.error("Failed to bind mediaSession pause handler:", err);
     }
 
-    // PLAY COMMAND (Resumes stream and enforces volume & unmuted state)
+    // PLAY COMMAND (Resumes stream and silent anchor, enforces volume & unmuted state)
     try {
       navigator.mediaSession.setActionHandler("play", () => {
         try {
           userManualPauseRef.current = false;
           interruptedWhilePlayingRef.current = false;
+          startSilentAnchor();
           if (ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === "function") {
             try {
               if (typeof ytPlayerRef.current.unMute === "function") {
@@ -1799,12 +1842,6 @@ export const Player: React.FC<PlayerProps> = ({
               }
             } catch {}
             ytPlayerRef.current.playVideo();
-            navigator.mediaSession.playbackState = "playing";
-          }
-          if (audioRef.current && activeAudioSourceRef.current === "audio") {
-            try {
-              audioRef.current.play().catch(() => {});
-            } catch {}
           }
           setPlayerState((prev) => ({ ...prev, isPlaying: true }));
           navigator.mediaSession.playbackState = "playing";
@@ -1816,7 +1853,7 @@ export const Player: React.FC<PlayerProps> = ({
       console.error("Failed to bind mediaSession play handler:", err);
     }
 
-    // PREVIOUS TRACK (MUST BE EXPLICITLY BOUND TO RESTORE OS SHADE BUTTON)
+    // PREVIOUS TRACK (EXPLICITLY BOUND TO RESTORE OS SHADE BUTTON)
     try {
       navigator.mediaSession.setActionHandler("previoustrack", () => {
         try {
@@ -1831,7 +1868,7 @@ export const Player: React.FC<PlayerProps> = ({
       console.error("Failed to bind mediaSession previoustrack handler:", err);
     }
 
-    // NEXT TRACK (MUST BE EXPLICITLY BOUND TO RESTORE OS SHADE BUTTON)
+    // NEXT TRACK (EXPLICITLY BOUND TO RESTORE OS SHADE BUTTON)
     try {
       navigator.mediaSession.setActionHandler("nexttrack", () => {
         try {
@@ -1907,6 +1944,7 @@ export const Player: React.FC<PlayerProps> = ({
         try {
           userManualPauseRef.current = true;
           interruptedWhilePlayingRef.current = false;
+          stopSilentAnchor();
           if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
             ytPlayerRef.current.pauseVideo();
           }
@@ -1922,7 +1960,7 @@ export const Player: React.FC<PlayerProps> = ({
     } catch (err) {
       console.error("Failed to bind mediaSession stop handler:", err);
     }
-  }, [handleSeekInternal, updatePositionState, setPlayerState]);
+  }, [handleSeekInternal, updatePositionState, setPlayerState, startSilentAnchor, stopSilentAnchor]);
 
   // Section 2: Synchronize Absolute URL MediaMetadata for rich cover art & OS vignette colors
   useEffect(() => {
@@ -1931,23 +1969,23 @@ export const Player: React.FC<PlayerProps> = ({
     if (currentTrack) {
       const rawCover = (currentTrack as any).coverArtUrl || currentTrack.coverUrl || currentTrack.thumbnail;
       const hdCover = getHdCoverUrl(rawCover) || rawCover;
-      const fullArtUrl = getAbsoluteImageUrl(hdCover);
+      const highResArt = formatArtworkUrl(hdCover, currentTrack);
 
       const title = cleanTrackTitle(currentTrack.title, currentTrack.artist) || currentTrack.title || "Oblivion Track";
-      const artist = `${currentTrack.artist || "Unknown Artist"} • Oblivion`;
-      const album = currentTrack.album ? `${currentTrack.album} • Oblivion` : "Oblivion";
+      const artist = `${currentTrack.artist || "Oblivion"} • Oblivion`;
+      const album = currentTrack.album ? `${currentTrack.album} • Oblivion` : "Oblivion Music";
 
       navigator.mediaSession.metadata = new MediaMetadata({
         title,
         artist,
         album,
         artwork: [
-          { src: fullArtUrl, sizes: "96x96", type: "image/jpeg" },
-          { src: fullArtUrl, sizes: "128x128", type: "image/jpeg" },
-          { src: fullArtUrl, sizes: "192x192", type: "image/jpeg" },
-          { src: fullArtUrl, sizes: "256x256", type: "image/jpeg" },
-          { src: fullArtUrl, sizes: "384x384", type: "image/jpeg" },
-          { src: fullArtUrl, sizes: "512x512", type: "image/jpeg" },
+          { src: highResArt, sizes: "96x96", type: "image/jpeg" },
+          { src: highResArt, sizes: "128x128", type: "image/jpeg" },
+          { src: highResArt, sizes: "192x192", type: "image/jpeg" },
+          { src: highResArt, sizes: "256x256", type: "image/jpeg" },
+          { src: highResArt, sizes: "384x384", type: "image/jpeg" },
+          { src: highResArt, sizes: "512x512", type: "image/jpeg" },
         ],
       });
     }
@@ -1959,6 +1997,8 @@ export const Player: React.FC<PlayerProps> = ({
     currentTrack?.album,
     (currentTrack as any)?.coverArtUrl,
     currentTrack?.thumbnail,
+    (currentTrack as any)?.youtubeId,
+    currentTrack?.youtubeVideoId,
   ]);
 
   // Section 3: Synchronize Playback State Dynamically
@@ -2190,69 +2230,25 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      {/* Clean Native HTML5 Audio Element */}
+      {/* Hidden Silent HTML5 Audio Anchor for Android Chrome MediaSession Lock */}
       <audio
         ref={audioRef}
+        src={getSilentAudioUrl()}
+        loop
         playsInline
+        preload="auto"
+        className="hidden"
+        style={{ display: "none" }}
         onPlay={() => {
-          activeAudioSourceRef.current = "audio";
-          if (audioRef.current) {
-            try {
-              audioRef.current.playbackRate = 1.0;
-              audioRef.current.defaultPlaybackRate = 1.0;
-              audioRef.current.preservesPitch = true;
-            } catch {}
-          }
-          enforceUnmutedState();
           if ("mediaSession" in navigator) {
             navigator.mediaSession.playbackState = "playing";
           }
         }}
         onPause={() => {
-          if ("mediaSession" in navigator) {
+          if ("mediaSession" in navigator && userManualPauseRef.current) {
             navigator.mediaSession.playbackState = "paused";
           }
         }}
-        onPlaying={() => {
-          activeAudioSourceRef.current = "audio";
-          if (audioRef.current) {
-            try {
-              audioRef.current.playbackRate = 1.0;
-              audioRef.current.defaultPlaybackRate = 1.0;
-              audioRef.current.preservesPitch = true;
-            } catch {}
-          }
-          enforceUnmutedState();
-          if ("mediaSession" in navigator) {
-            navigator.mediaSession.playbackState = "playing";
-          }
-        }}
-        onSeeking={() => {
-          isAudioSeekingRef.current = true;
-        }}
-        onSeeked={() => {
-          isAudioSeekingRef.current = false;
-          lastSeekTimeRef.current = null;
-          if (audioRef.current) {
-            try {
-              audioRef.current.playbackRate = 1.0;
-              audioRef.current.defaultPlaybackRate = 1.0;
-              audioRef.current.preservesPitch = true;
-            } catch {}
-          }
-        }}
-        onWaiting={() => {
-          // Buffering active - prevent premature skip
-        }}
-        onStalled={() => {
-          // Network stall - prevent premature skip
-        }}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={handleAudioEnded}
-        onError={(err) => {
-          console.warn("[Player] <audio> element stream notice:", err);
-        }}
-        preload="auto"
       />
 
       {!currentTrack ? null : (
