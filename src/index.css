@@ -731,7 +731,7 @@ canvas.animated-theme-bg:not(.full-player-canvas),
 }
 
 /* ================================================================================
-   2. RESPONSIVE YOUTUBE VIDEO CONTAINER (Video Mode)
+   2. RESPONSIVE YOUTUBE VIDEO CONTAINER (Video Mode) & BORDER TRIM ALIGNMENT
    ================================================================================ */
 .full-player-video-container,
 .full-player-iframe-wrapper {
@@ -758,15 +758,271 @@ canvas.animated-theme-bg:not(.full-player-canvas),
 }
 
 /* ================================================================================
-   3. DESKTOP / TABLET CONTAINER FLEX-CENTERING
+   TASK 1: REVERT & LOCK DOWN VIDEO PLAYER LAYOUT (NO-FAIL VIDEO CONTAINER)
    ================================================================================ */
-.full-player-modal-content {
+.full-player-video-card {
+  position: relative !important;
+  width: 90vw !important;
+  max-width: 420px !important;
+  aspect-ratio: 16 / 9 !important;
+  margin: 16px auto !important;
+  border-radius: 16px !important;
+  border: 1.5px solid var(--theme-border-color, var(--primary-color, #D4AF37)) !important;
+  box-shadow: 0 0 25px var(--theme-glow-color, rgba(212, 175, 55, 0.25)) !important;
+  overflow: hidden !important;
+  background: #000000 !important;
+  transform: none !important;
+  touch-action: none !important;
+}
+
+.full-player-video-card iframe {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  outline: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Backward compatibility for video wrapper */
+.full-player-video-wrapper,
+.full-player-video-frame-wrapper {
+  position: relative !important;
+  width: 90vw !important;
+  max-width: 420px !important;
+  aspect-ratio: 16 / 9 !important;
+  margin: 16px auto !important;
+  border-radius: 16px !important;
+  border: 1.5px solid var(--theme-border-color, var(--primary-color, #D4AF37)) !important;
+  box-shadow: 0 0 25px var(--theme-glow-color, rgba(212, 175, 55, 0.25)) !important;
+  overflow: hidden !important;
+  background: #000000 !important;
+  transform: none !important;
+  touch-action: none !important;
+}
+
+.full-player-video-wrapper iframe,
+.full-player-video-frame-wrapper iframe {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  outline: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ================================================================================
+   TASK 2: REMOVE LOGO & BRANDING BOUNDING BOX (ALL THEMES)
+   ================================================================================ */
+.full-player-top-brand,
+.full-player-brand-header,
+[data-theme="candyland"] .full-player-top-brand {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 8px 0 !important;
+  margin: 0 auto !important;
   display: flex !important;
-  flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  max-width: 520px !important;
-  margin: 0 auto !important;
+  gap: 8px !important;
+}
+
+.full-player-top-brand img,
+.full-player-top-brand svg {
+  background: transparent !important;
+}
+
+.full-player-top-brand svg {
+  width: 24px !important;
+  height: 24px !important;
+  flex-shrink: 0 !important;
+}
+
+.full-player-top-brand span {
+  font-weight: 700 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+/* ================================================================================
+   TASK 3: FIX HAUTE COUTURE THEME GOLD BORDER
+   ================================================================================ */
+[data-theme="haute-couture"] .full-player-video-card,
+[data-theme="neue-editorial"] .full-player-video-card,
+[data-theme="haute-couture"] .full-player-artwork-card,
+[data-theme="neue-editorial"] .full-player-artwork-card,
+[data-theme="haute-couture"] .full-player-video-wrapper,
+[data-theme="neue-editorial"] .full-player-video-wrapper {
+  border-color: #D4AF37 !important;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* ================================================================================
+   TASK 4: REFINE AUDIO ARTWORK BORDER (SLIM LINE + GLOW AURA)
+   ================================================================================ */
+.full-player-artwork-card {
+  position: relative !important;
+  width: 86vw !important;
+  max-width: 380px !important;
+  height: 86vw !important;
+  max-height: 380px !important;
+  margin: 16px auto 24px auto !important;
+  border-radius: 20px !important;
+  padding: 0 !important; /* Strips out thick inner padding */
+  border: 1.5px solid var(--theme-border-color, rgba(255, 255, 255, 0.2)) !important;
+  box-shadow: 0 10px 40px var(--theme-glow-color, rgba(0, 0, 0, 0.4)) !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.full-player-artwork-card img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 18px !important;
+  display: block !important;
+}
+
+/* Header & Nav Controls styling */
+.full-player-header,
+[data-theme="neue-editorial"] .full-player-header {
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 12px 16px !important;
+  width: 100% !important;
+}
+
+/* Cyberpunk Contrast Buttons */
+[data-theme="cyberpunk-neon"] .full-player-nav-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+}
+
+[data-theme="cyberpunk-neon"] .full-player-nav-btn.active {
+  color: #000000 !important;
+  background: #00F0FF !important; /* Neon cyan with bold black text */
+  font-weight: 700 !important;
+  box-shadow: 0 0 12px #00F0FF !important;
+}
+
+/* Theme variables for borders and glows */
+.full-player-video-card,
+.full-player-artwork-card {
+  border-color: var(--theme-border-color, var(--primary-color, var(--primary, #d4af37))) !important;
+}
+
+/* Neue Editorial / Haute Couture: #D4AF37 (Soft Champagne Gold) */
+[data-theme="neue-editorial"],
+.theme-neue-editorial,
+[data-theme="haute-couture"],
+.theme-haute-couture {
+  --theme-border-color: #D4AF37;
+  --theme-glow-color: rgba(212, 175, 55, 0.4);
+}
+
+/* Cyberpunk Neon Glass: #00F0FF (Cyan) / #FF007F (Neon Pink) */
+[data-theme="cyberpunk-neon"],
+.theme-cyberpunk-neon {
+  --theme-border-color: #00F0FF;
+  --theme-glow-color: rgba(0, 240, 255, 0.4);
+}
+
+/* Candyland Pastel: #FF69B4 (Pastel Bubblegum Pink) */
+[data-theme="candyland"],
+.theme-candyland {
+  --theme-border-color: #FF69B4;
+  --theme-glow-color: rgba(255, 105, 180, 0.35);
+}
+
+/* Obsidian Dark: #333333 / #555555 */
+[data-theme="obsidian-depth"],
+.theme-obsidian-depth {
+  --theme-border-color: #555555;
+  --theme-glow-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Velvet Luxury & Designer: #9D4EDD / #E0AAFF */
+[data-theme="designer"],
+[data-theme="velvet-luxury"],
+.theme-velvet-luxury {
+  --theme-border-color: #9D4EDD;
+  --theme-glow-color: rgba(157, 78, 221, 0.4);
+}
+
+/* Dynamic Emerald */
+[data-theme="dynamic-emerald"],
+.theme-dynamic-emerald {
+  --theme-border-color: #00f5a0;
+  --theme-glow-color: rgba(0, 245, 160, 0.4);
+}
+
+/* Audiophile Gold */
+[data-theme="audiophile-gold"],
+.theme-audiophile-gold {
+  --theme-border-color: #8fa7c2;
+  --theme-glow-color: rgba(143, 167, 194, 0.4);
+}
+
+/* Twilight Vaporwave */
+[data-theme="twilight-vaporwave"],
+.theme-twilight-vaporwave {
+  --theme-border-color: #ff2a8d;
+  --theme-glow-color: rgba(255, 42, 141, 0.4);
+}
+
+/* Nebula Liquid Glass */
+[data-theme="nebula-liquid-glass"],
+.theme-nebula-liquid-glass {
+  --theme-border-color: #ff007f;
+  --theme-glow-color: rgba(255, 0, 127, 0.4);
+}
+
+/* Candyland Pastel Full Player Palette */
+[data-theme="candyland"] .full-player-header {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: #2D2D2D !important;
+}
+
+[data-theme="candyland"] .full-player-nav-btn {
+  background: #FFF0F5 !important;
+  color: #FF1493 !important;
+  border: 1px solid #FFB6C1 !important;
+}
+
+[data-theme="candyland"] .full-player-nav-btn.active {
+  background: #FF69B4 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4) !important;
+}
+
+/* Bottom Player Control Dock */
+[data-theme="candyland"] .full-player-controls-container,
+[data-theme="candyland"] .full-player-bottom-dock {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(255, 182, 193, 0.6) !important;
+  box-shadow: 0 -4px 20px rgba(255, 182, 193, 0.3) !important;
+  color: #2D2D2D !important;
+}
+
+[data-theme="candyland"] .full-player-controls-container button {
+  color: #FF1493 !important;
+}
+
+[data-theme="candyland"] .full-player-play-btn {
+  background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4) !important;
 }
 
 
