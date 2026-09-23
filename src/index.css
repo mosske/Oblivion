@@ -677,6 +677,99 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   z-index: -100 !important;
 }
 
+/* ================================================================================
+   1. RESPONSIVE ALBUM ARTWORK CONTAINER (Audio Mode)
+   ================================================================================ */
+.full-player-artwork-container,
+.full-player-cover-wrapper {
+  /* Mobile default: fill available width with minimal margins */
+  width: 88vw !important;
+  height: 88vw !important;
+  max-width: 400px !important;
+  max-height: 400px !important;
+  margin: 16px auto 20px auto !important;
+  border-radius: 24px !important;
+  aspect-ratio: 1 / 1 !important;
+  transition: all 0.3s ease !important;
+}
+
+.full-player-cover-wrapper > .full-player-artwork-container,
+.full-player-cover-wrapper .full-player-artwork-container {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+}
+
+.full-player-artwork-container img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 20px !important;
+}
+
+/* Tablet & Desktop PC Specific Caps */
+@media (min-width: 768px) {
+  .full-player-artwork-container,
+  .full-player-cover-wrapper {
+    width: 360px !important;
+    height: 360px !important;
+    max-width: 360px !important;
+    max-height: 360px !important;
+    margin: 20px auto !important;
+  }
+
+  .full-player-cover-wrapper > .full-player-artwork-container,
+  .full-player-cover-wrapper .full-player-artwork-container {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+  }
+}
+
+/* ================================================================================
+   2. RESPONSIVE YOUTUBE VIDEO CONTAINER (Video Mode)
+   ================================================================================ */
+.full-player-video-container,
+.full-player-iframe-wrapper {
+  width: 92vw !important;
+  max-width: 440px !important;
+  margin: 12px auto 20px auto !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+.full-player-video-container iframe,
+.full-player-iframe-wrapper iframe {
+  width: 100% !important;
+  aspect-ratio: 16 / 9 !important;
+  border-radius: 18px !important;
+}
+
+@media (min-width: 768px) {
+  .full-player-video-container,
+  .full-player-iframe-wrapper {
+    width: 480px !important;
+    max-width: 480px !important;
+  }
+}
+
+/* ================================================================================
+   3. DESKTOP / TABLET CONTAINER FLEX-CENTERING
+   ================================================================================ */
+.full-player-modal-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+}
+
+
 
 
 

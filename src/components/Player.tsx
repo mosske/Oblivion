@@ -2208,7 +2208,7 @@ export const Player: React.FC<PlayerProps> = ({
         }
         className={
           isVideoModeActive
-            ? "transition-opacity duration-300 pointer-events-auto opacity-100"
+            ? "full-player-video-container full-player-iframe-wrapper transition-opacity duration-300 pointer-events-auto opacity-100"
             : "yt-iframe-hidden-container"
         }
       >
@@ -2649,11 +2649,11 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             ) : playerState.mediaMode === "video" ? (
               /* Music Video Mode on Center Stage */
-              <div className="flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-0.5">
+              <div className="full-player-modal-content flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-0.5">
                 {/* 16:9 Video Placeholder - exact bounding frame synchronized with YouTube wrapper with dynamic ambient glow */}
                 <div
                   ref={videoPlaceholderRef}
-                  className={`w-[min(88vw,480px)] aspect-video max-h-[26vh] sm:max-h-[34vh] md:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none artwork-glow-dynamic border-2 ${fpTheme.artBorder}`}
+                  className={`full-player-video-container full-player-iframe-wrapper aspect-video max-h-[26vh] sm:max-h-[34vh] md:max-h-[40vh] rounded-2xl sm:rounded-3xl shrink-0 pointer-events-none artwork-glow-dynamic border-2 ${fpTheme.artBorder}`}
                   style={isBespoke ? {
                     boxShadow: `0 0 35px ${bespokeColors[0]}, 0 0 70px ${bespokeColors[1]}`,
                   } : undefined}
@@ -2696,9 +2696,9 @@ export const Player: React.FC<PlayerProps> = ({
               </div>
             ) : (
               /* Audio / Song Mode: Central HD Album Artwork & Dynamic Stage */
-              <div className="flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto py-0.5">
+              <div className="full-player-modal-content flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto py-0.5">
                 {/* HD Cover Art with Dynamic Pulsing Color-Shifting Ambient Glow Aura */}
-                <div className="relative group flex items-center justify-center">
+                <div className="full-player-cover-wrapper relative group flex items-center justify-center">
                   {/* Dynamic themed colored backlight aura */}
                   <div
                     className={`absolute -inset-2.5 sm:-inset-4 rounded-[2.5rem] artwork-glow-dynamic opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`}
@@ -2712,7 +2712,7 @@ export const Player: React.FC<PlayerProps> = ({
                   {/* Contained 3D atmospheric floor drop shadow */}
                   <div className="absolute -inset-0.5 rounded-3xl shadow-[0_12px_28px_rgba(0,0,0,0.7),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
 
-                  <div className={`relative w-[min(48vw,200px)] h-[min(48vw,200px)] xs:w-[min(54vw,220px)] xs:h-[min(54vw,220px)] sm:w-64 sm:h-64 md:w-72 md:h-72 max-h-[26vh] sm:max-h-[32vh] aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} artwork-glow-dynamic shadow-[0_16px_36px_rgba(0,0,0,0.7)]`}>
+                  <div className={`full-player-artwork-container relative aspect-square rounded-3xl overflow-hidden border-2 ${fpTheme.artBorder} artwork-glow-dynamic shadow-[0_16px_36px_rgba(0,0,0,0.7)]`}>
                     <img
                       src={getHdCoverUrl(currentTrack.coverUrl)}
                       alt={currentTrack.title}
