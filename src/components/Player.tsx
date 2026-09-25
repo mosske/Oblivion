@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { PlayerState, Track, UserSettings, Playlist } from "../types";
 import {
   Play,
@@ -754,6 +754,56 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   );
 };
 
+interface VideoPlayerProps {
+  videoId: string;
+  isBespoke?: boolean;
+  bespokeColor?: string;
+  initialStartSeconds?: number;
+}
+
+// TASK 2: ISOLATE PROGRESS/TIME SYNCHRONIZATION
+// Wrap YouTube Iframe component inside React.memo comparing videoId, start seconds, and themes
+const VideoPlayer = React.memo(
+  ({ videoId, isBespoke, bespokeColor, initialStartSeconds = 0 }: VideoPlayerProps) => {
+    const originParam =
+      typeof window !== "undefined" && window.location.origin
+        ? `&origin=${encodeURIComponent(window.location.origin)}`
+        : "";
+    const startSec = Math.max(0, Math.floor(initialStartSeconds));
+    const startParam = startSec > 0 ? `&start=${startSec}` : "";
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1${originParam}${startParam}`;
+
+    return (
+      <div
+        className="full-player-video-card"
+        style={
+          isBespoke && bespokeColor
+            ? {
+                borderColor: bespokeColor,
+                boxShadow: `0 0 25px ${hexToRgba(bespokeColor, 0.35)}`,
+              }
+            : undefined
+        }
+      >
+        <iframe
+          key={`${videoId}_${startSec}`}
+          id="oblivion-full-player-video-iframe"
+          src={embedUrl}
+          title="YouTube Video Player"
+          className="w-full h-full rounded-2xl"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+        />
+      </div>
+    );
+  },
+  (prevProps, nextProps) =>
+    prevProps.videoId === nextProps.videoId &&
+    prevProps.initialStartSeconds === nextProps.initialStartSeconds &&
+    prevProps.isBespoke === nextProps.isBespoke &&
+    prevProps.bespokeColor === nextProps.bespokeColor
+);
+
 export const Player: React.FC<PlayerProps> = ({
   playerState,
   setPlayerState,
@@ -794,8 +844,8 @@ export const Player: React.FC<PlayerProps> = ({
 
   // SECTION 1: HIDDEN SILENT HTML5 AUDIO ANCHOR (Permanent Android MediaSession Fix)
   useEffect(() => {
-    // Generate valid PCM silent WAV fallback or remote blank audio
-    const silentSrc = getSilentAudioUrl() || "https://raw.githubusercontent.com/anars/blank-audio/master/10-seconds-of-silence.mp3";
+    // Generate valid PCM silent WAV
+    const silentSrc = getSilentAudioUrl() || "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
     const audio = new Audio(silentSrc);
     audio.loop = true;
     audio.setAttribute("playsinline", "true");
@@ -811,6 +861,7 @@ export const Player: React.FC<PlayerProps> = ({
   }, []);
 
   const startSilentAnchor = useCallback(() => {
+    if (playerState.mediaMode === "video") return;
     try {
       if (silentAudioRef.current && silentAudioRef.current.paused) {
         silentAudioRef.current.play().catch(() => {});
@@ -819,7 +870,7 @@ export const Player: React.FC<PlayerProps> = ({
         audioRef.current.play().catch(() => {});
       }
     } catch {}
-  }, []);
+  }, [playerState.mediaMode]);
 
   const stopSilentAnchor = useCallback(() => {
     try {
@@ -894,6 +945,8 @@ export const Player: React.FC<PlayerProps> = ({
   const videoStartTimeRef = useRef<number>(0);
   const videoPlayerRef = useRef<any>(null);
   const videoCurrentTimeRef = useRef<number>(0);
+  const currentVideoTrackIdRef = useRef<string | null>(null);
+  const isSeekingToVideoStartRef = useRef<boolean>(false);
   const handleSwitchToAudioModeRef = useRef<() => void>(() => {});
 
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
@@ -1198,18 +1251,166 @@ export const Player: React.FC<PlayerProps> = ({
     durationRef.current = duration;
   }, [duration]);
 
-  // Audio to Video Mode Handoff (Task 1 & Task 2)
-  const handleSwitchToVideoMode = useCallback(() => {
-    // 1. Capture current global audio playback position (currentTime in seconds)
-    const currentSeconds = Math.floor(currentTimeRef.current || currentTime || 0);
-    videoStartTimeRef.current = currentSeconds;
-    videoCurrentTimeRef.current = currentSeconds;
-    setVideoStartTime(currentSeconds);
+  // TASK 1: Determine active track video ID reliably
+  const activeVideoId = useMemo(() => {
+    if (!currentTrack) return "";
+    const idCandidates = [
+      (currentTrack as any).videoId,
+      (currentTrack as any).youtubeVideoId,
+      (currentTrack as any).youtubeId,
+      currentTrack.id,
+    ];
+    for (const cand of idCandidates) {
+      if (!cand) continue;
+      let clean = String(cand).trim();
+      if (clean.includes("watch?v=")) clean = clean.split("watch?v=")[1].split("&")[0];
+      else if (clean.includes("youtu.be/")) clean = clean.split("youtu.be/")[1].split("?")[0];
+      const cleaned = clean.replace(/[^a-zA-Z0-9_-]/g, "");
+      if (cleaned.length === 11) return cleaned;
+    }
+    return (currentTrack.id && currentTrack.id.length === 11)
+      ? currentTrack.id
+      : ((currentTrack as any).videoId || currentTrack.youtubeVideoId || (currentTrack as any).youtubeId || "");
+  }, [currentTrack]);
 
-    // 2. Pause the background HTML5 audio element BEFORE mounting the YouTube iframe to prevent overlapping dual-audio playback
+  // TASK 1: Store the active video ID in a React Ref to prevent re-load loops
+  const activeVideoIdRef = useRef<string | null>(null);
+
+  // ================================================================================
+  // TASK 4: HARDWARE-LEVEL MUTING SANITY GUARD
+  // ================================================================================
+  useEffect(() => {
+    if (playerState.mediaMode === "video") {
+      if (audioRef.current) audioRef.current.muted = true;
+    } else {
+      if (audioRef.current) audioRef.current.muted = false;
+    }
+  }, [playerState.mediaMode]);
+
+  // TASK 1: MUTE/PAUSE HTML5 AUDIO & BACKGROUND AUDIO ENGINE WHEN VIDEO MODE IS ACTIVE
+  useEffect(() => {
+    if (playerState.mediaMode === "video") {
+      // Pause primary HTML5 audio element so only the video outputs sound
+      if (audioRef.current && !audioRef.current.paused) {
+        try {
+          audioRef.current.pause();
+        } catch {}
+      }
+      if (silentAudioRef.current && !silentAudioRef.current.paused) {
+        try {
+          silentAudioRef.current.pause();
+        } catch {}
+      }
+      // Pause and mute the background YouTube audio streaming engine
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.pauseVideo?.();
+          ytPlayerRef.current.mute?.();
+        } catch {}
+      }
+    } else if (playerState.mediaMode === "song") {
+      // Resume primary audio element when returning to Audio mode
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.unMute?.();
+          ytPlayerRef.current.setVolume?.(volume * 100);
+          if (isPlayingRef.current && !userManualPauseRef.current) {
+            ytPlayerRef.current.playVideo?.();
+          }
+        } catch {}
+      }
+      if (audioRef.current && audioRef.current.paused && isPlaying) {
+        try {
+          audioRef.current.play().catch(console.error);
+        } catch {}
+      }
+    }
+  }, [playerState.mediaMode, isPlaying, volume]);
+
+  // ================================================================================
+  // TASK 2: SYNCHRONIZE TRACK CHANGES WHILE IN VIDEO MODE
+  // ================================================================================
+  useEffect(() => {
+    if (playerState.mediaMode !== "video") return;
+    if (!currentTrack || !activeVideoId) return;
+
+    // GUARD: If this is the exact same track when entering video mode, do NOT reset start time to 0!
+    if (currentVideoTrackIdRef.current === activeVideoId) {
+      return;
+    }
+
+    // Only actual track change (e.g. Next / Prev track while already in video mode) should reset to 0:
+    currentVideoTrackIdRef.current = activeVideoId;
+    activeVideoIdRef.current = activeVideoId;
+    isSeekingToVideoStartRef.current = false;
+    videoStartTimeRef.current = 0;
+    videoCurrentTimeRef.current = 0;
+    currentTimeRef.current = 0;
+    setVideoStartTime(0);
+
+    // 1. Clear and stop any background audioRef instances completely
     if (audioRef.current) {
       try {
         audioRef.current.pause();
+        audioRef.current.muted = true;
+      } catch {}
+    }
+    if (silentAudioRef.current && !silentAudioRef.current.paused) {
+      try {
+        silentAudioRef.current.pause();
+      } catch {}
+    }
+    if (ytPlayerRef.current) {
+      try {
+        ytPlayerRef.current.pauseVideo?.();
+        ytPlayerRef.current.stopVideo?.();
+        ytPlayerRef.current.mute?.();
+      } catch {}
+    }
+
+    // 2. Load and auto-play the new video in the YouTube iframe from beginning
+    if (videoPlayerRef.current && typeof videoPlayerRef.current.loadVideoById === "function") {
+      try {
+        videoPlayerRef.current.loadVideoById({
+          videoId: activeVideoId,
+          startSeconds: 0,
+        });
+        videoPlayerRef.current.unMute?.();
+        videoPlayerRef.current.setVolume?.(volume * 100);
+        videoPlayerRef.current.playVideo?.();
+      } catch (err) {
+        console.warn("[Player] Error reloading video by ID on track change:", err);
+      }
+    }
+  }, [activeVideoId, currentTrack, playerState.mediaMode, volume]);
+
+  // ================================================================================
+  // TASK 1: COMPLETE AUDIO ELEMENT PURGE UPON ENTERING VIDEO MODE
+  // ================================================================================
+  const handleSwitchToVideoMode = useCallback(() => {
+    // 1. Capture exact current playback timestamp from YouTube stream engine or audio element
+    let currentSeconds = 0;
+    if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === "function") {
+      try {
+        const ytTime = ytPlayerRef.current.getCurrentTime();
+        if (typeof ytTime === "number" && !isNaN(ytTime) && ytTime > 0) {
+          currentSeconds = ytTime;
+        }
+      } catch {}
+    }
+    if (!currentSeconds && audioRef.current && typeof audioRef.current.currentTime === "number" && !isNaN(audioRef.current.currentTime) && audioRef.current.currentTime > 0) {
+      currentSeconds = audioRef.current.currentTime;
+    }
+    if (!currentSeconds) {
+      currentSeconds = currentTimeRef.current || currentTime || 0;
+    }
+    currentSeconds = Math.max(0, Math.floor(currentSeconds));
+
+    // 2. IMMEDIATELY pause and mute background engines
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.muted = true;
       } catch {}
     }
     if (silentAudioRef.current) {
@@ -1217,91 +1418,198 @@ export const Player: React.FC<PlayerProps> = ({
         silentAudioRef.current.pause();
       } catch {}
     }
-    if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
+    if (ytPlayerRef.current) {
       try {
-        ytPlayerRef.current.pauseVideo();
+        ytPlayerRef.current.pauseVideo?.();
+        ytPlayerRef.current.mute?.();
       } catch {}
     }
 
-    // 3. Switch to Video mode
+    // 3. Mark the active video track so the track-change effect doesn't reset start time
+    currentVideoTrackIdRef.current = activeVideoId;
+    activeVideoIdRef.current = activeVideoId;
+    isSeekingToVideoStartRef.current = currentSeconds > 0;
+    videoStartTimeRef.current = currentSeconds;
+    videoCurrentTimeRef.current = currentSeconds;
+    currentTimeRef.current = currentSeconds;
+    setVideoStartTime(currentSeconds);
+
+    // Auto-clear seeking guard after 4 seconds
+    setTimeout(() => {
+      isSeekingToVideoStartRef.current = false;
+    }, 4000);
+
+    // Switch to Video mode without exiting full player
     setPlayerState((prev) => ({
       ...prev,
       mediaMode: "video",
       currentTime: currentSeconds,
+      isPlaying: true,
       showLyrics: false,
       showSimilar: false,
+      isFullscreen: true,
     }));
-  }, [currentTime, setPlayerState]);
+  }, [activeVideoId, currentTime, setPlayerState]);
 
-  // Video to Audio Mode Handoff (Task 2)
-  const handleSwitchToAudioMode = useCallback(() => {
-    // 1. Capture exact playback time from the YouTube iFrame API
-    let videoCurrentTime = videoCurrentTimeRef.current;
-    if (videoPlayerRef.current && typeof videoPlayerRef.current.getCurrentTime === "function") {
-      try {
-        const t = videoPlayerRef.current.getCurrentTime();
-        if (typeof t === "number" && !isNaN(t) && t >= 0) {
-          videoCurrentTime = t;
-        }
-      } catch {}
-    }
-    if (isNaN(videoCurrentTime) || videoCurrentTime < 0) {
-      videoCurrentTime = currentTimeRef.current || currentTime || 0;
-    }
-
-    const wasActive = isPlayingRef.current;
-
-    // 2. Seek the global audio engine to match the video's exit timestamp
-    if (audioRef.current) {
-      try {
-        audioRef.current.currentTime = videoCurrentTime;
-      } catch {}
-    }
-    if (ytPlayerRef.current && isYtReadyRef.current) {
-      try {
-        ytPlayerRef.current.seekTo?.(videoCurrentTime, true);
-      } catch {}
-    }
-
-    // Pause video player
-    if (videoPlayerRef.current && typeof videoPlayerRef.current.pauseVideo === "function") {
-      try {
-        videoPlayerRef.current.pauseVideo();
-      } catch {}
-    }
-
-    setPlayerState((prev) => ({
-      ...prev,
-      mediaMode: "song",
-      currentTime: videoCurrentTime,
-      isPlaying: wasActive,
-    }));
-
-    onSeek(videoCurrentTime);
-
-    // 3. Resume smooth playback on the main audio element if state was active
-    if (wasActive) {
-      userManualPauseRef.current = false;
-      startSilentAnchor();
-      if (audioRef.current) {
+  // ================================================================================
+  // TASK 3: ATOMIC SWAP FROM VIDEO TO AUDIO MODE
+  // ================================================================================
+  const handleSwitchToAudio = useCallback(async () => {
+    if (playerState.mediaMode === "video") {
+      // 1. Capture exact playback time from YouTube Player
+      let currentVideoTime = 0;
+      if (videoPlayerRef.current && typeof videoPlayerRef.current.getCurrentTime === "function") {
         try {
-          audioRef.current.play().catch(() => {});
+          const t = videoPlayerRef.current.getCurrentTime();
+          if (typeof t === "number" && !isNaN(t) && t >= 0) {
+            currentVideoTime = t;
+          }
         } catch {}
       }
-      if (ytPlayerRef.current && isYtReadyRef.current) {
+      if (!currentVideoTime && videoCurrentTimeRef.current) {
+        currentVideoTime = videoCurrentTimeRef.current;
+      }
+      if (!currentVideoTime) {
+        currentVideoTime = currentTimeRef.current || currentTime || 0;
+      }
+      currentVideoTime = Math.max(0, Math.floor(currentVideoTime));
+
+      // 2. IMMEDIATELY stop and destroy/unmount the YouTube video player:
+      if (videoPlayerRef.current) {
+        try {
+          videoPlayerRef.current.stopVideo?.();
+          videoPlayerRef.current.destroy?.();
+        } catch {}
+        videoPlayerRef.current = null;
+      }
+      activeVideoIdRef.current = null;
+      currentVideoTrackIdRef.current = null;
+      isSeekingToVideoStartRef.current = false;
+
+      // Force video iframe removal & wipe src so it cannot emit sound in background
+      const vIframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
+      if (vIframe) {
+        try {
+          vIframe.src = "about:blank";
+          vIframe.remove();
+        } catch {}
+      }
+
+      // 3. Set playerMode = 'audio' (mediaMode: 'song') & keep isFullscreen: true
+      setPlayerState((prev) => ({
+        ...prev,
+        mediaMode: "song",
+        currentTime: currentVideoTime,
+        isPlaying: true,
+        showLyrics: false,
+        showSimilar: false,
+        isFullscreen: true,
+      }));
+
+      userManualPauseRef.current = false;
+      currentTimeRef.current = currentVideoTime;
+      onSeek(currentVideoTime);
+
+      // Keep native audio strictly silent
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+          audioRef.current.src = getSilentAudioUrl();
+          audioRef.current.currentTime = 0;
+        } catch {}
+      }
+
+      // 4. Resume background YouTube stream engine with the EXACT SAME currentTrack
+      const activeVid =
+        (currentTrack as any)?.videoId ||
+        currentTrack?.youtubeVideoId ||
+        (currentTrack as any)?.youtubeId ||
+        currentTrack?.id;
+
+      if (activeVid && ytPlayerRef.current && isYtReadyRef.current) {
         try {
           ytPlayerRef.current.unMute?.();
           ytPlayerRef.current.setVolume?.(volume * 100);
+          if (typeof ytPlayerRef.current.loadVideoById === "function") {
+            ytPlayerRef.current.loadVideoById({
+              videoId: activeVid,
+              startSeconds: currentVideoTime,
+            });
+          } else if (typeof ytPlayerRef.current.seekTo === "function") {
+            ytPlayerRef.current.seekTo(currentVideoTime, true);
+          }
           ytPlayerRef.current.playVideo?.();
-        } catch {}
+        } catch (err) {
+          console.error("[Player] YT stream resume error:", err);
+        }
       }
+
       if ("mediaSession" in navigator) {
         navigator.mediaSession.playbackState = "playing";
       }
     }
-  }, [currentTime, onSeek, setPlayerState, startSilentAnchor, volume]);
+  }, [currentTrack, currentTime, onSeek, playerState.mediaMode, setPlayerState, volume]);
 
-  handleSwitchToAudioModeRef.current = handleSwitchToAudioMode;
+  const handleSwitchToAudioMode = handleSwitchToAudio;
+  handleSwitchToAudioModeRef.current = handleSwitchToAudio;
+
+  // TASK 2: Prevent Full Player Exit & Audio Stopping on Tab Toggle
+  const handleTabSwitch = useCallback(
+    (newMode: "audio" | "video" | "lyrics" | "radio", e?: React.MouseEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      // DO NOT trigger onClose() or dismiss full player modal
+      if (newMode === "audio") {
+        if (playerState.mediaMode === "video") {
+          handleSwitchToAudioMode();
+        } else {
+          // Already in audio mode: dismiss lyrics/radio overlay and ensure isFullscreen remains true
+          setPlayerState((prev) => ({
+            ...prev,
+            mediaMode: "song",
+            showLyrics: false,
+            showSimilar: false,
+            isFullscreen: true,
+          }));
+        }
+      } else if (newMode === "video") {
+        if (playerState.mediaMode !== "video") {
+          handleSwitchToVideoMode();
+        } else {
+          setPlayerState((prev) => ({
+            ...prev,
+            showLyrics: false,
+            showSimilar: false,
+            isFullscreen: true,
+          }));
+        }
+      } else if (newMode === "lyrics") {
+        setPlayerState((prev) => ({
+          ...prev,
+          showLyrics: !prev.showLyrics,
+          showSimilar: false,
+          isFullscreen: true,
+        }));
+      } else if (newMode === "radio") {
+        setPlayerState((prev) => {
+          const nextShowSimilar = !prev.showSimilar;
+          if (nextShowSimilar && currentTrack) {
+            setRadioSeedTrack(currentTrack);
+          }
+          return {
+            ...prev,
+            showSimilar: nextShowSimilar,
+            showLyrics: false,
+            isFullscreen: true,
+          };
+        });
+      }
+    },
+    [handleSwitchToAudioMode, handleSwitchToVideoMode, playerState.mediaMode, currentTrack, setPlayerState]
+  );
 
   const handleMinimizeFullPlayer = useCallback(() => {
     if (playerState.mediaMode === "video") {
@@ -1402,6 +1710,37 @@ export const Player: React.FC<PlayerProps> = ({
     onTogglePlayRef.current = onTogglePlay;
   }, [onTogglePlay]);
 
+  // Synchronized Next & Previous handlers that guarantee global currentTrack state update regardless of playerMode
+  const handleNextTrack = useCallback(() => {
+    isChangingTrackRef.current = true;
+    userManualPauseRef.current = false;
+    interruptedWhilePlayingRef.current = false;
+    activeVideoIdRef.current = null; // Clear active video ref so new video loads immediately
+    videoStartTimeRef.current = 0;
+    videoCurrentTimeRef.current = 0;
+    currentTimeRef.current = 0;
+    if (isChangingTrackTimeoutRef.current) clearTimeout(isChangingTrackTimeoutRef.current);
+    isChangingTrackTimeoutRef.current = setTimeout(() => {
+      isChangingTrackRef.current = false;
+    }, 2500);
+    onNextTrackRef.current();
+  }, []);
+
+  const handlePrevTrack = useCallback(() => {
+    isChangingTrackRef.current = true;
+    userManualPauseRef.current = false;
+    interruptedWhilePlayingRef.current = false;
+    activeVideoIdRef.current = null; // Clear active video ref so new video loads immediately
+    videoStartTimeRef.current = 0;
+    videoCurrentTimeRef.current = 0;
+    currentTimeRef.current = 0;
+    if (isChangingTrackTimeoutRef.current) clearTimeout(isChangingTrackTimeoutRef.current);
+    isChangingTrackTimeoutRef.current = setTimeout(() => {
+      isChangingTrackRef.current = false;
+    }, 2500);
+    onPrevTrackRef.current();
+  }, []);
+
   const handleEndedRef = useRef<() => void>(() => {});
 
   // Master handler for track end (works for both YouTube and HTML5 audio)
@@ -1428,14 +1767,8 @@ export const Player: React.FC<PlayerProps> = ({
     }
 
     // Advance to next song in the Playlist, Album, or Search results
-    isChangingTrackRef.current = true;
-    if (isChangingTrackTimeoutRef.current) clearTimeout(isChangingTrackTimeoutRef.current);
-    isChangingTrackTimeoutRef.current = setTimeout(() => {
-      isChangingTrackRef.current = false;
-    }, 2500);
-
-    onNextTrackRef.current();
-  }, [setPlayerState]);
+    handleNextTrack();
+  }, [handleNextTrack, setPlayerState]);
 
   useEffect(() => {
     handleEndedRef.current = handleEnded;
@@ -1608,9 +1941,42 @@ export const Player: React.FC<PlayerProps> = ({
       }
     }
 
-    const finalVid = videoId || "kJQP7kiw5Fk";
+    const finalVid = videoId || (currentTrack ? ((currentTrack as any).videoId || currentTrack.youtubeVideoId || (currentTrack as any).youtubeId || (currentTrack.id && currentTrack.id.length === 11 ? currentTrack.id : "")) : "");
+    if (!finalVid) return;
 
     const executePlay = (targetVid: string) => {
+      // TASK 1 & TASK 2: In video mode, route audio exclusively to Video Player while syncing background audio sources
+      if (playerState.mediaMode === "video") {
+        if (audioRef.current) {
+          try {
+            const trackAudio = getPlayableAudioUrl(currentTrack);
+            if (trackAudio && (!audioRef.current.src || !audioRef.current.src.includes(trackAudio))) {
+              audioRef.current.src = trackAudio;
+              audioRef.current.currentTime = 0;
+            }
+            audioRef.current.pause();
+          } catch {}
+        }
+        if (ytPlayerRef.current) {
+          try {
+            if (typeof ytPlayerRef.current.cueVideoById === "function") {
+              ytPlayerRef.current.cueVideoById({
+                videoId: targetVid,
+                startSeconds: 0,
+              });
+            }
+            ytPlayerRef.current.pauseVideo?.();
+            ytPlayerRef.current.mute?.();
+          } catch {}
+        }
+        if (silentAudioRef.current && !silentAudioRef.current.paused) {
+          try {
+            silentAudioRef.current.pause();
+          } catch {}
+        }
+        return;
+      }
+
       if (!isYtReadyRef.current || !ytPlayerRef.current) return;
       try {
         if (typeof ytPlayerRef.current.unMute === "function") {
@@ -1655,7 +2021,7 @@ export const Player: React.FC<PlayerProps> = ({
           width: "100%",
           videoId: vid,
           playerVars: {
-            autoplay: isPlayingRef.current && !userManualPauseRef.current ? 1 : 0,
+            autoplay: isPlayingRef.current && !userManualPauseRef.current && playerState.mediaMode !== "video" ? 1 : 0,
             controls: 1,
             disablekb: 0,
             fs: 1,
@@ -1668,6 +2034,13 @@ export const Player: React.FC<PlayerProps> = ({
           events: {
             onReady: (event: any) => {
               isYtReadyRef.current = true;
+              if (playerState.mediaMode === "video") {
+                try {
+                  event.target.pauseVideo?.();
+                  event.target.mute?.();
+                } catch {}
+                return;
+              }
               try {
                 if (typeof event.target.unMute === "function") {
                   event.target.unMute();
@@ -1685,6 +2058,13 @@ export const Player: React.FC<PlayerProps> = ({
               }
             },
             onStateChange: (event: any) => {
+              if (playerState.mediaMode === "video") {
+                try {
+                  event.target.pauseVideo?.();
+                  event.target.mute?.();
+                } catch {}
+                return;
+              }
               // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING, 5 = CUED, -1 = UNSTARTED
               if (event.data === 1) { // PLAYING
                 isChangingTrackRef.current = false;
@@ -1808,6 +2188,12 @@ export const Player: React.FC<PlayerProps> = ({
             const vDur = typeof vPlayer.getDuration === "function" ? vPlayer.getDuration() : undefined;
 
             if (typeof vCurTime === "number" && !isNaN(vCurTime) && vCurTime >= 0) {
+              if (isSeekingToVideoStartRef.current && videoStartTimeRef.current > 0) {
+                if (vCurTime < videoStartTimeRef.current - 1.5) {
+                  return;
+                }
+                isSeekingToVideoStartRef.current = false;
+              }
               videoCurrentTimeRef.current = vCurTime;
               setPlayerState((prev) => {
                 if (prev.mediaMode !== "video") return prev;
@@ -1889,6 +2275,7 @@ export const Player: React.FC<PlayerProps> = ({
         } catch {}
         videoPlayerRef.current = null;
       }
+      activeVideoIdRef.current = null;
       return;
     }
 
@@ -1911,6 +2298,10 @@ export const Player: React.FC<PlayerProps> = ({
                 if (typeof event.target.setVolume === "function") {
                   event.target.setVolume(volume * 100);
                 }
+                const seekTarget = videoStartTimeRef.current || currentTimeRef.current || 0;
+                if (seekTarget > 0 && typeof event.target.seekTo === "function") {
+                  event.target.seekTo(seekTarget, true);
+                }
                 event.target.playVideo();
               } catch {}
             },
@@ -1920,6 +2311,17 @@ export const Player: React.FC<PlayerProps> = ({
               if (event.data === 1) { // PLAYING
                 const curTime = event.target.getCurrentTime?.() || 0;
                 const dur = event.target.getDuration?.() || 0;
+
+                if (isSeekingToVideoStartRef.current && videoStartTimeRef.current > 0) {
+                  if (curTime < videoStartTimeRef.current - 1.5) {
+                    try {
+                      event.target.seekTo(videoStartTimeRef.current, true);
+                    } catch {}
+                    return;
+                  }
+                  isSeekingToVideoStartRef.current = false;
+                }
+
                 videoCurrentTimeRef.current = curTime;
                 setPlayerState((prev) => ({
                   ...prev,
@@ -1964,13 +2366,20 @@ export const Player: React.FC<PlayerProps> = ({
 
         if (data.event === "infoDelivery" && data.info) {
           if (typeof data.info.currentTime === "number") {
-            videoCurrentTimeRef.current = data.info.currentTime;
+            const rawTime = data.info.currentTime;
+            if (isSeekingToVideoStartRef.current && videoStartTimeRef.current > 0) {
+              if (rawTime < videoStartTimeRef.current - 1.5) {
+                return;
+              }
+              isSeekingToVideoStartRef.current = false;
+            }
+            videoCurrentTimeRef.current = rawTime;
             if (!isScrubbingRef.current) {
               setPlayerState((prev) => {
                 if (prev.mediaMode !== "video") return prev;
                 return {
                   ...prev,
-                  currentTime: data.info.currentTime,
+                  currentTime: rawTime,
                   duration: data.info.duration > 0 ? data.info.duration : prev.duration,
                   ...(data.info.playerState === 1
                     ? { isPlaying: true }
@@ -2006,7 +2415,7 @@ export const Player: React.FC<PlayerProps> = ({
         videoPlayerRef.current = null;
       }
     };
-  }, [playerState.mediaMode, currentTrack?.id, updatePositionState, setPlayerState, volume]);
+  }, [playerState.mediaMode, activeVideoId, updatePositionState, setPlayerState]);
 
   // Sync volume state directly to YouTube Video Player
   useEffect(() => {
@@ -2027,69 +2436,141 @@ export const Player: React.FC<PlayerProps> = ({
     enforceUnmutedState();
   }, [isFullscreen, playerState.mediaMode, showLyrics, showSimilar, enforceUnmutedState]);
 
-  // User manual play/pause toggle handler
-  const handleUserTogglePlay = (explicitPlay?: boolean) => {
-    const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlaying;
-    userManualPauseRef.current = !nextPlay;
+  // ================================================================================
+  // TASK 4: GLOBAL PLAY/PAUSE EVENT BUS SANITY GUARD (Single Active Media Controller)
+  // ================================================================================
+  const playMedia = useCallback(async () => {
+    userManualPauseRef.current = false;
+    interruptedWhilePlayingRef.current = false;
 
     if (playerState.mediaMode === "video") {
+      // IN VIDEO MODE: Purge and pause HTML5 audioRef, play video player
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+          audioRef.current.muted = true;
+        } catch {}
+      }
+      if (silentAudioRef.current && !silentAudioRef.current.paused) {
+        try {
+          silentAudioRef.current.pause();
+        } catch {}
+      }
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.pauseVideo?.();
+          ytPlayerRef.current.stopVideo?.();
+          ytPlayerRef.current.mute?.();
+        } catch {}
+      }
+
       if (videoPlayerRef.current) {
         try {
-          if (nextPlay) {
-            videoPlayerRef.current.playVideo?.();
-          } else {
-            videoPlayerRef.current.pauseVideo?.();
+          if (typeof videoPlayerRef.current.unMute === "function") {
+            videoPlayerRef.current.unMute();
+          }
+          if (typeof videoPlayerRef.current.setVolume === "function") {
+            videoPlayerRef.current.setVolume(volume * 100);
+          }
+          if (typeof videoPlayerRef.current.playVideo === "function") {
+            videoPlayerRef.current.playVideo();
           }
         } catch {}
       } else {
         const iframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
         if (iframe && iframe.contentWindow) {
-          const cmd = nextPlay ? "playVideo" : "pauseVideo";
-          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: cmd, args: [] }), "*");
+          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
         }
       }
     } else {
-      if (nextPlay) {
-        interruptedWhilePlayingRef.current = false;
-        startSilentAnchor();
-      } else {
-        stopSilentAnchor();
+      // IN AUDIO MODE: Stop video player completely, resume audio element
+      if (videoPlayerRef.current) {
+        try {
+          videoPlayerRef.current.stopVideo?.();
+        } catch {}
       }
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.stopVideo?.();
+        } catch {}
+      }
+
+      startSilentAnchor();
 
       if (audioRef.current) {
         try {
-          if (nextPlay) {
-            audioRef.current.play().catch(() => {});
-          } else {
-            audioRef.current.pause();
-          }
-        } catch {}
+          audioRef.current.muted = false;
+          await audioRef.current.play();
+        } catch (err) {
+          console.warn("[Player] playMedia audio error:", err);
+        }
       }
 
       if (isYtReadyRef.current && ytPlayerRef.current) {
         try {
-          if (nextPlay) {
-            if (typeof ytPlayerRef.current.unMute === "function") {
-              ytPlayerRef.current.unMute();
-            }
-            if (typeof ytPlayerRef.current.setVolume === "function") {
-              ytPlayerRef.current.setVolume(100);
-            }
-            ytPlayerRef.current.playVideo?.();
-          } else {
-            ytPlayerRef.current.pauseVideo?.();
+          if (typeof ytPlayerRef.current.unMute === "function") {
+            ytPlayerRef.current.unMute();
           }
+          if (typeof ytPlayerRef.current.setVolume === "function") {
+            ytPlayerRef.current.setVolume(100);
+          }
+          ytPlayerRef.current.playVideo?.();
         } catch (err) {
-          console.warn("[Player] Toggle play error:", err);
+          console.warn("[Player] playMedia YT error:", err);
         }
       }
     }
 
-    setPlayerState((prev) => ({ ...prev, isPlaying: nextPlay }));
+    setPlayerState((prev) => ({ ...prev, isPlaying: true }));
     if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
-      navigator.mediaSession.playbackState = nextPlay ? "playing" : "paused";
+      navigator.mediaSession.playbackState = "playing";
     }
-  };
+  }, [playerState.mediaMode, setPlayerState, startSilentAnchor, volume]);
+
+  const pauseMedia = useCallback(() => {
+    userManualPauseRef.current = true;
+    stopSilentAnchor();
+
+    // Immediately pause all engines
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+      } catch {}
+    }
+    if (videoPlayerRef.current && typeof videoPlayerRef.current.pauseVideo === "function") {
+      try {
+        videoPlayerRef.current.pauseVideo();
+      } catch {}
+    } else {
+      const iframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
+      }
+    }
+    if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
+      try {
+        ytPlayerRef.current.pauseVideo();
+      } catch {}
+    }
+
+    setPlayerState((prev) => ({ ...prev, isPlaying: false }));
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      navigator.mediaSession.playbackState = "paused";
+    }
+  }, [setPlayerState, stopSilentAnchor]);
+
+  // User manual play/pause toggle handler routed via playMedia / pauseMedia
+  const handleUserTogglePlay = useCallback(
+    (explicitPlay?: boolean) => {
+      const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlaying;
+      if (nextPlay) {
+        playMedia();
+      } else {
+        pauseMedia();
+      }
+    },
+    [isPlaying, playMedia, pauseMedia]
+  );
 
   // Section 1: PC & Mobile visibility and blur listeners to prevent browser background auto-mute & recover from interruptions
   useEffect(() => {
@@ -2148,23 +2629,11 @@ export const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
 
-    // PAUSE COMMAND (Directly stops YouTube and silent anchor, notifies Android OS)
+    // PAUSE COMMAND (Directly routed through pauseMedia sanity guard)
     try {
       navigator.mediaSession.setActionHandler("pause", () => {
         try {
-          userManualPauseRef.current = true;
-          interruptedWhilePlayingRef.current = false;
-          stopSilentAnchor();
-          if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
-            ytPlayerRef.current.pauseVideo();
-          }
-          if (audioRef.current) {
-            try {
-              audioRef.current.pause();
-            } catch {}
-          }
-          setPlayerState((prev) => ({ ...prev, isPlaying: false }));
-          navigator.mediaSession.playbackState = "paused";
+          pauseMedia();
         } catch (err) {
           console.error("MediaSession pause error:", err);
         }
@@ -2173,26 +2642,11 @@ export const Player: React.FC<PlayerProps> = ({
       console.error("Failed to bind mediaSession pause handler:", err);
     }
 
-    // PLAY COMMAND (Resumes stream and silent anchor, enforces volume & unmuted state)
+    // PLAY COMMAND (Directly routed through playMedia sanity guard)
     try {
       navigator.mediaSession.setActionHandler("play", () => {
         try {
-          userManualPauseRef.current = false;
-          interruptedWhilePlayingRef.current = false;
-          startSilentAnchor();
-          if (ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === "function") {
-            try {
-              if (typeof ytPlayerRef.current.unMute === "function") {
-                ytPlayerRef.current.unMute();
-              }
-              if (typeof ytPlayerRef.current.setVolume === "function") {
-                ytPlayerRef.current.setVolume(100);
-              }
-            } catch {}
-            ytPlayerRef.current.playVideo();
-          }
-          setPlayerState((prev) => ({ ...prev, isPlaying: true }));
-          navigator.mediaSession.playbackState = "playing";
+          playMedia();
         } catch (err) {
           console.error("MediaSession play error:", err);
         }
@@ -2207,7 +2661,7 @@ export const Player: React.FC<PlayerProps> = ({
         try {
           userManualPauseRef.current = false;
           interruptedWhilePlayingRef.current = false;
-          onPrevTrackRef.current?.();
+          handlePrevTrack();
         } catch (err) {
           console.error("MediaSession prev error:", err);
         }
@@ -2222,7 +2676,7 @@ export const Player: React.FC<PlayerProps> = ({
         try {
           userManualPauseRef.current = false;
           interruptedWhilePlayingRef.current = false;
-          onNextTrackRef.current?.();
+          handleNextTrack();
         } catch (err) {
           console.error("MediaSession next error:", err);
         }
@@ -2780,13 +3234,13 @@ export const Player: React.FC<PlayerProps> = ({
             <div className="flex items-center p-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg">
               <button
                 id="player-toggle-audio-mode"
-                onClick={handleSwitchToAudioMode}
+                onClick={(e) => handleTabSwitch("audio", e)}
                 className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  (playerState.mediaMode || "song") === "song"
+                  (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar
                     ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
                     : "text-white/70 hover:text-white"
                 }`}
-                style={isBespoke && (playerState.mediaMode || "song") === "song" ? {
+                style={isBespoke && (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? {
                   background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
                   color: calculateWcagText(bespokeColors[1]),
                 } : undefined}
@@ -2797,7 +3251,7 @@ export const Player: React.FC<PlayerProps> = ({
               </button>
               <button
                 id="player-toggle-video-mode"
-                onClick={handleSwitchToVideoMode}
+                onClick={(e) => handleTabSwitch("video", e)}
                 className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
                   playerState.mediaMode === "video"
                     ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
@@ -2817,9 +3271,7 @@ export const Player: React.FC<PlayerProps> = ({
             {/* Right: Quick Toggles (Lyrics, Radio) */}
             <div className="flex items-center gap-1.5 sm:gap-3">
               <button
-                onClick={() =>
-                  setPlayerState((prev) => ({ ...prev, showLyrics: !prev.showLyrics, showSimilar: false }))
-                }
+                onClick={(e) => handleTabSwitch("lyrics", e)}
                 className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                   showLyrics ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
                 }`}
@@ -2835,16 +3287,7 @@ export const Player: React.FC<PlayerProps> = ({
               </button>
 
               <button
-                onClick={() => {
-                  setPlayerState((prev) => {
-                    const nextShowSimilar = !prev.showSimilar;
-                    if (nextShowSimilar && currentTrack) {
-                      // Lock the seed track to the track that initiated the radio
-                      setRadioSeedTrack(currentTrack);
-                    }
-                    return { ...prev, showSimilar: nextShowSimilar, showLyrics: false };
-                  });
-                }}
+                onClick={(e) => handleTabSwitch("radio", e)}
                 className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                   showSimilar ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
                 }`}
@@ -2896,35 +3339,14 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
               </div>
             ) : playerState.mediaMode === "video" ? (
-              /* Music Video Mode on Center Stage */
+              /* Music Video Mode on Center Stage (TASK 2: Memoized VideoPlayer isolated from progress updates) */
               <div className="full-player-modal-content flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-0.5">
-                {(() => {
-                  const currentVideoId =
-                    (currentTrack as any)?.youtubeId ||
-                    currentTrack?.youtubeVideoId ||
-                    (currentTrack?.id && currentTrack.id.length === 11 ? currentTrack.id : "kJQP7kiw5Fk");
-                  const currentSeconds = Math.floor(videoStartTimeRef.current || currentTime || 0);
-                  const originParam = typeof window !== "undefined" && window.location.origin ? `&origin=${encodeURIComponent(window.location.origin)}` : "";
-                  const youtubeEmbedUrl = `https://www.youtube.com/embed/${currentVideoId}?autoplay=1&start=${currentSeconds}&enablejsapi=1${originParam}`;
-
-                  return (
-                    <div
-                      className="full-player-video-card"
-                      style={isBespoke ? {
-                        borderColor: bespokeColors[0],
-                        boxShadow: `0 0 25px ${hexToRgba(bespokeColors[0], 0.35)}`,
-                      } : undefined}
-                    >
-                      <iframe
-                        id="oblivion-full-player-video-iframe"
-                        src={youtubeEmbedUrl}
-                        title="YouTube Video Player"
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                      />
-                    </div>
-                  );
-                })()}
+                <VideoPlayer
+                  videoId={activeVideoId}
+                  isBespoke={isBespoke}
+                  bespokeColor={bespokeColors[0]}
+                  initialStartSeconds={videoStartTime}
+                />
 
                 {/* Song Title & Artist - lowered with clean gap below the video screen and clear of shadows */}
                 <div className="relative z-30 text-center space-y-0.5 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-2.5 sm:mt-4 pt-0.5">
@@ -3041,7 +3463,7 @@ export const Player: React.FC<PlayerProps> = ({
               {/* Center Group: Previous (Back), Play/Pause in Center, Next (Forward) */}
               <div className="flex items-center justify-center gap-2 sm:gap-4 shrink-0">
                 <button
-                  onClick={onPrevTrack}
+                  onClick={handlePrevTrack}
                   className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Previous Song"
                 >
@@ -3066,7 +3488,7 @@ export const Player: React.FC<PlayerProps> = ({
                 </button>
 
                 <button
-                  onClick={onNextTrack}
+                  onClick={handleNextTrack}
                   className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
                   title="Next Song"
                 >
@@ -3257,7 +3679,7 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* Center Playback Controls: Back Navigation Button, Play/Pause in Center, Forward/Next Navigation Button */}
                 <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 shrink-0">
                   <button
-                    onClick={onPrevTrack}
+                    onClick={handlePrevTrack}
                     className={`player-control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
                     title="Previous"
                   >
@@ -3285,7 +3707,7 @@ export const Player: React.FC<PlayerProps> = ({
                   </button>
 
                   <button
-                    onClick={onNextTrack}
+                    onClick={handleNextTrack}
                     className={`player-control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
                     title="Next"
                   >

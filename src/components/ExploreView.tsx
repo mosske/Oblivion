@@ -241,7 +241,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             </div>
 
             <h1
-              className={`text-2xl sm:text-3xl md:text-4xl font-extrabold ${
+              className={`explore-header-title explore-discover-heading text-2xl sm:text-3xl md:text-4xl font-extrabold ${
                 designConfig.id === "neue-editorial"
                   ? "text-white drop-shadow-[0_2px_8px_rgba(31,31,31,0.7)] [text-shadow:_0_2px_8px_rgba(31,31,31,0.7)]"
                   : designConfig.isCandy

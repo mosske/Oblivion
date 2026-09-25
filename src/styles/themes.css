@@ -3719,6 +3719,88 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   z-index: -100 !important;
 }
 
+/* ================================================================================
+   HARMONIZED CARD TRANSPARENCY & THEME TOKEN INHERITANCE
+   (Home, Explore, Library, and Music Cards across all 6 Full-App Themes)
+   ================================================================================ */
+.home-card,
+.explore-card,
+.library-card,
+.music-card {
+  background: var(--theme-card-bg, rgba(var(--card-bg-rgb, 20, 20, 25), 0.35)) !important;
+  border-color: var(--theme-card-border, rgba(255, 255, 255, 0.12)) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-card:hover,
+.explore-card:hover,
+.library-card:hover,
+.music-card:hover {
+  background: rgba(var(--card-bg-rgb, 255, 255, 255), 0.45) !important;
+  border-color: var(--theme-accent, rgba(223, 184, 108, 0.5)) !important;
+}
+
+/* Cyberpunk Neon Glass: Remove bounding boxes & borders from nav items */
+[data-theme="cyberpunk"] .nav-item,
+[data-theme="cyberpunk"] .nav-link,
+[data-theme="cyberpunk"] .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .nav-item,
+[data-theme="cyberpunk-neon"] .nav-link,
+[data-theme="cyberpunk-neon"] .bottom-nav-item,
+[data-theme-alias="cyberpunk"] .nav-item,
+[data-theme-alias="cyberpunk"] .nav-link,
+[data-theme-alias="cyberpunk"] .bottom-nav-item,
+[data-theme="cyberpunk"] .sidebar-nav .nav-item,
+[data-theme="cyberpunk-neon"] .sidebar-nav .nav-item,
+[data-theme="cyberpunk"] .desktop-menu .nav-item,
+[data-theme="cyberpunk-neon"] .desktop-menu .nav-item,
+[data-theme="cyberpunk"] .mobile-nav .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .mobile-nav .bottom-nav-item,
+[data-theme="cyberpunk"] .bottom-nav-bar .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .bottom-nav-bar .bottom-nav-item,
+[data-theme="cyberpunk"] .nav-icon-container,
+[data-theme="cyberpunk-neon"] .nav-icon-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Neue Editorial: Solid black explore header with warm gold drop glow */
+[data-theme="neue-editorial"] .explore-header-title,
+[data-theme="neue-editorial"] .explore-discover-heading,
+.theme-neue-editorial .explore-header-title,
+.theme-neue-editorial .explore-discover-heading {
+  color: #000000 !important;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.6), 0 0 24px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* Haute Couture Designer: Secondary ambient purple accent glow */
+[data-theme="haute-couture"] .card-has-glow,
+[data-theme="haute-couture"] .modal-content,
+[data-theme="haute-couture"] .album-header,
+[data-theme="haute-couture"] .playlist-header,
+[data-theme="haute-couture"] .genre-card,
+[data-theme="designer"] .card-has-glow,
+[data-theme="designer"] .modal-content,
+[data-theme="designer"] .album-header,
+[data-theme="designer"] .playlist-header,
+[data-theme="designer"] .genre-card,
+[data-theme="designer-ivory"] .card-has-glow,
+[data-theme="designer-ivory"] .modal-content,
+[data-theme="designer-ivory"] .album-header,
+[data-theme="designer-ivory"] .playlist-header,
+[data-theme="designer-ivory"] .genre-card,
+[data-theme-alias="haute-couture"] .card-has-glow,
+[data-theme-alias="haute-couture"] .modal-content,
+[data-theme-alias="haute-couture"] .album-header,
+[data-theme-alias="haute-couture"] .playlist-header,
+[data-theme-alias="haute-couture"] .genre-card {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(157, 78, 237, 0.2) !important;
+}
+
 
 
 

@@ -10,6 +10,7 @@ import { LibraryView } from "./components/LibraryView";
 import { SettingsView } from "./components/SettingsView";
 import { PlaylistDetailView } from "./components/PlaylistDetailView";
 import { Player } from "./components/Player";
+import { FullPlayer } from "./components/FullPlayer";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
@@ -477,14 +478,34 @@ export default function App() {
   };
 
   const [settings, setSettings] = useState<UserSettings>(() => {
+    // TASK 1: Synchronously read localStorage.getItem('oblivion_theme') BEFORE setting initial theme state
+    let initialThemeKey: string | null = null;
+    try {
+      const storedTheme = localStorage.getItem("oblivion_theme");
+      if (storedTheme) {
+        // Map any aliases to standard FULL_APP_DESIGNS keys
+        if (storedTheme === "emerald-wilderness") initialThemeKey = "dynamic-emerald";
+        else if (storedTheme === "studio-homme-mosaique") initialThemeKey = "audiophile-gold";
+        else if (storedTheme === "haute-couture") initialThemeKey = "designer";
+        else if (storedTheme === "cyberpunk") initialThemeKey = "cyberpunk-neon";
+        else if (FULL_APP_DESIGNS[storedTheme]) initialThemeKey = storedTheme;
+        else initialThemeKey = storedTheme;
+
+        // Apply immediately to document.documentElement on load
+        if (typeof document !== "undefined") {
+          document.documentElement.setAttribute("data-theme", storedTheme);
+        }
+      }
+    } catch {}
+
     try {
       const saved = localStorage.getItem("oblivion_user_settings");
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Default to dynamic-emerald (Emerald Wilderness) so living nature scenes & fireflies are visible immediately
-        let fullAppDesign = parsed.fullAppDesign;
-        if (!fullAppDesign || fullAppDesign === "designer") {
-          fullAppDesign = "dynamic-emerald";
+        // Preserve user's theme from oblivion_theme or parsed settings; do NOT force dynamic-emerald
+        let fullAppDesign = initialThemeKey || parsed.fullAppDesign;
+        if (!fullAppDesign) {
+          fullAppDesign = "dynamic-emerald"; // only if null or undefined
         }
 
         let themePreset = parsed.themePreset;
@@ -522,7 +543,7 @@ export default function App() {
       autoPlaySimilar: true,
       themePreset: "emerald-synth",
       miniPlayerLayout: "minimal-capsule",
-      fullAppDesign: "dynamic-emerald",
+      fullAppDesign: initialThemeKey || "designer",
       playerBackgroundAnimation: "ambient-drift",
       animationDriftSpeed: 6,
       animationAuroraSpeed: 6,
@@ -564,8 +585,19 @@ export default function App() {
         document.documentElement.setAttribute("data-theme-alias", "emerald-wilderness");
       } else if (activeFullDesign.id === "audiophile-gold") {
         document.documentElement.setAttribute("data-theme-alias", "studio-homme-mosaique");
+      } else if (activeFullDesign.id === "designer" || (activeFullDesign.id as string) === "designer-ivory") {
+        document.documentElement.setAttribute("data-theme-alias", "haute-couture");
+      } else if (activeFullDesign.id === "cyberpunk-neon") {
+        document.documentElement.setAttribute("data-theme-alias", "cyberpunk");
+      } else {
+        document.documentElement.removeAttribute("data-theme-alias");
       }
       syncDocumentThemeColor(activeFullDesign);
+
+      // TASK 1: Immediately persist active theme to localStorage
+      try {
+        localStorage.setItem("oblivion_theme", activeFullDesign.id);
+      } catch {}
 
       const themeVariables: Record<
         string,
@@ -1555,15 +1587,20 @@ export default function App() {
     });
   };
 
-  // Next Track with immediate auto-play and full Shuffle support
+  // Next Track with immediate auto-play, queue synchronization, and full Shuffle support
   const handleNextTrack = () => {
     setPlayerState((prev) => {
-      if (!prev.queue || prev.queue.length === 0) return prev;
+      let activeQueue = prev.queue || [];
+      if (activeQueue.length === 0 && prev.currentTrack) {
+        activeQueue = [prev.currentTrack];
+      }
+      if (activeQueue.length === 0) return prev;
+
       let currentIndex = prev.queueIndex;
-      if (currentIndex < 0 || currentIndex >= prev.queue.length) {
+      if (currentIndex < 0 || currentIndex >= activeQueue.length) {
         if (prev.currentTrack) {
           const cId = prev.currentTrack.id || prev.currentTrack.youtubeVideoId;
-          const foundIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
+          const foundIdx = activeQueue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
           currentIndex = foundIdx >= 0 ? foundIdx : 0;
         } else {
           currentIndex = 0;
@@ -1571,22 +1608,23 @@ export default function App() {
       }
 
       let nextIndex: number;
-      if (prev.isShuffle && prev.queue.length > 1) {
-        let rand = Math.floor(Math.random() * prev.queue.length);
+      if (prev.isShuffle && activeQueue.length > 1) {
+        let rand = Math.floor(Math.random() * activeQueue.length);
         if (rand === currentIndex) {
-          rand = (rand + 1) % prev.queue.length;
+          rand = (rand + 1) % activeQueue.length;
         }
         nextIndex = rand;
       } else {
         nextIndex = currentIndex + 1;
-        if (nextIndex >= prev.queue.length) {
+        if (nextIndex >= activeQueue.length) {
           nextIndex = 0;
         }
       }
 
-      const nextTrack = prev.queue[nextIndex];
+      const nextTrack = activeQueue[nextIndex];
       return {
         ...prev,
+        queue: activeQueue,
         queueIndex: nextIndex,
         currentTrack: nextTrack,
         currentTime: 0,
@@ -1595,15 +1633,20 @@ export default function App() {
     });
   };
 
-  // Previous Track with immediate auto-play and full Shuffle support
+  // Previous Track with immediate auto-play, queue synchronization, and full Shuffle support
   const handlePrevTrack = () => {
     setPlayerState((prev) => {
-      if (!prev.queue || prev.queue.length === 0) return prev;
+      let activeQueue = prev.queue || [];
+      if (activeQueue.length === 0 && prev.currentTrack) {
+        activeQueue = [prev.currentTrack];
+      }
+      if (activeQueue.length === 0) return prev;
+
       let currentIndex = prev.queueIndex;
-      if (currentIndex < 0 || currentIndex >= prev.queue.length) {
+      if (currentIndex < 0 || currentIndex >= activeQueue.length) {
         if (prev.currentTrack) {
           const cId = prev.currentTrack.id || prev.currentTrack.youtubeVideoId;
-          const foundIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
+          const foundIdx = activeQueue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
           currentIndex = foundIdx >= 0 ? foundIdx : 0;
         } else {
           currentIndex = 0;
@@ -1611,22 +1654,23 @@ export default function App() {
       }
 
       let prevIndex: number;
-      if (prev.isShuffle && prev.queue.length > 1) {
-        let rand = Math.floor(Math.random() * prev.queue.length);
+      if (prev.isShuffle && activeQueue.length > 1) {
+        let rand = Math.floor(Math.random() * activeQueue.length);
         if (rand === currentIndex) {
-          rand = (rand - 1 + prev.queue.length) % prev.queue.length;
+          rand = (rand - 1 + activeQueue.length) % activeQueue.length;
         }
         prevIndex = rand;
       } else {
         prevIndex = currentIndex - 1;
         if (prevIndex < 0) {
-          prevIndex = prev.queue.length - 1;
+          prevIndex = activeQueue.length - 1;
         }
       }
 
-      const prevTrack = prev.queue[prevIndex];
+      const prevTrack = activeQueue[prevIndex];
       return {
         ...prev,
+        queue: activeQueue,
         queueIndex: prevIndex,
         currentTrack: prevTrack,
         currentTime: 0,
@@ -2645,7 +2689,7 @@ export default function App() {
       </main>
 
       {/* Permanent Root Audio Player Fixture - Uneffected by Page & View Navigation */}
-      <Player
+      <FullPlayer
         playerState={playerState}
         setPlayerState={setPlayerState}
         onNextTrack={handleNextTrack}

@@ -1025,6 +1025,343 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4) !important;
 }
 
+/* ================================================================================
+   HARMONIZED CARD TRANSPARENCY & THEME TOKEN INHERITANCE
+   (Home, Explore, Library, and Music Cards across all 6 Full-App Themes)
+   ================================================================================ */
+:root {
+  --card-bg-rgb: 25, 23, 30;
+  --theme-card-bg: rgba(var(--card-bg-rgb), 0.35);
+  --theme-card-border: rgba(255, 255, 255, 0.12);
+  --theme-text-primary: #ffffff;
+  --theme-accent: #dfb86c;
+}
+
+[data-theme="designer"],
+[data-theme="designer-ivory"],
+[data-theme="haute-couture"],
+[data-theme-alias="haute-couture"],
+.theme-designer {
+  --card-bg-rgb: 30, 26, 32;
+  --theme-card-bg: rgba(30, 26, 32, 0.35);
+  --theme-card-border: rgba(223, 184, 108, 0.25);
+  --theme-text-primary: #fdfcf9;
+  --theme-accent: #dfb86c;
+}
+
+[data-theme="cyberpunk"],
+[data-theme="cyberpunk-neon"],
+[data-theme-alias="cyberpunk"],
+.theme-cyberpunk-neon {
+  --card-bg-rgb: 10, 13, 26;
+  --theme-card-bg: rgba(10, 13, 26, 0.30);
+  --theme-card-border: rgba(0, 243, 255, 0.25);
+  --theme-text-primary: #ffffff;
+  --theme-accent: #00f3ff;
+}
+
+[data-theme="candyland"],
+[data-theme="candyland-pastel"],
+[data-theme="ytmusic-red"],
+.theme-candyland {
+  --card-bg-rgb: 255, 255, 255;
+  --theme-card-bg: rgba(255, 255, 255, 0.45);
+  --theme-card-border: rgba(255, 255, 255, 0.60);
+  --theme-text-primary: #3b1235;
+  --theme-accent: #ff70a6;
+}
+
+[data-theme="dynamic-emerald"],
+[data-theme="emerald-wilderness"],
+[data-theme-alias="emerald-wilderness"],
+.theme-dynamic-emerald {
+  --card-bg-rgb: 2, 34, 24;
+  --theme-card-bg: rgba(2, 34, 24, 0.30);
+  --theme-card-border: rgba(0, 245, 160, 0.22);
+  --theme-text-primary: #e6fff5;
+  --theme-accent: #00f5a0;
+}
+
+[data-theme="audiophile-gold"],
+[data-theme="studio-homme-mosaique"],
+[data-theme-alias="studio-homme-mosaique"],
+.theme-audiophile-gold {
+  --card-bg-rgb: 12, 18, 30;
+  --theme-card-bg: rgba(12, 18, 30, 0.35);
+  --theme-card-border: rgba(245, 158, 11, 0.25);
+  --theme-text-primary: #f1f5f9;
+  --theme-accent: #f59e0b;
+}
+
+[data-theme="twilight-vaporwave"],
+.theme-twilight-vaporwave {
+  --card-bg-rgb: 30, 11, 54;
+  --theme-card-bg: rgba(30, 11, 54, 0.35);
+  --theme-card-border: rgba(244, 114, 182, 0.25);
+  --theme-text-primary: #fdf4ff;
+  --theme-accent: #f472b6;
+}
+
+[data-theme="neue-editorial"],
+.theme-neue-editorial {
+  --card-bg-rgb: 250, 245, 237;
+  --theme-card-bg: rgba(250, 245, 237, 0.55);
+  --theme-card-border: rgba(31, 31, 31, 0.12);
+  --theme-text-primary: #1F1F1F;
+  --theme-accent: #d4af37;
+}
+
+[data-theme="obsidian-depth"],
+.theme-obsidian-depth {
+  --card-bg-rgb: 30, 34, 45;
+  --theme-card-bg: rgba(30, 34, 45, 0.35);
+  --theme-card-border: rgba(148, 163, 184, 0.2);
+  --theme-text-primary: #f8fafc;
+  --theme-accent: #38bdf8;
+}
+
+[data-theme="nebula-liquid-glass"],
+.theme-nebula-liquid-glass {
+  --card-bg-rgb: 13, 11, 26;
+  --theme-card-bg: rgba(13, 11, 26, 0.35);
+  --theme-card-border: rgba(167, 139, 250, 0.25);
+  --theme-text-primary: #f5f3ff;
+  --theme-accent: #a78bfa;
+}
+
+[data-theme="bespoke"],
+.theme-bespoke {
+  --card-bg-rgb: 10, 13, 26;
+  --theme-card-bg: rgba(10, 13, 26, 0.35);
+  --theme-card-border: rgba(0, 240, 255, 0.25);
+  --theme-text-primary: #ffffff;
+  --theme-accent: #00f0ff;
+}
+
+/* Card transparency rule across Home, Explore, and Library cards */
+.home-card,
+.explore-card,
+.library-card,
+.music-card {
+  background: var(--theme-card-bg, rgba(var(--card-bg-rgb, 20, 20, 25), 0.35)) !important;
+  border-color: var(--theme-card-border, rgba(255, 255, 255, 0.12)) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-card:hover,
+.explore-card:hover,
+.library-card:hover,
+.music-card:hover {
+  background: rgba(var(--card-bg-rgb, 255, 255, 255), 0.45) !important;
+  border-color: var(--theme-accent, rgba(223, 184, 108, 0.5)) !important;
+}
+
+/* Chips, Buttons, and Badges token inheritance */
+.home-filter-chip,
+.home-genre-badge,
+.explore-filter-chip {
+  background: var(--theme-card-bg, rgba(255, 255, 255, 0.08)) !important;
+  border: 1px solid var(--theme-card-border, rgba(255, 255, 255, 0.15)) !important;
+  color: var(--theme-text-primary, inherit) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.home-filter-chip.active,
+.explore-filter-chip.active {
+  background: var(--theme-accent, #dfb86c) !important;
+  border-color: var(--theme-accent, #dfb86c) !important;
+  color: #000000 !important;
+}
+
+/* ================================================================================
+   CYBERPUNK NEON GLASS: REMOVE BOUNDING BOXES & BORDERS FROM NAV ITEMS
+   ================================================================================ */
+[data-theme="cyberpunk"] .nav-item,
+[data-theme="cyberpunk"] .nav-link,
+[data-theme="cyberpunk"] .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .nav-item,
+[data-theme="cyberpunk-neon"] .nav-link,
+[data-theme="cyberpunk-neon"] .bottom-nav-item,
+[data-theme-alias="cyberpunk"] .nav-item,
+[data-theme-alias="cyberpunk"] .nav-link,
+[data-theme-alias="cyberpunk"] .bottom-nav-item,
+[data-theme="cyberpunk"] .sidebar-nav .nav-item,
+[data-theme="cyberpunk-neon"] .sidebar-nav .nav-item,
+[data-theme="cyberpunk"] .desktop-menu .nav-item,
+[data-theme="cyberpunk-neon"] .desktop-menu .nav-item,
+[data-theme="cyberpunk"] .mobile-nav .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .mobile-nav .bottom-nav-item,
+[data-theme="cyberpunk"] .bottom-nav-bar .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .bottom-nav-bar .bottom-nav-item,
+[data-theme="cyberpunk"] .nav-icon-container,
+[data-theme="cyberpunk-neon"] .nav-icon-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ================================================================================
+   NEUE EDITORIAL: SOLID BLACK EXPLORE HEADER WITH WARM GOLD DROP GLOW
+   ================================================================================ */
+[data-theme="neue-editorial"] .explore-header-title,
+[data-theme="neue-editorial"] .explore-discover-heading,
+.theme-neue-editorial .explore-header-title,
+.theme-neue-editorial .explore-discover-heading {
+  color: #000000 !important;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.6), 0 0 24px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* ================================================================================
+   HAUTE COUTURE DESIGNER: SECONDARY AMBIENT PURPLE ACCENT GLOW
+   ================================================================================ */
+[data-theme="haute-couture"] .card-has-glow,
+[data-theme="haute-couture"] .modal-content,
+[data-theme="haute-couture"] .album-header,
+[data-theme="haute-couture"] .playlist-header,
+[data-theme="haute-couture"] .genre-card,
+[data-theme="designer"] .card-has-glow,
+[data-theme="designer"] .modal-content,
+[data-theme="designer"] .album-header,
+[data-theme="designer"] .playlist-header,
+[data-theme="designer"] .genre-card,
+[data-theme="designer-ivory"] .card-has-glow,
+[data-theme="designer-ivory"] .modal-content,
+[data-theme="designer-ivory"] .album-header,
+[data-theme="designer-ivory"] .playlist-header,
+[data-theme="designer-ivory"] .genre-card,
+[data-theme-alias="haute-couture"] .card-has-glow,
+[data-theme-alias="haute-couture"] .modal-content,
+[data-theme-alias="haute-couture"] .album-header,
+[data-theme-alias="haute-couture"] .playlist-header,
+[data-theme-alias="haute-couture"] .genre-card {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(157, 78, 237, 0.2) !important;
+}
+
+/* ================================================================================
+   TASK 3: CANDYLAND HOME TYPOGRAPHY SYNC (#1A2B4C)
+   ================================================================================ */
+[data-theme="candyland"] .home-greeting,
+[data-theme="candyland"] .home-user-title,
+[data-theme="candyland"] .home-section-title,
+[data-theme="candyland"] .home-container h1,
+[data-theme="candyland"] .home-container h2,
+[data-theme="candyland"] .home-container h3,
+[data-theme="candyland-pastel"] .home-greeting,
+[data-theme="candyland-pastel"] .home-user-title,
+[data-theme="candyland-pastel"] .home-section-title,
+[data-theme="candyland-pastel"] .home-container h1,
+[data-theme="candyland-pastel"] .home-container h2,
+[data-theme="candyland-pastel"] .home-container h3 {
+  color: #1A2B4C !important;
+}
+
+/* ================================================================================
+   TASK 4: HARMONIZE CARD STYLES FOR STUDIO HOMME MOSAIQUE & TWILIGHT VAPORWAVE
+   ================================================================================ */
+[data-theme="studio-homme-mosaique"] .explore-card,
+[data-theme="studio-homme-mosaique"] .library-card,
+[data-theme="audiophile-gold"] .explore-card,
+[data-theme="audiophile-gold"] .library-card,
+[data-theme-alias="studio-homme-mosaique"] .explore-card,
+[data-theme-alias="studio-homme-mosaique"] .library-card,
+[data-theme="twilight-vaporwave"] .explore-card,
+[data-theme="twilight-vaporwave"] .library-card {
+  background: var(--home-card-bg, rgba(20, 25, 35, 0.55)) !important;
+  border: 1px solid var(--home-card-border, rgba(255, 255, 255, 0.12)) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* ================================================================================
+   TASK 5: RESTORE COMPLETE THEME CONSISTENCY (NEUE EDITORIAL, NEBULA LIQUID GLASS,
+   OBSIDIAN DEPTH, BESPOKE)
+   ================================================================================ */
+[data-theme="neue-editorial"] .home-container,
+.theme-neue-editorial .home-container {
+  color: #1F1F1F !important;
+}
+[data-theme="neue-editorial"] .home-greeting,
+[data-theme="neue-editorial"] .home-user-title,
+[data-theme="neue-editorial"] .home-section-title,
+.theme-neue-editorial .home-greeting,
+.theme-neue-editorial .home-user-title,
+.theme-neue-editorial .home-section-title {
+  color: #1F1F1F !important;
+}
+[data-theme="neue-editorial"] .home-filter-chip,
+.theme-neue-editorial .home-filter-chip {
+  background: rgba(250, 245, 237, 0.55) !important;
+  border: 1px solid rgba(31, 31, 31, 0.15) !important;
+  color: #1F1F1F !important;
+}
+[data-theme="neue-editorial"] .home-filter-chip.active,
+.theme-neue-editorial .home-filter-chip.active {
+  background: #1F1F1F !important;
+  color: #FAF5ED !important;
+  border-color: #1F1F1F !important;
+}
+
+[data-theme="nebula-liquid-glass"] .home-container,
+.theme-nebula-liquid-glass .home-container {
+  color: #f5f3ff !important;
+}
+[data-theme="nebula-liquid-glass"] .home-greeting,
+[data-theme="nebula-liquid-glass"] .home-user-title,
+[data-theme="nebula-liquid-glass"] .home-section-title {
+  color: #f5f3ff !important;
+}
+[data-theme="nebula-liquid-glass"] .home-filter-chip {
+  background: rgba(13, 11, 26, 0.35) !important;
+  border: 1px solid rgba(167, 139, 250, 0.25) !important;
+  color: #f5f3ff !important;
+}
+[data-theme="nebula-liquid-glass"] .home-filter-chip.active {
+  background: #a78bfa !important;
+  color: #0d0b1a !important;
+}
+
+[data-theme="obsidian-depth"] .home-container,
+.theme-obsidian-depth .home-container {
+  color: #f8fafc !important;
+}
+[data-theme="obsidian-depth"] .home-greeting,
+[data-theme="obsidian-depth"] .home-user-title,
+[data-theme="obsidian-depth"] .home-section-title {
+  color: #f8fafc !important;
+}
+[data-theme="obsidian-depth"] .home-filter-chip {
+  background: rgba(30, 34, 45, 0.35) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  color: #f8fafc !important;
+}
+[data-theme="obsidian-depth"] .home-filter-chip.active {
+  background: #38bdf8 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="bespoke"] .home-container,
+[data-theme="bespoke-home"] .home-container,
+.theme-bespoke .home-container {
+  color: var(--theme-text-primary, #ffffff) !important;
+}
+[data-theme="bespoke"] .home-filter-chip,
+[data-theme="bespoke-home"] .home-filter-chip {
+  background: var(--theme-card-bg, rgba(10, 13, 26, 0.35)) !important;
+  border: 1px solid var(--theme-card-border, rgba(0, 240, 255, 0.25)) !important;
+  color: var(--theme-text-primary, #ffffff) !important;
+}
+[data-theme="bespoke"] .home-filter-chip.active,
+[data-theme="bespoke-home"] .home-filter-chip.active {
+  background: var(--theme-accent, #00f0ff) !important;
+  color: #000000 !important;
+}
+
 
 
 

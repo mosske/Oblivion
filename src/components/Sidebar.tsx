@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       id="app-sidebar-nav"
-      className={`w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col fixed left-0 top-0 bottom-0 h-screen ${designConfig.textPrimary} select-none z-30 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg overflow-y-auto overflow-x-hidden custom-scrollbar`}
+      className={`sidebar-nav desktop-menu w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col fixed left-0 top-0 bottom-0 h-screen ${designConfig.textPrimary} select-none z-30 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg overflow-y-auto overflow-x-hidden custom-scrollbar`}
     >
       {/* Brand Logo */}
       <div className="p-6 pb-4 flex items-center justify-between shrink-0">
@@ -94,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Main Navigation */}
-      <nav className="px-3 py-2 space-y-1.5 shrink-0" role="tablist" aria-label="Sidebar Navigation">
+      <nav className="sidebar-nav desktop-menu px-3 py-2 space-y-1.5 shrink-0" role="tablist" aria-label="Sidebar Navigation">
         {[
           { id: "nav-home-btn", tab: "home" as NavTab, label: "Home", icon: Home },
           { id: "nav-explore-btn", tab: "explore" as NavTab, label: "Explore", icon: Compass },
@@ -111,13 +111,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               aria-selected={isActive}
               aria-label={label}
               onClick={() => setActiveTab(tab)}
-              className={`sidebar-nav-item nav-item w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 select-none cursor-pointer border-0 outline-none bg-transparent ${
+              className={`sidebar-nav-item nav-item nav-link w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 select-none cursor-pointer border-0 outline-none bg-transparent ${
                 isActive
                   ? "nav-item-active tab-item-active tab-active"
                   : "nav-item-inactive"
               }`}
             >
-              <div className="nav-icon-container relative flex items-center justify-center w-7 h-7 shrink-0 transition-transform duration-200 bg-transparent border-0 outline-none shadow-none">
+              <div className="nav-icon nav-icon-container relative flex items-center justify-center w-7 h-7 shrink-0 transition-transform duration-200 bg-transparent border-0 outline-none shadow-none">
                 <span className="nav-icon-aura z-0" aria-hidden="true" />
                 <Icon className="relative z-10 w-5 h-5 transition-transform duration-200 overflow-visible shrink-0" />
               </div>

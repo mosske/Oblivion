@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { GoogleGenAI } from "@google/genai";
 import { DecodedSignature, recognizeBytes } from "shazamio-core";
 import play from "play-dl";
+import { Innertube } from "youtubei.js";
 
 // Prefer IPv4 connections to prevent dual-stack IPv6 ConnectTimeoutError in cloud containers
 if (typeof (dns as any).setDefaultResultOrder === "function") {
@@ -4375,6 +4376,369 @@ app.post("/api/youtube/playlists/:id/sync", async (req, res) => {
   const { tracks } = req.body;
   const result = await syncPlaylistTracksToYouTube(req, id, tracks || [], { allowInsert: true });
   res.json(result);
+});
+
+// Dedicated InnerTube Home Feed endpoint powered by Innertube
+let serverInnertubeInstance: Innertube | null = null;
+async function getServerInnertube(token?: string) {
+  if (!serverInnertubeInstance) {
+    serverInnertubeInstance = await Innertube.create({ retrieve_player: false });
+    // Force US region and English language to prevent cloud datacenter regional IP leakage
+    try {
+      if (serverInnertubeInstance.session?.context?.client) {
+        serverInnertubeInstance.session.context.client.gl = "US";
+        serverInnertubeInstance.session.context.client.hl = "en";
+      }
+    } catch {}
+  }
+  if (token) {
+    try {
+      serverInnertubeInstance.session.oauth.setTokens({
+        access_token: token,
+        refresh_token: "",
+        expiry_date: new Date(Date.now() + 3600 * 1000).toISOString(),
+      });
+    } catch {}
+  }
+  return serverInnertubeInstance;
+}
+
+const SERVER_REGIONAL_BLOCKLIST = [
+  'tamil',
+  'indian music',
+  'bollywood',
+  'kollywood',
+  'telugu',
+  'punjabi',
+  'desi',
+  'tollywood',
+  'mollywood',
+  'bhojpuri',
+  'malayalam',
+  'kannada',
+  'hindi',
+];
+
+app.get("/api/innertube/home", async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req);
+    const yt = await getServerInnertube(accessToken);
+    const continuation = req.query.continuation as string | undefined;
+
+    const sections: any[] = [];
+    let nextContinuationToken: string | undefined;
+
+    const parseSection = (sec: any, idx: number) => {
+      if (!sec) return;
+      const rawSec =
+        sec.musicCarouselShelfRenderer ||
+        sec.musicImmersiveCarouselShelfRenderer ||
+        sec.musicShelfRenderer ||
+        sec.musicCardShelfRenderer ||
+        sec;
+
+      let rawTitle =
+        rawSec.header?.title?.toString?.() ||
+        rawSec.header?.title?.text ||
+        rawSec.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.[0]?.text ||
+        rawSec.header?.musicCarouselShelfBasicHeaderRenderer?.title?.text ||
+        rawSec.title?.toString?.() ||
+        rawSec.title?.text ||
+        (typeof rawSec.title === "string" ? rawSec.title : "") ||
+        "";
+
+      if (!rawTitle && Array.isArray(rawSec.title?.runs)) {
+        rawTitle = rawSec.title.runs.map((r: any) => r.text || "").join("");
+      }
+
+      let rawSubtitle =
+        rawSec.header?.subtitle?.toString?.() ||
+        rawSec.header?.subtitle?.text ||
+        rawSec.header?.musicCarouselShelfBasicHeaderRenderer?.subtitle?.runs?.[0]?.text ||
+        rawSec.header?.musicCarouselShelfBasicHeaderRenderer?.subtitle?.text ||
+        rawSec.subheaders?.[0]?.toString?.() ||
+        rawSec.subheaders?.[0]?.text ||
+        rawSec.subtitle?.toString?.() ||
+        rawSec.subtitle?.text;
+
+      let rawItems: any[] = [];
+      if (Array.isArray(rawSec.contents)) {
+        rawItems = rawSec.contents;
+      } else if (rawSec.contents && Array.isArray(rawSec.contents.contents)) {
+        rawItems = rawSec.contents.contents;
+      }
+
+      const parsedItems: any[] = [];
+
+      for (const rawItem of rawItems) {
+        try {
+          const item =
+            rawItem.musicResponsiveListItemRenderer ||
+            rawItem.musicTwoRowItemRenderer ||
+            rawItem.musicMultiRowListItemRenderer ||
+            rawItem;
+
+          let rawItemTitle =
+            item.title?.toString?.() ||
+            item.title?.text ||
+            (typeof item.title === "string" ? item.title : "") ||
+            item.name?.toString?.() ||
+            item.name?.text ||
+            "";
+
+          if (!rawItemTitle && Array.isArray(item.title?.runs)) {
+            rawItemTitle = item.title.runs.map((r: any) => r.text || "").join("");
+          }
+          if (!rawItemTitle && Array.isArray(item.flex_columns) && item.flex_columns[0]?.title) {
+            const col0 = item.flex_columns[0].title;
+            rawItemTitle = col0.text || col0.toString?.() || (Array.isArray(col0.runs) ? col0.runs.map((r: any) => r.text || "").join("") : "");
+          }
+
+          if (!rawItemTitle) continue;
+
+          const payload = item.endpoint?.payload || item.navigationEndpoint?.payload || {};
+          let videoId: string | undefined =
+            item.id ||
+            payload.videoId ||
+            item.playlistItemData?.videoId ||
+            (item.item_type === "song" || item.item_type === "video" ? item.id : undefined);
+
+          let browseId: string | undefined =
+            payload.browseId ||
+            item.navigationEndpoint?.browseEndpoint?.browseId ||
+            (item.item_type !== "song" && item.item_type !== "video" ? item.id : undefined);
+
+          if (!videoId && typeof item.id === "string" && /^[a-zA-Z0-9_-]{11}$/.test(item.id)) {
+            videoId = item.id;
+          }
+
+          const id = videoId || browseId || String(Math.random());
+
+          let itemType: "song" | "playlist" | "album" | "video" | "artist" = "song";
+          const declaredType = (item.item_type || item.type || "").toString().toLowerCase();
+          const pageType = (
+            payload.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType ||
+            item.navigationEndpoint?.browseEndpoint?.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType ||
+            ""
+          ).toLowerCase();
+
+          if (
+            declaredType === "artist" ||
+            pageType.includes("artist") ||
+            pageType.includes("user_channel") ||
+            (browseId && (browseId.startsWith("UC") || browseId.startsWith("FEmusic_library_privately_owned_artist_detail")))
+          ) {
+            itemType = "artist";
+          } else if (
+            declaredType === "album" ||
+            pageType.includes("album") ||
+            (browseId && browseId.startsWith("MPREb_"))
+          ) {
+            itemType = "album";
+          } else if (
+            declaredType === "playlist" ||
+            pageType.includes("playlist") ||
+            (browseId && (browseId.startsWith("VL") || browseId.startsWith("PL") || browseId.startsWith("RD")))
+          ) {
+            itemType = "playlist";
+          } else if (
+            declaredType === "video" ||
+            (item.subtitle && /video/i.test(String(item.subtitle)))
+          ) {
+            itemType = "video";
+          } else {
+            itemType = "song";
+          }
+
+          let artistStr = "";
+          if (Array.isArray(item.artists) && item.artists.length > 0) {
+            artistStr = item.artists
+              .map((a: any) => a.name || a.text || (typeof a === "string" ? a : ""))
+              .filter(Boolean)
+              .join(", ");
+          } else if (Array.isArray(item.authors) && item.authors.length > 0) {
+            artistStr = item.authors
+              .map((a: any) => a.name || a.text || (typeof a === "string" ? a : ""))
+              .filter(Boolean)
+              .join(", ");
+          } else if (item.author) {
+            artistStr = item.author.name || item.author.text || (typeof item.author === "string" ? item.author : "");
+          }
+
+          let rawSub =
+            item.subtitle?.toString?.() ||
+            item.subtitle?.text ||
+            (typeof item.subtitle === "string" ? item.subtitle : "") ||
+            "";
+
+          if (!rawSub && Array.isArray(item.subtitle?.runs)) {
+            rawSub = item.subtitle.runs.map((r: any) => r.text || "").join("");
+          }
+          if (!rawSub && Array.isArray(item.flex_columns) && item.flex_columns[1]?.title) {
+            const col1 = item.flex_columns[1].title;
+            rawSub = col1.text || col1.toString?.() || (Array.isArray(col1.runs) ? col1.runs.map((r: any) => r.text || "").join("") : "");
+          }
+
+          if (!artistStr && rawSub) {
+            artistStr = rawSub;
+          }
+
+          // Thumbnail extraction
+          let thumbUrl = "";
+          let list: any[] = [];
+          const thumbData = item.thumbnail?.contents || item.thumbnail?.thumbnails || item.thumbnail || item.thumbnails;
+          if (Array.isArray(thumbData)) list = thumbData;
+          else if (thumbData && Array.isArray(thumbData.contents)) list = thumbData.contents;
+
+          if (list.length > 0) {
+            const sorted = [...list].sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)));
+            thumbUrl = sorted[0]?.url || "";
+            if (thumbUrl.startsWith("//")) thumbUrl = `https:${thumbUrl}`;
+            if (thumbUrl.includes("=w120-h120") || thumbUrl.includes("=s120")) {
+              thumbUrl = thumbUrl.replace("=w120-h120", "=w544-h544").replace("=s120", "=s544");
+            }
+          }
+          if (!thumbUrl && videoId && videoId.length === 11) {
+            thumbUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+          }
+
+          parsedItems.push({
+            id,
+            videoId: itemType === "song" || itemType === "video" ? videoId : undefined,
+            browseId,
+            title: rawItemTitle,
+            subtitle: rawSub || artistStr || "YouTube Music",
+            artist: artistStr || rawSub || "YouTube Music",
+            thumbnail: thumbUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=544&auto=format&fit=crop&q=80",
+            type: itemType,
+            duration: item.duration?.toString?.() || item.duration?.text,
+            year: item.year?.toString?.() || item.year?.text,
+            itemCount: item.item_count?.toString?.() || item.item_count?.text,
+          });
+        } catch {}
+      }
+
+      // Special spotlight card handling
+      const isCardShelf =
+        rawSec.type === "MusicCardShelf" ||
+        Boolean(rawSec.musicCardShelfRenderer) ||
+        Boolean(sec.musicCardShelfRenderer) ||
+        Boolean(rawSec.on_tap || rawSec.onTap);
+
+      if (isCardShelf && (rawSec.thumbnail || rawSec.on_tap || rawSec.onTap)) {
+        const tapPayload = rawSec.on_tap?.payload || rawSec.onTap?.payload || {};
+        const bId = tapPayload.browseId;
+        const vId = tapPayload.videoId;
+        const spotlightTitle = rawSec.title?.toString?.() || rawSec.title?.text || rawTitle;
+        if (spotlightTitle) {
+          let spotlightThumb = "";
+          const sThumbData = rawSec.thumbnail?.contents || rawSec.thumbnail?.thumbnails || rawSec.thumbnail || rawSec.thumbnails;
+          if (Array.isArray(sThumbData)) {
+            const sorted = [...sThumbData].sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)));
+            spotlightThumb = sorted[0]?.url || "";
+          }
+          if (spotlightThumb.startsWith("//")) spotlightThumb = `https:${spotlightThumb}`;
+          if (!spotlightThumb && vId) spotlightThumb = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
+
+          const spotlightItem = {
+            id: vId || bId || `spotlight-${idx}`,
+            videoId: vId,
+            browseId: bId,
+            title: spotlightTitle,
+            subtitle: rawSec.subtitle?.toString?.() || rawSec.subtitle?.text || rawSubtitle || "Featured Spotlight",
+            artist: spotlightTitle,
+            thumbnail: spotlightThumb || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=544&auto=format&fit=crop&q=80",
+            type: bId?.startsWith("UC") ? "artist" : bId?.startsWith("MPREb_") ? "album" : "playlist",
+          };
+          if (parsedItems.length === 0) {
+            parsedItems.push(spotlightItem);
+          }
+        }
+      }
+
+      if (parsedItems.length > 0) {
+        const sectionType =
+          rawSec.type ||
+          (sec.musicImmersiveCarouselShelfRenderer
+            ? "MusicImmersiveCarouselShelf"
+            : sec.musicShelfRenderer
+            ? "MusicShelf"
+            : sec.musicCardShelfRenderer
+            ? "MusicCardShelf"
+            : "MusicCarouselShelf");
+
+        sections.push({
+          id: `sec-${idx}-${encodeURIComponent(rawTitle || "feed")}`,
+          title: rawTitle || (idx === 0 ? "Quick Picks" : "Recommended for You"),
+          subtitle: rawSubtitle,
+          type: sectionType,
+          items: parsedItems,
+        });
+      }
+    };
+
+    if (continuation) {
+      // Continuation browse
+      const response = await (yt as any).actions.execute("/browse", {
+        client: "YTMUSIC",
+        continuation: continuation,
+      });
+      const sectionList = response.data?.continuationContents?.sectionListContinuation;
+      const rawSections = sectionList?.contents || [];
+      nextContinuationToken = sectionList?.continuations?.[0]?.nextContinuationData?.continuation;
+      rawSections.forEach((sec: any, i: number) => parseSection(sec, i));
+    } else {
+      // Initial home feed
+      const feed = await yt.music.getHomeFeed();
+      const page = (feed as any).page;
+      const tab = page?.contents?.item?.()?.tabs?.find((t: any) => t.selected);
+      nextContinuationToken = tab?.content?.continuation;
+
+      if (Array.isArray(feed.sections)) {
+        feed.sections.forEach((sec: any, i: number) => parseSection(sec, i));
+      }
+
+      if ((feed as any).has_continuation && sections.length < 8) {
+        try {
+          const nextFeed = await (feed as any).getContinuation();
+          const contPage = (nextFeed as any).page;
+          const contObj = contPage?.continuation_contents;
+          if (contObj?.continuation) nextContinuationToken = contObj.continuation;
+          if (Array.isArray(nextFeed.sections)) {
+            nextFeed.sections.forEach((sec: any, i: number) => parseSection(sec, sections.length + i));
+          }
+        } catch {}
+      }
+    }
+
+    // TASK 2 & 3: Filter all shelves against regional noise blocklist
+    const filteredSections = sections
+      .filter((sec) => {
+        const t = (sec.title || "").toLowerCase();
+        const s = (sec.subtitle || "").toLowerCase();
+        return !SERVER_REGIONAL_BLOCKLIST.some((k) => t.includes(k) || s.includes(k));
+      })
+      .map((sec) => ({
+        ...sec,
+        items: (sec.items || []).filter((item: any) => {
+          const itTitle = (item.title || "").toLowerCase();
+          const itArtist = (item.artist || "").toLowerCase();
+          const itSub = (item.subtitle || "").toLowerCase();
+          return !SERVER_REGIONAL_BLOCKLIST.some(
+            (k) => itTitle.includes(k) || itArtist.includes(k) || itSub.includes(k)
+          );
+        }),
+      }))
+      .filter((sec) => sec.items && sec.items.length > 0);
+
+    res.json({
+      sections: filteredSections,
+      continuationToken: nextContinuationToken,
+    });
+  } catch (err: any) {
+    console.error("[server] /api/innertube/home error:", err);
+    res.status(500).json({ error: "Failed to load InnerTube Home feed", message: err?.message });
+  }
 });
 
 // YouTube Music Home Feed (Always fresh pull on request: personalized when signed in, trending when signed out)

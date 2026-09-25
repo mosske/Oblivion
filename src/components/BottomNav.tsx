@@ -31,7 +31,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       id="bottom-navigation-bar"
       role="tablist"
       aria-label="Bottom Navigation"
-      className={`bottom-nav-dock md:hidden fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-30 px-2 shadow-2xl backdrop-blur-xl ${designConfig.bottomNavBg} ${designConfig.borderSubtle}`}
+      className={`mobile-nav bottom-nav-bar bottom-nav-dock md:hidden fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-30 px-2 shadow-2xl backdrop-blur-xl ${designConfig.bottomNavBg} ${designConfig.borderSubtle}`}
     >
       {tabs.map(({ id, tab, label, icon: Icon }) => {
         const isActive = activeTab === tab;
@@ -44,11 +44,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             aria-selected={isActive}
             aria-label={label}
             onClick={() => setActiveTab(tab)}
-            className={`bottom-nav-item nav-item relative flex flex-col items-center justify-center gap-0.5 w-16 py-1 cursor-pointer transition-all duration-200 select-none bg-transparent border-0 outline-none shadow-none ${
+            className={`bottom-nav-item nav-item nav-link relative flex flex-col items-center justify-center gap-0.5 w-16 py-1 cursor-pointer transition-all duration-200 select-none bg-transparent border-0 outline-none shadow-none ${
               isActive ? "nav-item-active tab-item-active tab-active" : "nav-item-inactive"
             }`}
           >
-            <div className="nav-icon-container relative z-10 flex items-center justify-center w-7 h-7 bg-transparent border-0 outline-none shadow-none transition-transform duration-200">
+            <div className="nav-icon nav-icon-container relative z-10 flex items-center justify-center w-7 h-7 bg-transparent border-0 outline-none shadow-none transition-transform duration-200">
               <span className="nav-icon-aura z-0" aria-hidden="true" />
               <Icon className="relative z-10 w-5 h-5 transition-transform duration-200 shrink-0 overflow-visible" />
             </div>
