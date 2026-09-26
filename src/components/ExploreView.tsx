@@ -192,6 +192,31 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const showPodcasts = showAll || activeCategory === "Podcasts";
   const showMoodsAndGenres = showAll || activeCategory === "Moods & Genres";
 
+  // STRICT ZERO-SONG FILTER: Do not show any album, playlist, or collection that has zero songs within!
+  const validAlbums = React.useMemo(() => {
+    return (data.newReleases || []).filter((album) => {
+      if (!album || !album.id) return false;
+      const count =
+        typeof album.tracksCount === "number"
+          ? album.tracksCount
+          : parseInt(String((album as any).videoCount || (album as any).trackCount || (album as any).itemCount || (album.tracks ? album.tracks.length : 0)).replace(/[^0-9]/g, ""), 10) || 0;
+      if (count <= 0 && (!Array.isArray(album.tracks) || album.tracks.length === 0)) {
+        return false;
+      }
+      if (Array.isArray(album.tracks) && album.tracks.length === 0 && count <= 0) {
+        return false;
+      }
+      const rawTitle = String(album.title || "").toLowerCase();
+      if (rawTitle.includes("[deleted") || rawTitle.includes("[private") || rawTitle === "0 videos" || rawTitle === "empty") {
+        return false;
+      }
+      if (typeof album.id === "string" && album.id.length === 11 && !(album as any).playlistId && !album.id.startsWith("PL") && !album.id.startsWith("OLAK") && !album.id.startsWith("MPREb")) {
+        return false;
+      }
+      return true;
+    });
+  }, [data.newReleases]);
+
   if (selectedGenre) {
     return (
       <GenreDetailView
@@ -324,7 +349,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           {/* ========================================================================= */}
           {/* 1. NEW RELEASES & POPULAR SINGLES */}
           {/* ========================================================================= */}
-          {showNewReleases && data.newReleases.length > 0 && (
+          {showNewReleases && validAlbums.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -341,7 +366,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {data.newReleases.map((album) => (
+                {validAlbums.map((album) => (
                   <div
                     key={album.id}
                     onClick={() => onSelectAlbum && onSelectAlbum(album)}

@@ -26,7 +26,7 @@ import { LyricsView } from "./LyricsView";
 import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { MarqueeText } from "./MarqueeText";
 import { OblivionLogo as Logo } from "./OblivionLogo";
-import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl } from "../utils/formatters";
+import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl, extractCleanYoutubeId } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { calculateWcagText, hexToRgba } from "../theme/colorUtils";
 import { getBespokeColors, getBespokeConfig } from "../theme/themeService";
@@ -773,6 +773,18 @@ const VideoPlayer = React.memo(
     const startParam = startSec > 0 ? `&start=${startSec}` : "";
     const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1${originParam}${startParam}`;
 
+    useEffect(() => {
+      return () => {
+        const iframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
+        if (iframe) {
+          try {
+            iframe.contentWindow?.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
+            iframe.src = "about:blank";
+          } catch {}
+        }
+      };
+    }, []);
+
     return (
       <div
         className="full-player-video-card"
@@ -841,6 +853,10 @@ export const Player: React.FC<PlayerProps> = ({
   const lastSeekTimestampRef = useRef<number>(0);
   const isAudioSeekingRef = useRef<boolean>(false);
   const activeAudioSourceRef = useRef<"audio" | "youtube">("youtube");
+  const mediaModeRef = useRef<"song" | "video">(playerState.mediaMode === "video" ? "video" : "song");
+  useEffect(() => {
+    mediaModeRef.current = playerState.mediaMode === "video" ? "video" : "song";
+  }, [playerState.mediaMode]);
 
   // SECTION 1: HIDDEN SILENT HTML5 AUDIO ANCHOR (Permanent Android MediaSession Fix)
   useEffect(() => {
@@ -946,7 +962,9 @@ export const Player: React.FC<PlayerProps> = ({
   const videoPlayerRef = useRef<any>(null);
   const videoCurrentTimeRef = useRef<number>(0);
   const currentVideoTrackIdRef = useRef<string | null>(null);
+  const lastActiveVideoTrackIdRef = useRef<string | null>(null);
   const isSeekingToVideoStartRef = useRef<boolean>(false);
+  const hasAppliedVideoStartRef = useRef<boolean>(false);
   const handleSwitchToAudioModeRef = useRef<() => void>(() => {});
 
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
@@ -1254,20 +1272,8 @@ export const Player: React.FC<PlayerProps> = ({
   // TASK 1: Determine active track video ID reliably
   const activeVideoId = useMemo(() => {
     if (!currentTrack) return "";
-    const idCandidates = [
-      (currentTrack as any).videoId,
-      (currentTrack as any).youtubeVideoId,
-      (currentTrack as any).youtubeId,
-      currentTrack.id,
-    ];
-    for (const cand of idCandidates) {
-      if (!cand) continue;
-      let clean = String(cand).trim();
-      if (clean.includes("watch?v=")) clean = clean.split("watch?v=")[1].split("&")[0];
-      else if (clean.includes("youtu.be/")) clean = clean.split("youtu.be/")[1].split("?")[0];
-      const cleaned = clean.replace(/[^a-zA-Z0-9_-]/g, "");
-      if (cleaned.length === 11) return cleaned;
-    }
+    const cleanId = extractCleanYoutubeId(currentTrack);
+    if (cleanId) return cleanId;
     return (currentTrack.id && currentTrack.id.length === 11)
       ? currentTrack.id
       : ((currentTrack as any).videoId || currentTrack.youtubeVideoId || (currentTrack as any).youtubeId || "");
@@ -1319,30 +1325,42 @@ export const Player: React.FC<PlayerProps> = ({
           }
         } catch {}
       }
-      if (audioRef.current && audioRef.current.paused && isPlaying) {
-        try {
-          audioRef.current.play().catch(console.error);
-        } catch {}
+      if (isPlayingRef.current && !userManualPauseRef.current) {
+        startSilentAnchor();
       }
     }
-  }, [playerState.mediaMode, isPlaying, volume]);
+  }, [playerState.mediaMode, isPlaying, volume, startSilentAnchor]);
 
   // ================================================================================
   // TASK 2: SYNCHRONIZE TRACK CHANGES WHILE IN VIDEO MODE
   // ================================================================================
   useEffect(() => {
-    if (playerState.mediaMode !== "video") return;
-    if (!currentTrack || !activeVideoId) return;
+    if (playerState.mediaMode !== "video") {
+      lastActiveVideoTrackIdRef.current = null;
+      return;
+    }
+    if (!currentTrack) return;
+    const vid = activeVideoId || extractCleanYoutubeId(currentTrack);
+    if (!vid) return;
 
-    // GUARD: If this is the exact same track when entering video mode, do NOT reset start time to 0!
-    if (currentVideoTrackIdRef.current === activeVideoId) {
+    // GUARD: If entering video mode for the first time for this track, DO NOT reset start time!
+    if (lastActiveVideoTrackIdRef.current === null) {
+      lastActiveVideoTrackIdRef.current = vid;
+      currentVideoTrackIdRef.current = vid;
       return;
     }
 
-    // Only actual track change (e.g. Next / Prev track while already in video mode) should reset to 0:
-    currentVideoTrackIdRef.current = activeVideoId;
-    activeVideoIdRef.current = activeVideoId;
+    // GUARD: If this is the exact same track, do NOT reset start time to 0!
+    if (lastActiveVideoTrackIdRef.current === vid) {
+      return;
+    }
+
+    // Only actual track change (Next / Prev track while already in video mode) should reset to 0:
+    lastActiveVideoTrackIdRef.current = vid;
+    currentVideoTrackIdRef.current = vid;
+    activeVideoIdRef.current = vid;
     isSeekingToVideoStartRef.current = false;
+    hasAppliedVideoStartRef.current = false;
     videoStartTimeRef.current = 0;
     videoCurrentTimeRef.current = 0;
     currentTimeRef.current = 0;
@@ -1353,6 +1371,8 @@ export const Player: React.FC<PlayerProps> = ({
       try {
         audioRef.current.pause();
         audioRef.current.muted = true;
+        audioRef.current.src = getSilentAudioUrl();
+        audioRef.current.currentTime = 0;
       } catch {}
     }
     if (silentAudioRef.current && !silentAudioRef.current.paused) {
@@ -1372,7 +1392,7 @@ export const Player: React.FC<PlayerProps> = ({
     if (videoPlayerRef.current && typeof videoPlayerRef.current.loadVideoById === "function") {
       try {
         videoPlayerRef.current.loadVideoById({
-          videoId: activeVideoId,
+          videoId: vid,
           startSeconds: 0,
         });
         videoPlayerRef.current.unMute?.();
@@ -1388,7 +1408,7 @@ export const Player: React.FC<PlayerProps> = ({
   // TASK 1: COMPLETE AUDIO ELEMENT PURGE UPON ENTERING VIDEO MODE
   // ================================================================================
   const handleSwitchToVideoMode = useCallback(() => {
-    // 1. Capture exact current playback timestamp from YouTube stream engine or audio element
+    // 1. Capture exact current playback timestamp across all media layers
     let currentSeconds = 0;
     if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === "function") {
       try {
@@ -1398,19 +1418,27 @@ export const Player: React.FC<PlayerProps> = ({
         }
       } catch {}
     }
-    if (!currentSeconds && audioRef.current && typeof audioRef.current.currentTime === "number" && !isNaN(audioRef.current.currentTime) && audioRef.current.currentTime > 0) {
-      currentSeconds = audioRef.current.currentTime;
+    if (currentSeconds <= 0 && typeof currentTimeRef.current === "number" && !isNaN(currentTimeRef.current) && currentTimeRef.current > 0) {
+      currentSeconds = currentTimeRef.current;
     }
-    if (!currentSeconds) {
-      currentSeconds = currentTimeRef.current || currentTime || 0;
+    if (currentSeconds <= 0 && typeof currentTime === "number" && !isNaN(currentTime) && currentTime > 0) {
+      currentSeconds = currentTime;
+    }
+    if (currentSeconds <= 0 && typeof playerState.currentTime === "number" && !isNaN(playerState.currentTime) && playerState.currentTime > 0) {
+      currentSeconds = playerState.currentTime;
     }
     currentSeconds = Math.max(0, Math.floor(currentSeconds));
 
-    // 2. IMMEDIATELY pause and mute background engines
+    // 2. Set media mode ref immediately to block any background playback loops
+    mediaModeRef.current = "video";
+
+    // IMMEDIATELY pause, stop and mute background engines so they cannot emit sound
     if (audioRef.current) {
       try {
         audioRef.current.pause();
         audioRef.current.muted = true;
+        audioRef.current.src = getSilentAudioUrl();
+        audioRef.current.currentTime = 0;
       } catch {}
     }
     if (silentAudioRef.current) {
@@ -1421,18 +1449,36 @@ export const Player: React.FC<PlayerProps> = ({
     if (ytPlayerRef.current) {
       try {
         ytPlayerRef.current.pauseVideo?.();
+        ytPlayerRef.current.stopVideo?.();
         ytPlayerRef.current.mute?.();
       } catch {}
     }
 
+    const vid = activeVideoId || extractCleanYoutubeId(currentTrack);
+
     // 3. Mark the active video track so the track-change effect doesn't reset start time
-    currentVideoTrackIdRef.current = activeVideoId;
-    activeVideoIdRef.current = activeVideoId;
+    lastActiveVideoTrackIdRef.current = vid;
+    currentVideoTrackIdRef.current = vid;
+    activeVideoIdRef.current = vid;
     isSeekingToVideoStartRef.current = currentSeconds > 0;
+    hasAppliedVideoStartRef.current = currentSeconds <= 0;
     videoStartTimeRef.current = currentSeconds;
     videoCurrentTimeRef.current = currentSeconds;
     currentTimeRef.current = currentSeconds;
     setVideoStartTime(currentSeconds);
+
+    // If an existing video player is already mounted, immediately seek to current second
+    if (videoPlayerRef.current) {
+      try {
+        if (currentSeconds > 0 && typeof videoPlayerRef.current.seekTo === "function") {
+          videoPlayerRef.current.seekTo(currentSeconds, true);
+        }
+        videoPlayerRef.current.unMute?.();
+        videoPlayerRef.current.setVolume?.(volume * 100);
+        videoPlayerRef.current.playVideo?.();
+        hasAppliedVideoStartRef.current = true;
+      } catch {}
+    }
 
     // Auto-clear seeking guard after 4 seconds
     setTimeout(() => {
@@ -1449,51 +1495,65 @@ export const Player: React.FC<PlayerProps> = ({
       showSimilar: false,
       isFullscreen: true,
     }));
-  }, [activeVideoId, currentTime, setPlayerState]);
+  }, [activeVideoId, currentTrack, currentTime, playerState.currentTime, setPlayerState, volume]);
 
   // ================================================================================
   // TASK 3: ATOMIC SWAP FROM VIDEO TO AUDIO MODE
   // ================================================================================
   const handleSwitchToAudio = useCallback(async () => {
-    if (playerState.mediaMode === "video") {
+    if (playerState.mediaMode === "video" || mediaModeRef.current === "video") {
+      mediaModeRef.current = "song";
+
       // 1. Capture exact playback time from YouTube Player
       let currentVideoTime = 0;
       if (videoPlayerRef.current && typeof videoPlayerRef.current.getCurrentTime === "function") {
         try {
           const t = videoPlayerRef.current.getCurrentTime();
           if (typeof t === "number" && !isNaN(t) && t >= 0) {
-            currentVideoTime = t;
+            currentVideoTime = Math.max(currentVideoTime, t);
           }
         } catch {}
       }
-      if (!currentVideoTime && videoCurrentTimeRef.current) {
-        currentVideoTime = videoCurrentTimeRef.current;
+      if (videoCurrentTimeRef.current && videoCurrentTimeRef.current > 0) {
+        currentVideoTime = Math.max(currentVideoTime, videoCurrentTimeRef.current);
       }
-      if (!currentVideoTime) {
-        currentVideoTime = currentTimeRef.current || currentTime || 0;
+      if (currentTimeRef.current && currentTimeRef.current > 0) {
+        currentVideoTime = Math.max(currentVideoTime, currentTimeRef.current);
+      }
+      if (currentTime && currentTime > 0) {
+        currentVideoTime = Math.max(currentVideoTime, currentTime);
+      }
+      if (playerState.currentTime && playerState.currentTime > 0) {
+        currentVideoTime = Math.max(currentVideoTime, playerState.currentTime);
       }
       currentVideoTime = Math.max(0, Math.floor(currentVideoTime));
 
-      // 2. IMMEDIATELY stop and destroy/unmount the YouTube video player:
+      // 2. IMMEDIATELY pause, mute, stop and destroy the YouTube video player:
+      const vIframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
+      if (vIframe) {
+        try {
+          vIframe.contentWindow?.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
+          vIframe.src = "about:blank";
+        } catch {}
+      }
       if (videoPlayerRef.current) {
         try {
+          videoPlayerRef.current.pauseVideo?.();
           videoPlayerRef.current.stopVideo?.();
           videoPlayerRef.current.destroy?.();
         } catch {}
         videoPlayerRef.current = null;
       }
-      activeVideoIdRef.current = null;
-      currentVideoTrackIdRef.current = null;
-      isSeekingToVideoStartRef.current = false;
-
-      // Force video iframe removal & wipe src so it cannot emit sound in background
-      const vIframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
       if (vIframe) {
         try {
-          vIframe.src = "about:blank";
           vIframe.remove();
         } catch {}
       }
+      activeVideoIdRef.current = null;
+      lastActiveVideoTrackIdRef.current = null;
+      currentVideoTrackIdRef.current = null;
+      isSeekingToVideoStartRef.current = false;
+      hasAppliedVideoStartRef.current = false;
 
       // 3. Set playerMode = 'audio' (mediaMode: 'song') & keep isFullscreen: true
       setPlayerState((prev) => ({
@@ -1521,6 +1581,7 @@ export const Player: React.FC<PlayerProps> = ({
 
       // 4. Resume background YouTube stream engine with the EXACT SAME currentTrack
       const activeVid =
+        extractCleanYoutubeId(currentTrack) ||
         (currentTrack as any)?.videoId ||
         currentTrack?.youtubeVideoId ||
         (currentTrack as any)?.youtubeId ||
@@ -1548,7 +1609,7 @@ export const Player: React.FC<PlayerProps> = ({
         navigator.mediaSession.playbackState = "playing";
       }
     }
-  }, [currentTrack, currentTime, onSeek, playerState.mediaMode, setPlayerState, volume]);
+  }, [currentTrack, currentTime, onSeek, playerState.currentTime, playerState.mediaMode, setPlayerState, volume]);
 
   const handleSwitchToAudioMode = handleSwitchToAudio;
   handleSwitchToAudioModeRef.current = handleSwitchToAudio;
@@ -1949,12 +2010,10 @@ export const Player: React.FC<PlayerProps> = ({
       if (playerState.mediaMode === "video") {
         if (audioRef.current) {
           try {
-            const trackAudio = getPlayableAudioUrl(currentTrack);
-            if (trackAudio && (!audioRef.current.src || !audioRef.current.src.includes(trackAudio))) {
-              audioRef.current.src = trackAudio;
-              audioRef.current.currentTime = 0;
-            }
             audioRef.current.pause();
+            audioRef.current.muted = true;
+            audioRef.current.src = getSilentAudioUrl();
+            audioRef.current.currentTime = 0;
           } catch {}
         }
         if (ytPlayerRef.current) {
@@ -2021,7 +2080,7 @@ export const Player: React.FC<PlayerProps> = ({
           width: "100%",
           videoId: vid,
           playerVars: {
-            autoplay: isPlayingRef.current && !userManualPauseRef.current && playerState.mediaMode !== "video" ? 1 : 0,
+            autoplay: isPlayingRef.current && !userManualPauseRef.current && mediaModeRef.current !== "video" ? 1 : 0,
             controls: 1,
             disablekb: 0,
             fs: 1,
@@ -2034,9 +2093,10 @@ export const Player: React.FC<PlayerProps> = ({
           events: {
             onReady: (event: any) => {
               isYtReadyRef.current = true;
-              if (playerState.mediaMode === "video") {
+              if (mediaModeRef.current === "video") {
                 try {
                   event.target.pauseVideo?.();
+                  event.target.stopVideo?.();
                   event.target.mute?.();
                 } catch {}
                 return;
@@ -2058,9 +2118,10 @@ export const Player: React.FC<PlayerProps> = ({
               }
             },
             onStateChange: (event: any) => {
-              if (playerState.mediaMode === "video") {
+              if (mediaModeRef.current === "video") {
                 try {
                   event.target.pauseVideo?.();
+                  event.target.stopVideo?.();
                   event.target.mute?.();
                 } catch {}
                 return;
@@ -2188,10 +2249,11 @@ export const Player: React.FC<PlayerProps> = ({
             const vDur = typeof vPlayer.getDuration === "function" ? vPlayer.getDuration() : undefined;
 
             if (typeof vCurTime === "number" && !isNaN(vCurTime) && vCurTime >= 0) {
-              if (isSeekingToVideoStartRef.current && videoStartTimeRef.current > 0) {
+              if (videoStartTimeRef.current > 0 && !hasAppliedVideoStartRef.current) {
                 if (vCurTime < videoStartTimeRef.current - 1.5) {
                   return;
                 }
+                hasAppliedVideoStartRef.current = true;
                 isSeekingToVideoStartRef.current = false;
               }
               videoCurrentTimeRef.current = vCurTime;
@@ -2210,6 +2272,8 @@ export const Player: React.FC<PlayerProps> = ({
         }
         return;
       }
+
+      if ((mediaModeRef.current as string) === "video") return;
 
       const player = ytPlayerRef.current;
       if (!player || !isYtReadyRef.current) return;
@@ -2312,13 +2376,14 @@ export const Player: React.FC<PlayerProps> = ({
                 const curTime = event.target.getCurrentTime?.() || 0;
                 const dur = event.target.getDuration?.() || 0;
 
-                if (isSeekingToVideoStartRef.current && videoStartTimeRef.current > 0) {
+                if (!hasAppliedVideoStartRef.current && videoStartTimeRef.current > 0) {
                   if (curTime < videoStartTimeRef.current - 1.5) {
                     try {
                       event.target.seekTo(videoStartTimeRef.current, true);
                     } catch {}
                     return;
                   }
+                  hasAppliedVideoStartRef.current = true;
                   isSeekingToVideoStartRef.current = false;
                 }
 
@@ -2367,10 +2432,11 @@ export const Player: React.FC<PlayerProps> = ({
         if (data.event === "infoDelivery" && data.info) {
           if (typeof data.info.currentTime === "number") {
             const rawTime = data.info.currentTime;
-            if (isSeekingToVideoStartRef.current && videoStartTimeRef.current > 0) {
+            if (!hasAppliedVideoStartRef.current && videoStartTimeRef.current > 0) {
               if (rawTime < videoStartTimeRef.current - 1.5) {
                 return;
               }
+              hasAppliedVideoStartRef.current = true;
               isSeekingToVideoStartRef.current = false;
             }
             videoCurrentTimeRef.current = rawTime;

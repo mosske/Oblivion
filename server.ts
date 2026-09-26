@@ -1574,21 +1574,51 @@ async function searchYouTubePlaylistsPublic(query: string): Promise<any[]> {
     for (const section of contents) {
       const renderers = section.itemSectionRenderer?.contents || [];
       for (const item of renderers) {
-        if (item.playlistRenderer) {
+        if (item.lockupViewModel && (item.lockupViewModel.contentType === "LOCKUP_CONTENT_TYPE_PLAYLIST" || item.lockupViewModel.contentId?.startsWith("PL"))) {
+          const lvm = item.lockupViewModel;
+          const playlistId = lvm.contentId;
+          const title = lvm.metadata?.lockupMetadataViewModel?.title?.content || "YouTube Playlist";
+          const artist = lvm.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows?.[0]?.metadataParts?.[0]?.text?.content || "YouTube Music";
+          const thumbs = lvm.contentImage?.collectionThumbnailViewModel?.primaryThumbnail?.thumbnailViewModel?.image?.sources || [];
+          const coverUrl = thumbs[thumbs.length - 1]?.url || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80";
+          const badgeText = lvm.contentImage?.collectionThumbnailViewModel?.primaryThumbnail?.thumbnailViewModel?.overlays?.[0]?.thumbnailOverlayBadgeViewModel?.thumbnailBadges?.[0]?.thumbnailBadgeViewModel?.text || "25 videos";
+          const parsedCount = parseInt(String(badgeText).replace(/[^0-9]/g, ""), 10) || 25;
+
+          if (playlistId && parsedCount > 0) {
+            playlists.push({
+              id: playlistId,
+              playlistId,
+              title,
+              artist,
+              description: `Curated YouTube Music • ${badgeText}`,
+              coverUrl,
+              type: "album",
+              isYouTubeSynced: true,
+              tracksCount: parsedCount,
+              tracks: []
+            });
+          }
+        } else if (item.playlistRenderer) {
           const p = item.playlistRenderer;
           const playlistId = p.playlistId;
           const title = p.title?.simpleText || p.title?.runs?.[0]?.text || "YouTube Playlist";
           const description = p.shortBylineText?.runs?.[0]?.text || "YouTube Music";
-          const coverUrl = p.thumbnails?.[0]?.thumbnails?.slice(-1)?.[0]?.url || `https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80`;
           const videoCount = p.videoCount || "25";
-          if (playlistId) {
+          const parsedCount = parseInt(String(videoCount).replace(/[^0-9]/g, ""), 10) || 0;
+          const thumbs = p.thumbnails?.[0]?.thumbnails || [];
+          const coverUrl = thumbs[thumbs.length - 1]?.url || p.thumbnails?.[0]?.url || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80";
+
+          if (playlistId && parsedCount > 0) {
             playlists.push({
               id: playlistId,
+              playlistId,
               title,
+              artist: description,
               description: `Curated YouTube Music • ${videoCount} tracks`,
               coverUrl,
+              type: "album",
               isYouTubeSynced: true,
-              tracksCount: parseInt(videoCount, 10) || 20,
+              tracksCount: parsedCount,
               tracks: []
             });
           }
@@ -1653,7 +1683,7 @@ async function searchYouTubePublic(query: string, searchType: string = "all"): P
             artist: meta.artist,
             uploader: meta.uploader,
             album: searchType === "album" ? meta.title : "",
-            type: searchType === "album" ? "album" : "track",
+            type: "track",
             coverUrl,
             audioUrl: `/api/youtube/stream/${videoId}`,
             durationText,
@@ -1666,15 +1696,18 @@ async function searchYouTubePublic(query: string, searchType: string = "all"): P
           const artist = p.shortBylineText?.runs?.[0]?.text || p.ownerText?.runs?.[0]?.text || "YouTube";
           const coverUrl = p.thumbnails?.[0]?.thumbnails?.slice(-1)?.[0]?.url || "";
           const videoCount = p.videoCount || "10";
-          results.push({
-            id: playlistId,
-            playlistId,
-            title,
-            artist,
-            type: "album",
-            coverUrl,
-            tracksCount: parseInt(videoCount, 10) || 10
-          });
+          const parsedCount = parseInt(String(videoCount).replace(/[^0-9]/g, ""), 10) || 0;
+          if (playlistId && parsedCount > 0) {
+            results.push({
+              id: playlistId,
+              playlistId,
+              title,
+              artist,
+              type: "album",
+              coverUrl,
+              tracksCount: parsedCount
+            });
+          }
         } else if (item.channelRenderer) {
           const c = item.channelRenderer;
           const channelId = c.channelId;
@@ -2686,26 +2719,35 @@ app.get(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async 
     const targetTitle = title || found?.title || "";
     const targetArtist = artist || found?.description || "";
     
-    if (isExplicitAlbum && targetTitle) {
-      const searchQuery = `${targetTitle} ${targetArtist} album songs official audio`.trim();
-      const albumTracks = await searchYouTubeMusic(searchQuery, accessToken || undefined, "track");
-      if (albumTracks && albumTracks.length > 0) {
-        const enriched = await enrichTracksWithDuration(albumTracks.slice(0, 20), accessToken);
-        const mapped = enriched.map((t, idx) => ({
-          ...t,
-          album: targetTitle,
-          trackNumber: idx + 1,
-        }));
-        if (found) {
-          found.tracks = mapped;
-          found.tracksCount = mapped.length;
-        }
-        return res.json({
-          tracks: mapped,
-          coverUrl: customCover || found?.coverUrl || mapped[0]?.coverUrl,
-          customCoverUrl: customCover || found?.customCoverUrl,
-          isCustomCover: Boolean(customCover),
-        });
+    if (targetTitle) {
+      const queries = [
+        `${targetTitle} ${targetArtist} album songs official audio`.trim(),
+        `${targetTitle} ${targetArtist}`.trim(),
+        `${targetTitle} songs official`.trim(),
+        targetTitle.trim(),
+      ];
+      for (const q of queries) {
+        try {
+          const albumTracks = await searchYouTubeMusic(q, accessToken || undefined, "track");
+          if (albumTracks && albumTracks.length > 0) {
+            const enriched = await enrichTracksWithDuration(albumTracks.slice(0, 20), accessToken);
+            const mapped = enriched.map((t, idx) => ({
+              ...t,
+              album: targetTitle,
+              trackNumber: idx + 1,
+            }));
+            if (found) {
+              found.tracks = mapped;
+              found.tracksCount = mapped.length;
+            }
+            return res.json({
+              tracks: mapped,
+              coverUrl: customCover || found?.coverUrl || mapped[0]?.coverUrl,
+              customCoverUrl: customCover || found?.customCoverUrl,
+              isCustomCover: Boolean(customCover),
+            });
+          }
+        } catch {}
       }
     }
 
@@ -5160,14 +5202,43 @@ app.get("/api/youtube/explore", async (req, res) => {
   try {
     const accessToken = await getValidAccessToken(req);
 
-    // Parallel fetch: New releases, Charts top 20, and Trending Music Videos from YouTube Music
+    // Parallel fetch: Real New Release Albums/Playlists, Charts top 20, and Trending Music Videos from YouTube Music
     const [newReleasesRes, chartsRes, musicVideosRes] = await Promise.allSettled([
-      searchYouTubeMusic("New Music Releases 2026 Album Single Official", accessToken || undefined, "album"),
+      searchYouTubePlaylistsPublic("New Album Releases 2026"),
       searchYouTubeMusicSongs("Top 50 Global Songs YouTube Music Charts Official", accessToken || undefined),
       searchYouTubeMusicSongs("Trending Music Videos Official YouTube Music", accessToken || undefined),
     ]);
 
-    let newReleases = newReleasesRes.status === "fulfilled" && newReleasesRes.value ? newReleasesRes.value : [];
+    let rawReleases = newReleasesRes.status === "fulfilled" && newReleasesRes.value ? newReleasesRes.value : [];
+    if (!rawReleases || rawReleases.length === 0) {
+      rawReleases = await searchYouTubePlaylistsPublic("Trending Albums Official 2026");
+    }
+
+    // STRICT ZERO-SONG GUARD: Do not show any album, playlist or collection that has zero songs within!
+    const validReleases = (rawReleases || []).filter((item: any) => {
+      if (!item || !item.id) return false;
+      const count = typeof item.tracksCount === "number"
+        ? item.tracksCount
+        : parseInt(String(item.videoCount || item.trackCount || item.itemCount || item.tracks?.length || 0).replace(/[^0-9]/g, ""), 10) || 0;
+      // Must have at least 1 song
+      if (count <= 0 && (!Array.isArray(item.tracks) || item.tracks.length === 0)) {
+        return false;
+      }
+      if (Array.isArray(item.tracks) && item.tracks.length === 0 && count <= 0) {
+        return false;
+      }
+      // Must not be deleted, empty, or private
+      const rawTitle = String(item.title || "").toLowerCase();
+      if (rawTitle.includes("[deleted") || rawTitle.includes("[private") || rawTitle === "0 videos" || rawTitle === "empty") {
+        return false;
+      }
+      // Must be a valid playlist or album collection, not a bare 11-char video ID disguised as an album
+      if (typeof item.id === "string" && item.id.length === 11 && !item.playlistId && !item.id.startsWith("PL") && !item.id.startsWith("OLAK") && !item.id.startsWith("MPREb")) {
+        return false;
+      }
+      return true;
+    });
+
     let charts = chartsRes.status === "fulfilled" && chartsRes.value ? chartsRes.value : [];
     let trendingVideos = musicVideosRes.status === "fulfilled" && musicVideosRes.value ? musicVideosRes.value : [];
 
@@ -5216,7 +5287,7 @@ app.get("/api/youtube/explore", async (req, res) => {
     ];
 
     res.json({
-      newReleases: deduplicateById(newReleases.slice(0, 16)),
+      newReleases: deduplicateById(validReleases.slice(0, 16)),
       charts: rankedCharts,
       trendingVideos: deduplicateById(trendingVideos),
       moodsAndMoments,

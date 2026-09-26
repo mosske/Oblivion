@@ -74,3 +74,39 @@ export function getPlayableAudioUrl(track: Track | null | undefined): string {
   return "";
 }
 
+/**
+ * Universal extractor for clean 11-character YouTube video IDs from track objects
+ */
+export function extractCleanYoutubeId(track: any): string {
+  if (!track) return "";
+  const candidates = [
+    track.youtubeVideoId,
+    track.videoId,
+    track.youtubeId,
+    track.id,
+    track.audioUrl,
+  ];
+  for (const cand of candidates) {
+    if (!cand || typeof cand !== "string") continue;
+    let str = cand.trim();
+    if (str.includes("watch?v=")) {
+      const match = str.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
+      if (match) return match[1];
+    }
+    if (str.includes("youtu.be/")) {
+      const match = str.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+      if (match) return match[1];
+    }
+    if (str.includes("/stream/")) {
+      const match = str.match(/\/stream\/([a-zA-Z0-9_-]{11})/);
+      if (match) return match[1];
+    }
+    const cleaned = str.replace(/[^a-zA-Z0-9_-]/g, "");
+    if (cleaned.length === 11) return cleaned;
+    const prefixMatch = str.match(/^([a-zA-Z0-9_-]{11})(_\d+)?$/);
+    if (prefixMatch) return prefixMatch[1];
+  }
+  return "";
+}
+
+

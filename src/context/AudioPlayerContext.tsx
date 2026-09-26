@@ -196,19 +196,14 @@ export const AudioPlayerProvider: React.FC<{ children: ReactNode }> = ({ childre
     setCurrentTime(currentVideoTime);
     setIsPlaying(true);
 
-    // 5 & 6. Set audioRef.current.currentTime = currentVideoTime and call await audioRef.current.play()
+    // 5 & 6. Reset audioRef to silent anchor
     if (audioRef.current) {
       try {
-        const trackAudioUrl = getPlayableAudioUrl(currentTrack);
-
-        if (trackAudioUrl && (!audioRef.current.src || !audioRef.current.src.includes(trackAudioUrl))) {
-          audioRef.current.src = trackAudioUrl;
-        }
-        audioRef.current.currentTime = currentVideoTime;
-        audioRef.current.muted = false;
-        await audioRef.current.play();
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current.currentTime = 0;
       } catch (err) {
-        console.error("[AudioPlayerContext] Audio resume error:", err);
+        console.error("[AudioPlayerContext] Audio reset error:", err);
       }
     }
   }, [currentTrack, currentTime]);
