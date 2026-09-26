@@ -177,7 +177,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </span>
         </div>
 
-        {/* 10 Full App Design Cards */}
+        {/* 11 Full App Design Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {FULL_APP_DESIGNS_LIST.map((design) => {
             const isSelected = (settings.fullAppDesign || "designer") === design.id;

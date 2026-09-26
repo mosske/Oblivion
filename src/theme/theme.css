@@ -140,7 +140,19 @@
   --nav-dock-bg: rgba(15, 23, 42, 0.65);
 }
 
-/* K. BESPOKE */
+/* K. SUGAR TIME JAZZ (Theme #10) */
+[data-theme="sugar-time-jazz"],
+.theme-sugar-time-jazz {
+  --nav-glow-color: rgba(147, 51, 234, 0.55);
+  --nav-aura-color: rgba(147, 51, 234, 0.55);
+  --nav-active-stroke: #f5eae1;
+  --nav-active-text: #f5eae1;
+  --nav-inactive-color: #c4b5a5;
+  --nav-inactive-stroke: #8c7e70;
+  --nav-dock-bg: rgba(28, 22, 17, 0.85);
+}
+
+/* L. BESPOKE (Theme #11) */
 [data-theme="bespoke"] {
   --nav-glow-color: var(--bespoke-c2, #00f0ff);
   --nav-aura-color: var(--bespoke-c2, #00f0ff);

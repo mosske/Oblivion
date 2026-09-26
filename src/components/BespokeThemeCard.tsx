@@ -419,7 +419,7 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
             {designConfig.badge || "BESPOKE"}
           </span>
           <span className="text-[10px] font-mono text-zinc-600 font-semibold">
-            {designConfig.num || "10"} / {String(FULL_APP_DESIGNS_LIST.length).padStart(2, "0")}
+            {designConfig.num || "11"} / {String(FULL_APP_DESIGNS_LIST.length).padStart(2, "0")}
           </span>
         </div>
 

@@ -21,6 +21,7 @@ export interface FullAppDesignConfig {
   isEmeraldWilderness?: boolean;
   isHommeMosaic?: boolean;
   isCyberpunkCity?: boolean;
+  isSugarTimeJazz?: boolean;
   isBespoke?: boolean;
   themeColorMeta?: string;
 
@@ -698,12 +699,81 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     trackRowHover: "hover:bg-white/[0.06] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),inset_0_-1px_1px_rgba(0,0,0,0.3),0_6px_20px_rgba(0,0,0,0.4),0_0_20px_rgba(255,0,127,0.18)]",
   },
 
+  "sugar-time-jazz": {
+    id: "sugar-time-jazz",
+    name: "Sugar Time Jazz",
+    subtitle: "Warm Tan to Dark Chocolate Gradients, Purple Back-Glow & Frosted Glass",
+    badge: "SUGAR TIME JAZZ",
+    num: "10",
+    themePreset: "sugar-time-jazz",
+    playerLayout: "floating-dock",
+    isSugarTimeJazz: true,
+    description:
+      "A soulful, warm late-night jazz lounge aesthetic featuring rich dark chocolate and warm tan gradients, frosted glass panels, high-contrast cream typography, and subtle ambient purple back-glow.",
+    features: [
+      "Warm beige/tan to dark chocolate and espresso gradient canvas",
+      "Frosted glass cards & modals with 16px blur and warm tan borders",
+      "Subtle purple ambient back-glow behind active navigation and stage elements",
+      "WCAG AAA contrast cream text (#f5eae1) and warm tan buttons (#e6d5c3)",
+    ],
+    swatchColors: ["#120e0b", "#1a1410", "#d4b496", "#9333ea"],
+    multiAccentGradient: "from-[#d4b496] via-[#c4b5a5] to-[#9333ea]",
+    isLight: false,
+    themeColorMeta: "#120e0b",
+
+    bgCanvas: "from-[#120e0b] via-[#1a1410] to-[#0d0a08]",
+    cardBg: "bg-[rgba(36,28,22,0.45)] backdrop-blur-xl border border-[rgba(212,180,150,0.15)] shadow-xl",
+    headerBg: "bg-[rgba(28,22,17,0.75)] backdrop-blur-2xl border-b border-[rgba(212,180,150,0.15)]",
+    sidebarBg: "bg-[rgba(28,22,17,0.85)] backdrop-blur-2xl border-r border-[rgba(212,180,150,0.15)]",
+    bottomNavBg: "bg-[rgba(28,22,17,0.85)] backdrop-blur-2xl border-t border-[rgba(212,180,150,0.15)]",
+    borderSubtle: "border-[rgba(212,180,150,0.15)]",
+    borderStrong: "border-[rgba(212,180,150,0.35)]",
+    textPrimary: "text-[#f5eae1]",
+    textSecondary: "text-[#c4b5a5]",
+    textMuted: "text-[#8c7e70]",
+    accentBg: "bg-[#e6d5c3]",
+    accentText: "text-[#d4b496]",
+    accentBorder: "border-[rgba(212,180,150,0.4)]",
+    accentContrastText: "text-[#120e0b]",
+
+    headingPrimary: "text-[#f5eae1] font-bold tracking-tight",
+    headingSecondary: "text-[#c4b5a5] font-semibold",
+    headingMuted: "text-[#8c7e70]",
+    cardHover: "hover:bg-[rgba(48,38,30,0.55)] hover:border-[rgba(212,180,150,0.3)] hover:-translate-y-1 transition-all duration-300",
+    modalBg: "bg-[rgba(28,22,17,0.85)] backdrop-blur-2xl border border-[rgba(212,180,150,0.2)] shadow-2xl",
+    pillBg: "bg-[rgba(36,28,22,0.6)] backdrop-blur-xl border border-[rgba(212,180,150,0.18)] text-[#c4b5a5]",
+    pillActive: "bg-[#e6d5c3] text-[#120e0b] font-bold shadow-[0_0_20px_rgba(147,51,234,0.35)] border border-[rgba(212,180,150,0.5)]",
+    inputBg: "bg-[rgba(20,15,12,0.6)] backdrop-blur-xl text-[#f5eae1] border border-[rgba(212,180,150,0.2)] focus:border-[#d4b496] focus:bg-[rgba(25,18,14,0.8)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]",
+    glowRing: "shadow-[0_0_25px_rgba(147,51,234,0.55)]",
+    waveformGradient: "from-[#d4b496] via-[#c4b5a5] to-[#9333ea]",
+    progressGradient: "bg-gradient-to-r from-[#d4b496] via-[#c4b5a5] to-[#9333ea]",
+    bannerGradient: "from-[#d4b496]/20 via-[#9333ea]/15 to-transparent",
+    mockup: {
+      bannerGradient: "from-[#120e0b] via-[#1a1410] to-[#0d0a08]",
+      heroTitle: "Sugar Time Jazz",
+      heroSubtitle: "Warm Tan, Dark Chocolate & Purple Glow",
+      chipLabels: ["Jazz Lounge", "Purple Glow", "Warm Beige", "Lossless"],
+      dockStyle: "bg-[rgba(28,22,17,0.75)] backdrop-blur-2xl border border-[rgba(212,180,150,0.2)] shadow-2xl rounded-full",
+    },
+
+    accentSecondaryBg: "bg-[#c4b5a5]",
+    accentSecondaryText: "text-[#c4b5a5]",
+    accentTertiaryBg: "bg-[#9333ea]",
+    accentTertiaryText: "text-[#a855f7]",
+
+    btnPrimary: "bg-[#e6d5c3] hover:bg-[#eddcca] text-[#120e0b] font-bold shadow-md active:translate-y-0.5 transition-all",
+    btnSecondary: "bg-[rgba(36,28,22,0.6)] hover:bg-[rgba(48,38,30,0.75)] text-[#f5eae1] border border-[rgba(212,180,150,0.2)] font-semibold transition-all",
+    navActive: "text-[#f5eae1] font-bold relative before:absolute before:inset-[-2px] before:bg-[radial-gradient(circle,rgba(147,51,234,0.55)_0%,transparent_70%)] before:rounded-xl before:opacity-80 before:z-0",
+    navInactive: "text-[#c4b5a5] hover:text-[#f5eae1] hover:bg-[rgba(212,180,150,0.06)] rounded-xl transition-all",
+    trackRowHover: "hover:bg-[rgba(212,180,150,0.08)] transition-all",
+  },
+
   bespoke: {
     id: "bespoke",
     name: "Bespoke",
     subtitle: "Custom 4-Color Palette, Liquid Glass & Refractive Glow",
     badge: "BESPOKE",
-    num: "10",
+    num: "11",
     themePreset: "bespoke",
     playerLayout: "floating-dock",
     isNebulaGlass: true,
@@ -825,6 +895,8 @@ export function createBespokeConfig(customColors?: string[]): FullAppDesignConfi
  * Theme 07 (Neue Editorial): #F2E8D8
  * Theme 08 (Obsidian Depth): #2a2e38
  * Theme 09 (Nebula Liquid Glass): #0d0b1a
+ * Theme 10 (Sugar Time Jazz): #120e0b
+ * Theme 11 (Bespoke): #0a0d1a
  */
 export const THEME_CANVAS_COLORS: Record<string, string> = {
   designer: "#051911",
@@ -837,11 +909,12 @@ export const THEME_CANVAS_COLORS: Record<string, string> = {
   "neue-editorial": "#F2E8D8",
   "obsidian-depth": "#2a2e38",
   "nebula-liquid-glass": "#0d0b1a",
+  "sugar-time-jazz": "#120e0b",
   bespoke: "#0a0d1a",
 };
 
 /**
- * Array of the 10 canonical Full App Designs (guaranteed unique IDs for React key rendering)
+ * Array of the 11 canonical Full App Designs (guaranteed unique IDs for React key rendering)
  */
 export const FULL_APP_DESIGNS_LIST: FullAppDesignConfig[] = Object.values(FULL_APP_DESIGNS_BASE);
 

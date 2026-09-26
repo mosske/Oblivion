@@ -3801,6 +3801,315 @@ button.bottom-nav-item:not(.nav-item-active):hover {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(157, 78, 237, 0.2) !important;
 }
 
+/* =========================================================================
+   SUGAR TIME JAZZ (THEME #10) - DESIGN TOKENS & VISUAL STYLING
+   ========================================================================= */
+
+.theme-sugar-time-jazz,
+[data-theme="sugar-time-jazz"] {
+  /* Warm Beige/Tan to Dark Chocolate/Black Gradients */
+  --bg-main: linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%);
+  --bg-card: rgba(36, 28, 22, 0.45);
+  --bg-modal: rgba(28, 22, 17, 0.65);
+  --bg-card-border: rgba(212, 180, 150, 0.15);
+  
+  /* Text & Contrast Rules */
+  --text-primary: #f5eae1;      /* Light cream for crisp contrast on dark backgrounds */
+  --text-secondary: #c4b5a5;    /* Warm beige for subtitles and secondary metadata */
+  --text-muted: #8c7e70;        /* Muted brown-gray */
+  --icon-color: #f5eae1;        /* Crisp cream for readable icons */
+  
+  /* Purple Back-Glow Accent (Strictly Back-Glow Only) */
+  --purple-glow-color: rgba(147, 51, 234, 0.55);
+  --purple-glow-soft: rgba(168, 85, 247, 0.25);
+  --accent-glow: 0 0 25px var(--purple-glow-color);
+
+  /* Full App Canvas & System Compatibility Tokens */
+  --bg-canvas: linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%);
+  --canvas-text-primary: #f5eae1;
+  --canvas-text-secondary: #c4b5a5;
+  --canvas-text-muted: #8c7e70;
+  --card-bg: rgba(36, 28, 22, 0.45);
+  --card-text: #f5eae1;
+  --card-border: rgba(212, 180, 150, 0.15);
+  --accent-primary: #d4b496;
+  --accent-color: #d4b496;
+  --primary: #d4b496;
+  --accent-primary-rgb: 212, 180, 150;
+  --accent-secondary: #c4b5a5;
+  --accent-tertiary: #9333ea;
+  --accent-gradient: linear-gradient(135deg, #d4b496 0%, #c4b5a5 50%, #9333ea 100%);
+  --accent-border: rgba(212, 180, 150, 0.35);
+  --accent-contrast-text: #120e0b;
+  --text-on-accent: #120e0b;
+  --bg-surface-elevated: #1a1410;
+  --border-subtle: rgba(212, 180, 150, 0.15);
+  --border-active: var(--accent-primary);
+  --waveform-inactive: rgba(140, 126, 112, 0.35);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(36, 28, 22, 0.45);
+  --glass-border: rgba(212, 180, 150, 0.15);
+  --nav-glow-color: rgba(147, 51, 234, 0.55);
+  --nav-aura-color: rgba(147, 51, 234, 0.55);
+  --nav-active-stroke: #f5eae1;
+  --nav-active-text: #f5eae1;
+  --nav-inactive-color: #c4b5a5;
+  --nav-inactive-stroke: #8c7e70;
+  --nav-dock-bg: rgba(28, 22, 17, 0.85);
+}
+
+/* Background canvas fill */
+.theme-sugar-time-jazz,
+[data-theme="sugar-time-jazz"],
+.sugar-time-jazz-canvas-bg {
+  background: linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%) !important;
+}
+
+/* =========================================================================
+   TASK 3: FROSTED GLASS CARDS & MODALS
+   ========================================================================= */
+
+.theme-sugar-time-jazz .card,
+.theme-sugar-time-jazz .modal,
+.theme-sugar-time-jazz .glass-panel,
+[data-theme="sugar-time-jazz"] .card,
+[data-theme="sugar-time-jazz"] .modal,
+[data-theme="sugar-time-jazz"] .glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Modal overlays, dialogs and player surfaces */
+.theme-sugar-time-jazz [role="dialog"],
+.theme-sugar-time-jazz .modal-surface,
+.theme-sugar-time-jazz .modal-content,
+[data-theme="sugar-time-jazz"] [role="dialog"],
+[data-theme="sugar-time-jazz"] .modal-surface,
+[data-theme="sugar-time-jazz"] .modal-content {
+  background: var(--bg-modal) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid var(--bg-card-border) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Mini player floating dock and full player overlay */
+.theme-sugar-time-jazz #app-mini-player-floating-dock,
+[data-theme="sugar-time-jazz"] #app-mini-player-floating-dock,
+.theme-sugar-time-jazz .mini-player-dock,
+[data-theme="sugar-time-jazz"] .mini-player-dock {
+  background: var(--bg-modal) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid var(--bg-card-border) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.55), 0 0 25px var(--purple-glow-soft) !important;
+}
+
+/* =========================================================================
+   TASK 4: NAVIGATION BACK-GLOW (MOBILE BOTTOM & PC/TABLET LEFT)
+   ========================================================================= */
+
+/* Active Navigation Items: text & icon remain high-contrast cream/white */
+.theme-sugar-time-jazz .nav-item.active,
+.theme-sugar-time-jazz .sidebar-item.active,
+.theme-sugar-time-jazz .bottom-nav-item.active,
+[data-theme="sugar-time-jazz"] .nav-item.active,
+[data-theme="sugar-time-jazz"] .sidebar-item.active,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active,
+.theme-sugar-time-jazz .nav-item-active,
+.theme-sugar-time-jazz .sidebar-nav-item.nav-item-active,
+.theme-sugar-time-jazz .bottom-nav-item.nav-item-active,
+[data-theme="sugar-time-jazz"] .nav-item-active,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.nav-item-active,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.nav-item-active {
+  color: var(--text-primary) !important; /* Text remains cream */
+  position: relative;
+}
+
+.theme-sugar-time-jazz .nav-item.active svg,
+.theme-sugar-time-jazz .sidebar-item.active svg,
+.theme-sugar-time-jazz .bottom-nav-item.active svg,
+[data-theme="sugar-time-jazz"] .nav-item.active svg,
+[data-theme="sugar-time-jazz"] .sidebar-item.active svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active svg,
+.theme-sugar-time-jazz .nav-item-active svg,
+.theme-sugar-time-jazz .sidebar-nav-item.nav-item-active svg,
+.theme-sugar-time-jazz .bottom-nav-item.nav-item-active svg,
+[data-theme="sugar-time-jazz"] .nav-item-active svg,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.nav-item-active svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.nav-item-active svg {
+  color: var(--icon-color) !important; /* Icon remains cream */
+  stroke: var(--icon-color) !important;
+  filter: drop-shadow(0 0 8px var(--purple-glow-color)) !important; /* Subtle purple glow behind icon */
+}
+
+/* Purple Ambient Back-Glow Container behind active state */
+.theme-sugar-time-jazz .nav-item.active::before,
+.theme-sugar-time-jazz .sidebar-item.active::before,
+.theme-sugar-time-jazz .bottom-nav-item.active::before,
+[data-theme="sugar-time-jazz"] .nav-item.active::before,
+[data-theme="sugar-time-jazz"] .sidebar-item.active::before,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active::before,
+.theme-sugar-time-jazz .nav-item-active::before,
+.theme-sugar-time-jazz .sidebar-nav-item.nav-item-active::before,
+.theme-sugar-time-jazz .bottom-nav-item.nav-item-active::before,
+[data-theme="sugar-time-jazz"] .nav-item-active::before,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.nav-item-active::before,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.nav-item-active::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: radial-gradient(circle, var(--purple-glow-color) 0%, transparent 70%);
+  border-radius: 12px;
+  z-index: -1;
+  opacity: 0.8;
+}
+
+/* Explicit text label color for active navigation */
+.theme-sugar-time-jazz .nav-item.active .nav-label,
+.theme-sugar-time-jazz .sidebar-item.active .nav-label,
+.theme-sugar-time-jazz .bottom-nav-item.active .nav-label,
+[data-theme="sugar-time-jazz"] .nav-item.active .nav-label,
+[data-theme="sugar-time-jazz"] .sidebar-item.active .nav-label,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active .nav-label,
+.theme-sugar-time-jazz .nav-item-active .nav-label,
+[data-theme="sugar-time-jazz"] .nav-item-active .nav-label {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+/* Inactive navigation items styling */
+.theme-sugar-time-jazz .nav-item:not(.active):not(.nav-item-active),
+.theme-sugar-time-jazz .sidebar-item:not(.active):not(.nav-item-active),
+.theme-sugar-time-jazz .bottom-nav-item:not(.active):not(.nav-item-active),
+[data-theme="sugar-time-jazz"] .nav-item:not(.active):not(.nav-item-active),
+[data-theme="sugar-time-jazz"] .sidebar-item:not(.active):not(.nav-item-active),
+[data-theme="sugar-time-jazz"] .bottom-nav-item:not(.active):not(.nav-item-active) {
+  color: var(--text-secondary) !important;
+}
+
+.theme-sugar-time-jazz .nav-item:not(.active):not(.nav-item-active) svg,
+.theme-sugar-time-jazz .sidebar-item:not(.active):not(.nav-item-active) svg,
+.theme-sugar-time-jazz .bottom-nav-item:not(.active):not(.nav-item-active) svg,
+[data-theme="sugar-time-jazz"] .nav-item:not(.active):not(.nav-item-active) svg,
+[data-theme="sugar-time-jazz"] .sidebar-item:not(.active):not(.nav-item-active) svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-item:not(.active):not(.nav-item-active) svg {
+  color: var(--text-secondary) !important;
+  stroke: var(--text-secondary) !important;
+  filter: none !important;
+}
+
+/* =========================================================================
+   TASK 5: CONTRAST RULE VALIDATION (WCAG AAA COMPLIANCE)
+   ========================================================================= */
+
+/* Input field backgrounds: rgba(20, 15, 12, 0.6) with light cream text (#f5eae1) */
+.theme-sugar-time-jazz input:not([type="range"]),
+.theme-sugar-time-jazz textarea,
+.theme-sugar-time-jazz select,
+[data-theme="sugar-time-jazz"] input:not([type="range"]),
+[data-theme="sugar-time-jazz"] textarea,
+[data-theme="sugar-time-jazz"] select {
+  background-color: rgba(20, 15, 12, 0.6) !important;
+  color: #f5eae1 !important;
+  border-color: rgba(212, 180, 150, 0.25) !important;
+}
+
+.theme-sugar-time-jazz input:not([type="range"])::placeholder,
+.theme-sugar-time-jazz textarea::placeholder,
+[data-theme="sugar-time-jazz"] input:not([type="range"])::placeholder,
+[data-theme="sugar-time-jazz"] textarea::placeholder {
+  color: #c4b5a5 !important;
+  opacity: 0.7 !important;
+}
+
+.theme-sugar-time-jazz input:not([type="range"]):focus,
+.theme-sugar-time-jazz textarea:focus,
+.theme-sugar-time-jazz select:focus,
+[data-theme="sugar-time-jazz"] input:not([type="range"]):focus,
+[data-theme="sugar-time-jazz"] textarea:focus,
+[data-theme="sugar-time-jazz"] select:focus {
+  border-color: #d4b496 !important;
+  background-color: rgba(25, 18, 14, 0.8) !important;
+  outline: none !important;
+  box-shadow: 0 0 15px rgba(212, 180, 150, 0.25) !important;
+}
+
+/* Active buttons: High-contrast light tan/beige button fill (#e6d5c3) with dark brown/black text (#120e0b) */
+.theme-sugar-time-jazz .btn-primary,
+.theme-sugar-time-jazz button.button-primary,
+.theme-sugar-time-jazz button.btn-signin,
+.theme-sugar-time-jazz .pill-active,
+.theme-sugar-time-jazz .pill-selected,
+.theme-sugar-time-jazz button.pill-selected,
+[data-theme="sugar-time-jazz"] .btn-primary,
+[data-theme="sugar-time-jazz"] button.button-primary,
+[data-theme="sugar-time-jazz"] button.btn-signin,
+[data-theme="sugar-time-jazz"] .pill-active,
+[data-theme="sugar-time-jazz"] .pill-selected,
+[data-theme="sugar-time-jazz"] button.pill-selected {
+  background: #e6d5c3 !important;
+  color: #120e0b !important;
+  border: 1px solid rgba(212, 180, 150, 0.5) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.theme-sugar-time-jazz .btn-primary:hover,
+.theme-sugar-time-jazz button.button-primary:hover,
+.theme-sugar-time-jazz button.btn-signin:hover,
+[data-theme="sugar-time-jazz"] .btn-primary:hover,
+[data-theme="sugar-time-jazz"] button.button-primary:hover,
+[data-theme="sugar-time-jazz"] button.btn-signin:hover {
+  background: #eddcca !important;
+  color: #120e0b !important;
+}
+
+.theme-sugar-time-jazz .btn-primary svg,
+.theme-sugar-time-jazz button.button-primary svg,
+.theme-sugar-time-jazz button.btn-signin svg,
+[data-theme="sugar-time-jazz"] .btn-primary svg,
+[data-theme="sugar-time-jazz"] button.button-primary svg,
+[data-theme="sugar-time-jazz"] button.btn-signin svg {
+  color: #120e0b !important;
+  stroke: #120e0b !important;
+}
+
+/* Secondary buttons: warm dark chocolate background with light cream text */
+.theme-sugar-time-jazz .btn-secondary,
+.theme-sugar-time-jazz button.button-secondary,
+[data-theme="sugar-time-jazz"] .btn-secondary,
+[data-theme="sugar-time-jazz"] button.button-secondary {
+  background: rgba(36, 28, 22, 0.6) !important;
+  color: #f5eae1 !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+.theme-sugar-time-jazz .btn-secondary:hover,
+.theme-sugar-time-jazz button.button-secondary:hover,
+[data-theme="sugar-time-jazz"] .btn-secondary:hover,
+[data-theme="sugar-time-jazz"] button.button-secondary:hover {
+  background: rgba(48, 38, 30, 0.75) !important;
+  color: #f5eae1 !important;
+}
+
+/* Badges: WCAG AAA compliance */
+.theme-sugar-time-jazz .badge,
+.theme-sugar-time-jazz .chip,
+[data-theme="sugar-time-jazz"] .badge,
+[data-theme="sugar-time-jazz"] .chip {
+  background: rgba(36, 28, 22, 0.65) !important;
+  color: #f5eae1 !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+
 
 
 

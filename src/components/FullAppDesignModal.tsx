@@ -116,7 +116,7 @@ export const FullAppDesignModal: React.FC<FullAppDesignModalProps> = ({
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/60 text-slate-200 border border-white/10">
                         {design.badge}
                       </span>
-                      <span className="text-xs font-mono text-slate-400">{design.num} / 08</span>
+                      <span className="text-xs font-mono text-slate-400">{design.num} / {String(FULL_APP_DESIGNS_LIST.length).padStart(2, "0")}</span>
                     </div>
 
                     {/* Miniature UI Screen Wireframe */}

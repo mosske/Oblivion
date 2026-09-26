@@ -164,7 +164,7 @@ export const FullAppDesignStudioView: React.FC<FullAppDesignStudioViewProps> = (
                     <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-black/60 text-white border border-white/10">
                       {design.badge}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">Design {design.num} / 08</span>
+                    <span className="text-xs font-mono text-slate-400">Design {design.num} / {String(FULL_APP_DESIGNS_LIST.length).padStart(2, "0")}</span>
                   </div>
 
                   {/* Complete App Wireframe Box */}

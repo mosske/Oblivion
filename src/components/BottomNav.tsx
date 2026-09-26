@@ -45,7 +45,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             aria-label={label}
             onClick={() => setActiveTab(tab)}
             className={`bottom-nav-item nav-item nav-link relative flex flex-col items-center justify-center gap-0.5 w-16 py-1 cursor-pointer transition-all duration-200 select-none bg-transparent border-0 outline-none shadow-none ${
-              isActive ? "nav-item-active tab-item-active tab-active" : "nav-item-inactive"
+              isActive ? "nav-item-active tab-item-active tab-active active" : "nav-item-inactive"
             }`}
           >
             <div className="nav-icon nav-icon-container relative z-10 flex items-center justify-center w-7 h-7 bg-transparent border-0 outline-none shadow-none transition-transform duration-200">
