@@ -357,9 +357,9 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Flame className="w-5 h-5 text-amber-500" />
+                  <ThemeIcon name="flame" themeId={designConfig.id} className="w-5 h-5 text-amber-500" />
                   <div>
-                    <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
+                    <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2`}>
                       New Releases & Popular Singles
                     </h2>
                     <p className={`text-[11px] ${designConfig.headingMuted} font-medium`}>
@@ -420,7 +420,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <TrendingUp className="w-5 h-5 text-emerald-500" />
+                  <ThemeIcon name="guitar" themeId={designConfig.id} className="w-5 h-5 text-emerald-500" />
                   <div>
                     <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                       Charts • Top Global Songs
@@ -540,7 +540,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Video className="w-5 h-5 text-red-500" />
+                  <ThemeIcon name="mic" themeId={designConfig.id} className="w-5 h-5 text-red-500" />
                   <div>
                     <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                       Music Videos
@@ -640,7 +640,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             <section className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2.5">
-                  <Film className="w-5 h-5 text-amber-500" />
+                  <ThemeIcon name="guitar" themeId={designConfig.id} className="w-5 h-5 text-amber-500" />
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
@@ -746,13 +746,13 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* 4. PODCASTS & MEDIA */}
+          {/* 5. PODCASTS & MEDIA */}
           {/* ========================================================================= */}
           {showPodcasts && data.podcasts.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Mic className="w-5 h-5 text-indigo-500" />
+                  <ThemeIcon name="mic" themeId={designConfig.id} className="w-5 h-5 text-indigo-500" />
                   <div>
                     <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                       Podcasts & Media
@@ -830,7 +830,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           {showMoodsAndGenres && data.moodsAndMoments.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
-                <Radio className="w-5 h-5 text-indigo-500" />
+                <ThemeIcon name="radio" themeId={designConfig.id} className="w-5 h-5 text-indigo-500" />
                 <div>
                   <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                     Moods & Moments

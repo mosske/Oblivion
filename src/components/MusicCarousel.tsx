@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { Play, Pause, ChevronLeft, ChevronRight, Music, Disc, ListMusic, Video, User } from "lucide-react";
 import { HomeFeedCardItem, HomeSection } from "../services/homeFeedService";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
+import { ThemeIcon } from "./ThemeIcon";
 
 interface MusicCarouselProps {
   section: HomeSection;
@@ -157,10 +158,18 @@ export const MusicCarousel: React.FC<MusicCarouselProps> = ({
                 {/* Type Icon Badge */}
                 <div className="absolute top-2 left-2 z-10">
                   <span className="p-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-white/90 flex items-center justify-center">
-                    {item.type === "song" && <Music className="w-3 h-3" />}
-                    {item.type === "video" && <Video className="w-3 h-3 text-red-400" />}
-                    {item.type === "album" && <Disc className="w-3 h-3" />}
-                    {item.type === "playlist" && <ListMusic className="w-3 h-3" />}
+                    {item.type === "song" && (
+                      <ThemeIcon name="music" themeId={designConfig.id} className="w-3 h-3" fallback={Music} />
+                    )}
+                    {item.type === "video" && (
+                      <ThemeIcon name="mic" themeId={designConfig.id} className="w-3 h-3 text-red-400" fallback={Video} />
+                    )}
+                    {item.type === "album" && (
+                      <ThemeIcon name="disc" themeId={designConfig.id} className="w-3 h-3" fallback={Disc} />
+                    )}
+                    {item.type === "playlist" && (
+                      <ThemeIcon name="playlist" themeId={designConfig.id} className="w-3 h-3" fallback={ListMusic} />
+                    )}
                     {item.type === "artist" && <User className="w-3 h-3 text-sky-400" />}
                   </span>
                 </div>

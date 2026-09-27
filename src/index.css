@@ -1491,71 +1491,138 @@ div[class*="category-wrapper"] {
 }
 
 /* ================================================================================
-   TASK 2: CYBERPUNK NEON GLASS - REMOVE SQUARE OUTLINES FROM MAIN MENU
+   FIX 3: CYBERPUNK NEON GLASS - REMOVE INACTIVE BUTTON BOX OUTLINES (NAVBAR)
    ================================================================================ */
+.theme-cyberpunk nav a,
+.theme-cyberpunk nav button,
+.theme-cyberpunk .bottom-nav button,
+.theme-cyberpunk .bottom-nav-bar button,
 .theme-cyberpunk .bottom-nav-item,
+.theme-cyberpunk .sidebar a,
+.theme-cyberpunk .sidebar button,
+.theme-cyberpunk .sidebar-nav button,
 .theme-cyberpunk .sidebar-nav-item,
 .theme-cyberpunk .sidebar-item,
 .theme-cyberpunk .nav-item,
 .theme-cyberpunk .nav-link,
-[data-theme="cyberpunk"] .bottom-nav-item,
-[data-theme="cyberpunk"] .sidebar-nav-item,
-[data-theme="cyberpunk"] .sidebar-item,
-[data-theme="cyberpunk"] .nav-item,
-[data-theme="cyberpunk"] .nav-link,
+.theme-cyberpunk-neon nav a,
+.theme-cyberpunk-neon nav button,
+.theme-cyberpunk-neon .bottom-nav button,
+.theme-cyberpunk-neon .bottom-nav-bar button,
 .theme-cyberpunk-neon .bottom-nav-item,
+.theme-cyberpunk-neon .sidebar a,
+.theme-cyberpunk-neon .sidebar button,
+.theme-cyberpunk-neon .sidebar-nav button,
 .theme-cyberpunk-neon .sidebar-nav-item,
 .theme-cyberpunk-neon .sidebar-item,
 .theme-cyberpunk-neon .nav-item,
 .theme-cyberpunk-neon .nav-link,
-[data-theme="cyberpunk-neon"] .bottom-nav-item,
-[data-theme="cyberpunk-neon"] .sidebar-nav-item,
-[data-theme="cyberpunk-neon"] .sidebar-item,
-[data-theme="cyberpunk-neon"] .nav-item,
-[data-theme="cyberpunk-neon"] .nav-link,
-[data-theme-alias="cyberpunk"] .bottom-nav-item,
-[data-theme-alias="cyberpunk"] .sidebar-nav-item,
-[data-theme-alias="cyberpunk"] .sidebar-item,
-[data-theme-alias="cyberpunk"] .nav-item,
-[data-theme-alias="cyberpunk"] .nav-link,
-[data-theme="cyberpunk"] .sidebar-nav .nav-item,
-[data-theme="cyberpunk-neon"] .sidebar-nav .nav-item,
-[data-theme="cyberpunk"] .desktop-menu .nav-item,
-[data-theme="cyberpunk-neon"] .desktop-menu .nav-item,
-[data-theme="cyberpunk"] .mobile-nav .bottom-nav-item,
-[data-theme="cyberpunk-neon"] .mobile-nav .bottom-nav-item,
-[data-theme="cyberpunk"] .bottom-nav-bar .bottom-nav-item,
-[data-theme="cyberpunk-neon"] .bottom-nav-bar .bottom-nav-item,
-[data-theme="cyberpunk"] .nav-icon-container,
-[data-theme="cyberpunk-neon"] .nav-icon-container {
+.theme-neon-glass nav a,
+.theme-neon-glass nav button,
+.theme-neon-glass .bottom-nav button,
+.theme-neon-glass .bottom-nav-bar button,
+.theme-neon-glass .bottom-nav-item,
+.theme-neon-glass .sidebar a,
+.theme-neon-glass .sidebar button,
+.theme-neon-glass .sidebar-nav button,
+.theme-neon-glass .sidebar-nav-item,
+.theme-neon-glass .sidebar-item,
+.theme-neon-glass .nav-item,
+.theme-neon-glass .nav-link,
+[data-theme*="cyberpunk"] nav a,
+[data-theme*="cyberpunk"] nav button,
+[data-theme*="cyberpunk"] .bottom-nav button,
+[data-theme*="cyberpunk"] .bottom-nav-bar button,
+[data-theme*="cyberpunk"] .bottom-nav-item,
+[data-theme*="cyberpunk"] .sidebar a,
+[data-theme*="cyberpunk"] .sidebar button,
+[data-theme*="cyberpunk"] .sidebar-nav button,
+[data-theme*="cyberpunk"] .sidebar-nav-item,
+[data-theme*="cyberpunk"] .sidebar-item,
+[data-theme*="cyberpunk"] .nav-item,
+[data-theme*="cyberpunk"] .nav-link,
+[data-theme*="neon"] nav a,
+[data-theme*="neon"] nav button,
+[data-theme*="neon"] .bottom-nav button,
+[data-theme*="neon"] .bottom-nav-bar button,
+[data-theme*="neon"] .bottom-nav-item,
+[data-theme*="neon"] .sidebar a,
+[data-theme*="neon"] .sidebar button,
+[data-theme*="neon"] .sidebar-nav button,
+[data-theme*="neon"] .sidebar-nav-item,
+[data-theme*="neon"] .sidebar-item,
+[data-theme*="neon"] .nav-item,
+[data-theme*="neon"] .nav-link {
   border: none !important;
   background: transparent !important;
+  background-color: transparent !important;
   box-shadow: none !important;
   outline: none !important;
 }
 
-.theme-cyberpunk .bottom-nav-item.active,
-.theme-cyberpunk .sidebar-nav-item.active,
-.theme-cyberpunk .sidebar-item.active,
-.theme-cyberpunk .nav-item.active,
-[data-theme="cyberpunk"] .bottom-nav-item.active,
-[data-theme="cyberpunk"] .sidebar-nav-item.active,
-[data-theme="cyberpunk"] .sidebar-item.active,
-[data-theme="cyberpunk"] .nav-item.active,
-.theme-cyberpunk-neon .bottom-nav-item.active,
-.theme-cyberpunk-neon .sidebar-nav-item.active,
-.theme-cyberpunk-neon .sidebar-item.active,
-.theme-cyberpunk-neon .nav-item.active,
-[data-theme="cyberpunk-neon"] .bottom-nav-item.active,
-[data-theme="cyberpunk-neon"] .sidebar-nav-item.active,
-[data-theme="cyberpunk-neon"] .sidebar-item.active,
-[data-theme="cyberpunk-neon"] .nav-item.active,
-[data-theme-alias="cyberpunk"] .bottom-nav-item.active,
-[data-theme-alias="cyberpunk"] .sidebar-nav-item.active,
-[data-theme-alias="cyberpunk"] .sidebar-item.active,
-[data-theme-alias="cyberpunk"] .nav-item.active {
-  border: none !important;
+.theme-cyberpunk nav a:not(.active),
+.theme-cyberpunk nav button:not(.active),
+.theme-cyberpunk .bottom-nav button:not(.active),
+.theme-cyberpunk .bottom-nav-bar button:not(.active),
+.theme-cyberpunk .bottom-nav-item:not(.active),
+.theme-cyberpunk .sidebar a:not(.active),
+.theme-cyberpunk .sidebar button:not(.active),
+.theme-cyberpunk .sidebar-nav button:not(.active),
+.theme-cyberpunk .sidebar-nav-item:not(.active),
+.theme-cyberpunk .sidebar-item:not(.active),
+.theme-cyberpunk .nav-item:not(.active),
+.theme-cyberpunk .nav-item-inactive,
+.theme-cyberpunk-neon nav a:not(.active),
+.theme-cyberpunk-neon nav button:not(.active),
+.theme-cyberpunk-neon .bottom-nav button:not(.active),
+.theme-cyberpunk-neon .bottom-nav-bar button:not(.active),
+.theme-cyberpunk-neon .bottom-nav-item:not(.active),
+.theme-cyberpunk-neon .sidebar a:not(.active),
+.theme-cyberpunk-neon .sidebar button:not(.active),
+.theme-cyberpunk-neon .sidebar-nav button:not(.active),
+.theme-cyberpunk-neon .sidebar-nav-item:not(.active),
+.theme-cyberpunk-neon .sidebar-item:not(.active),
+.theme-cyberpunk-neon .nav-item:not(.active),
+.theme-cyberpunk-neon .nav-item-inactive,
+.theme-neon-glass nav a:not(.active),
+.theme-neon-glass nav button:not(.active),
+.theme-neon-glass .bottom-nav button:not(.active),
+.theme-neon-glass .bottom-nav-bar button:not(.active),
+.theme-neon-glass .bottom-nav-item:not(.active),
+.theme-neon-glass .sidebar a:not(.active),
+.theme-neon-glass .sidebar button:not(.active),
+.theme-neon-glass .sidebar-nav button:not(.active),
+.theme-neon-glass .sidebar-nav-item:not(.active),
+.theme-neon-glass .sidebar-item:not(.active),
+.theme-neon-glass .nav-item:not(.active),
+.theme-neon-glass .nav-item-inactive,
+[data-theme*="cyberpunk"] nav a:not(.active),
+[data-theme*="cyberpunk"] nav button:not(.active),
+[data-theme*="cyberpunk"] .bottom-nav button:not(.active),
+[data-theme*="cyberpunk"] .bottom-nav-bar button:not(.active),
+[data-theme*="cyberpunk"] .bottom-nav-item:not(.active),
+[data-theme*="cyberpunk"] .sidebar a:not(.active),
+[data-theme*="cyberpunk"] .sidebar button:not(.active),
+[data-theme*="cyberpunk"] .sidebar-nav button:not(.active),
+[data-theme*="cyberpunk"] .sidebar-nav-item:not(.active),
+[data-theme*="cyberpunk"] .sidebar-item:not(.active),
+[data-theme*="cyberpunk"] .nav-item:not(.active),
+[data-theme*="cyberpunk"] .nav-item-inactive,
+[data-theme*="neon"] nav a:not(.active),
+[data-theme*="neon"] nav button:not(.active),
+[data-theme*="neon"] .bottom-nav button:not(.active),
+[data-theme*="neon"] .bottom-nav-bar button:not(.active),
+[data-theme*="neon"] .bottom-nav-item:not(.active),
+[data-theme*="neon"] .sidebar a:not(.active),
+[data-theme*="neon"] .sidebar button:not(.active),
+[data-theme*="neon"] .sidebar-nav button:not(.active),
+[data-theme*="neon"] .sidebar-nav-item:not(.active),
+[data-theme*="neon"] .sidebar-item:not(.active),
+[data-theme*="neon"] .nav-item:not(.active),
+[data-theme*="neon"] .nav-item-inactive {
   background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
   box-shadow: none !important;
   outline: none !important;
 }
@@ -1825,137 +1892,172 @@ div[class*="category-wrapper"] {
   --purple-ambient-glow-strong: 0 0 35px rgba(168, 85, 247, 0.65);
 }
 
-/* 1. Explore Page Cards */
-.theme-sugar-time-jazz .explore-page .card,
-.theme-sugar-time-jazz .explore-card,
-.theme-sugar-time-jazz .album-card,
-.theme-sugar-time-jazz .playlist-card,
-.theme-sugar-time-jazz .artist-card,
-.theme-sugar-time-jazz .genre-card,
-.theme-sugar-time-jazz .explore-page .album-card,
-.theme-sugar-time-jazz .explore-page .playlist-card,
-.theme-sugar-time-jazz .explore-view .card,
-.theme-sugar-time-jazz .explore-page [class*="card"],
-[data-theme="sugar-time-jazz"] .explore-page .card,
-[data-theme="sugar-time-jazz"] .explore-card,
-[data-theme="sugar-time-jazz"] .album-card,
-[data-theme="sugar-time-jazz"] .playlist-card,
-[data-theme="sugar-time-jazz"] .artist-card,
-[data-theme="sugar-time-jazz"] .genre-card,
-[data-theme="sugar-time-jazz"] .explore-page .album-card,
-[data-theme="sugar-time-jazz"] .explore-page .playlist-card,
-[data-theme="sugar-time-jazz"] .explore-view .card,
-[data-theme="sugar-time-jazz"] .explore-page [class*="card"] {
-  box-shadow: 0 0 22px rgba(147, 51, 234, 0.5) !important;
-  border: 1px solid rgba(212, 180, 150, 0.25) !important;
-}
-
-/* 2. Library Page Cards & Playlists */
-.theme-sugar-time-jazz .library-page .card,
-.theme-sugar-time-jazz .library-item,
-.theme-sugar-time-jazz .playlist-item,
-.theme-sugar-time-jazz .collection-card,
-.theme-sugar-time-jazz .saved-album-item,
-.theme-sugar-time-jazz .library-card,
-.theme-sugar-time-jazz .library-view .card,
-.theme-sugar-time-jazz .library-view .playlist-card,
-.theme-sugar-time-jazz .library-page [class*="card"],
-[data-theme="sugar-time-jazz"] .library-page .card,
-[data-theme="sugar-time-jazz"] .library-item,
-[data-theme="sugar-time-jazz"] .playlist-item,
-[data-theme="sugar-time-jazz"] .collection-card,
-[data-theme="sugar-time-jazz"] .saved-album-item,
-[data-theme="sugar-time-jazz"] .library-card,
-[data-theme="sugar-time-jazz"] .library-view .card,
-[data-theme="sugar-time-jazz"] .library-view .playlist-card,
-[data-theme="sugar-time-jazz"] .library-page [class*="card"] {
-  box-shadow: 0 0 22px rgba(147, 51, 234, 0.5) !important;
-  border: 1px solid rgba(212, 180, 150, 0.25) !important;
-}
-
-/* 3. Settings Cards & Modals */
-.theme-sugar-time-jazz .settings-section,
-.theme-sugar-time-jazz .settings-card,
-.theme-sugar-time-jazz .settings-page .card,
-.theme-sugar-time-jazz .settings-page .settings-section,
-.theme-sugar-time-jazz .settings-view .card,
-.theme-sugar-time-jazz .settings-view .settings-section,
-.theme-sugar-time-jazz .modal,
+/* ================================================================================
+   FIX 2: SUGAR TIME JAZZ - FORCE PURPLE BACK-GLOW ON CARDS & SECTIONS
+   ================================================================================ */
+/* All Card Components, Section Blocks & Grid Tiles */
+.theme-sugar-time-jazz main div[class*="bg-"],
+.theme-sugar-time-jazz section,
+.theme-sugar-time-jazz [class*="card"],
+.theme-sugar-time-jazz [class*="Card"],
+.theme-sugar-time-jazz div[role="dialog"],
+.theme-sugar-time-jazz .explore-page main > div > div,
+.theme-sugar-time-jazz .library-page main > div > div,
+.theme-sugar-time-jazz .settings-page section,
 .theme-sugar-time-jazz .modal-content,
-.theme-sugar-time-jazz .dialog-box,
-.theme-sugar-time-jazz .modal-container,
-.theme-sugar-time-jazz .dialog,
-.theme-sugar-time-jazz .overlay-card,
-.theme-sugar-time-jazz [class*="modal"],
-.theme-sugar-time-jazz [role="dialog"],
-[data-theme="sugar-time-jazz"] .settings-section,
-[data-theme="sugar-time-jazz"] .settings-card,
-[data-theme="sugar-time-jazz"] .settings-page .card,
-[data-theme="sugar-time-jazz"] .settings-page .settings-section,
-[data-theme="sugar-time-jazz"] .settings-view .card,
-[data-theme="sugar-time-jazz"] .settings-view .settings-section,
-[data-theme="sugar-time-jazz"] .modal,
-[data-theme="sugar-time-jazz"] .modal-content,
-[data-theme="sugar-time-jazz"] .dialog-box,
-[data-theme="sugar-time-jazz"] .modal-container,
-[data-theme="sugar-time-jazz"] .dialog,
-[data-theme="sugar-time-jazz"] .overlay-card,
-[data-theme="sugar-time-jazz"] [class*="modal"],
-[data-theme="sugar-time-jazz"] [role="dialog"] {
-  box-shadow: 0 0 32px rgba(168, 85, 247, 0.6), inset 0 0 15px rgba(147, 51, 234, 0.2) !important;
-  border: 1px solid rgba(212, 180, 150, 0.3) !important;
+[data-theme="sugar-time-jazz"] main div[class*="bg-"],
+[data-theme="sugar-time-jazz"] section,
+[data-theme="sugar-time-jazz"] [class*="card"],
+[data-theme="sugar-time-jazz"] [class*="Card"],
+[data-theme="sugar-time-jazz"] div[role="dialog"],
+[data-theme="sugar-time-jazz"] .explore-page main > div > div,
+[data-theme="sugar-time-jazz"] .library-page main > div > div,
+[data-theme="sugar-time-jazz"] .settings-page section,
+[data-theme="sugar-time-jazz"] .modal-content {
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.25), 0 0 2px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.2) !important;
 }
 
-/* 4. Individual Track Blocks & Search / Album / Playlist Views */
-.theme-sugar-time-jazz .track-row,
-.theme-sugar-time-jazz .song-card,
-.theme-sugar-time-jazz .track-item,
-.theme-sugar-time-jazz .search-result-item,
-.theme-sugar-time-jazz .search-item,
-.theme-sugar-time-jazz .genre-item,
-.theme-sugar-time-jazz .album-track,
-.theme-sugar-time-jazz .album-view .track-item,
-.theme-sugar-time-jazz .album-detail-view .track-item,
-.theme-sugar-time-jazz .genre-view .card,
-.theme-sugar-time-jazz .genre-detail-view .card,
-.theme-sugar-time-jazz .search-results .track-block,
-.theme-sugar-time-jazz .search-view .track-item,
-.theme-sugar-time-jazz .search-view .track-row,
-.theme-sugar-time-jazz .playlist-view .track-item,
-.theme-sugar-time-jazz .playlist-detail-view .track-item,
-.theme-sugar-time-jazz .playlist-track-row,
-[data-theme="sugar-time-jazz"] .track-row,
-[data-theme="sugar-time-jazz"] .song-card,
-[data-theme="sugar-time-jazz"] .track-item,
-[data-theme="sugar-time-jazz"] .search-result-item,
-[data-theme="sugar-time-jazz"] .search-item,
-[data-theme="sugar-time-jazz"] .genre-item,
-[data-theme="sugar-time-jazz"] .album-track,
-[data-theme="sugar-time-jazz"] .album-view .track-item,
-[data-theme="sugar-time-jazz"] .album-detail-view .track-item,
-[data-theme="sugar-time-jazz"] .genre-view .card,
-[data-theme="sugar-time-jazz"] .genre-detail-view .card,
-[data-theme="sugar-time-jazz"] .search-results .track-block,
-[data-theme="sugar-time-jazz"] .search-view .track-item,
-[data-theme="sugar-time-jazz"] .search-view .track-row,
-[data-theme="sugar-time-jazz"] .playlist-view .track-item,
-[data-theme="sugar-time-jazz"] .playlist-detail-view .track-item,
-[data-theme="sugar-time-jazz"] .playlist-track-row {
-  box-shadow: 0 0 16px rgba(147, 51, 234, 0.4) !important;
-  border: 1px solid rgba(212, 180, 150, 0.18) !important;
+/* Track list rows across Album/Playlist/Search views */
+.theme-sugar-time-jazz div[data-track-id],
+.theme-sugar-time-jazz [class*="track-row"],
+.theme-sugar-time-jazz [class*="TrackRow"],
+.theme-sugar-time-jazz [class*="track"],
+.theme-sugar-time-jazz [class*="Track"],
+.theme-sugar-time-jazz [class*="song-row"],
+[data-theme="sugar-time-jazz"] div[data-track-id],
+[data-theme="sugar-time-jazz"] [class*="track-row"],
+[data-theme="sugar-time-jazz"] [class*="TrackRow"],
+[data-theme="sugar-time-jazz"] [class*="track"],
+[data-theme="sugar-time-jazz"] [class*="Track"],
+[data-theme="sugar-time-jazz"] [class*="song-row"] {
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15) !important;
 }
 
-/* --------------------------------------------------------------------------------
-   TASK 5 DIRECTIVE: ROCK & MUSICAL INSTRUMENT ICON PURPLE DROP-SHADOW
-   -------------------------------------------------------------------------------- */
+/* ================================================================================
+   FIX 1: SUGAR TIME JAZZ - NAV ITEM GLOW (REMOVE BOX SHAPE & MATCH IMAGE 3 STYLE)
+   ================================================================================ */
+.theme-sugar-time-jazz nav a,
+.theme-sugar-time-jazz nav button,
+.theme-sugar-time-jazz .bottom-nav button,
+.theme-sugar-time-jazz .bottom-nav-bar button,
+.theme-sugar-time-jazz .bottom-nav-item,
+.theme-sugar-time-jazz .sidebar a,
+.theme-sugar-time-jazz .sidebar button,
+.theme-sugar-time-jazz .sidebar-nav button,
+.theme-sugar-time-jazz .sidebar-nav-item,
+.theme-sugar-time-jazz .sidebar-item,
+.theme-sugar-time-jazz .nav-item,
+.theme-sugar-time-jazz .nav-link,
+[data-theme="sugar-time-jazz"] nav a,
+[data-theme="sugar-time-jazz"] nav button,
+[data-theme="sugar-time-jazz"] .bottom-nav button,
+[data-theme="sugar-time-jazz"] .bottom-nav-bar button,
+[data-theme="sugar-time-jazz"] .bottom-nav-item,
+[data-theme="sugar-time-jazz"] .sidebar a,
+[data-theme="sugar-time-jazz"] .sidebar button,
+[data-theme="sugar-time-jazz"] .sidebar-nav button,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item,
+[data-theme="sugar-time-jazz"] .sidebar-item,
+[data-theme="sugar-time-jazz"] .nav-item,
+[data-theme="sugar-time-jazz"] .nav-link {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.theme-sugar-time-jazz nav a.active,
+.theme-sugar-time-jazz nav button.active,
+.theme-sugar-time-jazz .bottom-nav .active,
+.theme-sugar-time-jazz .bottom-nav-bar .active,
+.theme-sugar-time-jazz .bottom-nav-item.active,
+.theme-sugar-time-jazz .sidebar .active,
+.theme-sugar-time-jazz .sidebar-nav .active,
+.theme-sugar-time-jazz .sidebar-nav-item.active,
+.theme-sugar-time-jazz .sidebar-item.active,
+.theme-sugar-time-jazz .nav-item.active,
+.theme-sugar-time-jazz .nav-item-active,
+.theme-sugar-time-jazz .tab-item-active,
+.theme-sugar-time-jazz .tab-active,
+.theme-sugar-time-jazz [aria-current="page"],
+[data-theme="sugar-time-jazz"] nav a.active,
+[data-theme="sugar-time-jazz"] nav button.active,
+[data-theme="sugar-time-jazz"] .bottom-nav .active,
+[data-theme="sugar-time-jazz"] .bottom-nav-bar .active,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active,
+[data-theme="sugar-time-jazz"] .sidebar .active,
+[data-theme="sugar-time-jazz"] .sidebar-nav .active,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.active,
+[data-theme="sugar-time-jazz"] .sidebar-item.active,
+[data-theme="sugar-time-jazz"] .nav-item.active,
+[data-theme="sugar-time-jazz"] .nav-item-active,
+[data-theme="sugar-time-jazz"] .tab-item-active,
+[data-theme="sugar-time-jazz"] .tab-active,
+[data-theme="sugar-time-jazz"] [aria-current="page"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  color: #d8b4fe !important; /* Soft purple text */
+  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.95)) drop-shadow(0 0 20px rgba(147, 51, 234, 0.8)) !important;
+}
+
+.theme-sugar-time-jazz nav a.active svg,
+.theme-sugar-time-jazz nav button.active svg,
+.theme-sugar-time-jazz .bottom-nav .active svg,
+.theme-sugar-time-jazz .bottom-nav-bar .active svg,
+.theme-sugar-time-jazz .bottom-nav-item.active svg,
+.theme-sugar-time-jazz .sidebar .active svg,
+.theme-sugar-time-jazz .sidebar-nav .active svg,
+.theme-sugar-time-jazz .sidebar-nav-item.active svg,
+.theme-sugar-time-jazz .sidebar-item.active svg,
+.theme-sugar-time-jazz .nav-item.active svg,
+.theme-sugar-time-jazz .nav-item-active svg,
+.theme-sugar-time-jazz .tab-item-active svg,
+.theme-sugar-time-jazz .tab-active svg,
+[data-theme="sugar-time-jazz"] nav a.active svg,
+[data-theme="sugar-time-jazz"] nav button.active svg,
+[data-theme="sugar-time-jazz"] .bottom-nav .active svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-bar .active svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active svg,
+[data-theme="sugar-time-jazz"] .sidebar .active svg,
+[data-theme="sugar-time-jazz"] .sidebar-nav .active svg,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.active svg,
+[data-theme="sugar-time-jazz"] .sidebar-item.active svg,
+[data-theme="sugar-time-jazz"] .nav-item.active svg,
+[data-theme="sugar-time-jazz"] .nav-item-active svg,
+[data-theme="sugar-time-jazz"] .tab-item-active svg,
+[data-theme="sugar-time-jazz"] .tab-active svg {
+  color: #e9d5ff !important;
+  filter: drop-shadow(0 0 12px rgba(168, 85, 247, 1)) !important;
+}
+
+/* ================================================================================
+   CRITICAL TASK 3: SECTION & CATEGORY ICONS GLOWING PURPLE FILTER
+   ================================================================================ */
+.theme-sugar-time-jazz header svg,
+.theme-sugar-time-jazz h1 svg,
+.theme-sugar-time-jazz h2 svg,
+.theme-sugar-time-jazz h3 svg,
+.theme-sugar-time-jazz .section-title svg,
+.theme-sugar-time-jazz .home-section-title svg,
 .theme-sugar-time-jazz .rock-icon,
 .theme-sugar-time-jazz .category-icon svg,
 .theme-sugar-time-jazz .category-icon,
+[data-theme="sugar-time-jazz"] header svg,
+[data-theme="sugar-time-jazz"] h1 svg,
+[data-theme="sugar-time-jazz"] h2 svg,
+[data-theme="sugar-time-jazz"] h3 svg,
+[data-theme="sugar-time-jazz"] .section-title svg,
+[data-theme="sugar-time-jazz"] .home-section-title svg,
 [data-theme="sugar-time-jazz"] .rock-icon,
 [data-theme="sugar-time-jazz"] .category-icon svg,
 [data-theme="sugar-time-jazz"] .category-icon {
-  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.7)) !important;
   color: #f5eae1 !important;
+  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.85)) !important;
 }
 
 /* General Back-glow for Cards, Content Containers, and Panels */
