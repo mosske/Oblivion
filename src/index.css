@@ -1035,6 +1035,11 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   --theme-card-border: rgba(255, 255, 255, 0.12);
   --theme-text-primary: #ffffff;
   --theme-accent: #dfb86c;
+  --btn-gradient: var(--accent-gradient, linear-gradient(135deg, #f7e2ab 0%, #dfb86c 50%, #a07422 100%));
+  --btn-text: var(--text-on-accent, #ffffff);
+  --btn-border: transparent;
+  --btn-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --btn-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme="designer"],
@@ -1169,25 +1174,350 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   -webkit-backdrop-filter: blur(12px) !important;
 }
 
+/* ================================================================================
+/* ================================================================================
+   DYNAMIC THEME-BOUND CATEGORY CHIPS & GLOW ARTIFACT ELIMINATION
+   ================================================================================ */
+/* Default / Dynamic Active Category Chip across all themes */
+.category-chip.active,
+.chip-button.active,
+.filter-pill.active,
+button[class*="chip"].active,
+button[class*="category"].active,
+.home-chip-active,
 .home-filter-chip.active,
-.explore-filter-chip.active {
-  background: var(--theme-accent, #dfb86c) !important;
-  border-color: var(--theme-accent, #dfb86c) !important;
-  color: #000000 !important;
+.explore-filter-chip.active,
+.explore-chip-active {
+  background: var(--theme-accent-gradient, var(--accent-gradient, var(--primary-accent, var(--accent-color, var(--primary, #dfb86c))))) !important;
+  color: var(--theme-active-text, var(--text-on-accent, var(--accent-contrast-text, #ffffff))) !important;
+  border: 1px solid var(--accent-border, var(--border-active, rgba(255, 255, 255, 0.2))) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  border-radius: 9999px !important;
+}
+
+.category-chip.active:hover,
+.chip-button.active:hover,
+.filter-pill.active:hover,
+button[class*="chip"].active:hover,
+button[class*="category"].active:hover,
+.home-chip-active:hover,
+.home-filter-chip.active:hover,
+.explore-filter-chip.active:hover,
+.explore-chip-active:hover {
+  filter: brightness(1.08) !important;
+  box-shadow: none !important;
+}
+
+/* Eliminate glowing square edge pseudo-element artifacts */
+.category-chip::before,
+.category-chip::after,
+.chip-button::before,
+.chip-button::after,
+.filter-pill::before,
+.filter-pill::after,
+.home-filter-chip::before,
+.home-filter-chip::after,
+.explore-filter-chip::before,
+.explore-filter-chip::after {
+  display: none !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* Theme-Specific Explicit Active Chip Colors */
+
+/* 1. Nebula Liquid Glass Theme - Preserved Pink-to-Black Gradient */
+[data-theme="nebula-liquid-glass"] .category-chip.active,
+[data-theme="nebula-liquid-glass"] .chip-button.active,
+[data-theme="nebula-liquid-glass"] .filter-pill.active,
+[data-theme="nebula-liquid-glass"] .home-filter-chip.active,
+[data-theme="nebula-liquid-glass"] .explore-filter-chip.active,
+[data-theme="nebula-liquid-glass"] .home-chip-active,
+[data-theme="nebula-liquid-glass"] .explore-chip-active,
+.theme-nebula-liquid-glass .category-chip.active,
+.theme-nebula-liquid-glass .chip-button.active,
+.theme-nebula-liquid-glass .filter-pill.active,
+.theme-nebula-liquid-glass .home-filter-chip.active,
+.theme-nebula-liquid-glass .explore-filter-chip.active,
+.theme-nebula-liquid-glass .home-chip-active,
+.theme-nebula-liquid-glass .explore-chip-active {
+  background: linear-gradient(135deg, #8b005d, #120015) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 0, 127, 0.45) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 2. Haute Couture Designer Theme - Preserved Metallic Champagne Gold */
+[data-theme="designer"] .category-chip.active,
+[data-theme="designer"] .chip-button.active,
+[data-theme="designer"] .filter-pill.active,
+[data-theme="designer"] .home-filter-chip.active,
+[data-theme="designer"] .explore-filter-chip.active,
+[data-theme="haute-couture"] .category-chip.active,
+[data-theme="haute-couture"] .chip-button.active,
+[data-theme="haute-couture"] .filter-pill.active,
+[data-theme="haute-couture"] .home-filter-chip.active,
+[data-theme="haute-couture"] .explore-filter-chip.active,
+[data-theme-alias="haute-couture"] .category-chip.active,
+[data-theme-alias="haute-couture"] .chip-button.active,
+[data-theme-alias="haute-couture"] .filter-pill.active,
+[data-theme-alias="haute-couture"] .home-filter-chip.active,
+[data-theme-alias="haute-couture"] .explore-filter-chip.active,
+.theme-haute-couture .category-chip.active,
+.theme-haute-couture .chip-button.active,
+.theme-haute-couture .filter-pill.active,
+.theme-haute-couture .home-filter-chip.active,
+.theme-haute-couture .explore-filter-chip.active,
+.theme-designer .category-chip.active,
+.theme-designer .chip-button.active,
+.theme-designer .filter-pill.active,
+.theme-designer .home-filter-chip.active,
+.theme-designer .explore-filter-chip.active {
+  background: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 50%, #a07422 100%) !important;
+  color: #120f14 !important;
+  border: 1px solid rgba(223, 184, 108, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 3. Cyberpunk Neon Theme */
+[data-theme="cyberpunk-neon"] .category-chip.active,
+[data-theme="cyberpunk-neon"] .chip-button.active,
+[data-theme="cyberpunk-neon"] .filter-pill.active,
+[data-theme="cyberpunk-neon"] .home-filter-chip.active,
+[data-theme="cyberpunk-neon"] .explore-filter-chip.active,
+[data-theme="cyberpunk"] .category-chip.active,
+[data-theme="cyberpunk"] .chip-button.active,
+[data-theme="cyberpunk"] .filter-pill.active,
+[data-theme="cyberpunk"] .home-filter-chip.active,
+[data-theme="cyberpunk"] .explore-filter-chip.active,
+.theme-cyberpunk-neon .category-chip.active,
+.theme-cyberpunk-neon .chip-button.active,
+.theme-cyberpunk-neon .filter-pill.active,
+.theme-cyberpunk-neon .home-filter-chip.active,
+.theme-cyberpunk-neon .explore-filter-chip.active {
+  background: linear-gradient(135deg, #00f3ff 0%, #ff007f 100%) !important;
+  color: #050814 !important;
+  border: 1px solid rgba(0, 243, 255, 0.6) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 4. Candyland Light Theme */
+[data-theme="candyland"] .category-chip.active,
+[data-theme="candyland"] .chip-button.active,
+[data-theme="candyland"] .filter-pill.active,
+[data-theme="candyland"] .home-filter-chip.active,
+[data-theme="candyland"] .explore-filter-chip.active,
+[data-theme="ytmusic-red"] .category-chip.active,
+.theme-candyland .category-chip.active,
+.theme-candyland .chip-button.active,
+.theme-candyland .filter-pill.active,
+.theme-candyland .home-filter-chip.active,
+.theme-candyland .explore-filter-chip.active {
+  background: linear-gradient(135deg, #ff70a6 0%, #a3c4f3 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 112, 166, 0.6) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 5. Dynamic Emerald Theme */
+[data-theme="dynamic-emerald"] .category-chip.active,
+[data-theme="dynamic-emerald"] .chip-button.active,
+[data-theme="dynamic-emerald"] .filter-pill.active,
+[data-theme="dynamic-emerald"] .home-filter-chip.active,
+[data-theme="dynamic-emerald"] .explore-filter-chip.active,
+[data-theme="emerald-wilderness"] .category-chip.active,
+.theme-dynamic-emerald .category-chip.active,
+.theme-dynamic-emerald .chip-button.active,
+.theme-dynamic-emerald .filter-pill.active,
+.theme-dynamic-emerald .home-filter-chip.active,
+.theme-dynamic-emerald .explore-filter-chip.active {
+  background: linear-gradient(135deg, #00f5a0 0%, #00d9f5 100%) !important;
+  color: #011a12 !important;
+  border: 1px solid rgba(0, 245, 160, 0.6) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 6. Audiophile Gold / Slate Blue Theme */
+[data-theme="audiophile-gold"] .category-chip.active,
+[data-theme="audiophile-gold"] .chip-button.active,
+[data-theme="audiophile-gold"] .filter-pill.active,
+[data-theme="audiophile-gold"] .home-filter-chip.active,
+[data-theme="audiophile-gold"] .explore-filter-chip.active,
+.theme-audiophile-gold .category-chip.active,
+.theme-audiophile-gold .chip-button.active,
+.theme-audiophile-gold .filter-pill.active,
+.theme-audiophile-gold .home-filter-chip.active,
+.theme-audiophile-gold .explore-filter-chip.active {
+  background: linear-gradient(135deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%) !important;
+  color: #070b14 !important;
+  border: 1px solid rgba(143, 167, 194, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 7. Twilight Vaporwave Theme */
+[data-theme="twilight-vaporwave"] .category-chip.active,
+[data-theme="twilight-vaporwave"] .chip-button.active,
+[data-theme="twilight-vaporwave"] .filter-pill.active,
+[data-theme="twilight-vaporwave"] .home-filter-chip.active,
+[data-theme="twilight-vaporwave"] .explore-filter-chip.active,
+.theme-twilight-vaporwave .category-chip.active,
+.theme-twilight-vaporwave .chip-button.active,
+.theme-twilight-vaporwave .filter-pill.active,
+.theme-twilight-vaporwave .home-filter-chip.active,
+.theme-twilight-vaporwave .explore-filter-chip.active {
+  background: linear-gradient(135deg, #ff2a8d 0%, #8a2be2 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 42, 141, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 8. Neue Editorial Theme */
+[data-theme="neue-editorial"] .category-chip.active,
+[data-theme="neue-editorial"] .chip-button.active,
+[data-theme="neue-editorial"] .filter-pill.active,
+[data-theme="neue-editorial"] .home-filter-chip.active,
+[data-theme="neue-editorial"] .explore-filter-chip.active,
+.theme-neue-editorial .category-chip.active,
+.theme-neue-editorial .chip-button.active,
+.theme-neue-editorial .filter-pill.active,
+.theme-neue-editorial .home-filter-chip.active,
+.theme-neue-editorial .explore-filter-chip.active {
+  background: linear-gradient(135deg, #1F1F1F 0%, #3A3530 100%) !important;
+  color: #FAF5ED !important;
+  border: 1px solid rgba(31, 31, 31, 0.4) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 9. Obsidian Depth Theme */
+[data-theme="obsidian-depth"] .category-chip.active,
+[data-theme="obsidian-depth"] .chip-button.active,
+[data-theme="obsidian-depth"] .filter-pill.active,
+[data-theme="obsidian-depth"] .home-filter-chip.active,
+[data-theme="obsidian-depth"] .explore-filter-chip.active,
+.theme-obsidian-depth .category-chip.active,
+.theme-obsidian-depth .chip-button.active,
+.theme-obsidian-depth .filter-pill.active,
+.theme-obsidian-depth .home-filter-chip.active,
+.theme-obsidian-depth .explore-filter-chip.active {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(56, 189, 248, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 10. Sugar Time Jazz Theme */
+[data-theme="sugar-time-jazz"] .category-chip.active,
+[data-theme="sugar-time-jazz"] .chip-button.active,
+[data-theme="sugar-time-jazz"] .filter-pill.active,
+[data-theme="sugar-time-jazz"] .home-filter-chip.active,
+[data-theme="sugar-time-jazz"] .explore-filter-chip.active,
+.theme-sugar-time-jazz .category-chip.active,
+.theme-sugar-time-jazz .chip-button.active,
+.theme-sugar-time-jazz .filter-pill.active,
+.theme-sugar-time-jazz .home-filter-chip.active,
+.theme-sugar-time-jazz .explore-filter-chip.active {
+  background: linear-gradient(135deg, #d4b496 0%, #c4b5a5 50%, #9333ea 100%) !important;
+  color: #120e0b !important;
+  border: 1px solid rgba(212, 180, 150, 0.4) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 11. Bespoke Custom Theme */
+[data-theme="bespoke"] .category-chip.active,
+[data-theme="bespoke"] .chip-button.active,
+[data-theme="bespoke"] .filter-pill.active,
+[data-theme="bespoke"] .home-filter-chip.active,
+[data-theme="bespoke"] .explore-filter-chip.active,
+[data-theme="bespoke-home"] .category-chip.active,
+[data-theme="bespoke-home"] .chip-button.active,
+[data-theme="bespoke-home"] .filter-pill.active,
+[data-theme="bespoke-home"] .home-filter-chip.active,
+[data-theme="bespoke-home"] .explore-filter-chip.active,
+.theme-bespoke .category-chip.active,
+.theme-bespoke .chip-button.active,
+.theme-bespoke .filter-pill.active,
+.theme-bespoke .home-filter-chip.active,
+.theme-bespoke .explore-filter-chip.active {
+  background: var(--accent-gradient, linear-gradient(135deg, var(--bespoke-c1, #00f0ff), var(--bespoke-c2, #ff007f))) !important;
+  color: var(--accent-contrast-text, #ffffff) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* Strip parent container styling for category chips */
+.chips-container,
+.category-bar,
+.chip-scroll-wrapper,
+div[class*="chip-container"],
+div[class*="category-wrapper"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Ensure individual inactive chips remain clean pills without background box artifacts */
+.category-chip:not(.active),
+.chip-button:not(.active),
+.filter-pill:not(.active),
+.home-filter-chip:not(.active),
+.explore-filter-chip:not(.active) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.category-chip:not(.active):hover,
+.chip-button:not(.active):hover,
+.filter-pill:not(.active):hover,
+.home-filter-chip:not(.active):hover,
+.explore-filter-chip:not(.active):hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 /* ================================================================================
-   CYBERPUNK NEON GLASS: REMOVE BOUNDING BOXES & BORDERS FROM NAV ITEMS
+   TASK 2: CYBERPUNK NEON GLASS - REMOVE SQUARE OUTLINES FROM MAIN MENU
    ================================================================================ */
+.theme-cyberpunk .bottom-nav-item,
+.theme-cyberpunk .sidebar-nav-item,
+.theme-cyberpunk .sidebar-item,
+.theme-cyberpunk .nav-item,
+.theme-cyberpunk .nav-link,
+[data-theme="cyberpunk"] .bottom-nav-item,
+[data-theme="cyberpunk"] .sidebar-nav-item,
+[data-theme="cyberpunk"] .sidebar-item,
 [data-theme="cyberpunk"] .nav-item,
 [data-theme="cyberpunk"] .nav-link,
-[data-theme="cyberpunk"] .bottom-nav-item,
+.theme-cyberpunk-neon .bottom-nav-item,
+.theme-cyberpunk-neon .sidebar-nav-item,
+.theme-cyberpunk-neon .sidebar-item,
+.theme-cyberpunk-neon .nav-item,
+.theme-cyberpunk-neon .nav-link,
+[data-theme="cyberpunk-neon"] .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .sidebar-nav-item,
+[data-theme="cyberpunk-neon"] .sidebar-item,
 [data-theme="cyberpunk-neon"] .nav-item,
 [data-theme="cyberpunk-neon"] .nav-link,
-[data-theme="cyberpunk-neon"] .bottom-nav-item,
+[data-theme-alias="cyberpunk"] .bottom-nav-item,
+[data-theme-alias="cyberpunk"] .sidebar-nav-item,
+[data-theme-alias="cyberpunk"] .sidebar-item,
 [data-theme-alias="cyberpunk"] .nav-item,
 [data-theme-alias="cyberpunk"] .nav-link,
-[data-theme-alias="cyberpunk"] .bottom-nav-item,
 [data-theme="cyberpunk"] .sidebar-nav .nav-item,
 [data-theme="cyberpunk-neon"] .sidebar-nav .nav-item,
 [data-theme="cyberpunk"] .desktop-menu .nav-item,
@@ -1198,10 +1528,100 @@ canvas.animated-theme-bg:not(.full-player-canvas),
 [data-theme="cyberpunk-neon"] .bottom-nav-bar .bottom-nav-item,
 [data-theme="cyberpunk"] .nav-icon-container,
 [data-theme="cyberpunk-neon"] .nav-icon-container {
-  background: transparent !important;
   border: none !important;
+  background: transparent !important;
   box-shadow: none !important;
   outline: none !important;
+}
+
+.theme-cyberpunk .bottom-nav-item.active,
+.theme-cyberpunk .sidebar-nav-item.active,
+.theme-cyberpunk .sidebar-item.active,
+.theme-cyberpunk .nav-item.active,
+[data-theme="cyberpunk"] .bottom-nav-item.active,
+[data-theme="cyberpunk"] .sidebar-nav-item.active,
+[data-theme="cyberpunk"] .sidebar-item.active,
+[data-theme="cyberpunk"] .nav-item.active,
+.theme-cyberpunk-neon .bottom-nav-item.active,
+.theme-cyberpunk-neon .sidebar-nav-item.active,
+.theme-cyberpunk-neon .sidebar-item.active,
+.theme-cyberpunk-neon .nav-item.active,
+[data-theme="cyberpunk-neon"] .bottom-nav-item.active,
+[data-theme="cyberpunk-neon"] .sidebar-nav-item.active,
+[data-theme="cyberpunk-neon"] .sidebar-item.active,
+[data-theme="cyberpunk-neon"] .nav-item.active,
+[data-theme-alias="cyberpunk"] .bottom-nav-item.active,
+[data-theme-alias="cyberpunk"] .sidebar-nav-item.active,
+[data-theme-alias="cyberpunk"] .sidebar-item.active,
+[data-theme-alias="cyberpunk"] .nav-item.active {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ================================================================================
+   TASK 3: CYBERPUNK NEON GLASS - SOFTEN MINI PLAYER BUTTON BORDERS
+   ================================================================================ */
+.theme-cyberpunk,
+[data-theme="cyberpunk"],
+.theme-cyberpunk-neon,
+[data-theme="cyberpunk-neon"],
+[data-theme-alias="cyberpunk"] {
+  --cyber-cyan: #00f3ff;
+  --cyber-cyan-glow: rgba(0, 243, 255, 0.3);
+}
+
+.theme-cyberpunk .mini-player .action-btn,
+.theme-cyberpunk .mini-player-controls button:not(.mini-player-play-btn),
+.theme-cyberpunk .mini-player .secondary-controls button,
+.theme-cyberpunk .mini-player button.player-control-btn,
+[data-theme="cyberpunk"] .mini-player .action-btn,
+[data-theme="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn),
+[data-theme="cyberpunk"] .mini-player .secondary-controls button,
+[data-theme="cyberpunk"] .mini-player button.player-control-btn,
+.theme-cyberpunk-neon .mini-player .action-btn,
+.theme-cyberpunk-neon .mini-player-controls button:not(.mini-player-play-btn),
+.theme-cyberpunk-neon .mini-player .secondary-controls button,
+.theme-cyberpunk-neon .mini-player button.player-control-btn,
+[data-theme="cyberpunk-neon"] .mini-player .action-btn,
+[data-theme="cyberpunk-neon"] .mini-player-controls button:not(.mini-player-play-btn),
+[data-theme="cyberpunk-neon"] .mini-player .secondary-controls button,
+[data-theme="cyberpunk-neon"] .mini-player button.player-control-btn,
+[data-theme-alias="cyberpunk"] .mini-player .action-btn,
+[data-theme-alias="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn),
+[data-theme-alias="cyberpunk"] .mini-player .secondary-controls button,
+[data-theme-alias="cyberpunk"] .mini-player button.player-control-btn {
+  border-radius: 12px !important;
+  border: 1px solid var(--cyber-cyan-glow, rgba(0, 243, 255, 0.3)) !important;
+  background: rgba(10, 15, 28, 0.6) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.theme-cyberpunk .mini-player .action-btn:hover,
+.theme-cyberpunk .mini-player-controls button:not(.mini-player-play-btn):hover,
+.theme-cyberpunk .mini-player .secondary-controls button:hover,
+.theme-cyberpunk .mini-player button.player-control-btn:hover,
+[data-theme="cyberpunk"] .mini-player .action-btn:hover,
+[data-theme="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn):hover,
+[data-theme="cyberpunk"] .mini-player .secondary-controls button:hover,
+[data-theme="cyberpunk"] .mini-player button.player-control-btn:hover,
+.theme-cyberpunk-neon .mini-player .action-btn:hover,
+.theme-cyberpunk-neon .mini-player-controls button:not(.mini-player-play-btn):hover,
+.theme-cyberpunk-neon .mini-player .secondary-controls button:hover,
+.theme-cyberpunk-neon .mini-player button.player-control-btn:hover,
+[data-theme="cyberpunk-neon"] .mini-player .action-btn:hover,
+[data-theme="cyberpunk-neon"] .mini-player-controls button:not(.mini-player-play-btn):hover,
+[data-theme="cyberpunk-neon"] .mini-player .secondary-controls button:hover,
+[data-theme="cyberpunk-neon"] .mini-player button.player-control-btn:hover,
+[data-theme-alias="cyberpunk"] .mini-player .action-btn:hover,
+[data-theme-alias="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn):hover,
+[data-theme-alias="cyberpunk"] .mini-player .secondary-controls button:hover,
+[data-theme-alias="cyberpunk"] .mini-player button.player-control-btn:hover {
+  border-color: var(--cyber-cyan, #00f3ff) !important;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.4) !important;
 }
 
 /* ================================================================================
@@ -1302,9 +1722,10 @@ canvas.animated-theme-bg:not(.full-player-canvas),
 }
 [data-theme="neue-editorial"] .home-filter-chip.active,
 .theme-neue-editorial .home-filter-chip.active {
-  background: #1F1F1F !important;
-  color: #FAF5ED !important;
-  border-color: #1F1F1F !important;
+  background: var(--btn-gradient, var(--accent-gradient)) !important;
+  color: var(--btn-text, #FAF5ED) !important;
+  border: 1px solid var(--btn-border, transparent) !important;
+  box-shadow: none !important;
 }
 
 [data-theme="nebula-liquid-glass"] .home-container,
@@ -1322,8 +1743,10 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   color: #f5f3ff !important;
 }
 [data-theme="nebula-liquid-glass"] .home-filter-chip.active {
-  background: #a78bfa !important;
-  color: #0d0b1a !important;
+  background: linear-gradient(135deg, #8b005d, #120015) !important;
+  color: var(--btn-text, #ffffff) !important;
+  border: 1px solid var(--btn-border, rgba(255, 0, 127, 0.45)) !important;
+  box-shadow: none !important;
 }
 
 [data-theme="obsidian-depth"] .home-container,
@@ -1341,8 +1764,10 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   color: #f8fafc !important;
 }
 [data-theme="obsidian-depth"] .home-filter-chip.active {
-  background: #38bdf8 !important;
-  color: #0f172a !important;
+  background: var(--btn-gradient, var(--accent-gradient)) !important;
+  color: var(--btn-text, #0f172a) !important;
+  border: 1px solid var(--btn-border, transparent) !important;
+  box-shadow: none !important;
 }
 
 [data-theme="bespoke"] .home-container,
@@ -1358,8 +1783,120 @@ canvas.animated-theme-bg:not(.full-player-canvas),
 }
 [data-theme="bespoke"] .home-filter-chip.active,
 [data-theme="bespoke-home"] .home-filter-chip.active {
-  background: var(--theme-accent, #00f0ff) !important;
-  color: #000000 !important;
+  background: var(--btn-gradient, var(--accent-gradient)) !important;
+  color: var(--btn-text, #ffffff) !important;
+  border: 1px solid var(--btn-border, transparent) !important;
+  box-shadow: none !important;
+}
+
+/* ================================================================================
+   TASK 2: EXPAND PURPLE BACK-GLOW ACROSS ALL CARDS & MODALS IN 'SUGAR TIME JAZZ'
+   ================================================================================ */
+/* Define Sugar Time Jazz Ambient Purple Tokens */
+.theme-sugar-time-jazz,
+[data-theme="sugar-time-jazz"] {
+  --purple-glow-vibrant: rgba(168, 85, 247, 0.65);
+  --purple-glow-deep: rgba(147, 51, 234, 0.45);
+  --purple-ambient-glow: 0 0 25px rgba(147, 51, 234, 0.45);
+  --purple-ambient-glow-strong: 0 0 35px rgba(168, 85, 247, 0.65);
+}
+
+/* Back-glow for Cards, Content Containers, and Panels */
+.theme-sugar-time-jazz .card,
+.theme-sugar-time-jazz .shelf-card,
+.theme-sugar-time-jazz [class*="card"],
+.theme-sugar-time-jazz .glass-panel,
+.theme-sugar-time-jazz .mini-player,
+[data-theme="sugar-time-jazz"] .card,
+[data-theme="sugar-time-jazz"] .shelf-card,
+[data-theme="sugar-time-jazz"] [class*="card"],
+[data-theme="sugar-time-jazz"] .glass-panel,
+[data-theme="sugar-time-jazz"] .mini-player {
+  box-shadow: var(--purple-ambient-glow) !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+.theme-sugar-time-jazz .card:hover,
+.theme-sugar-time-jazz .shelf-card:hover,
+.theme-sugar-time-jazz [class*="card"]:hover,
+[data-theme="sugar-time-jazz"] .card:hover,
+[data-theme="sugar-time-jazz"] .shelf-card:hover,
+[data-theme="sugar-time-jazz"] [class*="card"]:hover {
+  box-shadow: var(--purple-ambient-glow-strong), inset 0 0 15px rgba(168, 85, 247, 0.15) !important;
+  border: 1px solid rgba(212, 180, 150, 0.35) !important;
+}
+
+/* Back-glow for Modals, Popups, and Overlays */
+.theme-sugar-time-jazz .modal,
+.theme-sugar-time-jazz .modal-content,
+.theme-sugar-time-jazz .dialog,
+.theme-sugar-time-jazz [class*="modal"],
+[data-theme="sugar-time-jazz"] .modal,
+[data-theme="sugar-time-jazz"] .modal-content,
+[data-theme="sugar-time-jazz"] .dialog,
+[data-theme="sugar-time-jazz"] [class*="modal"] {
+  box-shadow: var(--purple-ambient-glow-strong), inset 0 0 15px rgba(147, 51, 234, 0.2) !important;
+  border: 1px solid rgba(212, 180, 150, 0.3) !important;
+}
+
+/* Back-glow for Primary Action Buttons (Pill Category Chips explicitly have zero square shadow) */
+.theme-sugar-time-jazz .btn-primary,
+[data-theme="sugar-time-jazz"] .btn-primary {
+  box-shadow: var(--purple-ambient-glow-strong) !important;
+}
+
+/* Accent Back-Glow for Header Titles and Active Badges */
+.theme-sugar-time-jazz h1,
+.theme-sugar-time-jazz h2,
+.theme-sugar-time-jazz .active-indicator,
+[data-theme="sugar-time-jazz"] h1,
+[data-theme="sugar-time-jazz"] h2,
+[data-theme="sugar-time-jazz"] .active-indicator {
+  text-shadow: 0 0 12px var(--purple-glow-vibrant);
+}
+
+/* ================================================================================
+   TASK 3: EXTEND THEME STYLING TO FULL PLAYER
+   ================================================================================ */
+/* Full Player Theme Unification */
+.theme-sugar-time-jazz .full-player-overlay,
+.theme-sugar-time-jazz .full-player-container,
+[data-theme="sugar-time-jazz"] .full-player-overlay,
+[data-theme="sugar-time-jazz"] .full-player-container {
+  background: var(--bg-main) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Full Player Cards & Glass Elements */
+.theme-sugar-time-jazz .full-player-overlay .glass-card,
+.theme-sugar-time-jazz .full-player-overlay .art-container,
+.theme-sugar-time-jazz .full-player-overlay .full-player-artwork-card,
+[data-theme="sugar-time-jazz"] .full-player-overlay .glass-card,
+[data-theme="sugar-time-jazz"] .full-player-overlay .art-container,
+[data-theme="sugar-time-jazz"] .full-player-overlay .full-player-artwork-card {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--bg-card-border);
+  box-shadow: 0 0 35px var(--purple-glow-deep) !important;
+}
+
+/* Playback Control Buttons in Full Player */
+.theme-sugar-time-jazz .full-player-overlay .play-pause-btn,
+.theme-sugar-time-jazz .full-player-overlay .full-player-play-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .play-pause-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .full-player-play-btn {
+  background: var(--btn-gradient, var(--accent-gradient)) !important;
+  box-shadow: 0 0 20px var(--purple-glow-vibrant) !important;
+  color: var(--text-primary) !important;
+}
+
+.theme-sugar-time-jazz .full-player-overlay .control-btn,
+.theme-sugar-time-jazz .full-player-overlay .player-control-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .control-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .player-control-btn {
+  color: var(--text-primary) !important;
+  filter: drop-shadow(0 0 6px var(--purple-glow-deep));
 }
 
 

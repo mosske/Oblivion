@@ -262,31 +262,18 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* Filter Tabs / Quick Shelves */}
       {!loading && filterTabs.length > 2 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar -mx-1 px-1">
+        <div className="chips-container category-bar chip-scroll-wrapper flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar -mx-1 px-1 bg-transparent border-0 shadow-none outline-none">
           {filterTabs.map((tab) => {
             const isActive = selectedFilter === tab;
             return (
               <button
                 key={tab}
                 onClick={() => setSelectedFilter(tab)}
-                className={`home-filter-chip px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 border ${
+                className={`category-chip filter-pill chip-button home-filter-chip px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 border ${
                   isActive
-                    ? "active shadow-md"
-                    : "opacity-70 hover:opacity-100"
+                    ? "active home-chip-active"
+                    : "opacity-75 hover:opacity-100"
                 }`}
-                style={
-                  isActive
-                    ? {
-                        backgroundColor: "var(--theme-border-color, #ffffff)",
-                        borderColor: "var(--theme-border-color, #ffffff)",
-                        color: "#000000",
-                      }
-                    : {
-                        backgroundColor: "var(--theme-card-bg, rgba(255,255,255,0.04))",
-                        borderColor: "var(--theme-border-color, rgba(255,255,255,0.1))",
-                        color: "var(--theme-text-primary, #ffffff)",
-                      }
-                }
               >
                 {tab}
               </button>

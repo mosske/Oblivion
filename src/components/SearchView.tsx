@@ -569,15 +569,15 @@ export const SearchView: React.FC<SearchViewProps> = ({
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="chips-container category-bar chip-scroll-wrapper flex items-center gap-2 overflow-x-auto pb-1 bg-transparent border-0 shadow-none outline-none">
           {(["all", "track", "album", "artist"] as const).map((f) => (
             <button
               key={f}
               onClick={() => handleFilterSelect(f)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all active:scale-95 ${
+              className={`category-chip filter-pill chip-button px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all active:scale-95 border ${
                 filter === f
-                  ? `${designConfig.pillActive} shadow-md`
-                  : `${designConfig.pillBg} hover:opacity-90`
+                  ? `active ${designConfig.pillActive} shadow-md`
+                  : `${designConfig.pillBg} hover:opacity-90 border-transparent`
               }`}
             >
               {f === "all" ? "All Results" : f + "s"}

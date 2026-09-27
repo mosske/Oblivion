@@ -310,16 +310,16 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
       </div>
 
       {/* Category Selector Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar -mx-1 px-1">
+      <div className="chips-container category-bar chip-scroll-wrapper flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar -mx-1 px-1 bg-transparent border-0 shadow-none outline-none">
         {categories.map((cat) => {
           const isActive = activeCategory === cat;
           return (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 ${
+              className={`category-chip filter-pill chip-button explore-filter-chip px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 border ${
                 isActive
-                  ? `${designConfig.accentBg} ${designConfig.accentContrastText} shadow-md ring-2 ${designConfig.accentBorder}`
+                  ? `active explore-chip-active ${designConfig.accentBg} ${designConfig.accentContrastText}`
                   : `${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle}`
               }`}
             >

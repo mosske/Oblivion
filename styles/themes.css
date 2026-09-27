@@ -18,7 +18,12 @@
   --accent-primary-rgb: 223, 184, 108;
   --accent-secondary: #f7e2ab;
   --accent-tertiary: #a07422;
+  --accent-gradient: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 50%, #a07422 100%);
+  --accent-border: rgba(223, 184, 108, 0.45);
   --accent-contrast-text: #120f14;
+  --text-on-accent: #120f14;
+  --bg-surface-elevated: #1f1b22;
+  --text-primary: #fdfcf9;
   --text-muted: #b0a694;
   --border-subtle: rgba(223, 184, 108, 0.22);
   --border-active: var(--accent-primary);
@@ -43,7 +48,12 @@
   --accent-primary-rgb: 0, 243, 255;
   --accent-secondary: #ff007f;
   --accent-tertiary: #7b2cbf;
+  --accent-gradient: linear-gradient(135deg, #00f3ff 0%, #ff007f 100%);
+  --accent-border: rgba(0, 243, 255, 0.5);
   --accent-contrast-text: #050814;
+  --text-on-accent: #050814;
+  --bg-surface-elevated: #0f1325;
+  --text-primary: #ffffff;
   --text-muted: #94a3b8;
   --border-subtle: rgba(0, 243, 255, 0.25);
   --border-active: var(--accent-primary);
@@ -77,7 +87,12 @@
   --accent-primary-rgb: 255, 112, 166;
   --accent-secondary: #a3c4f3;
   --accent-tertiary: #ffd166;
+  --accent-gradient: linear-gradient(135deg, #ff70a6 0%, #a3c4f3 100%);
+  --accent-border: rgba(255, 112, 166, 0.6);
   --accent-contrast-text: #ffffff;
+  --text-on-accent: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --text-primary: #3b1235;
   --text-muted: #5e356d;
   --border-subtle: rgba(255, 182, 193, 0.5);
   --border-active: var(--accent-primary);
@@ -101,7 +116,12 @@
   --accent-primary-rgb: 0, 245, 160;
   --accent-secondary: #00d9f5;
   --accent-tertiary: #ffe066;
+  --accent-gradient: linear-gradient(135deg, #00f5a0 0%, #00d9f5 100%);
+  --accent-border: rgba(0, 245, 160, 0.5);
   --accent-contrast-text: #011a12;
+  --text-on-accent: #011a12;
+  --bg-surface-elevated: #04291e;
+  --text-primary: #e6fff5;
   --text-muted: #6ee7b7;
   --border-subtle: rgba(0, 245, 160, 0.22);
   --border-active: var(--accent-primary);
@@ -112,26 +132,31 @@
 
 [data-theme="audiophile-gold"],
 .theme-audiophile-gold {
-  --bg-canvas: linear-gradient(160deg, #170d06 0%, #261408 50%, #100804 100%);
-  --canvas-text-primary: #fef3c7;
-  --canvas-text-secondary: #fde68a;
-  --canvas-text-muted: #fbbf24;
-  --card-bg: rgba(38, 20, 8, 0.75);
-  --card-text: #fef3c7;
-  --card-border: rgba(245, 158, 11, 0.35);
-  --accent-primary: #f59e0b;
-  --accent-color: #f59e0b;
-  --primary: #f59e0b;
-  --accent-primary-rgb: 245, 158, 11;
-  --accent-secondary: #d4af37;
-  --accent-tertiary: #e65c00;
-  --accent-contrast-text: #170d06;
-  --text-muted: #fbbf24;
-  --border-subtle: rgba(245, 158, 11, 0.3);
+  --bg-canvas: linear-gradient(160deg, #080c16 0%, #0e1422 50%, #05080e 100%);
+  --canvas-text-primary: #f1f5f9;
+  --canvas-text-secondary: #cbd5e1;
+  --canvas-text-muted: #7e91a6;
+  --card-bg: rgba(12, 18, 30, 0.65);
+  --card-text: #f1f5f9;
+  --card-border: rgba(143, 167, 194, 0.22);
+  --accent-primary: #8fa7c2;
+  --accent-color: #8fa7c2;
+  --primary: #8fa7c2;
+  --accent-primary-rgb: 143, 167, 194;
+  --accent-secondary: #cbd5e1;
+  --accent-tertiary: #4a5f78;
+  --accent-gradient: linear-gradient(135deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%);
+  --accent-border: rgba(143, 167, 194, 0.45);
+  --accent-contrast-text: #070b14;
+  --text-on-accent: #070b14;
+  --bg-surface-elevated: #101726;
+  --text-primary: #f1f5f9;
+  --text-muted: #7e91a6;
+  --border-subtle: rgba(143, 167, 194, 0.2);
   --border-active: var(--accent-primary);
-  --glass-blur: blur(16px);
-  --glass-bg: rgba(38, 20, 8, 0.75);
-  --glass-border: rgba(245, 158, 11, 0.35);
+  --glass-blur: blur(24px);
+  --glass-bg: rgba(12, 18, 30, 0.65);
+  --glass-border: rgba(143, 167, 194, 0.22);
 }
 
 [data-theme="twilight-vaporwave"],
@@ -149,7 +174,12 @@
   --accent-primary-rgb: 255, 42, 141;
   --accent-secondary: #8a2be2;
   --accent-tertiary: #ff758c;
+  --accent-gradient: linear-gradient(135deg, #ff2a8d 0%, #8a2be2 100%);
+  --accent-border: rgba(255, 42, 141, 0.5);
   --accent-contrast-text: #ffffff;
+  --text-on-accent: #ffffff;
+  --bg-surface-elevated: #240e3f;
+  --text-primary: #fdf4ff;
   --text-muted: #f0abfc;
   --border-subtle: rgba(255, 42, 141, 0.3);
   --border-active: var(--accent-primary);
@@ -174,16 +204,20 @@
   --accent-primary-rgb: 31, 31, 31;
   --accent-secondary: #3A3530;
   --accent-tertiary: #524B44;
+  --accent-gradient: linear-gradient(135deg, #1F1F1F 0%, #3A3530 100%);
+  --accent-border: rgba(31, 31, 31, 0.4);
   --accent-contrast-text: #F2E8D8;
+  --text-on-accent: #F2E8D8;
+  --bg-surface-elevated: #FAF5ED;
   --text-primary: #1F1F1F;
   --text-secondary: #666055;
   --text-muted: #666055;
   --border-color: rgba(31, 31, 31, 0.12);
   --border-subtle: rgba(31, 31, 31, 0.12);
   --border-active: var(--accent-primary);
-  --glow-color-1: rgba(31, 31, 31, 0.15);
+  --glow-color-1: rgba(212, 175, 55, 0.25);
   --glow-color-2: rgba(242, 232, 216, 0.60);
-  --waveform-inactive: rgba(31, 31, 31, 0.18);
+  --waveform-inactive: rgba(184, 134, 11, 0.18);
   --glass-blur: blur(16px);
   --glass-bg: rgba(250, 245, 237, 0.96);
   --glass-border: rgba(31, 31, 31, 0.12);
@@ -205,7 +239,11 @@
   --accent-primary-rgb: 56, 189, 248;
   --accent-secondary: #a5f3fc;
   --accent-tertiary: #0284c7;
+  --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  --accent-border: rgba(56, 189, 248, 0.5);
   --accent-contrast-text: #0f172a;
+  --text-on-accent: #0f172a;
+  --bg-surface-elevated: #262a34;
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
@@ -244,7 +282,11 @@
   --accent-secondary: #ff7b00;
   --accent-tertiary: #00f0ff;
   --accent-violet: #8b5cf6;
+  --accent-gradient: linear-gradient(135deg, #ff007f 0%, #ff7b00 50%, #00f0ff 100%);
+  --accent-border: rgba(255, 0, 127, 0.5);
   --accent-contrast-text: #ffffff;
+  --text-on-accent: #ffffff;
+  --bg-surface-elevated: #1a0f35;
   --text-primary: #ffffff;
   --text-secondary: #ebd6ff;
   --text-muted: #c084fc;
@@ -383,6 +425,31 @@
   color: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
   background: rgba(125, 125, 125, 0.12);
+}
+
+/* Dynamic 'Viewing Hidden' Active Button State */
+.viewing-hidden-active {
+  background: var(--accent-gradient, var(--accent-primary)) !important;
+  color: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+  border: 1px solid var(--accent-border, var(--border-active, transparent)) !important;
+}
+
+.viewing-hidden-active svg,
+.viewing-hidden-active * {
+  color: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+  stroke: var(--text-on-accent, var(--accent-contrast-text, #ffffff)) !important;
+}
+
+/* Windows / Desktop Select Dropdown Popup Option Contrast */
+select.sort-dropdown,
+select {
+  color: var(--text-primary, var(--canvas-text-primary, #ffffff));
+}
+
+select.sort-dropdown option,
+select option {
+  background-color: var(--bg-surface-elevated, #1a1625) !important;
+  color: var(--text-primary, #ffffff) !important;
 }
 
 /* Enforced WCAG Active Button, Pill, & Toggle Rule */
@@ -645,12 +712,25 @@ input[type="checkbox"] {
   box-shadow: inset 3px 3px 6px rgba(10, 12, 17, 0.85), inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
 }
 
+[data-theme="obsidian-depth"] input[type="range"],
+.theme-obsidian-depth input[type="range"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
 [data-theme="obsidian-depth"] input[type="range"]::-webkit-slider-runnable-track,
 .theme-obsidian-depth input[type="range"]::-webkit-slider-runnable-track {
   background: #20242d !important;
   box-shadow: inset 3px 3px 6px rgba(10, 12, 17, 0.85), inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
   border-radius: 9999px;
   height: 8px;
+  border: none !important;
 }
 
 [data-theme="obsidian-depth"] input[type="range"]::-moz-range-track,
@@ -659,25 +739,34 @@ input[type="checkbox"] {
   box-shadow: inset 3px 3px 6px rgba(10, 12, 17, 0.85), inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
   border-radius: 9999px;
   height: 8px;
+  border: none !important;
 }
 
 [data-theme="obsidian-depth"] input[type="range"]::-webkit-slider-thumb,
 .theme-obsidian-depth input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
   background: linear-gradient(135deg, #a5f3fc 0%, #38bdf8 50%, #0284c7 100%) !important;
-  box-shadow: 4px 4px 10px rgba(10, 12, 18, 0.8), -2px -2px 6px rgba(255, 255, 255, 0.2), 0 0 12px rgba(56, 189, 248, 0.6) !important;
-  border: 2px solid #20242d !important;
+  border-radius: 50% !important;
+  border: 0 solid transparent !important;
+  outline: none !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
   width: 18px;
   height: 18px;
   margin-top: -5px;
   cursor: pointer;
   transition: transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 [data-theme="obsidian-depth"] input[type="range"]::-moz-range-thumb,
 .theme-obsidian-depth input[type="range"]::-moz-range-thumb {
+  appearance: none !important;
   background: linear-gradient(135deg, #a5f3fc 0%, #38bdf8 50%, #0284c7 100%) !important;
-  box-shadow: 4px 4px 10px rgba(10, 12, 18, 0.8), -2px -2px 6px rgba(255, 255, 255, 0.2), 0 0 12px rgba(56, 189, 248, 0.6) !important;
-  border: 2px solid #20242d !important;
+  border-radius: 50% !important;
+  border: 0 solid transparent !important;
+  outline: none !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
   width: 18px;
   height: 18px;
   cursor: pointer;
@@ -685,8 +774,20 @@ input[type="checkbox"] {
 }
 
 [data-theme="obsidian-depth"] input[type="range"]:hover::-webkit-slider-thumb,
-.theme-obsidian-depth input[type="range"]:hover::-webkit-slider-thumb {
+.theme-obsidian-depth input[type="range"]:hover::-webkit-slider-thumb,
+[data-theme="obsidian-depth"] input[type="range"]:active::-webkit-slider-thumb,
+.theme-obsidian-depth input[type="range"]:active::-webkit-slider-thumb {
   transform: scale(1.15);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.8) !important;
+}
+
+[data-theme="obsidian-depth"] input[type="range"]:focus,
+.theme-obsidian-depth input[type="range"]:focus,
+[data-theme="obsidian-depth"] input[type="range"]:focus-visible,
+.theme-obsidian-depth input[type="range"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 /* 3D Checkboxes */
@@ -1341,6 +1442,415 @@ input[type="checkbox"] {
   animation: mist-drift-2 36s ease-in-out infinite;
 }
 
+/* Enhanced Dynamic Movement Keyframes for Tropical Rainforest */
+@keyframes vine-swing-left {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  35% {
+    transform: rotate(3.2deg) skewX(1deg);
+  }
+  70% {
+    transform: rotate(-2.4deg) skewX(-0.8deg);
+  }
+}
+
+@keyframes vine-swing-right {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  40% {
+    transform: rotate(-3.8deg) skewX(-1.2deg);
+  }
+  75% {
+    transform: rotate(2.2deg) skewX(0.7deg);
+  }
+}
+
+@keyframes vine-swing-center {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2.6deg) translateY(-2px);
+  }
+}
+
+@keyframes monstera-breathe-left {
+  0%, 100% {
+    transform: scale(1) rotate(0deg) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.035) rotate(1.8deg) translate(6px, -4px);
+  }
+}
+
+@keyframes monstera-breathe-right {
+  0%, 100% {
+    transform: scale(1) rotate(0deg) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.03) rotate(-2deg) translate(-5px, -3px);
+  }
+}
+
+@keyframes canopy-rustle {
+  0%, 100% {
+    transform: translateY(0) scaleY(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-5px) scaleY(1.02);
+    filter: brightness(1.06);
+  }
+}
+
+@keyframes stream-shimmer {
+  0% {
+    transform: translateX(-4%) scaleY(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateX(4%) scaleY(1.08);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(-4%) scaleY(1);
+    opacity: 0.45;
+  }
+}
+
+@keyframes dappled-sunlight {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(1) translate(0, 0);
+  }
+  33% {
+    opacity: 0.55;
+    transform: scale(1.06) translate(12px, 8px);
+  }
+  66% {
+    opacity: 0.4;
+    transform: scale(0.96) translate(-8px, 4px);
+  }
+}
+
+@keyframes jungle-fog-drift {
+  0% {
+    transform: translateX(-15%) translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(12%) translateY(-8px);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(-15%) translateY(0);
+    opacity: 0.35;
+  }
+}
+
+.animate-vine-left {
+  animation: vine-swing-left 5.2s ease-in-out infinite;
+  transform-origin: top left;
+}
+
+.animate-vine-right {
+  animation: vine-swing-right 6.4s ease-in-out infinite;
+  transform-origin: top right;
+}
+
+.animate-vine-center {
+  animation: vine-swing-center 4.6s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-monstera-left {
+  animation: monstera-breathe-left 5.8s ease-in-out infinite;
+  transform-origin: bottom left;
+}
+
+.animate-monstera-right {
+  animation: monstera-breathe-right 6.6s ease-in-out infinite;
+  transform-origin: bottom right;
+}
+
+.animate-canopy-rustle {
+  animation: canopy-rustle 7.5s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-stream-shimmer {
+  animation: stream-shimmer 4.8s ease-in-out infinite;
+}
+
+.animate-dappled-sunlight {
+  animation: dappled-sunlight 9s ease-in-out infinite;
+}
+
+.animate-jungle-fog {
+  animation: jungle-fog-drift 28s ease-in-out infinite;
+}
+
+/* Animated Living Oil Painting Keyframes */
+@keyframes painting-living-breath {
+  0% {
+    transform: scale(1) translate(0%, 0%);
+  }
+  35% {
+    transform: scale(1.035) translate(-0.8%, -0.4%);
+  }
+  70% {
+    transform: scale(1.02) translate(0.6%, -0.8%);
+  }
+  100% {
+    transform: scale(1) translate(0%, 0%);
+  }
+}
+
+@keyframes water-oil-caustics {
+  0%, 100% {
+    opacity: 0.38;
+    transform: scaleY(1) translateY(0);
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.68;
+    transform: scaleY(1.06) translateY(-2px);
+    filter: brightness(1.22);
+  }
+}
+
+@keyframes impasto-sheen {
+  0%, 100% {
+    opacity: 0.12;
+    transform: translateX(-5%);
+  }
+  50% {
+    opacity: 0.28;
+    transform: translateX(5%);
+  }
+}
+
+.animate-painting-living {
+  animation: painting-living-breath 38s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.animate-water-oil-caustics {
+  animation: water-oil-caustics 6s ease-in-out infinite;
+}
+
+.animate-impasto-sheen {
+  animation: impasto-sheen 12s ease-in-out infinite;
+}
+
+/* Animated Forest Diagonal Bands Keyframes (Sliding, Breeze Swaying, Random Zooming) */
+@keyframes band-slide-1 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -110px, 0);
+  }
+}
+
+@keyframes band-slide-2 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 130px, 0);
+  }
+}
+
+@keyframes band-slide-3 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -145px, 0);
+  }
+}
+
+@keyframes band-slide-4 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 95px, 0);
+  }
+}
+
+@keyframes band-slide-5 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -90px, 0);
+  }
+}
+
+@keyframes band-slide-6 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 120px, 0);
+  }
+}
+
+@keyframes band-slide-7 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, -130px, 0);
+  }
+}
+
+@keyframes band-slide-8 {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0);
+  }
+  50% {
+    transform: translate3d(0, 110px, 0);
+  }
+}
+
+/* Organic Canopy Breeze Sway & Random Zooming */
+@keyframes band-sway-zoom {
+  0% {
+    transform: rotate(-36deg) scale(1.12) translate3d(0px, 0px, 0);
+  }
+  25% {
+    transform: rotate(-33deg) scale(1.22) translate3d(-16px, 14px, 0);
+  }
+  50% {
+    transform: rotate(-38.5deg) scale(1.09) translate3d(18px, -16px, 0);
+  }
+  75% {
+    transform: rotate(-34deg) scale(1.24) translate3d(-14px, -20px, 0);
+  }
+  100% {
+    transform: rotate(-36deg) scale(1.12) translate3d(0px, 0px, 0);
+  }
+}
+
+@keyframes canopy-light-spot-1 {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+    opacity: 0.25;
+  }
+  35% {
+    transform: translate3d(85px, -65px, 0) scale(1.35);
+    opacity: 0.65;
+  }
+  70% {
+    transform: translate3d(150px, 30px, 0) scale(0.85);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+    opacity: 0.25;
+  }
+}
+
+@keyframes canopy-light-spot-2 {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(1.1);
+    opacity: 0.3;
+  }
+  40% {
+    transform: translate3d(-90px, 65px, 0) scale(0.85);
+    opacity: 0.7;
+  }
+  80% {
+    transform: translate3d(-45px, -35px, 0) scale(1.3);
+    opacity: 0.38;
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(1.1);
+    opacity: 0.3;
+  }
+}
+
+@keyframes canopy-light-spot-3 {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(0.95);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate3d(105px, 85px, 0) scale(1.45);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(0.95);
+    opacity: 0.2;
+  }
+}
+
+.animate-band-slide-1 {
+  animation: band-slide-1 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-2 {
+  animation: band-slide-2 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-3 {
+  animation: band-slide-3 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-4 {
+  animation: band-slide-4 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-5 {
+  animation: band-slide-5 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-6 {
+  animation: band-slide-6 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-7 {
+  animation: band-slide-7 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-slide-8 {
+  animation: band-slide-8 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-band-sway-overall {
+  animation: band-sway-zoom 5s ease-in-out infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.animate-canopy-spot-1 {
+  animation: canopy-light-spot-1 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-canopy-spot-2 {
+  animation: canopy-light-spot-2 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-canopy-spot-3 {
+  animation: canopy-light-spot-3 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 /* ==========================================================================
    3D FROSTED GLASS & GRADIENT SURFACES FOR EMERALD WILDERNESS
    ========================================================================== */
@@ -1473,5 +1983,2629 @@ input[type="checkbox"] {
   border: 2px solid rgba(1, 16, 11, 0.85) !important;
   box-shadow: 0 0 10px rgba(0, 245, 160, 0.4) !important;
 }
+
+/* Background Stacking Isolation */
+.emerald-wilderness-bg,
+canvas.animated-theme-bg,
+.animated-theme-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+/* Full Player UI Overlay Layering - Strict Non-scrolling Immersive Viewport */
+.full-player-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  z-index: 100 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+}
+
+[data-theme="dynamic-emerald"] .full-player-overlay,
+.full-player-overlay[data-theme="dynamic-emerald"] {
+  background-color: #01140c !important;
+}
+
+/* ==========================================================================
+   Studio Homme Mosaïque (Homme Masculine Luxury Aesthetic)
+   Smokey Glass Cards, Modals, Gradient Buttons, Badges, and Full Player Styling
+   ========================================================================== */
+
+/* Smokey Glass Cards, Boxes & Articles */
+[data-theme="audiophile-gold"] .homme-glass-card,
+[data-theme="audiophile-gold"] .bg-card,
+[data-theme="audiophile-gold"] article,
+[data-theme="audiophile-gold"] .glass-card {
+  background: linear-gradient(135deg, rgba(16, 23, 37, 0.65) 0%, rgba(10, 15, 25, 0.75) 100%) !important;
+  backdrop-filter: blur(24px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+  border: 1px solid rgba(143, 167, 194, 0.22) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.52), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="audiophile-gold"] .homme-glass-card:hover,
+[data-theme="audiophile-gold"] .bg-card:hover,
+[data-theme="audiophile-gold"] article:hover,
+[data-theme="audiophile-gold"] .glass-card:hover {
+  background: linear-gradient(135deg, rgba(22, 32, 49, 0.72) 0%, rgba(13, 20, 33, 0.82) 100%) !important;
+  border-color: rgba(143, 167, 194, 0.42) !important;
+  border-top-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.62), 0 0 24px rgba(143, 167, 194, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Smokey Glass Modals & Dialogs */
+[data-theme="audiophile-gold"] [role="dialog"],
+[data-theme="audiophile-gold"] .modal-content,
+[data-theme="audiophile-gold"] .homme-modal {
+  background: linear-gradient(150deg, rgba(14, 20, 33, 0.94) 0%, rgba(7, 11, 18, 0.98) 100%) !important;
+  backdrop-filter: blur(32px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(150%) !important;
+  border: 1px solid rgba(143, 167, 194, 0.3) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.88), 0 0 35px rgba(143, 167, 194, 0.15) !important;
+}
+
+/* Gradient Primary Buttons (No Single Solid Colors) */
+[data-theme="audiophile-gold"] .btn-primary,
+[data-theme="audiophile-gold"] button.bg-accent,
+[data-theme="audiophile-gold"] .homme-btn-primary {
+  background: linear-gradient(135deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%) !important;
+  color: #070b14 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.7) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 6px 22px rgba(143, 167, 194, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="audiophile-gold"] .btn-primary:hover,
+[data-theme="audiophile-gold"] button.bg-accent:hover,
+[data-theme="audiophile-gold"] .homme-btn-primary:hover {
+  filter: brightness(1.14) !important;
+  box-shadow: 0 8px 28px rgba(143, 167, 194, 0.48), inset 0 1px 1px rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Gradient Secondary Buttons */
+[data-theme="audiophile-gold"] .btn-secondary,
+[data-theme="audiophile-gold"] .homme-btn-secondary {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(26, 36, 52, 0.75) 55%, rgba(12, 17, 27, 0.9) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(143, 167, 194, 0.35) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-theme="audiophile-gold"] .btn-secondary:hover,
+[data-theme="audiophile-gold"] .homme-btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(34, 46, 66, 0.8) 55%, rgba(16, 23, 35, 0.95) 100%) !important;
+  border-color: rgba(143, 167, 194, 0.55) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 15px rgba(143, 167, 194, 0.2) !important;
+}
+
+/* Gradient Badges, Pills & Status Indicators */
+[data-theme="audiophile-gold"] .badge-gradient,
+[data-theme="audiophile-gold"] .pill-gradient,
+[data-theme="audiophile-gold"] .theme-badge {
+  background: linear-gradient(135deg, rgba(143, 167, 194, 0.2) 0%, rgba(74, 95, 120, 0.15) 100%) !important;
+  border: 1px solid rgba(143, 167, 194, 0.38) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #d8e5f2 !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Smokey Glass Inputs & Textareas */
+[data-theme="audiophile-gold"] input,
+[data-theme="audiophile-gold"] textarea,
+[data-theme="audiophile-gold"] select {
+  background: rgba(14, 21, 33, 0.72) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(143, 167, 194, 0.26) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="audiophile-gold"] input:focus,
+[data-theme="audiophile-gold"] textarea:focus,
+[data-theme="audiophile-gold"] select:focus {
+  border-color: rgba(143, 167, 194, 0.75) !important;
+  box-shadow: 0 0 20px rgba(143, 167, 194, 0.28) !important;
+}
+
+/* Full Player Overlay Foundation */
+[data-theme="audiophile-gold"] .full-player-overlay,
+.full-player-overlay[data-theme="audiophile-gold"] {
+  background-color: #070a12 !important;
+}
+
+/* Custom Gilded Scrollbar Thumb */
+[data-theme="audiophile-gold"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%) !important;
+  border-radius: 9999px !important;
+}
+
+/* ==========================================================================
+   Cyberpunk Neon Glass — Translucent Obsidian Frosted Glass UI
+   Gives boxes, buttons, cards, modals, blocks, player, and nav high transparency
+   so the sprawling cinematic cyberpunk city backdrop shines through vividly
+   ========================================================================== */
+
+/* 1. Cards, Boxes, Blocks & Content Panels */
+[data-theme="cyberpunk-neon"] .bg-card,
+[data-theme="cyberpunk-neon"] article,
+[data-theme="cyberpunk-neon"] .glass-card,
+[data-theme="cyberpunk-neon"] .card,
+[data-theme="cyberpunk-neon"] .theme-card,
+[data-theme="cyberpunk-neon"] .playlist-card,
+[data-theme="cyberpunk-neon"] .track-card,
+[data-theme="cyberpunk-neon"] .album-card,
+[data-theme="cyberpunk-neon"] .panel,
+[data-theme="cyberpunk-neon"] .box {
+  background: rgba(8, 12, 28, 0.28) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1px solid rgba(0, 243, 255, 0.2) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="cyberpunk-neon"] .bg-card:hover,
+[data-theme="cyberpunk-neon"] article:hover,
+[data-theme="cyberpunk-neon"] .glass-card:hover,
+[data-theme="cyberpunk-neon"] .card:hover,
+[data-theme="cyberpunk-neon"] .playlist-card:hover,
+[data-theme="cyberpunk-neon"] .track-card:hover {
+  background: rgba(14, 20, 44, 0.45) !important;
+  border-color: rgba(0, 243, 255, 0.45) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 22px rgba(0, 243, 255, 0.22) !important;
+}
+
+/* 2. Buttons, Controls & Interactive Pills */
+[data-theme="cyberpunk-neon"] .btn-secondary,
+[data-theme="cyberpunk-neon"] .btn-ghost,
+[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active) {
+  background: rgba(12, 17, 38, 0.35) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(0, 243, 255, 0.25) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="cyberpunk-neon"] .btn-secondary:hover,
+[data-theme="cyberpunk-neon"] .btn-ghost:hover,
+[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active):hover {
+  background: rgba(18, 26, 56, 0.55) !important;
+  border-color: rgba(0, 243, 255, 0.55) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px rgba(0, 243, 255, 0.3) !important;
+}
+
+[data-theme="cyberpunk-neon"] .btn-primary {
+  background: linear-gradient(135deg, rgba(0, 243, 255, 0.85) 0%, rgba(255, 0, 127, 0.85) 100%) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 6px 24px rgba(0, 243, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Filter pills & chips */
+[data-theme="cyberpunk-neon"] button[class*="rounded-full"]:not(.active):not([class*="bg-[#00f3ff]"]) {
+  background: rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 243, 255, 0.22) !important;
+}
+
+/* 3. Modals, Dialogs, Drawers & Overlays */
+[data-theme="cyberpunk-neon"] div.fixed.inset-0.bg-black\/80,
+[data-theme="cyberpunk-neon"] div.fixed.inset-0.bg-black\/85,
+[data-theme="cyberpunk-neon"] div.fixed.inset-0[class*="bg-black"],
+[data-theme="cyberpunk-neon"] .modal-overlay {
+  background: rgba(3, 6, 16, 0.52) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+[data-theme="cyberpunk-neon"] [role="dialog"],
+[data-theme="cyberpunk-neon"] .modal-content,
+[data-theme="cyberpunk-neon"] div[class*="max-w-"][class*="rounded-3xl"] {
+  background: rgba(8, 12, 28, 0.52) !important;
+  backdrop-filter: blur(36px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(180%) !important;
+  border: 1px solid rgba(0, 243, 255, 0.32) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.24) !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.75), 0 0 40px rgba(0, 243, 255, 0.16) !important;
+}
+
+[data-theme="cyberpunk-neon"] div[class*="max-w-"][class*="rounded-3xl"] > div:first-child {
+  background: rgba(6, 9, 22, 0.38) !important;
+  border-bottom: 1px solid rgba(0, 243, 255, 0.2) !important;
+}
+
+/* Side Drawers (Queue Drawer, Similar Tracks Drawer) */
+[data-theme="cyberpunk-neon"] .drawer-content,
+[data-theme="cyberpunk-neon"] div[class*="fixed inset-y-0 right-0"] {
+  background: rgba(7, 10, 24, 0.55) !important;
+  backdrop-filter: blur(32px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(170%) !important;
+  border-left: 1px solid rgba(0, 243, 255, 0.28) !important;
+}
+
+/* 4. Player Components (Bottom Player & Full Player Overlay) */
+[data-theme="cyberpunk-neon"] .bottom-player,
+[data-theme="cyberpunk-neon"] div.fixed[class*="bottom-16"],
+[data-theme="cyberpunk-neon"] div.fixed[class*="bottom-4"],
+[data-theme="cyberpunk-neon"] div[class*="bottomDeck"] {
+  background: rgba(7, 11, 26, 0.38) !important;
+  backdrop-filter: blur(28px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(170%) !important;
+  border: 1px solid rgba(0, 243, 255, 0.28) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55), 0 0 25px rgba(0, 243, 255, 0.18) !important;
+}
+
+/* Full Player Overlay */
+[data-theme="cyberpunk-neon"] .full-player-overlay,
+.full-player-overlay[data-theme="cyberpunk-neon"] {
+  background-color: rgba(6, 9, 20, 0.55) !important;
+  backdrop-filter: blur(28px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+}
+
+[data-theme="cyberpunk-neon"] .full-player-overlay div[class*="bottomDeck"],
+[data-theme="cyberpunk-neon"] .full-player-overlay div.rounded-t-3xl {
+  background: rgba(7, 11, 26, 0.42) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border-top: 1px solid rgba(0, 243, 255, 0.25) !important;
+}
+
+/* 5. Navigation Chrome (Header, Sidebar & BottomNav) */
+[data-theme="cyberpunk-neon"] header.top-navbar {
+  background: rgba(6, 9, 20, 0.32) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-bottom: 1px solid rgba(0, 243, 255, 0.18) !important;
+}
+
+[data-theme="cyberpunk-neon"] aside#app-sidebar-nav {
+  background: rgba(6, 9, 20, 0.36) !important;
+  backdrop-filter: blur(28px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+  border-right: 1px solid rgba(0, 243, 255, 0.18) !important;
+}
+
+[data-theme="cyberpunk-neon"] div[class*="md:hidden fixed bottom-0"] {
+  background: rgba(6, 9, 20, 0.38) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-top: 1px solid rgba(0, 243, 255, 0.18) !important;
+}
+
+/* 6. Inputs & Search Fields */
+[data-theme="cyberpunk-neon"] input,
+[data-theme="cyberpunk-neon"] textarea,
+[data-theme="cyberpunk-neon"] select {
+  background: rgba(10, 14, 32, 0.35) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(0, 243, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="cyberpunk-neon"] input:focus,
+[data-theme="cyberpunk-neon"] textarea:focus,
+[data-theme="cyberpunk-neon"] select:focus {
+  background: rgba(14, 20, 45, 0.52) !important;
+  border-color: rgba(0, 243, 255, 0.75) !important;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.32) !important;
+}
+
+/* =========================================================================
+   Theme 10: Bespoke (Liquid Glass with Custom 4-Color Palette Architecture)
+   ========================================================================= */
+
+:root {
+  --bespoke-c1: #0a0d1a;
+  --bespoke-c2: #ff007f;
+  --bespoke-c3: #8b5cf6;
+  --bespoke-c4: #00f0ff;
+
+  --text-on-accent: #ffffff;
+  --text-off-accent: #ffffff;
+  --text-primary: #ffffff;
+}
+
+[data-theme="bespoke"] {
+  /* Strictly limit button gradients to a clean 2-color transition using Color 1 & Color 2 */
+  --accent-gradient: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  --accent-primary: var(--bespoke-c1);
+  --accent-secondary: var(--bespoke-c2);
+
+  /* 1. BUTTONS & INTERACTIVE ACCENTS (Color 1 & Color 2) */
+  --accent-color: var(--bespoke-c2);
+  --primary: var(--bespoke-c2);
+  --accent-contrast-text: var(--text-on-accent);
+
+  /* 2. OFF / INACTIVE STATES & SURFACES (Color 3) */
+  --btn-off-bg: rgba(255, 255, 255, 0.06);
+  --btn-off-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.1), var(--bespoke-c3));
+  --surface-card: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.4));
+  --border-subtle: linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3));
+
+  /* 3. APP BACKGROUND & CANVAS SHADER (All 4 Colors) */
+  --bg-primary: radial-gradient(circle at 10% 10%, var(--bespoke-c1) 0%, var(--bespoke-c3) 40%, #050508 80%);
+  --bespoke-full-gradient: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2), var(--bespoke-c3), var(--bespoke-c4));
+
+  /* 4. PLAYER CONTROL & PROGRESS SURFACES (Color 1, 2 & 4) */
+  --player-bg: linear-gradient(180deg, rgba(15, 15, 20, 0.85) 0%, var(--bespoke-c4) 100%);
+  --player-progress-fill: linear-gradient(90deg, var(--bespoke-c1), var(--bespoke-c2));
+  --glow-accent: 0 0 20px var(--bespoke-c1), inset 0 0 10px var(--bespoke-c2);
+}
+
+/* Button & Surface Text Styling Rules */
+[data-theme="bespoke"] .btn-signin,
+[data-theme="bespoke"] .button-primary,
+[data-theme="bespoke"] .header-action-btn,
+[data-theme="bespoke"] .chip-active,
+[data-theme="bespoke"] .pill-selected {
+  background: var(--accent-gradient) !important;
+  color: var(--text-on-accent) !important;
+}
+
+[data-theme="bespoke"] .chip-inactive,
+[data-theme="bespoke"] .button-secondary {
+  background: var(--btn-off-bg) !important;
+  color: var(--text-off-accent) !important;
+}
+
+[data-theme="bespoke"] body,
+[data-theme="bespoke"] .app-title,
+[data-theme="bespoke"] .track-title,
+[data-theme="bespoke"] .section-heading {
+  color: var(--text-primary);
+}
+
+[data-theme="bespoke"] body {
+  background: var(--bg-primary) !important;
+}
+
+[data-theme="bespoke"] .waveform-inactive-bar,
+[data-theme="bespoke"] .unplayed-track-tint {
+  background: rgba(255, 255, 255, 0.20) !important;
+}
+
+[data-theme="bespoke"] .active-progress-gradient,
+[data-theme="bespoke"] .progress-gradient-animated {
+  background: var(--player-progress-fill) !important;
+  background-size: 200% 100% !important;
+  animation: progress-gradient-shift 3s linear infinite !important;
+}
+
+[data-theme="bespoke"] .artwork-glow-dynamic {
+  box-shadow: 0 0 35px var(--bespoke-c1), 0 0 70px var(--bespoke-c2) !important;
+}
+
+/* Full Player Overlay styling under Bespoke theme */
+[data-theme="bespoke"] .full-player-overlay,
+.theme-bespoke .full-player-overlay {
+  background: radial-gradient(circle at 10% 10%, var(--bespoke-c1) 0%, var(--bespoke-c3) 40%, #050508 80%) !important;
+}
+
+[data-theme="bespoke"] .full-player-overlay .full-player-play-btn,
+.theme-bespoke .full-player-overlay .full-player-play-btn {
+  background: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+  box-shadow: 0 0 28px var(--bespoke-c2), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.6) !important;
+  border-top-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="bespoke"] .full-player-overlay .full-player-play-btn svg,
+.theme-bespoke .full-player-overlay .full-player-play-btn svg {
+  fill: var(--text-on-accent, #ffffff) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+}
+
+[data-theme="bespoke"] .full-player-overlay .tab-active-bespoke,
+.theme-bespoke .full-player-overlay .tab-active-bespoke {
+  background: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+  box-shadow: 0 0 16px var(--bespoke-c2) !important;
+}
+
+/* ================================================================================
+   CRITICAL UI OVERHAUL: BOTTOM NAV ACTIVE ICON OUTLINE & SOFT NEON GLOW
+   ================================================================================ */
+
+/* 1. REMOVE ANY BACKGROUND, BORDER, SHADOW, OR FILTER BOX ARTIFACTS */
+.nav-item-active,
+.tab-item-active,
+.tab-active,
+.bottom-nav-item.nav-item-active,
+.sidebar-nav-item.nav-item-active,
+.nav-icon-container {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Strictly ensure icon containers have no background or borders across all states */
+.bottom-nav-item .nav-icon-container,
+.sidebar-nav-item .nav-icon-container,
+.nav-item .nav-icon-container,
+.nav-icon-container {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* ================================================================================
+   INDEPENDENT RADIAL AURA ELEMENT (Clean background glow layer behind SVG icon)
+   ================================================================================ */
+.nav-icon-aura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--nav-glow-color, var(--nav-aura-color, #00f0ff)) 0%, transparent 70%);
+  filter: blur(8px);
+  -webkit-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 0;
+}
+
+.nav-item-active .nav-icon-aura,
+.tab-item-active .nav-icon-aura,
+.tab-active .nav-icon-aura {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+/* Neue Editorial Active Icon Aura with warm golden ambient aura */
+[data-theme="neue-editorial"] .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-aura {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(
+    circle,
+    rgba(230, 198, 103, 0.45) 0%,
+    rgba(212, 175, 55, 0.15) 60%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4) !important;
+  filter: blur(7px) !important;
+  -webkit-filter: blur(7px) !important;
+  display: block !important;
+}
+
+[data-theme="neue-editorial"] .nav-item.active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .nav-item.active::before,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item-active .nav-aura,
+[data-theme="neue-editorial"] .nav-item-active::before,
+[data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-item-active .nav-aura,
+[data-theme="neue-editorial"] .tab-item-active::before,
+[data-theme="neue-editorial"] .tab-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-active .nav-aura,
+[data-theme="neue-editorial"] .tab-active::before {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1.22) !important;
+}
+
+/* Remove any box-shadow or filters from SVG containers to prevent rectangular bounding box shadows */
+.nav-item svg,
+.bottom-nav-item svg,
+.sidebar-nav-item svg,
+.nav-item-active svg,
+.tab-item-active svg,
+.tab-active svg {
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  overflow: visible !important; /* Prevents stroke clipping into a rectangular box */
+}
+
+/* Remove all drop-shadow and filter properties from inner SVG vector elements */
+.nav-item svg path,
+.nav-item svg circle,
+.nav-item svg polyline,
+.nav-item svg polygon,
+.nav-item svg rect,
+.nav-item svg line,
+.nav-item-active svg path,
+.nav-item-active svg circle,
+.nav-item-active svg polyline,
+.nav-item-active svg polygon,
+.nav-item-active svg rect,
+.nav-item-active svg line,
+.tab-item-active svg path,
+.tab-item-active svg circle,
+.tab-active svg path,
+.tab-active svg circle {
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* 2. CRISP OUTLINED ACTIVE ICONS (PURE VECTOR STROKES MATCHING THEME GLOW) */
+.nav-item-active svg,
+.nav-item-active svg path,
+.nav-item-active svg polygon,
+.nav-item-active svg rect,
+.nav-item-active svg circle,
+.nav-item-active svg polyline,
+.tab-item-active svg,
+.tab-active svg {
+  fill: none !important;
+  stroke: var(--nav-active-stroke, var(--nav-glow-color, #00f0ff)) !important;
+  stroke-width: 2.2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  transition: stroke 0.25s ease-in-out;
+}
+
+/* ================================================================================
+   2. BRIGHT ACTIVE TEXT & MATCHING GLOW COLOR
+   ================================================================================ */
+
+/* A. ACTIVE TEXT LABEL STYLING */
+.nav-item-active .nav-label,
+.tab-item-active .nav-label,
+.tab-active .nav-label {
+  color: var(--nav-active-text, #ffffff) !important;
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--nav-glow-color, #00f0ff), 0 0 16px var(--nav-glow-color, #00f0ff);
+  transition: all 0.25s ease-in-out;
+}
+
+/* B. SOFT AMBIENT GLOW BACKDROP */
+.nav-item-active,
+.tab-item-active,
+.bottom-nav-item.nav-item-active {
+  position: relative;
+}
+
+.nav-item-active > *,
+.tab-item-active > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ================================================================================
+   1. THEME-AWARE INACTIVE COLOR VARIABLES
+   ================================================================================ */
+
+/* A. LIGHT CANVAS THEMES (e.g., Candyland Pastel, Neue Editorial) */
+[data-theme="candyland-pastel"],
+[data-theme="candyland"],
+[data-theme="neue-editorial"] {
+  --nav-inactive-color: rgba(30, 41, 59, 0.75); /* High-contrast slate */
+  --nav-inactive-stroke: #1e293b;
+  --nav-dock-bg: rgba(255, 255, 255, 0.82);
+}
+
+/* B. DARK / NEON CANVAS THEMES (e.g., Cyberpunk, Emerald, Studio Homme, Liquid Glass) */
+[data-theme="cyberpunk-neon"],
+[data-theme="emerald-wilderness"],
+[data-theme="dynamic-emerald"],
+[data-theme="studio-homme-mosaique"],
+[data-theme="audiophile-gold"],
+[data-theme="twilight-vaporwave"],
+[data-theme="nebula-liquid-glass"],
+[data-theme="obsidian-depth"],
+[data-theme="designer"],
+[data-theme="ytmusic-red"],
+[data-theme="bespoke"] {
+  --nav-inactive-color: rgba(255, 255, 255, 0.70); /* Brightened off-white */
+  --nav-inactive-stroke: rgba(255, 255, 255, 0.85);
+  --nav-dock-bg: rgba(15, 23, 42, 0.65);
+}
+
+/* C. INACTIVE NAVIGATION BASELINE & ADAPTIVE CONTRAST */
+.nav-item:not(.nav-item-active) svg,
+.bottom-nav-item:not(.nav-item-active) svg {
+  fill: none !important;
+  stroke: var(--nav-inactive-stroke, rgba(255, 255, 255, 0.75)) !important;
+  stroke-width: 1.8px;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important; /* Remove low-opacity washouts */
+  filter: none !important; /* Strictly no drop-shadow to prevent box artifacts */
+  -webkit-filter: none !important;
+  box-shadow: none !important;
+  transition: stroke 0.25s ease, transform 0.2s ease;
+}
+
+.nav-item:not(.nav-item-active) .nav-label,
+.bottom-nav-item:not(.nav-item-active) .nav-label,
+.nav-item-inactive .nav-label,
+.nav-item-inactive,
+.tab-inactive,
+button.bottom-nav-item:not(.nav-item-active),
+.bottom-nav-item.nav-item-inactive {
+  color: var(--nav-inactive-color, rgba(255, 255, 255, 0.75)) !important;
+  font-weight: 500;
+  opacity: 1 !important;
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+  transition: color 0.25s ease, opacity 0.25s ease;
+}
+
+.nav-item:not(.nav-item-active):hover svg,
+.bottom-nav-item:not(.nav-item-active):hover svg {
+  stroke: var(--nav-inactive-stroke, rgba(255, 255, 255, 0.95)) !important;
+  transform: translateY(-1px);
+}
+
+.nav-item:not(.nav-item-active):hover .nav-label,
+.bottom-nav-item:not(.nav-item-active):hover .nav-label,
+.nav-item-inactive:hover,
+button.bottom-nav-item:not(.nav-item-active):hover {
+  opacity: 1 !important;
+  color: var(--nav-inactive-color, rgba(255, 255, 255, 0.95)) !important;
+}
+
+/* D. BOTTOM NAV CONTAINER DOCK */
+.bottom-nav-dock {
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  background: var(--nav-dock-bg, rgba(15, 23, 42, 0.65)) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="candyland-pastel"] .bottom-nav-dock,
+[data-theme="candyland"] .bottom-nav-dock,
+[data-theme="neue-editorial"] .bottom-nav-dock {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ================================================================================
+   3. THEME-SPECIFIC NAVIGATION OVERRIDES (MATCHING TEXT GLOW AND ICON AURA)
+   ================================================================================ */
+
+/* A. CYBERPUNK NEON GLASS */
+[data-theme="cyberpunk-neon"] .nav-item-active svg path,
+[data-theme="cyberpunk-neon"] .nav-item-active svg circle,
+[data-theme="cyberpunk-neon"] .nav-item-active svg polyline,
+[data-theme="cyberpunk-neon"] .nav-item-active svg polygon,
+[data-theme="cyberpunk-neon"] .tab-active svg path,
+[data-theme="cyberpunk-neon"] .tab-active svg circle {
+  stroke: #00f0ff !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="cyberpunk-neon"] .nav-icon-aura {
+  background: radial-gradient(circle, #00f0ff 0%, transparent 70%) !important;
+}
+[data-theme="cyberpunk-neon"] .nav-item-active .nav-label {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px #00f0ff, 0 0 16px #00f0ff !important;
+}
+
+/* B. EMERALD WILDERNESS & DYNAMIC EMERALD */
+[data-theme="emerald-wilderness"] .nav-item-active svg path,
+[data-theme="emerald-wilderness"] .nav-item-active svg circle,
+[data-theme="emerald-wilderness"] .nav-item-active svg polyline,
+[data-theme="emerald-wilderness"] .nav-item-active svg polygon,
+[data-theme="emerald-wilderness"] .tab-active svg path,
+[data-theme="dynamic-emerald"] .nav-item-active svg path,
+[data-theme="dynamic-emerald"] .tab-active svg path {
+  stroke: #10b981 !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="emerald-wilderness"] .nav-icon-aura,
+[data-theme="dynamic-emerald"] .nav-icon-aura {
+  background: radial-gradient(circle, #10b981 0%, transparent 70%) !important;
+}
+[data-theme="emerald-wilderness"] .nav-item-active .nav-label,
+[data-theme="dynamic-emerald"] .nav-item-active .nav-label {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px #10b981, 0 0 16px #10b981 !important;
+}
+
+/* C. STUDIO HOMME MOSAIQUE & AUDIOPHILE GOLD */
+[data-theme="studio-homme-mosaique"] .nav-item-active svg path,
+[data-theme="studio-homme-mosaique"] .nav-item-active svg circle,
+[data-theme="studio-homme-mosaique"] .nav-item-active svg polyline,
+[data-theme="studio-homme-mosaique"] .nav-item-active svg polygon,
+[data-theme="studio-homme-mosaique"] .tab-active svg path,
+[data-theme="audiophile-gold"] .nav-item-active svg path,
+[data-theme="audiophile-gold"] .tab-active svg path {
+  stroke: #f59e0b !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="studio-homme-mosaique"] .nav-icon-aura,
+[data-theme="audiophile-gold"] .nav-icon-aura {
+  background: radial-gradient(circle, #f59e0b 0%, transparent 70%) !important;
+}
+[data-theme="studio-homme-mosaique"] .nav-item-active .nav-label,
+[data-theme="audiophile-gold"] .nav-item-active .nav-label {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px #f59e0b, 0 0 16px #f59e0b !important;
+}
+
+/* D. NEUE EDITORIAL - Warm Golden Glow for Active Navigation Button (Icon, Text, and Aura) */
+[data-theme="neue-editorial"] .nav-item.active,
+[data-theme="neue-editorial"] .nav-item.active .nav-icon,
+[data-theme="neue-editorial"] .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .nav-item-active,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-container,
+[data-theme="neue-editorial"] .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .tab-item-active,
+[data-theme="neue-editorial"] .tab-active,
+[data-theme="neue-editorial"] .bottom-nav-item.nav-item-active .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-label {
+  color: #b8860b !important; /* Rich warm gold/amber */
+}
+
+/* Active Icon Stroke & Fill */
+[data-theme="neue-editorial"] .nav-item.active svg,
+[data-theme="neue-editorial"] .nav-item.active svg path,
+[data-theme="neue-editorial"] .nav-item.active svg circle,
+[data-theme="neue-editorial"] .nav-item.active svg polyline,
+[data-theme="neue-editorial"] .nav-item.active svg polygon,
+[data-theme="neue-editorial"] .nav-item-active svg,
+[data-theme="neue-editorial"] .nav-item-active svg path,
+[data-theme="neue-editorial"] .nav-item-active svg circle,
+[data-theme="neue-editorial"] .nav-item-active svg polyline,
+[data-theme="neue-editorial"] .nav-item-active svg polygon,
+[data-theme="neue-editorial"] .tab-active svg,
+[data-theme="neue-editorial"] .tab-active svg path,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active svg,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active svg,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active svg,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active svg {
+  stroke: #b8860b !important;
+  color: #b8860b !important;
+  stroke-width: 2.4px !important;
+  transition: all 0.25s ease-in-out;
+}
+
+/* Active Icon & Text Warm Golden Drop-Shadow */
+[data-theme="neue-editorial"] .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .nav-item.active svg,
+[data-theme="neue-editorial"] .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .nav-item.active .nav-icon-container svg,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon svg,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-container svg,
+[data-theme="neue-editorial"] .nav-item-active svg,
+[data-theme="neue-editorial"] .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .tab-active .nav-label,
+[data-theme="neue-editorial"] .tab-active svg,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-icon-container svg,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-label,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-icon svg,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-icon-container svg,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-label {
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.65)) 
+          drop-shadow(0 0 16px rgba(230, 198, 103, 0.35)) !important;
+  -webkit-filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.65)) 
+                  drop-shadow(0 0 16px rgba(230, 198, 103, 0.35)) !important;
+  text-shadow: none !important;
+}
+
+/* Independent Warm Golden Background Aura Layer */
+[data-theme="neue-editorial"] .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .nav-item.active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item.active::before,
+[data-theme="neue-editorial"] .nav-item-active .nav-aura,
+[data-theme="neue-editorial"] .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .nav-item-active::before,
+[data-theme="neue-editorial"] .tab-item-active .nav-aura,
+[data-theme="neue-editorial"] .tab-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .tab-active .nav-icon-aura,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .bottom-nav-bar .nav-item.active::before,
+[data-theme="neue-editorial"] .bottom-nav-dock .nav-item-active .nav-icon-aura,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .side-nav-rail .nav-item.active::before,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active .nav-aura,
+[data-theme="neue-editorial"] .sidebar-navigation .nav-item.active::before,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-active .nav-icon-aura {
+  background: radial-gradient(
+    circle,
+    rgba(230, 198, 103, 0.45) 0%,
+    rgba(212, 175, 55, 0.15) 60%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4) !important;
+  border-radius: 50% !important;
+}
+
+[data-theme="neue-editorial"] .nav-item.active .nav-label,
+[data-theme="neue-editorial"] .nav-item-active .nav-label {
+  font-weight: 800 !important;
+}
+
+[data-theme="neue-editorial"] .nav-item:not(.nav-item-active):not(.active) svg,
+[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active):not(.active) svg,
+[data-theme="neue-editorial"] .sidebar-nav-item:not(.nav-item-active):not(.active) svg {
+  stroke: #78716c !important;
+  opacity: 0.55 !important;
+  stroke-width: 1.8px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="neue-editorial"] .nav-item:not(.nav-item-active):not(.active) .nav-label,
+[data-theme="neue-editorial"] .bottom-nav-item:not(.nav-item-active):not(.active) .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item:not(.nav-item-active):not(.active) .nav-label {
+  color: #78716c !important;
+  opacity: 0.60 !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* E. CANDYLAND PASTEL */
+[data-theme="candyland-pastel"] .nav-item-active svg path,
+[data-theme="candyland-pastel"] .nav-item-active svg circle,
+[data-theme="candyland-pastel"] .nav-item-active svg polyline,
+[data-theme="candyland-pastel"] .nav-item-active svg polygon,
+[data-theme="candyland"] .nav-item-active svg path,
+[data-theme="candyland"] .nav-item-active svg circle {
+  stroke: #ff2a8d !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+[data-theme="candyland-pastel"] .nav-icon-aura,
+[data-theme="candyland"] .nav-icon-aura {
+  background: radial-gradient(circle, #ff2a8d 0%, transparent 70%) !important;
+}
+[data-theme="candyland-pastel"] .nav-item-active .nav-label,
+[data-theme="candyland"] .nav-item-active .nav-label {
+  color: #ff2a8d !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 8px #ff2a8d, 0 0 16px #ff2a8d !important;
+}
+
+/* F. BESPOKE */
+[data-theme="bespoke"] .nav-item-active svg path,
+[data-theme="bespoke"] .nav-item-active svg circle,
+[data-theme="bespoke"] .nav-item-active svg polyline,
+[data-theme="bespoke"] .nav-item-active svg polygon,
+[data-theme="bespoke"] .tab-active svg path,
+[data-theme="bespoke"] .tab-active svg circle {
+  stroke: var(--bespoke-c2, #ff007f) !important;
+  stroke-width: 2.2px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transition: all 0.25s ease-in-out;
+}
+[data-theme="bespoke"] .nav-icon-aura {
+  background: radial-gradient(circle, var(--bespoke-c2, #ff007f) 0%, transparent 70%) !important;
+}
+[data-theme="bespoke"] .nav-item-active .nav-label {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 8px var(--bespoke-c2, #ff007f), 0 0 16px var(--bespoke-c2, #ff007f) !important;
+}
+
+/* ================================================================================
+   4. GENERAL LIGHT-THEME RULESET
+   ================================================================================ */
+.light-theme .nav-item-active .nav-label,
+.light-theme .nav-item:not(.nav-item-active) .nav-label {
+  color: var(--nav-inactive-color, #1e293b) !important;
+}
+
+/* ================================================================================
+   5. CRISP OUTLINED ACTIVE ICONS ACROSS ALL 4 TABS & ALL THEMES (NO BOX OR FILL)
+   ================================================================================ */
+.nav-item-active svg,
+.nav-item-active svg path,
+.nav-item-active svg circle,
+.nav-item-active svg polyline,
+.nav-item-active svg polygon,
+.nav-item-active svg rect,
+[data-nav].nav-item-active svg,
+[data-nav].nav-item-active svg path,
+[data-nav].nav-item-active svg circle {
+  fill: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* ================================================================================
+   6. REMOVE ACTIVE PAGE LABEL UNDERLINES GLOBALLY
+   ================================================================================ */
+.nav-item-active .nav-label,
+.nav-item-active a,
+.nav-item-active span,
+.sidebar-nav-item.nav-item-active .nav-label {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.nav-item-active::after,
+.nav-item-active::before,
+.nav-item-active .nav-label::after,
+.nav-item-active .nav-label::before,
+.sidebar-nav-item.nav-item-active::after,
+.sidebar-nav-item.nav-item-active::before {
+  display: none !important;
+  content: none !important;
+  border-bottom: none !important;
+  height: 0 !important;
+}
+
+/* ================================================================================
+   7. SIDEBAR NAVIGATION MENU (PC & TABLET) CONTRAST & STYLING (MATCHES BOTTOM NAV)
+   ================================================================================ */
+.sidebar-nav-item {
+  position: relative;
+  text-decoration: none !important;
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.sidebar-nav-item.nav-item-active {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Subtle, smooth hover on inactive items for desktop cursor feedback */
+.sidebar-nav-item.nav-item-inactive:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Inactive text contrast rules across light themes */
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive .nav-label,
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive {
+  color: #78716c !important;
+  font-weight: 600 !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #000000 !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive svg {
+  stroke: #78716c !important;
+  opacity: 0.6 !important;
+}
+[data-theme="neue-editorial"] .sidebar-nav-item.nav-item-inactive:hover svg {
+  stroke: #000000 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive .nav-label,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive .nav-label,
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive {
+  color: #6b2d5f !important;
+  font-weight: 600 !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive:hover,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive:hover {
+  background: rgba(255, 255, 255, 0.65) !important;
+  color: #3b1235 !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive svg,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive svg {
+  stroke: #6b2d5f !important;
+}
+[data-theme="candyland-pastel"] .sidebar-nav-item.nav-item-inactive:hover svg,
+[data-theme="candyland"] .sidebar-nav-item.nav-item-inactive:hover svg {
+  stroke: #3b1235 !important;
+}
+
+/* ================================================================================
+   8. BESPOKE GRADIENT ARCHITECTURE (Playlist, Album, Genre Views)
+   ================================================================================ */
+
+/* 1. SOLID DYNAMIC CANVAS (Normal Document Flow, No Viewport Freezes) */
+[data-theme="bespoke"] {
+  background: linear-gradient(
+    160deg,
+    var(--bespoke-c1) 0%,
+    var(--bespoke-c2) 35%,
+    var(--bespoke-c3) 70%,
+    var(--bespoke-c4) 100%
+  );
+}
+
+/* 2. SOLID, OPAQUE TOP STICKY HEADER WITH 3D SHELF EDGE */
+[data-theme="bespoke"] .view-action-bar,
+[data-theme="bespoke"] .playlist-top-bar {
+  background: color-mix(in srgb, var(--bespoke-c1) 90%, #ffffff 10%) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.28) !important;
+  box-shadow: 0 6px 18px -2px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1.5px 0 rgba(0, 0, 0, 0.25) !important;
+  z-index: 50 !important;
+}
+
+/* 3. 3D TEXT INPUT FIELDS & SEARCH BARS (Recessed Sunken Bevel) */
+[data-theme="bespoke"] input[type="text"],
+[data-theme="bespoke"] input[type="search"],
+[data-theme="bespoke"] input[type="password"],
+[data-theme="bespoke"] textarea,
+[data-theme="bespoke"] select,
+[data-theme="bespoke"] .search-input-field,
+[data-theme="bespoke"] .view-action-bar input,
+[data-theme="bespoke"] .playlist-top-bar input {
+  background: color-mix(in srgb, var(--bespoke-c1) 75%, #ffffff 25%) !important;
+  color: var(--bespoke-text-color, #0f172a) !important;
+  position: relative;
+  box-shadow: inset 0 2.5px 6px rgba(0, 0, 0, 0.22), inset 0 1px 2px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border-top: 1.5px solid rgba(0, 0, 0, 0.28) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38) !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.18) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+[data-theme="bespoke"] input[type="text"]:focus,
+[data-theme="bespoke"] input[type="search"]:focus,
+[data-theme="bespoke"] input[type="password"]:focus,
+[data-theme="bespoke"] textarea:focus,
+[data-theme="bespoke"] select:focus,
+[data-theme="bespoke"] .search-input-field:focus,
+[data-theme="bespoke"] .view-action-bar input:focus,
+[data-theme="bespoke"] .playlist-top-bar input:focus {
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--bespoke-c2), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  border-top-color: var(--bespoke-c2) !important;
+}
+
+[data-theme="bespoke"] .view-action-bar input::placeholder,
+[data-theme="bespoke"] .playlist-top-bar input::placeholder {
+  color: var(--bespoke-text-muted, #334155) !important;
+  opacity: 0.8 !important;
+}
+
+/* 4. 3D BUTTONS (Tactile Raised Bevel with Specular Highlight & Depth Shadow) */
+/* Exclude navigation buttons and player buttons from the blocky 3D button look */
+[data-theme="bespoke"] button:not(.bottom-nav-item):not(.sidebar-nav-item):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button):not(#app-mini-player-floating-dock button):not(.mini-player button):not(#player-fullscreen-dock button):not(.full-player-overlay button):not(.fullscreen-player button),
+[data-theme="bespoke"] .btn-primary,
+[data-theme="bespoke"] .button-primary,
+[data-theme="bespoke"] .btn-signin,
+[data-theme="bespoke"] .btn-secondary,
+[data-theme="bespoke"] .button-secondary,
+[data-theme="bespoke"] .btn-primary-action,
+[data-theme="bespoke"] .view-action-bar button,
+[data-theme="bespoke"] .playlist-top-bar button,
+[data-theme="bespoke"] .track-action-btn,
+[data-theme="bespoke"] .track-reorder-btn,
+[data-theme="bespoke"] .track-drag-handle {
+  position: relative;
+  background: color-mix(in srgb, var(--bespoke-c1) 75%, #ffffff 25%);
+  color: var(--bespoke-text-color, #0f172a);
+  box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.24), 0 2px 4px -1px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 rgba(0, 0, 0, 0.25) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.3) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.18) !important;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), filter 0.18s ease;
+}
+
+[data-theme="bespoke"] button:not(.bottom-nav-item):not(.sidebar-nav-item):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button):not(#app-mini-player-floating-dock button):not(.mini-player button):not(#player-fullscreen-dock button):not(.full-player-overlay button):not(.fullscreen-player button):hover,
+[data-theme="bespoke"] .btn-primary:hover,
+[data-theme="bespoke"] .button-primary:hover,
+[data-theme="bespoke"] .btn-signin:hover,
+[data-theme="bespoke"] .btn-secondary:hover,
+[data-theme="bespoke"] .button-secondary:hover,
+[data-theme="bespoke"] .btn-primary-action:hover,
+[data-theme="bespoke"] .view-action-bar button:hover,
+[data-theme="bespoke"] .playlist-top-bar button:hover,
+[data-theme="bespoke"] .track-action-btn:hover,
+[data-theme="bespoke"] .track-reorder-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.3), 0 3px 6px -1px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="bespoke"] button:not(.bottom-nav-item):not(.sidebar-nav-item):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button):not(#app-mini-player-floating-dock button):not(.mini-player button):not(#player-fullscreen-dock button):not(.full-player-overlay button):not(.fullscreen-player button):active,
+[data-theme="bespoke"] .btn-primary:active,
+[data-theme="bespoke"] .button-primary:active,
+[data-theme="bespoke"] .btn-signin:active,
+[data-theme="bespoke"] .btn-secondary:active,
+[data-theme="bespoke"] .button-secondary:active,
+[data-theme="bespoke"] .btn-primary-action:active,
+[data-theme="bespoke"] .view-action-bar button:active,
+[data-theme="bespoke"] .playlist-top-bar button:active,
+[data-theme="bespoke"] .track-action-btn:active,
+[data-theme="bespoke"] .track-reorder-btn:active {
+  transform: translateY(1.5px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.25) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ================================================================================
+   NAVIGATION BUTTONS (Mobile Bottom & Tablet/PC Left Margin Sidebar)
+   Remove box/border/shadow - clean inscribed depth on icons and labels
+   ================================================================================ */
+[data-theme="bespoke"] #bottom-navigation-bar button,
+[data-theme="bespoke"] .bottom-nav-dock button,
+[data-theme="bespoke"] .bottom-nav-item,
+[data-theme="bespoke"] .bottom-nav button,
+[data-theme="bespoke"] #app-sidebar-nav nav button,
+[data-theme="bespoke"] .sidebar-nav-item,
+[data-theme="bespoke"] #nav-home-btn,
+[data-theme="bespoke"] #nav-explore-btn,
+[data-theme="bespoke"] #nav-library-btn,
+[data-theme="bespoke"] #nav-settings-btn {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="bespoke"] #bottom-navigation-bar button:hover,
+[data-theme="bespoke"] .bottom-nav-item:hover,
+[data-theme="bespoke"] #app-sidebar-nav nav button:hover,
+[data-theme="bespoke"] .sidebar-nav-item:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: none !important;
+}
+
+[data-theme="bespoke"] #bottom-navigation-bar button:active,
+[data-theme="bespoke"] .bottom-nav-item:active,
+[data-theme="bespoke"] #app-sidebar-nav nav button:active,
+[data-theme="bespoke"] .sidebar-nav-item:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: translateY(0.5px) !important;
+}
+
+/* ================================================================================
+   MINI PLAYER & FULL PLAYER BUTTONS (No ugly square/rectangle 3D boxes)
+   ================================================================================ */
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(.rounded-full),
+[data-theme="bespoke"] .mini-player button:not(.rounded-full),
+[data-theme="bespoke"] #player-fullscreen-dock button:not(.rounded-full),
+[data-theme="bespoke"] .full-player-overlay button:not(.rounded-full),
+[data-theme="bespoke"] .fullscreen-player button:not(.rounded-full),
+[data-theme="bespoke"] #player-fullscreen-add-playlist-btn {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(.rounded-full):hover,
+[data-theme="bespoke"] #player-fullscreen-dock button:not(.rounded-full):hover,
+[data-theme="bespoke"] .full-player-overlay button:not(.rounded-full):hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: none !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(.rounded-full):active,
+[data-theme="bespoke"] #player-fullscreen-dock button:not(.rounded-full):active,
+[data-theme="bespoke"] .full-player-overlay button:not(.rounded-full):active {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transform: translateY(0.5px) !important;
+}
+
+/* ================================================================================
+   INSCRIBED DEPTH (Light + Dark combination for carved / etched depth)
+   ================================================================================ */
+[data-theme="bespoke"] #app-mini-player-floating-dock button svg,
+[data-theme="bespoke"] .mini-player button svg,
+[data-theme="bespoke"] #player-fullscreen-dock button svg,
+[data-theme="bespoke"] .full-player-overlay button svg,
+[data-theme="bespoke"] .fullscreen-player button svg,
+[data-theme="bespoke"] #bottom-navigation-bar button svg,
+[data-theme="bespoke"] .bottom-nav-item svg,
+[data-theme="bespoke"] #app-sidebar-nav nav button svg,
+[data-theme="bespoke"] .sidebar-nav-item svg {
+  filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 1px 0.5px rgba(255, 255, 255, 0.5)) !important;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:hover svg,
+[data-theme="bespoke"] #player-fullscreen-dock button:hover svg,
+[data-theme="bespoke"] .full-player-overlay button:hover svg,
+[data-theme="bespoke"] .bottom-nav-item:hover svg,
+[data-theme="bespoke"] .sidebar-nav-item:hover svg {
+  filter: drop-shadow(0 -1.5px 0.5px rgba(0, 0, 0, 0.9)) drop-shadow(0 1px 1px rgba(255, 255, 255, 0.65)) !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:active svg,
+[data-theme="bespoke"] #player-fullscreen-dock button:active svg,
+[data-theme="bespoke"] .full-player-overlay button:active svg,
+[data-theme="bespoke"] .bottom-nav-item:active svg,
+[data-theme="bespoke"] .sidebar-nav-item:active svg {
+  transform: translateY(0.5px) !important;
+  filter: drop-shadow(0 -0.5px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 1px 0 rgba(255, 255, 255, 0.4)) !important;
+}
+
+/* Inscribed text on mini player, full player & navigation */
+[data-theme="bespoke"] #app-mini-player-floating-dock .track-title,
+[data-theme="bespoke"] #app-mini-player-floating-dock .artist-name,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-bold,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono span,
+[data-theme="bespoke"] #player-fullscreen-dock .stage-title,
+[data-theme="bespoke"] #player-fullscreen-dock .stage-artist,
+[data-theme="bespoke"] #player-fullscreen-dock .font-mono,
+[data-theme="bespoke"] #player-fullscreen-dock button span,
+[data-theme="bespoke"] .full-player-overlay button span,
+[data-theme="bespoke"] .bottom-nav-item .nav-label,
+[data-theme="bespoke"] .sidebar-nav-item .nav-label {
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.7), 0 1px 0.5px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Primary Highlight Action Buttons */
+[data-theme="bespoke"] .btn-primary-action,
+[data-theme="bespoke"] .button-primary,
+[data-theme="bespoke"] .btn-signin {
+  background: linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3)) !important;
+  color: var(--bespoke-text-on-accent, var(--text-on-accent, #ffffff)) !important;
+  font-weight: 700;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.6) !important;
+  border-bottom: 2.5px solid rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 4px 14px -1px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="bespoke"] .view-action-bar button svg,
+[data-theme="bespoke"] .playlist-top-bar button svg,
+[data-theme="bespoke"] .view-action-bar svg,
+[data-theme="bespoke"] .playlist-top-bar svg {
+  color: var(--bespoke-icon-color, #0f172a) !important;
+  stroke: var(--bespoke-icon-color, #0f172a) !important;
+}
+
+/* 5. 3D SOLID CARDS, BLOCKS & SURFACES (Spec-Bevel & Ambient Occlusion Depth) */
+[data-theme="bespoke"] .playlist-header-card,
+[data-theme="bespoke"] .album-header-card,
+[data-theme="bespoke"] .genre-header-card,
+[data-theme="bespoke"] .playlist-card,
+[data-theme="bespoke"] .album-card,
+[data-theme="bespoke"] .stat-card,
+[data-theme="bespoke"] .settings-card,
+[data-theme="bespoke"] .library-card,
+[data-theme="bespoke"] .quick-pick-card,
+[data-theme="bespoke"] .bespoke-customizer-card,
+[data-theme="bespoke"] .color-slot-card,
+[data-theme="bespoke"] .bespoke-preset-card {
+  position: relative;
+  background: color-mix(in srgb, var(--bespoke-c1) 82%, #ffffff 18%) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.26), 0 2px 6px -1px rgba(0, 0, 0, 0.14), inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.45), inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.22) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.26) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.16) !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="bespoke"] .playlist-card:hover,
+[data-theme="bespoke"] .album-card:hover,
+[data-theme="bespoke"] .quick-pick-card:hover,
+[data-theme="bespoke"] .bespoke-preset-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.34), 0 4px 10px -1px rgba(0, 0, 0, 0.18), inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 3D Track Row Plates */
+[data-theme="bespoke"] .track-row-item {
+  position: relative;
+  background: color-mix(in srgb, var(--bespoke-c1) 88%, #ffffff 12%) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 3px 8px -2px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.15) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.35) !important;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.2) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+[data-theme="bespoke"] .track-row-item:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--bespoke-c2) 70%, #ffffff 30%) !important;
+  border-color: var(--bespoke-c2) !important;
+  box-shadow: 0 6px 14px -2px rgba(0, 0, 0, 0.24), inset 0 1px 1px rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 6. 3D BADGES, CHIPS & PILLS (Pill Edge Depth) */
+[data-theme="bespoke"] .pill,
+[data-theme="bespoke"] .badge,
+[data-theme="bespoke"] .chip,
+[data-theme="bespoke"] [class*="pill-"],
+[data-theme="bespoke"] .category-pill {
+  position: relative;
+  box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 1px rgba(0, 0, 0, 0.2) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.24) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+[data-theme="bespoke"] .pill:hover,
+[data-theme="bespoke"] .category-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Active / Selected Pill */
+[data-theme="bespoke"] .pill-selected,
+[data-theme="bespoke"] .pill-active,
+[data-theme="bespoke"] button.pill-selected {
+  background: linear-gradient(135deg, var(--bespoke-c1), var(--bespoke-c2)) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.32), inset 0 1.5px 1px rgba(255, 255, 255, 0.65), inset 0 -2px 1px rgba(0, 0, 0, 0.32) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.6) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.38) !important;
+}
+
+/* 7. 3D MODALS & DIALOGS (Floating 3D Elevation with Crisp Specular Edge) */
+[data-theme="bespoke"] [role="dialog"],
+[data-theme="bespoke"] .modal,
+[data-theme="bespoke"] .modal-surface,
+[data-theme="bespoke"] .modal-content,
+[data-theme="bespoke"] .fixed.inset-0 > div:not(.bg-black):not(.fixed) {
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.65), 0 8px 24px -4px rgba(0, 0, 0, 0.38), inset 0 2px 2px rgba(255, 255, 255, 0.5), inset 0 -2.5px 3px rgba(0, 0, 0, 0.35) !important;
+  border-top: 2px solid rgba(255, 255, 255, 0.55) !important;
+  border-bottom: 2.5px solid rgba(0, 0, 0, 0.45) !important;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  border-right: 1.5px solid rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 8. 3D BOTTOM NAV DOCK */
+[data-theme="bespoke"] nav.fixed.bottom-0,
+[data-theme="bespoke"] .bottom-nav-dock,
+[data-theme="bespoke"] .bottom-nav {
+  box-shadow: 0 -8px 32px -4px rgba(0, 0, 0, 0.45), inset 0 1.5px 1px rgba(255, 255, 255, 0.42), inset 0 -1px 0 rgba(0, 0, 0, 0.25) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+}
+
+/* 9. ADAPTIVE WCAG TEXT & ICON CONTRAST */
+[data-theme="bespoke"] .tracks-section-heading,
+[data-theme="bespoke"] .playlist-view-container h3,
+[data-theme="bespoke"] .genre-detail-view h2,
+[data-theme="bespoke"] h3.tracks-section-heading {
+  color: var(--bespoke-text-color, #0f172a) !important;
+  text-shadow: none !important;
+}
+
+[data-theme="bespoke"] .playlist-header-card h1,
+[data-theme="bespoke"] .album-header-card h1,
+[data-theme="bespoke"] .genre-header-card h1,
+[data-theme="bespoke"] .track-row-item .track-title {
+  color: var(--bespoke-text-color, #0f172a) !important;
+}
+
+[data-theme="bespoke"] .playlist-header-card p,
+[data-theme="bespoke"] .playlist-header-card span,
+[data-theme="bespoke"] .album-header-card p,
+[data-theme="bespoke"] .album-header-card span,
+[data-theme="bespoke"] .genre-header-card p,
+[data-theme="bespoke"] .genre-header-card span,
+[data-theme="bespoke"] .track-row-item .artist-name,
+[data-theme="bespoke"] .track-row-item .track-duration,
+[data-theme="bespoke"] .track-row-item .track-index,
+[data-theme="bespoke"] .track-row-item .font-mono {
+  color: var(--bespoke-text-muted, #334155) !important;
+}
+
+/* Track row action icons (+, trash, drag handle, move arrows) */
+[data-theme="bespoke"] .track-row-item button svg,
+[data-theme="bespoke"] .track-row-item .track-action-btn svg,
+[data-theme="bespoke"] .track-row-item .track-reorder-btn svg,
+[data-theme="bespoke"] .track-row-item .track-drag-handle svg {
+  color: var(--bespoke-icon-color, #0f172a) !important;
+  stroke: var(--bespoke-icon-color, #0f172a) !important;
+}
+
+[data-theme="bespoke"] .track-row-item .track-drag-handle {
+  background: color-mix(in srgb, var(--bespoke-c1) 70%, #ffffff 30%) !important;
+  color: var(--bespoke-text-color, #0f172a) !important;
+  border-color: color-mix(in srgb, var(--bespoke-c2) 40%, transparent) !important;
+}
+
+/* ================================================================================
+   5. MINI PLAYER: STRICT 2-COLOR GRADIENT & AUTOMATIC WCAG CONTRAST
+   ================================================================================ */
+[data-theme="bespoke"] #app-mini-player-floating-dock {
+  background: var(--bespoke-mini-player-bg, linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3))) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.2), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.35) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.2) !important;
+  box-sizing: border-box !important;
+  width: calc(100% - 24px) !important;
+  max-width: 680px !important;
+  overflow: visible !important;
+  isolation: isolate !important;
+}
+
+/* Top drag bar handle */
+[data-theme="bespoke"] #app-mini-player-floating-dock > div:first-child {
+  background: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.4)) !important;
+}
+
+/* Mini player track title */
+[data-theme="bespoke"] #app-mini-player-floating-dock .track-title,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-bold {
+  color: var(--bespoke-mini-player-text, #ffffff) !important;
+}
+
+/* Mini player artist & studio info, timestamps */
+[data-theme="bespoke"] #app-mini-player-floating-dock .artist-name,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono,
+[data-theme="bespoke"] #app-mini-player-floating-dock .font-mono span,
+[data-theme="bespoke"] #app-mini-player-floating-dock .text-[10px],
+[data-theme="bespoke"] #app-mini-player-floating-dock .text-[11px] {
+  color: var(--bespoke-mini-player-text-muted, rgba(255, 255, 255, 0.8)) !important;
+}
+
+/* Mini player action buttons & icons */
+[data-theme="bespoke"] #app-mini-player-floating-dock button svg {
+  color: var(--bespoke-mini-player-icon, #ffffff) !important;
+  stroke: var(--bespoke-mini-player-icon, #ffffff) !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button:not(:hover):not(.rounded-full) svg {
+  color: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.75)) !important;
+  stroke: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.75)) !important;
+}
+
+/* Mini player center Play/Pause circular button (sleek circle, no square corners) */
+[data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full {
+  background: var(--bespoke-mini-player-play-bg, #0f172a) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45), inset 0 -1.5px 1px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 9999px !important;
+}
+
+[data-theme="bespoke"] #app-mini-player-floating-dock button.rounded-full svg {
+  fill: var(--bespoke-mini-player-play-icon, #ffffff) !important;
+  color: var(--bespoke-mini-player-play-icon, #ffffff) !important;
+  stroke: var(--bespoke-mini-player-play-icon, #ffffff) !important;
+}
+
+/* Mini player waveform scrubber container with 3D sunken depth */
+[data-theme="bespoke"] #app-mini-player-floating-dock .group.relative.flex-1 {
+  background: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 1px rgba(255, 255, 255, 0.15) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.3) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Mini player waveform inactive bars */
+[data-theme="bespoke"] #app-mini-player-floating-dock .waveform-inactive-bar {
+  background: var(--bespoke-mini-player-wave-inactive, rgba(255, 255, 255, 0.35)) !important;
+}
+
+/* Mini player waveform active / progress bars */
+[data-theme="bespoke"] #app-mini-player-floating-dock .progress-gradient-animated,
+[data-theme="bespoke"] #app-mini-player-floating-dock span[style*="linear-gradient"] {
+  background: var(--bespoke-mini-player-wave-active, #ffffff) !important;
+  box-shadow: 0 0 8px var(--bespoke-mini-player-wave-active, #ffffff) !important;
+}
+
+/* ================================================================================
+   NEUE EDITORIAL: WARM GOLDEN MINI PLAYER & FULL PLAYER OVERHAUL
+   ================================================================================ */
+
+/* 1. SUNKEN 3D DEEP PILL CONTAINER (High Contrast Slot) */
+[data-theme="neue-editorial"] .progress-waveform-container,
+[data-theme="neue-editorial"] .progress-bar-track-housing,
+.theme-neue-editorial .progress-waveform-container,
+.theme-neue-editorial .progress-bar-track-housing {
+  background: linear-gradient(180deg, #2a2520 0%, #363028 100%) !important;
+  border: 1px solid rgba(212, 175, 55, 0.25) !important;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.6),
+              inset 0 1px 3px rgba(0, 0, 0, 0.8),
+              0 1px 2px rgba(255, 255, 255, 0.5) !important;
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+}
+
+/* 2. HIGH-CONTRAST GOLDEN ACTIVE WAVEFORM & UNPLAYED BARS */
+[data-theme="neue-editorial"] .progress-waveform-bar.is-played,
+[data-theme="neue-editorial"] .progress-bar-fill-active,
+[data-theme="neue-editorial"] .progress-waveform-active,
+.theme-neue-editorial .progress-waveform-bar.is-played,
+.theme-neue-editorial .progress-bar-fill-active,
+.theme-neue-editorial .progress-waveform-active {
+  background: linear-gradient(135deg, #ffd700 0%, #ffae00 50%, #e6c667 100%) !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.85)) 
+          drop-shadow(0 0 14px rgba(255, 174, 0, 0.5)) !important;
+}
+
+/* Unplayed Waveform Bars */
+[data-theme="neue-editorial"] .progress-waveform-bar:not(.is-played),
+[data-theme="neue-editorial"] .progress-bar-track-unplayed,
+[data-theme="neue-editorial"] .waveform-inactive-bar,
+.theme-neue-editorial .progress-waveform-bar:not(.is-played),
+.theme-neue-editorial .progress-bar-track-unplayed,
+.theme-neue-editorial .waveform-inactive-bar {
+  background: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Progress Handle Knob / Thumb */
+[data-theme="neue-editorial"] .progress-thumb-knob,
+[data-theme="neue-editorial"] .progress-handle-active,
+.theme-neue-editorial .progress-thumb-knob,
+.theme-neue-editorial .progress-handle-active {
+  background: #ffffff !important;
+  border: 2px solid #d4af37 !important;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.7),
+              0 0 18px rgba(230, 198, 103, 0.4) !important;
+}
+
+/* 2. WARM GOLDEN PLAYER BUTTONS & PLAY/PAUSE AURA */
+/* Primary Play/Pause Button */
+[data-theme="neue-editorial"] .player-play-btn,
+[data-theme="neue-editorial"] .mini-player-play-btn,
+[data-theme="neue-editorial"] .full-player-play-btn,
+.theme-neue-editorial .player-play-btn,
+.theme-neue-editorial .mini-player-play-btn,
+.theme-neue-editorial .full-player-play-btn {
+  background: linear-gradient(135deg, #b8860b 0%, #d4af37 50%, #e6c667 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.45),
+              0 0 20px rgba(230, 198, 103, 0.25) !important;
+}
+
+[data-theme="neue-editorial"] .player-play-btn:hover,
+[data-theme="neue-editorial"] .mini-player-play-btn:hover,
+[data-theme="neue-editorial"] .full-player-play-btn:hover,
+.theme-neue-editorial .player-play-btn:hover,
+.theme-neue-editorial .mini-player-play-btn:hover,
+.theme-neue-editorial .full-player-play-btn:hover {
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.65),
+              0 0 28px rgba(230, 198, 103, 0.45) !important;
+  transform: scale(1.04);
+}
+
+[data-theme="neue-editorial"] .player-play-btn svg,
+[data-theme="neue-editorial"] .mini-player-play-btn svg,
+[data-theme="neue-editorial"] .full-player-play-btn svg,
+.theme-neue-editorial .player-play-btn svg,
+.theme-neue-editorial .mini-player-play-btn svg,
+.theme-neue-editorial .full-player-play-btn svg {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Secondary Control Icons (Next, Prev, Shuffle, Repeat, Plus, Expand) */
+[data-theme="neue-editorial"] .player-control-btn,
+[data-theme="neue-editorial"] .mini-player .control-icon,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn),
+.theme-neue-editorial .player-control-btn,
+.theme-neue-editorial .mini-player .control-icon {
+  color: #8b6508 !important;
+  filter: none !important;
+}
+
+[data-theme="neue-editorial"] .player-control-btn svg,
+[data-theme="neue-editorial"] .mini-player .control-icon,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+.theme-neue-editorial .player-control-btn svg,
+.theme-neue-editorial .mini-player .control-icon {
+  color: #8b6508 !important;
+  stroke: #8b6508 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+[data-theme="neue-editorial"] .player-control-btn:hover,
+[data-theme="neue-editorial"] .mini-player .control-icon:hover,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn):hover,
+.theme-neue-editorial .player-control-btn:hover,
+.theme-neue-editorial .mini-player .control-icon:hover {
+  color: #b8860b !important;
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5)) !important;
+}
+
+[data-theme="neue-editorial"] .player-control-btn:hover svg,
+[data-theme="neue-editorial"] .mini-player .control-icon:hover,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn):hover svg,
+.theme-neue-editorial .player-control-btn:hover svg,
+.theme-neue-editorial .mini-player .control-icon:hover {
+  color: #b8860b !important;
+  stroke: #b8860b !important;
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5)) !important;
+  -webkit-filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5)) !important;
+}
+
+/* 3. CLEAN MINI PLAYER CARD & FULL PLAYER BOTTOM BAR BACKGROUND */
+[data-theme="neue-editorial"] .mini-player-container,
+[data-theme="neue-editorial"] .full-player-bottom-bar,
+[data-theme="neue-editorial"] #app-mini-player-floating-dock,
+.theme-neue-editorial .mini-player-container,
+.theme-neue-editorial .full-player-bottom-bar,
+.theme-neue-editorial #app-mini-player-floating-dock {
+  background: rgba(253, 251, 247, 0.92) !important;
+  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  box-shadow: 0 10px 30px rgba(184, 134, 11, 0.12) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* 3. SUNKEN PILL TIMESTAMP CONTRAST */
+[data-theme="neue-editorial"] .player-time-display,
+.theme-neue-editorial .player-time-display {
+  color: #6b583e !important;
+  font-weight: 600 !important;
+}
+
+/* ================================================================================
+   YOUTUBE IFRAME BACKGROUND STREAM ENGINE POSITIONING
+   Prevent Browser Auto-Mute in Audio/Mini Mode across Desktop & Mobile
+   ================================================================================ */
+.yt-iframe-hidden-container {
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0.01 !important;
+  pointer-events: none !important;
+  z-index: -100 !important;
+}
+
+/* ================================================================================
+   HARMONIZED CARD TRANSPARENCY & THEME TOKEN INHERITANCE
+   (Home, Explore, Library, and Music Cards across all 6 Full-App Themes)
+   ================================================================================ */
+.home-card,
+.explore-card,
+.library-card,
+.music-card {
+  background: var(--theme-card-bg, rgba(var(--card-bg-rgb, 20, 20, 25), 0.35)) !important;
+  border-color: var(--theme-card-border, rgba(255, 255, 255, 0.12)) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-card:hover,
+.explore-card:hover,
+.library-card:hover,
+.music-card:hover {
+  background: rgba(var(--card-bg-rgb, 255, 255, 255), 0.45) !important;
+  border-color: var(--theme-accent, rgba(223, 184, 108, 0.5)) !important;
+}
+
+/* ================================================================================
+   DYNAMIC THEME-BOUND CATEGORY CHIPS & GLOW ARTIFACT ELIMINATION
+   ================================================================================ */
+/* Default / Dynamic Active Category Chip across all themes */
+.category-chip.active,
+.chip-button.active,
+.filter-pill.active,
+button[class*="chip"].active,
+button[class*="category"].active,
+.home-chip-active,
+.home-filter-chip.active,
+.explore-filter-chip.active,
+.explore-chip-active {
+  background: var(--theme-accent-gradient, var(--accent-gradient, var(--primary-accent, var(--accent-color, var(--primary, #dfb86c))))) !important;
+  color: var(--theme-active-text, var(--text-on-accent, var(--accent-contrast-text, #ffffff))) !important;
+  border: 1px solid var(--accent-border, var(--border-active, rgba(255, 255, 255, 0.2))) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  border-radius: 9999px !important;
+}
+
+.category-chip.active:hover,
+.chip-button.active:hover,
+.filter-pill.active:hover,
+button[class*="chip"].active:hover,
+button[class*="category"].active:hover,
+.home-chip-active:hover,
+.home-filter-chip.active:hover,
+.explore-filter-chip.active:hover,
+.explore-chip-active:hover {
+  filter: brightness(1.08) !important;
+  box-shadow: none !important;
+}
+
+/* Eliminate glowing square edge pseudo-element artifacts */
+.category-chip::before,
+.category-chip::after,
+.chip-button::before,
+.chip-button::after,
+.filter-pill::before,
+.filter-pill::after,
+.home-filter-chip::before,
+.home-filter-chip::after,
+.explore-filter-chip::before,
+.explore-filter-chip::after {
+  display: none !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* Theme-Specific Explicit Active Chip Colors */
+
+/* 1. Nebula Liquid Glass Theme - Preserved Pink-to-Black Gradient */
+[data-theme="nebula-liquid-glass"] .category-chip.active,
+[data-theme="nebula-liquid-glass"] .chip-button.active,
+[data-theme="nebula-liquid-glass"] .filter-pill.active,
+[data-theme="nebula-liquid-glass"] .home-filter-chip.active,
+[data-theme="nebula-liquid-glass"] .explore-filter-chip.active,
+[data-theme="nebula-liquid-glass"] .home-chip-active,
+[data-theme="nebula-liquid-glass"] .explore-chip-active,
+.theme-nebula-liquid-glass .category-chip.active,
+.theme-nebula-liquid-glass .chip-button.active,
+.theme-nebula-liquid-glass .filter-pill.active,
+.theme-nebula-liquid-glass .home-filter-chip.active,
+.theme-nebula-liquid-glass .explore-filter-chip.active,
+.theme-nebula-liquid-glass .home-chip-active,
+.theme-nebula-liquid-glass .explore-chip-active {
+  background: linear-gradient(135deg, #8b005d, #120015) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 0, 127, 0.45) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 2. Haute Couture Designer Theme - Preserved Metallic Champagne Gold */
+[data-theme="designer"] .category-chip.active,
+[data-theme="designer"] .chip-button.active,
+[data-theme="designer"] .filter-pill.active,
+[data-theme="designer"] .home-filter-chip.active,
+[data-theme="designer"] .explore-filter-chip.active,
+[data-theme="haute-couture"] .category-chip.active,
+[data-theme="haute-couture"] .chip-button.active,
+[data-theme="haute-couture"] .filter-pill.active,
+[data-theme="haute-couture"] .home-filter-chip.active,
+[data-theme="haute-couture"] .explore-filter-chip.active,
+[data-theme-alias="haute-couture"] .category-chip.active,
+[data-theme-alias="haute-couture"] .chip-button.active,
+[data-theme-alias="haute-couture"] .filter-pill.active,
+[data-theme-alias="haute-couture"] .home-filter-chip.active,
+[data-theme-alias="haute-couture"] .explore-filter-chip.active,
+.theme-haute-couture .category-chip.active,
+.theme-haute-couture .chip-button.active,
+.theme-haute-couture .filter-pill.active,
+.theme-haute-couture .home-filter-chip.active,
+.theme-haute-couture .explore-filter-chip.active,
+.theme-designer .category-chip.active,
+.theme-designer .chip-button.active,
+.theme-designer .filter-pill.active,
+.theme-designer .home-filter-chip.active,
+.theme-designer .explore-filter-chip.active {
+  background: linear-gradient(135deg, #f7e2ab 0%, #dfb86c 50%, #a07422 100%) !important;
+  color: #120f14 !important;
+  border: 1px solid rgba(223, 184, 108, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 3. Cyberpunk Neon Theme */
+[data-theme="cyberpunk-neon"] .category-chip.active,
+[data-theme="cyberpunk-neon"] .chip-button.active,
+[data-theme="cyberpunk-neon"] .filter-pill.active,
+[data-theme="cyberpunk-neon"] .home-filter-chip.active,
+[data-theme="cyberpunk-neon"] .explore-filter-chip.active,
+[data-theme="cyberpunk"] .category-chip.active,
+[data-theme="cyberpunk"] .chip-button.active,
+[data-theme="cyberpunk"] .filter-pill.active,
+[data-theme="cyberpunk"] .home-filter-chip.active,
+[data-theme="cyberpunk"] .explore-filter-chip.active,
+.theme-cyberpunk-neon .category-chip.active,
+.theme-cyberpunk-neon .chip-button.active,
+.theme-cyberpunk-neon .filter-pill.active,
+.theme-cyberpunk-neon .home-filter-chip.active,
+.theme-cyberpunk-neon .explore-filter-chip.active {
+  background: linear-gradient(135deg, #00f3ff 0%, #ff007f 100%) !important;
+  color: #050814 !important;
+  border: 1px solid rgba(0, 243, 255, 0.6) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 4. Candyland Light Theme */
+[data-theme="candyland"] .category-chip.active,
+[data-theme="candyland"] .chip-button.active,
+[data-theme="candyland"] .filter-pill.active,
+[data-theme="candyland"] .home-filter-chip.active,
+[data-theme="candyland"] .explore-filter-chip.active,
+[data-theme="ytmusic-red"] .category-chip.active,
+.theme-candyland .category-chip.active,
+.theme-candyland .chip-button.active,
+.theme-candyland .filter-pill.active,
+.theme-candyland .home-filter-chip.active,
+.theme-candyland .explore-filter-chip.active {
+  background: linear-gradient(135deg, #ff70a6 0%, #a3c4f3 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 112, 166, 0.6) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 5. Dynamic Emerald Theme */
+[data-theme="dynamic-emerald"] .category-chip.active,
+[data-theme="dynamic-emerald"] .chip-button.active,
+[data-theme="dynamic-emerald"] .filter-pill.active,
+[data-theme="dynamic-emerald"] .home-filter-chip.active,
+[data-theme="dynamic-emerald"] .explore-filter-chip.active,
+[data-theme="emerald-wilderness"] .category-chip.active,
+.theme-dynamic-emerald .category-chip.active,
+.theme-dynamic-emerald .chip-button.active,
+.theme-dynamic-emerald .filter-pill.active,
+.theme-dynamic-emerald .home-filter-chip.active,
+.theme-dynamic-emerald .explore-filter-chip.active {
+  background: linear-gradient(135deg, #00f5a0 0%, #00d9f5 100%) !important;
+  color: #011a12 !important;
+  border: 1px solid rgba(0, 245, 160, 0.6) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 6. Audiophile Gold / Slate Blue Theme */
+[data-theme="audiophile-gold"] .category-chip.active,
+[data-theme="audiophile-gold"] .chip-button.active,
+[data-theme="audiophile-gold"] .filter-pill.active,
+[data-theme="audiophile-gold"] .home-filter-chip.active,
+[data-theme="audiophile-gold"] .explore-filter-chip.active,
+.theme-audiophile-gold .category-chip.active,
+.theme-audiophile-gold .chip-button.active,
+.theme-audiophile-gold .filter-pill.active,
+.theme-audiophile-gold .home-filter-chip.active,
+.theme-audiophile-gold .explore-filter-chip.active {
+  background: linear-gradient(135deg, #b8cadc 0%, #8fa7c2 50%, #4a5f78 100%) !important;
+  color: #070b14 !important;
+  border: 1px solid rgba(143, 167, 194, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 7. Twilight Vaporwave Theme */
+[data-theme="twilight-vaporwave"] .category-chip.active,
+[data-theme="twilight-vaporwave"] .chip-button.active,
+[data-theme="twilight-vaporwave"] .filter-pill.active,
+[data-theme="twilight-vaporwave"] .home-filter-chip.active,
+[data-theme="twilight-vaporwave"] .explore-filter-chip.active,
+.theme-twilight-vaporwave .category-chip.active,
+.theme-twilight-vaporwave .chip-button.active,
+.theme-twilight-vaporwave .filter-pill.active,
+.theme-twilight-vaporwave .home-filter-chip.active,
+.theme-twilight-vaporwave .explore-filter-chip.active {
+  background: linear-gradient(135deg, #ff2a8d 0%, #8a2be2 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 42, 141, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 8. Neue Editorial Theme */
+[data-theme="neue-editorial"] .category-chip.active,
+[data-theme="neue-editorial"] .chip-button.active,
+[data-theme="neue-editorial"] .filter-pill.active,
+[data-theme="neue-editorial"] .home-filter-chip.active,
+[data-theme="neue-editorial"] .explore-filter-chip.active,
+.theme-neue-editorial .category-chip.active,
+.theme-neue-editorial .chip-button.active,
+.theme-neue-editorial .filter-pill.active,
+.theme-neue-editorial .home-filter-chip.active,
+.theme-neue-editorial .explore-filter-chip.active {
+  background: linear-gradient(135deg, #1F1F1F 0%, #3A3530 100%) !important;
+  color: #FAF5ED !important;
+  border: 1px solid rgba(31, 31, 31, 0.4) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 9. Obsidian Depth Theme */
+[data-theme="obsidian-depth"] .category-chip.active,
+[data-theme="obsidian-depth"] .chip-button.active,
+[data-theme="obsidian-depth"] .filter-pill.active,
+[data-theme="obsidian-depth"] .home-filter-chip.active,
+[data-theme="obsidian-depth"] .explore-filter-chip.active,
+.theme-obsidian-depth .category-chip.active,
+.theme-obsidian-depth .chip-button.active,
+.theme-obsidian-depth .filter-pill.active,
+.theme-obsidian-depth .home-filter-chip.active,
+.theme-obsidian-depth .explore-filter-chip.active {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(56, 189, 248, 0.5) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 10. Sugar Time Jazz Theme */
+[data-theme="sugar-time-jazz"] .category-chip.active,
+[data-theme="sugar-time-jazz"] .chip-button.active,
+[data-theme="sugar-time-jazz"] .filter-pill.active,
+[data-theme="sugar-time-jazz"] .home-filter-chip.active,
+[data-theme="sugar-time-jazz"] .explore-filter-chip.active,
+.theme-sugar-time-jazz .category-chip.active,
+.theme-sugar-time-jazz .chip-button.active,
+.theme-sugar-time-jazz .filter-pill.active,
+.theme-sugar-time-jazz .home-filter-chip.active,
+.theme-sugar-time-jazz .explore-filter-chip.active {
+  background: linear-gradient(135deg, #d4b496 0%, #c4b5a5 50%, #9333ea 100%) !important;
+  color: #120e0b !important;
+  border: 1px solid rgba(212, 180, 150, 0.4) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* 11. Bespoke Custom Theme */
+[data-theme="bespoke"] .category-chip.active,
+[data-theme="bespoke"] .chip-button.active,
+[data-theme="bespoke"] .filter-pill.active,
+[data-theme="bespoke"] .home-filter-chip.active,
+[data-theme="bespoke"] .explore-filter-chip.active,
+[data-theme="bespoke-home"] .category-chip.active,
+[data-theme="bespoke-home"] .chip-button.active,
+[data-theme="bespoke-home"] .filter-pill.active,
+[data-theme="bespoke-home"] .home-filter-chip.active,
+[data-theme="bespoke-home"] .explore-filter-chip.active,
+.theme-bespoke .category-chip.active,
+.theme-bespoke .chip-button.active,
+.theme-bespoke .filter-pill.active,
+.theme-bespoke .home-filter-chip.active,
+.theme-bespoke .explore-filter-chip.active {
+  background: var(--accent-gradient, linear-gradient(135deg, var(--bespoke-c1, #00f0ff), var(--bespoke-c2, #ff007f))) !important;
+  color: var(--accent-contrast-text, #ffffff) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+}
+
+/* Strip parent container styling for category chips */
+.chips-container,
+.category-bar,
+.chip-scroll-wrapper,
+div[class*="chip-container"],
+div[class*="category-wrapper"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Ensure individual inactive chips remain clean pills without background box artifacts */
+.category-chip:not(.active),
+.chip-button:not(.active),
+.filter-pill:not(.active),
+.home-filter-chip:not(.active),
+.explore-filter-chip:not(.active) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.category-chip:not(.active):hover,
+.chip-button:not(.active):hover,
+.filter-pill:not(.active):hover,
+.home-filter-chip:not(.active):hover,
+.explore-filter-chip:not(.active):hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+
+/* ================================================================================
+   TASK 2: CYBERPUNK NEON GLASS - REMOVE SQUARE OUTLINES FROM MAIN MENU
+   ================================================================================ */
+.theme-cyberpunk .bottom-nav-item,
+.theme-cyberpunk .sidebar-nav-item,
+.theme-cyberpunk .sidebar-item,
+.theme-cyberpunk .nav-item,
+.theme-cyberpunk .nav-link,
+[data-theme="cyberpunk"] .bottom-nav-item,
+[data-theme="cyberpunk"] .sidebar-nav-item,
+[data-theme="cyberpunk"] .sidebar-item,
+[data-theme="cyberpunk"] .nav-item,
+[data-theme="cyberpunk"] .nav-link,
+.theme-cyberpunk-neon .bottom-nav-item,
+.theme-cyberpunk-neon .sidebar-nav-item,
+.theme-cyberpunk-neon .sidebar-item,
+.theme-cyberpunk-neon .nav-item,
+.theme-cyberpunk-neon .nav-link,
+[data-theme="cyberpunk-neon"] .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .sidebar-nav-item,
+[data-theme="cyberpunk-neon"] .sidebar-item,
+[data-theme="cyberpunk-neon"] .nav-item,
+[data-theme="cyberpunk-neon"] .nav-link,
+[data-theme-alias="cyberpunk"] .bottom-nav-item,
+[data-theme-alias="cyberpunk"] .sidebar-nav-item,
+[data-theme-alias="cyberpunk"] .sidebar-item,
+[data-theme-alias="cyberpunk"] .nav-item,
+[data-theme-alias="cyberpunk"] .nav-link,
+[data-theme="cyberpunk"] .sidebar-nav .nav-item,
+[data-theme="cyberpunk-neon"] .sidebar-nav .nav-item,
+[data-theme="cyberpunk"] .desktop-menu .nav-item,
+[data-theme="cyberpunk-neon"] .desktop-menu .nav-item,
+[data-theme="cyberpunk"] .mobile-nav .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .mobile-nav .bottom-nav-item,
+[data-theme="cyberpunk"] .bottom-nav-bar .bottom-nav-item,
+[data-theme="cyberpunk-neon"] .bottom-nav-bar .bottom-nav-item,
+[data-theme="cyberpunk"] .nav-icon-container,
+[data-theme="cyberpunk-neon"] .nav-icon-container {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.theme-cyberpunk .bottom-nav-item.active,
+.theme-cyberpunk .sidebar-nav-item.active,
+.theme-cyberpunk .sidebar-item.active,
+.theme-cyberpunk .nav-item.active,
+[data-theme="cyberpunk"] .bottom-nav-item.active,
+[data-theme="cyberpunk"] .sidebar-nav-item.active,
+[data-theme="cyberpunk"] .sidebar-item.active,
+[data-theme="cyberpunk"] .nav-item.active,
+.theme-cyberpunk-neon .bottom-nav-item.active,
+.theme-cyberpunk-neon .sidebar-nav-item.active,
+.theme-cyberpunk-neon .sidebar-item.active,
+.theme-cyberpunk-neon .nav-item.active,
+[data-theme="cyberpunk-neon"] .bottom-nav-item.active,
+[data-theme="cyberpunk-neon"] .sidebar-nav-item.active,
+[data-theme="cyberpunk-neon"] .sidebar-item.active,
+[data-theme="cyberpunk-neon"] .nav-item.active,
+[data-theme-alias="cyberpunk"] .bottom-nav-item.active,
+[data-theme-alias="cyberpunk"] .sidebar-nav-item.active,
+[data-theme-alias="cyberpunk"] .sidebar-item.active,
+[data-theme-alias="cyberpunk"] .nav-item.active {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ================================================================================
+   TASK 3: CYBERPUNK NEON GLASS - SOFTEN MINI PLAYER BUTTON BORDERS
+   ================================================================================ */
+.theme-cyberpunk,
+[data-theme="cyberpunk"],
+.theme-cyberpunk-neon,
+[data-theme="cyberpunk-neon"],
+[data-theme-alias="cyberpunk"] {
+  --cyber-cyan: #00f3ff;
+  --cyber-cyan-glow: rgba(0, 243, 255, 0.3);
+}
+
+.theme-cyberpunk .mini-player .action-btn,
+.theme-cyberpunk .mini-player-controls button:not(.mini-player-play-btn),
+.theme-cyberpunk .mini-player .secondary-controls button,
+.theme-cyberpunk .mini-player button.player-control-btn,
+[data-theme="cyberpunk"] .mini-player .action-btn,
+[data-theme="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn),
+[data-theme="cyberpunk"] .mini-player .secondary-controls button,
+[data-theme="cyberpunk"] .mini-player button.player-control-btn,
+.theme-cyberpunk-neon .mini-player .action-btn,
+.theme-cyberpunk-neon .mini-player-controls button:not(.mini-player-play-btn),
+.theme-cyberpunk-neon .mini-player .secondary-controls button,
+.theme-cyberpunk-neon .mini-player button.player-control-btn,
+[data-theme="cyberpunk-neon"] .mini-player .action-btn,
+[data-theme="cyberpunk-neon"] .mini-player-controls button:not(.mini-player-play-btn),
+[data-theme="cyberpunk-neon"] .mini-player .secondary-controls button,
+[data-theme="cyberpunk-neon"] .mini-player button.player-control-btn,
+[data-theme-alias="cyberpunk"] .mini-player .action-btn,
+[data-theme-alias="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn),
+[data-theme-alias="cyberpunk"] .mini-player .secondary-controls button,
+[data-theme-alias="cyberpunk"] .mini-player button.player-control-btn {
+  border-radius: 12px !important;
+  border: 1px solid var(--cyber-cyan-glow, rgba(0, 243, 255, 0.3)) !important;
+  background: rgba(10, 15, 28, 0.6) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.theme-cyberpunk .mini-player .action-btn:hover,
+.theme-cyberpunk .mini-player-controls button:not(.mini-player-play-btn):hover,
+.theme-cyberpunk .mini-player .secondary-controls button:hover,
+.theme-cyberpunk .mini-player button.player-control-btn:hover,
+[data-theme="cyberpunk"] .mini-player .action-btn:hover,
+[data-theme="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn):hover,
+[data-theme="cyberpunk"] .mini-player .secondary-controls button:hover,
+[data-theme="cyberpunk"] .mini-player button.player-control-btn:hover,
+.theme-cyberpunk-neon .mini-player .action-btn:hover,
+.theme-cyberpunk-neon .mini-player-controls button:not(.mini-player-play-btn):hover,
+.theme-cyberpunk-neon .mini-player .secondary-controls button:hover,
+.theme-cyberpunk-neon .mini-player button.player-control-btn:hover,
+[data-theme="cyberpunk-neon"] .mini-player .action-btn:hover,
+[data-theme="cyberpunk-neon"] .mini-player-controls button:not(.mini-player-play-btn):hover,
+[data-theme="cyberpunk-neon"] .mini-player .secondary-controls button:hover,
+[data-theme="cyberpunk-neon"] .mini-player button.player-control-btn:hover,
+[data-theme-alias="cyberpunk"] .mini-player .action-btn:hover,
+[data-theme-alias="cyberpunk"] .mini-player-controls button:not(.mini-player-play-btn):hover,
+[data-theme-alias="cyberpunk"] .mini-player .secondary-controls button:hover,
+[data-theme-alias="cyberpunk"] .mini-player button.player-control-btn:hover {
+  border-color: var(--cyber-cyan, #00f3ff) !important;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.4) !important;
+}
+
+/* Neue Editorial: Solid black explore header with warm gold drop glow */
+[data-theme="neue-editorial"] .explore-header-title,
+[data-theme="neue-editorial"] .explore-discover-heading,
+.theme-neue-editorial .explore-header-title,
+.theme-neue-editorial .explore-discover-heading {
+  color: #000000 !important;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.6), 0 0 24px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* Haute Couture Designer: Secondary ambient purple accent glow */
+[data-theme="haute-couture"] .card-has-glow,
+[data-theme="haute-couture"] .modal-content,
+[data-theme="haute-couture"] .album-header,
+[data-theme="haute-couture"] .playlist-header,
+[data-theme="haute-couture"] .genre-card,
+[data-theme="designer"] .card-has-glow,
+[data-theme="designer"] .modal-content,
+[data-theme="designer"] .album-header,
+[data-theme="designer"] .playlist-header,
+[data-theme="designer"] .genre-card,
+[data-theme="designer-ivory"] .card-has-glow,
+[data-theme="designer-ivory"] .modal-content,
+[data-theme="designer-ivory"] .album-header,
+[data-theme="designer-ivory"] .playlist-header,
+[data-theme="designer-ivory"] .genre-card,
+[data-theme-alias="haute-couture"] .card-has-glow,
+[data-theme-alias="haute-couture"] .modal-content,
+[data-theme-alias="haute-couture"] .album-header,
+[data-theme-alias="haute-couture"] .playlist-header,
+[data-theme-alias="haute-couture"] .genre-card {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(157, 78, 237, 0.2) !important;
+}
+
+/* =========================================================================
+   SUGAR TIME JAZZ (THEME #10) - DESIGN TOKENS & VISUAL STYLING
+   ========================================================================= */
+
+.theme-sugar-time-jazz,
+[data-theme="sugar-time-jazz"] {
+  /* Warm Beige/Tan to Dark Chocolate/Black Gradients */
+  --bg-main: linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%);
+  --bg-card: rgba(36, 28, 22, 0.45);
+  --bg-modal: rgba(28, 22, 17, 0.65);
+  --bg-card-border: rgba(212, 180, 150, 0.15);
+  
+  /* Text & Contrast Rules */
+  --text-primary: #f5eae1;      /* Light cream for crisp contrast on dark backgrounds */
+  --text-secondary: #c4b5a5;    /* Warm beige for subtitles and secondary metadata */
+  --text-muted: #8c7e70;        /* Muted brown-gray */
+  --icon-color: #f5eae1;        /* Crisp cream for readable icons */
+  
+  /* Purple Back-Glow Accent (Strictly Back-Glow Only) */
+  --purple-glow-color: rgba(147, 51, 234, 0.55);
+  --purple-glow-soft: rgba(168, 85, 247, 0.25);
+  --purple-glow-vibrant: rgba(168, 85, 247, 0.65);
+  --purple-glow-deep: rgba(147, 51, 234, 0.45);
+  --accent-glow: 0 0 25px var(--purple-glow-color);
+
+  /* Full App Canvas & System Compatibility Tokens */
+  --bg-canvas: linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%);
+  --canvas-text-primary: #f5eae1;
+  --canvas-text-secondary: #c4b5a5;
+  --canvas-text-muted: #8c7e70;
+  --card-bg: rgba(36, 28, 22, 0.45);
+  --card-text: #f5eae1;
+  --card-border: rgba(212, 180, 150, 0.15);
+  --accent-primary: #d4b496;
+  --accent-color: #d4b496;
+  --primary: #d4b496;
+  --accent-primary-rgb: 212, 180, 150;
+  --accent-secondary: #c4b5a5;
+  --accent-tertiary: #9333ea;
+  --accent-gradient: linear-gradient(135deg, #d4b496 0%, #c4b5a5 50%, #9333ea 100%);
+  --accent-border: rgba(212, 180, 150, 0.35);
+  --accent-contrast-text: #120e0b;
+  --text-on-accent: #120e0b;
+  --bg-surface-elevated: #1a1410;
+  --border-subtle: rgba(212, 180, 150, 0.15);
+  --border-active: var(--accent-primary);
+  --waveform-inactive: rgba(140, 126, 112, 0.35);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(36, 28, 22, 0.45);
+  --glass-border: rgba(212, 180, 150, 0.15);
+  --nav-glow-color: rgba(147, 51, 234, 0.55);
+  --nav-aura-color: rgba(147, 51, 234, 0.55);
+  --nav-active-stroke: #f5eae1;
+  --nav-active-text: #f5eae1;
+  --nav-inactive-color: #c4b5a5;
+  --nav-inactive-stroke: #8c7e70;
+  --nav-dock-bg: rgba(28, 22, 17, 0.85);
+}
+
+/* Background canvas fill */
+.theme-sugar-time-jazz,
+[data-theme="sugar-time-jazz"],
+.sugar-time-jazz-canvas-bg {
+  background: linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%) !important;
+}
+
+/* =========================================================================
+   TASK 3: FROSTED GLASS CARDS & MODALS
+   ========================================================================= */
+
+.theme-sugar-time-jazz .card,
+.theme-sugar-time-jazz .modal,
+.theme-sugar-time-jazz .glass-panel,
+[data-theme="sugar-time-jazz"] .card,
+[data-theme="sugar-time-jazz"] .modal,
+[data-theme="sugar-time-jazz"] .glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Glow on Interactive Cards & Containers */
+.theme-sugar-time-jazz .card:hover,
+.theme-sugar-time-jazz .glass-panel,
+.theme-sugar-time-jazz .modal-content,
+.theme-sugar-time-jazz .mini-player,
+[data-theme="sugar-time-jazz"] .card:hover,
+[data-theme="sugar-time-jazz"] .glass-panel,
+[data-theme="sugar-time-jazz"] .modal-content,
+[data-theme="sugar-time-jazz"] .mini-player {
+  box-shadow: 0 0 25px var(--purple-glow-deep), inset 0 0 15px rgba(168, 85, 247, 0.15) !important;
+  border: 1px solid rgba(212, 180, 150, 0.25) !important;
+}
+
+/* Accent Back-Glow for Header Titles and Active Badges */
+.theme-sugar-time-jazz h1,
+.theme-sugar-time-jazz h2,
+.theme-sugar-time-jazz .active-indicator,
+[data-theme="sugar-time-jazz"] h1,
+[data-theme="sugar-time-jazz"] h2,
+[data-theme="sugar-time-jazz"] .active-indicator {
+  text-shadow: 0 0 12px var(--purple-glow-vibrant);
+}
+
+/* Full Player Theme Unification */
+.theme-sugar-time-jazz .full-player-overlay,
+.theme-sugar-time-jazz .full-player-container,
+.theme-sugar-time-jazz [class*="FullPlayer"],
+[data-theme="sugar-time-jazz"] .full-player-overlay,
+[data-theme="sugar-time-jazz"] .full-player-container,
+[data-theme="sugar-time-jazz"] [class*="FullPlayer"] {
+  background: var(--bg-main) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Full Player Cards & Glass Elements */
+.theme-sugar-time-jazz .full-player-overlay .glass-card,
+.theme-sugar-time-jazz .full-player-overlay .art-container,
+.theme-sugar-time-jazz .full-player-overlay .full-player-artwork-card,
+[data-theme="sugar-time-jazz"] .full-player-overlay .glass-card,
+[data-theme="sugar-time-jazz"] .full-player-overlay .art-container,
+[data-theme="sugar-time-jazz"] .full-player-overlay .full-player-artwork-card {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--bg-card-border);
+  box-shadow: 0 0 35px var(--purple-glow-deep) !important;
+}
+
+/* Playback Control Buttons in Full Player */
+.theme-sugar-time-jazz .full-player-overlay .play-pause-btn,
+.theme-sugar-time-jazz .full-player-overlay .full-player-play-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .play-pause-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .full-player-play-btn {
+  background: var(--btn-gradient, var(--accent-gradient)) !important;
+  box-shadow: 0 0 20px var(--purple-glow-vibrant) !important;
+  color: var(--text-primary) !important;
+}
+
+.theme-sugar-time-jazz .full-player-overlay .control-btn,
+.theme-sugar-time-jazz .full-player-overlay .player-control-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .control-btn,
+[data-theme="sugar-time-jazz"] .full-player-overlay .player-control-btn {
+  color: var(--text-primary) !important;
+  filter: drop-shadow(0 0 6px var(--purple-glow-deep));
+}
+
+/* Modal overlays, dialogs and player surfaces */
+.theme-sugar-time-jazz [role="dialog"],
+.theme-sugar-time-jazz .modal-surface,
+.theme-sugar-time-jazz .modal-content,
+[data-theme="sugar-time-jazz"] [role="dialog"],
+[data-theme="sugar-time-jazz"] .modal-surface,
+[data-theme="sugar-time-jazz"] .modal-content {
+  background: var(--bg-modal) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid var(--bg-card-border) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Mini player floating dock and full player overlay */
+.theme-sugar-time-jazz #app-mini-player-floating-dock,
+[data-theme="sugar-time-jazz"] #app-mini-player-floating-dock,
+.theme-sugar-time-jazz .mini-player-dock,
+[data-theme="sugar-time-jazz"] .mini-player-dock {
+  background: var(--bg-modal) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid var(--bg-card-border) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.55), 0 0 25px var(--purple-glow-soft) !important;
+}
+
+/* =========================================================================
+   TASK 4: NAVIGATION BACK-GLOW (MOBILE BOTTOM & PC/TABLET LEFT)
+   ========================================================================= */
+
+/* Active Navigation Items: text & icon remain high-contrast cream/white */
+.theme-sugar-time-jazz .nav-item.active,
+.theme-sugar-time-jazz .sidebar-item.active,
+.theme-sugar-time-jazz .bottom-nav-item.active,
+[data-theme="sugar-time-jazz"] .nav-item.active,
+[data-theme="sugar-time-jazz"] .sidebar-item.active,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active,
+.theme-sugar-time-jazz .nav-item-active,
+.theme-sugar-time-jazz .sidebar-nav-item.nav-item-active,
+.theme-sugar-time-jazz .bottom-nav-item.nav-item-active,
+[data-theme="sugar-time-jazz"] .nav-item-active,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.nav-item-active,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.nav-item-active {
+  color: var(--text-primary) !important; /* Text remains cream */
+  position: relative;
+}
+
+.theme-sugar-time-jazz .nav-item.active svg,
+.theme-sugar-time-jazz .sidebar-item.active svg,
+.theme-sugar-time-jazz .bottom-nav-item.active svg,
+[data-theme="sugar-time-jazz"] .nav-item.active svg,
+[data-theme="sugar-time-jazz"] .sidebar-item.active svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active svg,
+.theme-sugar-time-jazz .nav-item-active svg,
+.theme-sugar-time-jazz .sidebar-nav-item.nav-item-active svg,
+.theme-sugar-time-jazz .bottom-nav-item.nav-item-active svg,
+[data-theme="sugar-time-jazz"] .nav-item-active svg,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.nav-item-active svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.nav-item-active svg {
+  color: var(--icon-color) !important; /* Icon remains cream */
+  stroke: var(--icon-color) !important;
+  filter: drop-shadow(0 0 8px var(--purple-glow-color)) !important; /* Subtle purple glow behind icon */
+}
+
+/* Purple Ambient Back-Glow Container behind active state */
+.theme-sugar-time-jazz .nav-item.active::before,
+.theme-sugar-time-jazz .sidebar-item.active::before,
+.theme-sugar-time-jazz .bottom-nav-item.active::before,
+[data-theme="sugar-time-jazz"] .nav-item.active::before,
+[data-theme="sugar-time-jazz"] .sidebar-item.active::before,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active::before,
+.theme-sugar-time-jazz .nav-item-active::before,
+.theme-sugar-time-jazz .sidebar-nav-item.nav-item-active::before,
+.theme-sugar-time-jazz .bottom-nav-item.nav-item-active::before,
+[data-theme="sugar-time-jazz"] .nav-item-active::before,
+[data-theme="sugar-time-jazz"] .sidebar-nav-item.nav-item-active::before,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.nav-item-active::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: radial-gradient(circle, var(--purple-glow-color) 0%, transparent 70%);
+  border-radius: 12px;
+  z-index: -1;
+  opacity: 0.8;
+}
+
+/* Explicit text label color for active navigation */
+.theme-sugar-time-jazz .nav-item.active .nav-label,
+.theme-sugar-time-jazz .sidebar-item.active .nav-label,
+.theme-sugar-time-jazz .bottom-nav-item.active .nav-label,
+[data-theme="sugar-time-jazz"] .nav-item.active .nav-label,
+[data-theme="sugar-time-jazz"] .sidebar-item.active .nav-label,
+[data-theme="sugar-time-jazz"] .bottom-nav-item.active .nav-label,
+.theme-sugar-time-jazz .nav-item-active .nav-label,
+[data-theme="sugar-time-jazz"] .nav-item-active .nav-label {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+/* Inactive navigation items styling */
+.theme-sugar-time-jazz .nav-item:not(.active):not(.nav-item-active),
+.theme-sugar-time-jazz .sidebar-item:not(.active):not(.nav-item-active),
+.theme-sugar-time-jazz .bottom-nav-item:not(.active):not(.nav-item-active),
+[data-theme="sugar-time-jazz"] .nav-item:not(.active):not(.nav-item-active),
+[data-theme="sugar-time-jazz"] .sidebar-item:not(.active):not(.nav-item-active),
+[data-theme="sugar-time-jazz"] .bottom-nav-item:not(.active):not(.nav-item-active) {
+  color: var(--text-secondary) !important;
+}
+
+.theme-sugar-time-jazz .nav-item:not(.active):not(.nav-item-active) svg,
+.theme-sugar-time-jazz .sidebar-item:not(.active):not(.nav-item-active) svg,
+.theme-sugar-time-jazz .bottom-nav-item:not(.active):not(.nav-item-active) svg,
+[data-theme="sugar-time-jazz"] .nav-item:not(.active):not(.nav-item-active) svg,
+[data-theme="sugar-time-jazz"] .sidebar-item:not(.active):not(.nav-item-active) svg,
+[data-theme="sugar-time-jazz"] .bottom-nav-item:not(.active):not(.nav-item-active) svg {
+  color: var(--text-secondary) !important;
+  stroke: var(--text-secondary) !important;
+  filter: none !important;
+}
+
+/* =========================================================================
+   TASK 5: CONTRAST RULE VALIDATION (WCAG AAA COMPLIANCE)
+   ========================================================================= */
+
+/* Input field backgrounds: rgba(20, 15, 12, 0.6) with light cream text (#f5eae1) */
+.theme-sugar-time-jazz input:not([type="range"]),
+.theme-sugar-time-jazz textarea,
+.theme-sugar-time-jazz select,
+[data-theme="sugar-time-jazz"] input:not([type="range"]),
+[data-theme="sugar-time-jazz"] textarea,
+[data-theme="sugar-time-jazz"] select {
+  background-color: rgba(20, 15, 12, 0.6) !important;
+  color: #f5eae1 !important;
+  border-color: rgba(212, 180, 150, 0.25) !important;
+}
+
+.theme-sugar-time-jazz input:not([type="range"])::placeholder,
+.theme-sugar-time-jazz textarea::placeholder,
+[data-theme="sugar-time-jazz"] input:not([type="range"])::placeholder,
+[data-theme="sugar-time-jazz"] textarea::placeholder {
+  color: #c4b5a5 !important;
+  opacity: 0.7 !important;
+}
+
+.theme-sugar-time-jazz input:not([type="range"]):focus,
+.theme-sugar-time-jazz textarea:focus,
+.theme-sugar-time-jazz select:focus,
+[data-theme="sugar-time-jazz"] input:not([type="range"]):focus,
+[data-theme="sugar-time-jazz"] textarea:focus,
+[data-theme="sugar-time-jazz"] select:focus {
+  border-color: #d4b496 !important;
+  background-color: rgba(25, 18, 14, 0.8) !important;
+  outline: none !important;
+  box-shadow: 0 0 15px rgba(212, 180, 150, 0.25) !important;
+}
+
+/* Active buttons: High-contrast light tan/beige button fill (#e6d5c3) with dark brown/black text (#120e0b) */
+.theme-sugar-time-jazz .btn-primary,
+.theme-sugar-time-jazz button.button-primary,
+.theme-sugar-time-jazz button.btn-signin,
+.theme-sugar-time-jazz .pill-active,
+.theme-sugar-time-jazz .pill-selected,
+.theme-sugar-time-jazz button.pill-selected,
+[data-theme="sugar-time-jazz"] .btn-primary,
+[data-theme="sugar-time-jazz"] button.button-primary,
+[data-theme="sugar-time-jazz"] button.btn-signin,
+[data-theme="sugar-time-jazz"] .pill-active,
+[data-theme="sugar-time-jazz"] .pill-selected,
+[data-theme="sugar-time-jazz"] button.pill-selected {
+  background: #e6d5c3 !important;
+  color: #120e0b !important;
+  border: 1px solid rgba(212, 180, 150, 0.5) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.theme-sugar-time-jazz .btn-primary:hover,
+.theme-sugar-time-jazz button.button-primary:hover,
+.theme-sugar-time-jazz button.btn-signin:hover,
+[data-theme="sugar-time-jazz"] .btn-primary:hover,
+[data-theme="sugar-time-jazz"] button.button-primary:hover,
+[data-theme="sugar-time-jazz"] button.btn-signin:hover {
+  background: #eddcca !important;
+  color: #120e0b !important;
+}
+
+.theme-sugar-time-jazz .btn-primary svg,
+.theme-sugar-time-jazz button.button-primary svg,
+.theme-sugar-time-jazz button.btn-signin svg,
+[data-theme="sugar-time-jazz"] .btn-primary svg,
+[data-theme="sugar-time-jazz"] button.button-primary svg,
+[data-theme="sugar-time-jazz"] button.btn-signin svg {
+  color: #120e0b !important;
+  stroke: #120e0b !important;
+}
+
+/* Secondary buttons: warm dark chocolate background with light cream text */
+.theme-sugar-time-jazz .btn-secondary,
+.theme-sugar-time-jazz button.button-secondary,
+[data-theme="sugar-time-jazz"] .btn-secondary,
+[data-theme="sugar-time-jazz"] button.button-secondary {
+  background: rgba(36, 28, 22, 0.6) !important;
+  color: #f5eae1 !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+.theme-sugar-time-jazz .btn-secondary:hover,
+.theme-sugar-time-jazz button.button-secondary:hover,
+[data-theme="sugar-time-jazz"] .btn-secondary:hover,
+[data-theme="sugar-time-jazz"] button.button-secondary:hover {
+  background: rgba(48, 38, 30, 0.75) !important;
+  color: #f5eae1 !important;
+}
+
+/* Badges: WCAG AAA compliance */
+.theme-sugar-time-jazz .badge,
+.theme-sugar-time-jazz .chip,
+[data-theme="sugar-time-jazz"] .badge,
+[data-theme="sugar-time-jazz"] .chip {
+  background: rgba(36, 28, 22, 0.65) !important;
+  color: #f5eae1 !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+
+
+
+
+
+
 
 
