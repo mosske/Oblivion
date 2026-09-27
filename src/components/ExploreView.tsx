@@ -33,6 +33,7 @@ import {
 } from "../services/exploreService";
 import { GenreDetailView } from "./GenreDetailView";
 import { GenreItem } from "../services/genreService";
+import { ThemeIcon } from "./ThemeIcon";
 
 interface ExploreViewProps {
   onPlayTrack: (track: Track) => void;
@@ -257,7 +258,10 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                   : "bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"
               } text-xs font-bold`}
             >
-              <Compass
+              <ThemeIcon
+                name="heroBadge"
+                themeId={designConfig.id}
+                fallback={Compass}
                 className={`w-3.5 h-3.5 ${
                   designConfig.id === "neue-editorial" ? "text-[#1F1F1F]" : designConfig.accentText
                 }`}
@@ -846,7 +850,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                     className={`h-24 p-3.5 rounded-2xl bg-gradient-to-br ${mood.color} text-white font-bold text-sm flex flex-col justify-between items-start shadow-md hover:scale-[1.03] active:scale-95 transition-all text-left group overflow-hidden relative`}
                   >
                     <div className="absolute -right-2 -bottom-2 opacity-20 group-hover:opacity-40 transition-opacity">
-                      <Sparkles className="w-16 h-16" />
+                      <ThemeIcon name="mood" themeId={designConfig.id} genreTitle={mood.title} className="w-16 h-16" />
                     </div>
                     <span>{mood.title}</span>
                     <span className="text-[11px] font-mono opacity-80 group-hover:opacity-100 flex items-center gap-1">
@@ -864,7 +868,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           {showMoodsAndGenres && data.genres.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2.5">
-                <Disc3 className="w-5 h-5 text-pink-500" />
+                <ThemeIcon name="disc" themeId={designConfig.id} className="w-5 h-5 text-pink-500" />
                 <div>
                   <h2 className={`text-lg sm:text-xl font-bold ${designConfig.headingPrimary} tracking-tight`}>
                     Genres
@@ -882,7 +886,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                     className={`h-20 p-3.5 rounded-2xl bg-gradient-to-br ${genre.color} text-white font-bold text-sm flex flex-col justify-between items-start shadow-md hover:scale-[1.03] active:scale-95 transition-all text-left group overflow-hidden relative`}
                   >
                     <div className="absolute -right-2 -bottom-2 opacity-20 group-hover:opacity-40 transition-opacity">
-                      <Music className="w-12 h-12" />
+                      <ThemeIcon name="genre" themeId={designConfig.id} genreTitle={genre.title} className="w-12 h-12" />
                     </div>
                     <span>{genre.title}</span>
                     <span className="text-[10px] font-mono opacity-80 group-hover:opacity-100">

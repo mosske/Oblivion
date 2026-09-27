@@ -20,6 +20,7 @@ import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes"
 import { MarqueeText } from "./MarqueeText";
 import { fetchGenreTracks, GenreItem } from "../services/genreService";
 import { useContextualScrollRecovery } from "../utils/scrollRecovery";
+import { ThemeIcon } from "./ThemeIcon";
 
 interface GenreDetailViewProps {
   genre: GenreItem;
@@ -348,7 +349,14 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                     color: "var(--text-primary, #ffffff)",
                   }}
                 >
-                  <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--accent-primary, #dfb86c)" }} />
+                  <ThemeIcon
+                    name="heroBadge"
+                    themeId={designConfig.id}
+                    genreTitle={genre.title}
+                    fallback={Sparkles}
+                    className="w-3.5 h-3.5"
+                    style={{ color: "var(--accent-primary, #dfb86c)" }}
+                  />
                   <span>Curated Soundscape</span>
                 </span>
               </div>
@@ -374,7 +382,13 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                 style={{ color: "var(--text-muted, #94a3b8)" }}
               >
                 <div className="flex items-center gap-1.5">
-                  <Music className="w-3.5 h-3.5" />
+                  <ThemeIcon
+                    name="genre"
+                    themeId={designConfig.id}
+                    genreTitle={genre.title}
+                    fallback={Music}
+                    className="w-3.5 h-3.5"
+                  />
                   <span>{tracks.length} songs</span>
                 </div>
                 {totalDurationSec > 0 && (

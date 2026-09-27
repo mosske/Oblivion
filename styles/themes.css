@@ -22,6 +22,8 @@
   --accent-border: rgba(223, 184, 108, 0.45);
   --accent-contrast-text: #120f14;
   --text-on-accent: #120f14;
+  --btn-gradient: var(--accent-gradient);
+  --btn-text: var(--text-on-accent);
   --bg-surface-elevated: #1f1b22;
   --text-primary: #fdfcf9;
   --text-muted: #b0a694;
@@ -3743,6 +3745,7 @@ button.bottom-nav-item:not(.nav-item-active):hover {
 }
 
 /* ================================================================================
+/* ================================================================================
    DYNAMIC THEME-BOUND CATEGORY CHIPS & GLOW ARTIFACT ELIMINATION
    ================================================================================ */
 /* Default / Dynamic Active Category Chip across all themes */
@@ -4057,7 +4060,6 @@ div[class*="category-wrapper"] {
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-
 /* ================================================================================
    TASK 2: CYBERPUNK NEON GLASS - REMOVE SQUARE OUTLINES FROM MAIN MENU
    ================================================================================ */
@@ -4248,6 +4250,8 @@ div[class*="category-wrapper"] {
   --purple-glow-soft: rgba(168, 85, 247, 0.25);
   --purple-glow-vibrant: rgba(168, 85, 247, 0.65);
   --purple-glow-deep: rgba(147, 51, 234, 0.45);
+  --purple-ambient-glow: 0 0 25px rgba(147, 51, 234, 0.45);
+  --purple-ambient-glow-strong: 0 0 35px rgba(168, 85, 247, 0.65);
   --accent-glow: 0 0 25px var(--purple-glow-color);
 
   /* Full App Canvas & System Compatibility Tokens */
@@ -4309,17 +4313,144 @@ div[class*="category-wrapper"] {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
-/* Glow on Interactive Cards & Containers */
-.theme-sugar-time-jazz .card:hover,
-.theme-sugar-time-jazz .glass-panel,
+/* --------------------------------------------------------------------------------
+   TASK 1: LOGO STYLING FOR SUGAR TIME JAZZ
+   -------------------------------------------------------------------------------- */
+.theme-sugar-time-jazz .brand-logo,
+.theme-sugar-time-jazz .app-logo svg,
+.theme-sugar-time-jazz .logo svg,
+.theme-sugar-time-jazz svg.app-logo,
+.theme-sugar-time-jazz svg.brand-logo,
+.theme-sugar-time-jazz .sidebar-logo,
+[data-theme="sugar-time-jazz"] .brand-logo,
+[data-theme="sugar-time-jazz"] .app-logo svg,
+[data-theme="sugar-time-jazz"] .logo svg,
+[data-theme="sugar-time-jazz"] svg.app-logo,
+[data-theme="sugar-time-jazz"] svg.brand-logo,
+[data-theme="sugar-time-jazz"] .sidebar-logo {
+  color: #f5eae1 !important;
+  fill: #f5eae1 !important;
+  filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.75)) !important;
+}
+
+/* --------------------------------------------------------------------------------
+   TASK 2: UNIVERSAL PURPLE BACK-GLOW EXPANSION
+   -------------------------------------------------------------------------------- */
+/* (a) Explore Cards */
+.theme-sugar-time-jazz .explore-page .card,
+.theme-sugar-time-jazz .explore-page .album-card,
+.theme-sugar-time-jazz .explore-page .playlist-card,
+.theme-sugar-time-jazz .explore-card,
+.theme-sugar-time-jazz .explore-view .card,
+.theme-sugar-time-jazz .explore-page [class*="card"],
+[data-theme="sugar-time-jazz"] .explore-page .card,
+[data-theme="sugar-time-jazz"] .explore-page .album-card,
+[data-theme="sugar-time-jazz"] .explore-page .playlist-card,
+[data-theme="sugar-time-jazz"] .explore-card,
+[data-theme="sugar-time-jazz"] .explore-view .card,
+[data-theme="sugar-time-jazz"] .explore-page [class*="card"] {
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.45) !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+/* (b) Library Cards & Playlists */
+.theme-sugar-time-jazz .library-page .card,
+.theme-sugar-time-jazz .library-page .playlist-item,
+.theme-sugar-time-jazz .library-page .collection-card,
+.theme-sugar-time-jazz .library-card,
+.theme-sugar-time-jazz .library-view .card,
+.theme-sugar-time-jazz .library-view .playlist-card,
+.theme-sugar-time-jazz .library-page [class*="card"],
+[data-theme="sugar-time-jazz"] .library-page .card,
+[data-theme="sugar-time-jazz"] .library-page .playlist-item,
+[data-theme="sugar-time-jazz"] .library-page .collection-card,
+[data-theme="sugar-time-jazz"] .library-card,
+[data-theme="sugar-time-jazz"] .library-view .card,
+[data-theme="sugar-time-jazz"] .library-view .playlist-card,
+[data-theme="sugar-time-jazz"] .library-page [class*="card"] {
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.45) !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+/* (c) Settings Cards & Modals */
+.theme-sugar-time-jazz .settings-page .card,
+.theme-sugar-time-jazz .settings-page .settings-section,
+.theme-sugar-time-jazz .settings-view .card,
+.theme-sugar-time-jazz .settings-view .settings-section,
+.theme-sugar-time-jazz .modal,
 .theme-sugar-time-jazz .modal-content,
-.theme-sugar-time-jazz .mini-player,
-[data-theme="sugar-time-jazz"] .card:hover,
-[data-theme="sugar-time-jazz"] .glass-panel,
+.theme-sugar-time-jazz .dialog,
+.theme-sugar-time-jazz [class*="modal"],
+[data-theme="sugar-time-jazz"] .settings-page .card,
+[data-theme="sugar-time-jazz"] .settings-page .settings-section,
+[data-theme="sugar-time-jazz"] .settings-view .card,
+[data-theme="sugar-time-jazz"] .settings-view .settings-section,
+[data-theme="sugar-time-jazz"] .modal,
 [data-theme="sugar-time-jazz"] .modal-content,
-[data-theme="sugar-time-jazz"] .mini-player {
-  box-shadow: 0 0 25px var(--purple-glow-deep), inset 0 0 15px rgba(168, 85, 247, 0.15) !important;
+[data-theme="sugar-time-jazz"] .dialog,
+[data-theme="sugar-time-jazz"] [class*="modal"] {
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.55), inset 0 0 15px rgba(147, 51, 234, 0.15) !important;
   border: 1px solid rgba(212, 180, 150, 0.25) !important;
+}
+
+/* (d) Song Cards / Track Blocks in Albums, Genres, Search & Playlists */
+.theme-sugar-time-jazz .track-row,
+.theme-sugar-time-jazz .song-card,
+.theme-sugar-time-jazz .album-view .track-item,
+.theme-sugar-time-jazz .album-detail-view .track-item,
+.theme-sugar-time-jazz .genre-view .card,
+.theme-sugar-time-jazz .genre-detail-view .card,
+.theme-sugar-time-jazz .search-results .track-block,
+.theme-sugar-time-jazz .search-view .track-item,
+.theme-sugar-time-jazz .search-view .track-row,
+.theme-sugar-time-jazz .playlist-view .track-item,
+.theme-sugar-time-jazz .playlist-detail-view .track-item,
+.theme-sugar-time-jazz .playlist-track-row,
+[data-theme="sugar-time-jazz"] .track-row,
+[data-theme="sugar-time-jazz"] .song-card,
+[data-theme="sugar-time-jazz"] .album-view .track-item,
+[data-theme="sugar-time-jazz"] .album-detail-view .track-item,
+[data-theme="sugar-time-jazz"] .genre-view .card,
+[data-theme="sugar-time-jazz"] .genre-detail-view .card,
+[data-theme="sugar-time-jazz"] .search-results .track-block,
+[data-theme="sugar-time-jazz"] .search-view .track-item,
+[data-theme="sugar-time-jazz"] .search-view .track-row,
+[data-theme="sugar-time-jazz"] .playlist-view .track-item,
+[data-theme="sugar-time-jazz"] .playlist-detail-view .track-item,
+[data-theme="sugar-time-jazz"] .playlist-track-row {
+  box-shadow: 0 0 16px rgba(147, 51, 234, 0.35) !important;
+  border: 1px solid rgba(212, 180, 150, 0.15) !important;
+}
+
+/* General Back-glow for Cards, Content Containers, and Panels */
+.theme-sugar-time-jazz .card,
+.theme-sugar-time-jazz .shelf-card,
+.theme-sugar-time-jazz [class*="card"],
+.theme-sugar-time-jazz .glass-panel,
+.theme-sugar-time-jazz .mini-player,
+[data-theme="sugar-time-jazz"] .card,
+[data-theme="sugar-time-jazz"] .shelf-card,
+[data-theme="sugar-time-jazz"] [class*="card"],
+[data-theme="sugar-time-jazz"] .glass-panel,
+[data-theme="sugar-time-jazz"] .mini-player {
+  box-shadow: var(--purple-ambient-glow) !important;
+  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+}
+
+.theme-sugar-time-jazz .card:hover,
+.theme-sugar-time-jazz .shelf-card:hover,
+.theme-sugar-time-jazz [class*="card"]:hover,
+[data-theme="sugar-time-jazz"] .card:hover,
+[data-theme="sugar-time-jazz"] .shelf-card:hover,
+[data-theme="sugar-time-jazz"] [class*="card"]:hover {
+  box-shadow: var(--purple-ambient-glow-strong), inset 0 0 15px rgba(168, 85, 247, 0.15) !important;
+  border: 1px solid rgba(212, 180, 150, 0.35) !important;
+}
+
+/* Primary Action Buttons Ambient Glow */
+.theme-sugar-time-jazz .btn-primary,
+[data-theme="sugar-time-jazz"] .btn-primary {
+  box-shadow: var(--purple-ambient-glow-strong) !important;
 }
 
 /* Accent Back-Glow for Header Titles and Active Badges */
@@ -4329,16 +4460,69 @@ div[class*="category-wrapper"] {
 [data-theme="sugar-time-jazz"] h1,
 [data-theme="sugar-time-jazz"] h2,
 [data-theme="sugar-time-jazz"] .active-indicator {
-  text-shadow: 0 0 12px var(--purple-glow-vibrant);
+  text-shadow: 0 0 12px var(--purple-glow-vibrant, rgba(168, 85, 247, 0.65));
+}
+
+/* --------------------------------------------------------------------------------
+   TASK 3: MINI & FULL PLAYER PLAY BUTTON GLOW (NO CLIPPING)
+   -------------------------------------------------------------------------------- */
+.theme-sugar-time-jazz .mini-player .play-btn,
+.theme-sugar-time-jazz .mini-player .mini-player-play-btn,
+.theme-sugar-time-jazz .full-player .play-btn,
+.theme-sugar-time-jazz .full-player-play-btn,
+.theme-sugar-time-jazz .play-pause-btn,
+.theme-sugar-time-jazz .play-pause-container button,
+[data-theme="sugar-time-jazz"] .mini-player .play-btn,
+[data-theme="sugar-time-jazz"] .mini-player .mini-player-play-btn,
+[data-theme="sugar-time-jazz"] .full-player .play-btn,
+[data-theme="sugar-time-jazz"] .full-player-play-btn,
+[data-theme="sugar-time-jazz"] .play-pause-btn,
+[data-theme="sugar-time-jazz"] .play-pause-container button {
+  background: #e6d5c3 !important;
+  color: #120e0b !important;
+  border: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.8) !important;
+}
+
+.theme-sugar-time-jazz .mini-player .mini-player-play-btn svg,
+.theme-sugar-time-jazz .full-player-play-btn svg,
+.theme-sugar-time-jazz .play-pause-btn svg,
+[data-theme="sugar-time-jazz"] .mini-player .mini-player-play-btn svg,
+[data-theme="sugar-time-jazz"] .full-player-play-btn svg,
+[data-theme="sugar-time-jazz"] .play-pause-btn svg {
+  fill: #120e0b !important;
+  color: #120e0b !important;
+  stroke: #120e0b !important;
+}
+
+/* --------------------------------------------------------------------------------
+   TASK 4: PURPLE GRADIENT ANIMATED PROGRESS BAR & VISUALIZER
+   -------------------------------------------------------------------------------- */
+.theme-sugar-time-jazz .progress-bar-fill,
+.theme-sugar-time-jazz .seek-bar-fill,
+.theme-sugar-time-jazz .player-progress-fill,
+.theme-sugar-time-jazz .visualizer-bar,
+.theme-sugar-time-jazz .progress-waveform-bar.is-played,
+.theme-sugar-time-jazz .progress-waveform-active,
+.theme-sugar-time-jazz .waveform-bar.active,
+[data-theme="sugar-time-jazz"] .progress-bar-fill,
+[data-theme="sugar-time-jazz"] .seek-bar-fill,
+[data-theme="sugar-time-jazz"] .player-progress-fill,
+[data-theme="sugar-time-jazz"] .visualizer-bar,
+[data-theme="sugar-time-jazz"] .progress-waveform-bar.is-played,
+[data-theme="sugar-time-jazz"] .progress-waveform-active,
+[data-theme="sugar-time-jazz"] .waveform-bar.active {
+  background: linear-gradient(90deg, #9333ea 0%, #c084fc 100%) !important;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.7) !important;
 }
 
 /* Full Player Theme Unification */
 .theme-sugar-time-jazz .full-player-overlay,
 .theme-sugar-time-jazz .full-player-container,
-.theme-sugar-time-jazz [class*="FullPlayer"],
 [data-theme="sugar-time-jazz"] .full-player-overlay,
-[data-theme="sugar-time-jazz"] .full-player-container,
-[data-theme="sugar-time-jazz"] [class*="FullPlayer"] {
+[data-theme="sugar-time-jazz"] .full-player-container {
   background: var(--bg-main) !important;
   color: var(--text-primary) !important;
 }
@@ -4354,17 +4538,7 @@ div[class*="category-wrapper"] {
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
   border: 1px solid var(--bg-card-border);
-  box-shadow: 0 0 35px var(--purple-glow-deep) !important;
-}
-
-/* Playback Control Buttons in Full Player */
-.theme-sugar-time-jazz .full-player-overlay .play-pause-btn,
-.theme-sugar-time-jazz .full-player-overlay .full-player-play-btn,
-[data-theme="sugar-time-jazz"] .full-player-overlay .play-pause-btn,
-[data-theme="sugar-time-jazz"] .full-player-overlay .full-player-play-btn {
-  background: var(--btn-gradient, var(--accent-gradient)) !important;
-  box-shadow: 0 0 20px var(--purple-glow-vibrant) !important;
-  color: var(--text-primary) !important;
+  box-shadow: 0 0 35px var(--purple-glow-deep, rgba(147, 51, 234, 0.45)) !important;
 }
 
 .theme-sugar-time-jazz .full-player-overlay .control-btn,
@@ -4372,7 +4546,7 @@ div[class*="category-wrapper"] {
 [data-theme="sugar-time-jazz"] .full-player-overlay .control-btn,
 [data-theme="sugar-time-jazz"] .full-player-overlay .player-control-btn {
   color: var(--text-primary) !important;
-  filter: drop-shadow(0 0 6px var(--purple-glow-deep));
+  filter: drop-shadow(0 0 6px var(--purple-glow-deep, rgba(147, 51, 234, 0.45)));
 }
 
 /* Modal overlays, dialogs and player surfaces */

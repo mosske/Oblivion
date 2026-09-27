@@ -167,6 +167,19 @@ const PALETTES: Record<string, GradientPalette> = {
     auraColor: "#ff007f",
     textGold: "#ff2a85",
   },
+
+  // 10. Sugar Time Jazz (Warm Beige/Cream `#f5eae1`, Amber/Chocolate & Ambient Purple Glow)
+  "sugar-time-jazz": {
+    ringGrad: { c1: "#f5eae1", c2: "#d4b496", c3: "#9333ea", c4: "#f5eae1" },
+    tri1Grad: { c1: "#d4b496", c2: "#c4b5a5", c3: "#1a1410" },
+    tri2Grad: { c1: "#f5eae1", c2: "#d4b496", c3: "#a855f7" },
+    highlight: "#ffffff",
+    shadow: "#120e0b",
+    playCore: "#120e0b",
+    playHighlight: "#f5eae1",
+    auraColor: "#a855f7",
+    textGold: "#f5eae1",
+  },
 };
 
 export const OblivionLogo: React.FC<OblivionLogoProps> = ({
@@ -234,7 +247,7 @@ export const OblivionLogo: React.FC<OblivionLogoProps> = ({
       viewBox={viewBox}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`inline-block shrink-0 ${
+      className={`brand-logo app-logo logo inline-block shrink-0 ${
         animated ? "transition-all duration-300 hover:scale-105 active:scale-95 group-hover:drop-shadow-lg" : ""
       } ${className}`}
       aria-label="Oblivion Music Logo"
