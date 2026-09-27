@@ -4,11 +4,12 @@ import {
   Music2,
   Guitar,
   Drum,
-  Disc3,
+  Mic2,
   Radio,
+  Volume2,
+  Disc3,
   AudioWaveform,
   Sparkles,
-  Mic,
   Flame,
   Compass,
   LucideProps,
@@ -22,14 +23,22 @@ export type IconType =
   | "instrument"
   | "guitar"
   | "drum"
+  | "mic"
+  | "mic2"
+  | "radio"
+  | "volume"
+  | "volume2"
   | "sparkles"
   | "flame"
-  | "radio"
   | "disc"
   | "category"
-  | "heroBadge";
+  | "heroBadge"
+  | "playlist"
+  | "rhythm"
+  | "vocal"
+  | "track";
 
-interface ThemeIconProps extends LucideProps {
+export interface ThemeIconProps extends LucideProps {
   name?: IconType;
   themeId?: string;
   genreTitle?: string;
@@ -37,8 +46,8 @@ interface ThemeIconProps extends LucideProps {
 }
 
 /**
- * Maps standard music & category icons to rock/jazz instruments (Guitar, Drum, Bass/Waveform, Disc)
- * when the Sugar Time Jazz theme is active.
+ * Maps standard music & category icons to rock/jazz instruments (Guitar, Drum, Mic2, Radio, Volume2, Waveform)
+ * with purple glow and warm cream styling when the Sugar Time Jazz theme is active.
  */
 export const ThemeIcon: React.FC<ThemeIconProps> = ({
   name = "music",
@@ -57,44 +66,108 @@ export const ThemeIcon: React.FC<ThemeIconProps> = ({
         document.documentElement.classList.contains("theme-sugar-time-jazz")));
 
   if (isSugarTimeJazz) {
-    // Contextual instrument selection based on genre/category or icon name
+    const combinedClassName = `rock-icon category-icon ${className}`;
     const lowerTitle = (genreTitle || "").toLowerCase();
-    
-    if (lowerTitle.includes("rock") || lowerTitle.includes("metal") || lowerTitle.includes("punk") || lowerTitle.includes("guitar")) {
-      return <Guitar className={className} {...props} />;
-    }
-    if (lowerTitle.includes("drum") || lowerTitle.includes("beat") || lowerTitle.includes("hip hop") || lowerTitle.includes("r&b") || lowerTitle.includes("dance")) {
-      return <Drum className={className} {...props} />;
-    }
-    if (lowerTitle.includes("jazz") || lowerTitle.includes("blues") || lowerTitle.includes("acoustic") || lowerTitle.includes("folk") || lowerTitle.includes("indie")) {
-      return <Guitar className={className} {...props} />;
-    }
-    if (lowerTitle.includes("electronic") || lowerTitle.includes("synth") || lowerTitle.includes("bass") || lowerTitle.includes("ambient")) {
-      return <AudioWaveform className={className} {...props} />;
+
+    // 1. Contextual instrument selection by genre / category title
+    if (
+      lowerTitle.includes("rock") ||
+      lowerTitle.includes("metal") ||
+      lowerTitle.includes("punk") ||
+      lowerTitle.includes("guitar") ||
+      lowerTitle.includes("jazz") ||
+      lowerTitle.includes("blues") ||
+      lowerTitle.includes("acoustic") ||
+      lowerTitle.includes("folk") ||
+      lowerTitle.includes("indie") ||
+      lowerTitle.includes("explore") ||
+      lowerTitle.includes("discovery")
+    ) {
+      return <Guitar className={combinedClassName} {...props} />;
     }
 
+    if (
+      lowerTitle.includes("drum") ||
+      lowerTitle.includes("beat") ||
+      lowerTitle.includes("rhythm") ||
+      lowerTitle.includes("hip hop") ||
+      lowerTitle.includes("r&b") ||
+      lowerTitle.includes("dance") ||
+      lowerTitle.includes("playlist") ||
+      lowerTitle.includes("groove")
+    ) {
+      return <Drum className={combinedClassName} {...props} />;
+    }
+
+    if (
+      lowerTitle.includes("vocal") ||
+      lowerTitle.includes("sing") ||
+      lowerTitle.includes("voice") ||
+      lowerTitle.includes("live") ||
+      lowerTitle.includes("performance") ||
+      lowerTitle.includes("featured") ||
+      lowerTitle.includes("pop") ||
+      lowerTitle.includes("concert")
+    ) {
+      return <Mic2 className={combinedClassName} {...props} />;
+    }
+
+    if (
+      lowerTitle.includes("radio") ||
+      lowerTitle.includes("broadcast") ||
+      lowerTitle.includes("station")
+    ) {
+      return <Radio className={combinedClassName} {...props} />;
+    }
+
+    if (
+      lowerTitle.includes("electronic") ||
+      lowerTitle.includes("synth") ||
+      lowerTitle.includes("bass") ||
+      lowerTitle.includes("ambient") ||
+      lowerTitle.includes("sound")
+    ) {
+      return <AudioWaveform className={combinedClassName} {...props} />;
+    }
+
+    // 2. Icon name mapping for Sugar Time Jazz
     switch (name) {
+      // Guitar for Rock / Main Categories / Explore headers
+      case "guitar":
+      case "category":
+      case "heroBadge":
       case "music":
       case "music2":
       case "genre":
-      case "guitar":
-        return <Guitar className={className} {...props} />;
-      case "drum":
-      case "mood":
-        return <Drum className={className} {...props} />;
-      case "instrument":
-      case "heroBadge":
-        return <Guitar className={className} {...props} />;
-      case "category":
-      case "disc":
-        return <Disc3 className={className} {...props} />;
-      case "radio":
-        return <Radio className={className} {...props} />;
       case "sparkles":
       case "flame":
-        return <Guitar className={className} {...props} />;
+        return <Guitar className={combinedClassName} {...props} />;
+
+      // Drum for Rhythms / Playlists / Beats
+      case "drum":
+      case "rhythm":
+      case "playlist":
+      case "mood":
+      case "disc":
+        return <Drum className={combinedClassName} {...props} />;
+
+      // Mic2 for Vocals / Live Performances / Featured Tracks
+      case "mic":
+      case "mic2":
+      case "vocal":
+      case "track":
+        return <Mic2 className={combinedClassName} {...props} />;
+
+      // Radio & Volume2 for Stations / Sound Levels
+      case "radio":
+        return <Radio className={combinedClassName} {...props} />;
+      case "volume":
+      case "volume2":
+        return <Volume2 className={combinedClassName} {...props} />;
+
+      case "instrument":
       default:
-        return <Guitar className={className} {...props} />;
+        return <Guitar className={combinedClassName} {...props} />;
     }
   }
 
@@ -116,6 +189,13 @@ export const ThemeIcon: React.FC<ThemeIconProps> = ({
       return <Disc3 className={className} {...props} />;
     case "radio":
       return <Radio className={className} {...props} />;
+    case "volume":
+    case "volume2":
+      return <Volume2 className={className} {...props} />;
+    case "mic":
+    case "mic2":
+    case "vocal":
+      return <Mic2 className={className} {...props} />;
     case "sparkles":
       return <Sparkles className={className} {...props} />;
     case "flame":

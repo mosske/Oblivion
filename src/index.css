@@ -1825,66 +1825,95 @@ div[class*="category-wrapper"] {
   --purple-ambient-glow-strong: 0 0 35px rgba(168, 85, 247, 0.65);
 }
 
-/* (a) Explore Cards */
+/* 1. Explore Page Cards */
 .theme-sugar-time-jazz .explore-page .card,
+.theme-sugar-time-jazz .explore-card,
+.theme-sugar-time-jazz .album-card,
+.theme-sugar-time-jazz .playlist-card,
+.theme-sugar-time-jazz .artist-card,
+.theme-sugar-time-jazz .genre-card,
 .theme-sugar-time-jazz .explore-page .album-card,
 .theme-sugar-time-jazz .explore-page .playlist-card,
-.theme-sugar-time-jazz .explore-card,
 .theme-sugar-time-jazz .explore-view .card,
 .theme-sugar-time-jazz .explore-page [class*="card"],
 [data-theme="sugar-time-jazz"] .explore-page .card,
+[data-theme="sugar-time-jazz"] .explore-card,
+[data-theme="sugar-time-jazz"] .album-card,
+[data-theme="sugar-time-jazz"] .playlist-card,
+[data-theme="sugar-time-jazz"] .artist-card,
+[data-theme="sugar-time-jazz"] .genre-card,
 [data-theme="sugar-time-jazz"] .explore-page .album-card,
 [data-theme="sugar-time-jazz"] .explore-page .playlist-card,
-[data-theme="sugar-time-jazz"] .explore-card,
 [data-theme="sugar-time-jazz"] .explore-view .card,
 [data-theme="sugar-time-jazz"] .explore-page [class*="card"] {
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.45) !important;
-  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+  box-shadow: 0 0 22px rgba(147, 51, 234, 0.5) !important;
+  border: 1px solid rgba(212, 180, 150, 0.25) !important;
 }
 
-/* (b) Library Cards & Playlists */
+/* 2. Library Page Cards & Playlists */
 .theme-sugar-time-jazz .library-page .card,
-.theme-sugar-time-jazz .library-page .playlist-item,
-.theme-sugar-time-jazz .library-page .collection-card,
+.theme-sugar-time-jazz .library-item,
+.theme-sugar-time-jazz .playlist-item,
+.theme-sugar-time-jazz .collection-card,
+.theme-sugar-time-jazz .saved-album-item,
 .theme-sugar-time-jazz .library-card,
 .theme-sugar-time-jazz .library-view .card,
 .theme-sugar-time-jazz .library-view .playlist-card,
 .theme-sugar-time-jazz .library-page [class*="card"],
 [data-theme="sugar-time-jazz"] .library-page .card,
-[data-theme="sugar-time-jazz"] .library-page .playlist-item,
-[data-theme="sugar-time-jazz"] .library-page .collection-card,
+[data-theme="sugar-time-jazz"] .library-item,
+[data-theme="sugar-time-jazz"] .playlist-item,
+[data-theme="sugar-time-jazz"] .collection-card,
+[data-theme="sugar-time-jazz"] .saved-album-item,
 [data-theme="sugar-time-jazz"] .library-card,
 [data-theme="sugar-time-jazz"] .library-view .card,
 [data-theme="sugar-time-jazz"] .library-view .playlist-card,
 [data-theme="sugar-time-jazz"] .library-page [class*="card"] {
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.45) !important;
-  border: 1px solid rgba(212, 180, 150, 0.2) !important;
+  box-shadow: 0 0 22px rgba(147, 51, 234, 0.5) !important;
+  border: 1px solid rgba(212, 180, 150, 0.25) !important;
 }
 
-/* (c) Settings Cards & Modals */
+/* 3. Settings Cards & Modals */
+.theme-sugar-time-jazz .settings-section,
+.theme-sugar-time-jazz .settings-card,
 .theme-sugar-time-jazz .settings-page .card,
 .theme-sugar-time-jazz .settings-page .settings-section,
 .theme-sugar-time-jazz .settings-view .card,
 .theme-sugar-time-jazz .settings-view .settings-section,
 .theme-sugar-time-jazz .modal,
 .theme-sugar-time-jazz .modal-content,
+.theme-sugar-time-jazz .dialog-box,
+.theme-sugar-time-jazz .modal-container,
 .theme-sugar-time-jazz .dialog,
+.theme-sugar-time-jazz .overlay-card,
 .theme-sugar-time-jazz [class*="modal"],
+.theme-sugar-time-jazz [role="dialog"],
+[data-theme="sugar-time-jazz"] .settings-section,
+[data-theme="sugar-time-jazz"] .settings-card,
 [data-theme="sugar-time-jazz"] .settings-page .card,
 [data-theme="sugar-time-jazz"] .settings-page .settings-section,
 [data-theme="sugar-time-jazz"] .settings-view .card,
 [data-theme="sugar-time-jazz"] .settings-view .settings-section,
 [data-theme="sugar-time-jazz"] .modal,
 [data-theme="sugar-time-jazz"] .modal-content,
+[data-theme="sugar-time-jazz"] .dialog-box,
+[data-theme="sugar-time-jazz"] .modal-container,
 [data-theme="sugar-time-jazz"] .dialog,
-[data-theme="sugar-time-jazz"] [class*="modal"] {
-  box-shadow: 0 0 30px rgba(168, 85, 247, 0.55), inset 0 0 15px rgba(147, 51, 234, 0.15) !important;
-  border: 1px solid rgba(212, 180, 150, 0.25) !important;
+[data-theme="sugar-time-jazz"] .overlay-card,
+[data-theme="sugar-time-jazz"] [class*="modal"],
+[data-theme="sugar-time-jazz"] [role="dialog"] {
+  box-shadow: 0 0 32px rgba(168, 85, 247, 0.6), inset 0 0 15px rgba(147, 51, 234, 0.2) !important;
+  border: 1px solid rgba(212, 180, 150, 0.3) !important;
 }
 
-/* (d) Song Cards / Track Blocks in Albums, Genres, Search & Playlists */
+/* 4. Individual Track Blocks & Search / Album / Playlist Views */
 .theme-sugar-time-jazz .track-row,
 .theme-sugar-time-jazz .song-card,
+.theme-sugar-time-jazz .track-item,
+.theme-sugar-time-jazz .search-result-item,
+.theme-sugar-time-jazz .search-item,
+.theme-sugar-time-jazz .genre-item,
+.theme-sugar-time-jazz .album-track,
 .theme-sugar-time-jazz .album-view .track-item,
 .theme-sugar-time-jazz .album-detail-view .track-item,
 .theme-sugar-time-jazz .genre-view .card,
@@ -1897,6 +1926,11 @@ div[class*="category-wrapper"] {
 .theme-sugar-time-jazz .playlist-track-row,
 [data-theme="sugar-time-jazz"] .track-row,
 [data-theme="sugar-time-jazz"] .song-card,
+[data-theme="sugar-time-jazz"] .track-item,
+[data-theme="sugar-time-jazz"] .search-result-item,
+[data-theme="sugar-time-jazz"] .search-item,
+[data-theme="sugar-time-jazz"] .genre-item,
+[data-theme="sugar-time-jazz"] .album-track,
 [data-theme="sugar-time-jazz"] .album-view .track-item,
 [data-theme="sugar-time-jazz"] .album-detail-view .track-item,
 [data-theme="sugar-time-jazz"] .genre-view .card,
@@ -1907,8 +1941,21 @@ div[class*="category-wrapper"] {
 [data-theme="sugar-time-jazz"] .playlist-view .track-item,
 [data-theme="sugar-time-jazz"] .playlist-detail-view .track-item,
 [data-theme="sugar-time-jazz"] .playlist-track-row {
-  box-shadow: 0 0 16px rgba(147, 51, 234, 0.35) !important;
-  border: 1px solid rgba(212, 180, 150, 0.15) !important;
+  box-shadow: 0 0 16px rgba(147, 51, 234, 0.4) !important;
+  border: 1px solid rgba(212, 180, 150, 0.18) !important;
+}
+
+/* --------------------------------------------------------------------------------
+   TASK 5 DIRECTIVE: ROCK & MUSICAL INSTRUMENT ICON PURPLE DROP-SHADOW
+   -------------------------------------------------------------------------------- */
+.theme-sugar-time-jazz .rock-icon,
+.theme-sugar-time-jazz .category-icon svg,
+.theme-sugar-time-jazz .category-icon,
+[data-theme="sugar-time-jazz"] .rock-icon,
+[data-theme="sugar-time-jazz"] .category-icon svg,
+[data-theme="sugar-time-jazz"] .category-icon {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.7)) !important;
+  color: #f5eae1 !important;
 }
 
 /* General Back-glow for Cards, Content Containers, and Panels */
