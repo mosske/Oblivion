@@ -2176,7 +2176,7 @@ canvas.animated-theme-bg,
 /* 2. Buttons, Controls & Interactive Pills */
 [data-theme="cyberpunk-neon"] .btn-secondary,
 [data-theme="cyberpunk-neon"] .btn-ghost,
-[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active) {
+[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active):not(.bottom-nav-item):not(.sidebar-nav-item):not(.sidebar-item):not(.nav-item):not(.nav-link):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button) {
   background: rgba(12, 17, 38, 0.35) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
@@ -2188,7 +2188,7 @@ canvas.animated-theme-bg,
 
 [data-theme="cyberpunk-neon"] .btn-secondary:hover,
 [data-theme="cyberpunk-neon"] .btn-ghost:hover,
-[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active):hover {
+[data-theme="cyberpunk-neon"] button:not(.btn-primary):not([class*="bg-[#00f3ff]"]):not([class*="bg-cyan"]):not([class*="bg-gradient"]):not([class*="bg-white"]):not(.active):not(.bottom-nav-item):not(.sidebar-nav-item):not(.sidebar-item):not(.nav-item):not(.nav-link):not(#bottom-navigation-bar button):not(#app-sidebar-nav nav button):hover {
   background: rgba(18, 26, 56, 0.55) !important;
   border-color: rgba(0, 243, 255, 0.55) !important;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px rgba(0, 243, 255, 0.3) !important;
@@ -4061,66 +4061,82 @@ div[class*="category-wrapper"] {
 }
 
 /* ================================================================================
-   FIX 3: CYBERPUNK NEON GLASS - REMOVE INACTIVE BUTTON BOX OUTLINES (NAVBAR)
+   FIX 3: CYBERPUNK NEON GLASS - REMOVE INACTIVE BUTTON BOXES & KEEP WHITE ICONS/TEXT
    ================================================================================ */
+/* 1. All Navigation Buttons / Links in Cyberpunk Theme (Mobile Bottom Nav & Desktop Sidebar) */
 .theme-cyberpunk nav a,
 .theme-cyberpunk nav button,
 .theme-cyberpunk .bottom-nav button,
 .theme-cyberpunk .bottom-nav-bar button,
+.theme-cyberpunk .bottom-nav-dock button,
 .theme-cyberpunk .bottom-nav-item,
+.theme-cyberpunk #bottom-navigation-bar button,
 .theme-cyberpunk .sidebar a,
 .theme-cyberpunk .sidebar button,
 .theme-cyberpunk .sidebar-nav button,
 .theme-cyberpunk .sidebar-nav-item,
 .theme-cyberpunk .sidebar-item,
+.theme-cyberpunk #app-sidebar-nav nav button,
 .theme-cyberpunk .nav-item,
 .theme-cyberpunk .nav-link,
 .theme-cyberpunk-neon nav a,
 .theme-cyberpunk-neon nav button,
 .theme-cyberpunk-neon .bottom-nav button,
 .theme-cyberpunk-neon .bottom-nav-bar button,
+.theme-cyberpunk-neon .bottom-nav-dock button,
 .theme-cyberpunk-neon .bottom-nav-item,
+.theme-cyberpunk-neon #bottom-navigation-bar button,
 .theme-cyberpunk-neon .sidebar a,
 .theme-cyberpunk-neon .sidebar button,
 .theme-cyberpunk-neon .sidebar-nav button,
 .theme-cyberpunk-neon .sidebar-nav-item,
 .theme-cyberpunk-neon .sidebar-item,
+.theme-cyberpunk-neon #app-sidebar-nav nav button,
 .theme-cyberpunk-neon .nav-item,
 .theme-cyberpunk-neon .nav-link,
 .theme-neon-glass nav a,
 .theme-neon-glass nav button,
 .theme-neon-glass .bottom-nav button,
 .theme-neon-glass .bottom-nav-bar button,
+.theme-neon-glass .bottom-nav-dock button,
 .theme-neon-glass .bottom-nav-item,
+.theme-neon-glass #bottom-navigation-bar button,
 .theme-neon-glass .sidebar a,
 .theme-neon-glass .sidebar button,
 .theme-neon-glass .sidebar-nav button,
 .theme-neon-glass .sidebar-nav-item,
 .theme-neon-glass .sidebar-item,
+.theme-neon-glass #app-sidebar-nav nav button,
 .theme-neon-glass .nav-item,
 .theme-neon-glass .nav-link,
 [data-theme*="cyberpunk"] nav a,
 [data-theme*="cyberpunk"] nav button,
 [data-theme*="cyberpunk"] .bottom-nav button,
 [data-theme*="cyberpunk"] .bottom-nav-bar button,
+[data-theme*="cyberpunk"] .bottom-nav-dock button,
 [data-theme*="cyberpunk"] .bottom-nav-item,
+[data-theme*="cyberpunk"] #bottom-navigation-bar button,
 [data-theme*="cyberpunk"] .sidebar a,
 [data-theme*="cyberpunk"] .sidebar button,
 [data-theme*="cyberpunk"] .sidebar-nav button,
 [data-theme*="cyberpunk"] .sidebar-nav-item,
 [data-theme*="cyberpunk"] .sidebar-item,
+[data-theme*="cyberpunk"] #app-sidebar-nav nav button,
 [data-theme*="cyberpunk"] .nav-item,
 [data-theme*="cyberpunk"] .nav-link,
 [data-theme*="neon"] nav a,
 [data-theme*="neon"] nav button,
 [data-theme*="neon"] .bottom-nav button,
 [data-theme*="neon"] .bottom-nav-bar button,
+[data-theme*="neon"] .bottom-nav-dock button,
 [data-theme*="neon"] .bottom-nav-item,
+[data-theme*="neon"] #bottom-navigation-bar button,
 [data-theme*="neon"] .sidebar a,
 [data-theme*="neon"] .sidebar button,
 [data-theme*="neon"] .sidebar-nav button,
 [data-theme*="neon"] .sidebar-nav-item,
 [data-theme*="neon"] .sidebar-item,
+[data-theme*="neon"] #app-sidebar-nav nav button,
 [data-theme*="neon"] .nav-item,
 [data-theme*="neon"] .nav-link {
   border: none !important;
@@ -4128,73 +4144,241 @@ div[class*="category-wrapper"] {
   background-color: transparent !important;
   box-shadow: none !important;
   outline: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
+/* 2. Inactive Navigation Buttons (Remove All Container Boxes, Outlines & Backgrounds) */
 .theme-cyberpunk nav a:not(.active),
 .theme-cyberpunk nav button:not(.active),
 .theme-cyberpunk .bottom-nav button:not(.active),
 .theme-cyberpunk .bottom-nav-bar button:not(.active),
+.theme-cyberpunk .bottom-nav-dock button:not(.active),
 .theme-cyberpunk .bottom-nav-item:not(.active),
+.theme-cyberpunk #bottom-navigation-bar button:not(.active),
 .theme-cyberpunk .sidebar a:not(.active),
 .theme-cyberpunk .sidebar button:not(.active),
 .theme-cyberpunk .sidebar-nav button:not(.active),
 .theme-cyberpunk .sidebar-nav-item:not(.active),
 .theme-cyberpunk .sidebar-item:not(.active),
+.theme-cyberpunk #app-sidebar-nav nav button:not(.active),
 .theme-cyberpunk .nav-item:not(.active),
 .theme-cyberpunk .nav-item-inactive,
 .theme-cyberpunk-neon nav a:not(.active),
 .theme-cyberpunk-neon nav button:not(.active),
 .theme-cyberpunk-neon .bottom-nav button:not(.active),
 .theme-cyberpunk-neon .bottom-nav-bar button:not(.active),
+.theme-cyberpunk-neon .bottom-nav-dock button:not(.active),
 .theme-cyberpunk-neon .bottom-nav-item:not(.active),
+.theme-cyberpunk-neon #bottom-navigation-bar button:not(.active),
 .theme-cyberpunk-neon .sidebar a:not(.active),
 .theme-cyberpunk-neon .sidebar button:not(.active),
 .theme-cyberpunk-neon .sidebar-nav button:not(.active),
 .theme-cyberpunk-neon .sidebar-nav-item:not(.active),
 .theme-cyberpunk-neon .sidebar-item:not(.active),
+.theme-cyberpunk-neon #app-sidebar-nav nav button:not(.active),
 .theme-cyberpunk-neon .nav-item:not(.active),
 .theme-cyberpunk-neon .nav-item-inactive,
 .theme-neon-glass nav a:not(.active),
 .theme-neon-glass nav button:not(.active),
 .theme-neon-glass .bottom-nav button:not(.active),
 .theme-neon-glass .bottom-nav-bar button:not(.active),
+.theme-neon-glass .bottom-nav-dock button:not(.active),
 .theme-neon-glass .bottom-nav-item:not(.active),
+.theme-neon-glass #bottom-navigation-bar button:not(.active),
 .theme-neon-glass .sidebar a:not(.active),
 .theme-neon-glass .sidebar button:not(.active),
 .theme-neon-glass .sidebar-nav button:not(.active),
 .theme-neon-glass .sidebar-nav-item:not(.active),
 .theme-neon-glass .sidebar-item:not(.active),
+.theme-neon-glass #app-sidebar-nav nav button:not(.active),
 .theme-neon-glass .nav-item:not(.active),
 .theme-neon-glass .nav-item-inactive,
 [data-theme*="cyberpunk"] nav a:not(.active),
 [data-theme*="cyberpunk"] nav button:not(.active),
 [data-theme*="cyberpunk"] .bottom-nav button:not(.active),
 [data-theme*="cyberpunk"] .bottom-nav-bar button:not(.active),
+[data-theme*="cyberpunk"] .bottom-nav-dock button:not(.active),
 [data-theme*="cyberpunk"] .bottom-nav-item:not(.active),
+[data-theme*="cyberpunk"] #bottom-navigation-bar button:not(.active),
 [data-theme*="cyberpunk"] .sidebar a:not(.active),
 [data-theme*="cyberpunk"] .sidebar button:not(.active),
 [data-theme*="cyberpunk"] .sidebar-nav button:not(.active),
 [data-theme*="cyberpunk"] .sidebar-nav-item:not(.active),
 [data-theme*="cyberpunk"] .sidebar-item:not(.active),
+[data-theme*="cyberpunk"] #app-sidebar-nav nav button:not(.active),
 [data-theme*="cyberpunk"] .nav-item:not(.active),
 [data-theme*="cyberpunk"] .nav-item-inactive,
 [data-theme*="neon"] nav a:not(.active),
 [data-theme*="neon"] nav button:not(.active),
 [data-theme*="neon"] .bottom-nav button:not(.active),
 [data-theme*="neon"] .bottom-nav-bar button:not(.active),
+[data-theme*="neon"] .bottom-nav-dock button:not(.active),
 [data-theme*="neon"] .bottom-nav-item:not(.active),
+[data-theme*="neon"] #bottom-navigation-bar button:not(.active),
 [data-theme*="neon"] .sidebar a:not(.active),
 [data-theme*="neon"] .sidebar button:not(.active),
 [data-theme*="neon"] .sidebar-nav button:not(.active),
 [data-theme*="neon"] .sidebar-nav-item:not(.active),
 [data-theme*="neon"] .sidebar-item:not(.active),
+[data-theme*="neon"] #app-sidebar-nav nav button:not(.active),
 [data-theme*="neon"] .nav-item:not(.active),
 [data-theme*="neon"] .nav-item-inactive {
   background: transparent !important;
   background-color: transparent !important;
   border: none !important;
+  border-color: transparent !important;
   box-shadow: none !important;
   outline: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  color: #ffffff !important;
+}
+
+/* 3. Suppress any pseudo-element boxes (::before / ::after) on Inactive Nav Items */
+.theme-cyberpunk nav button:not(.active)::before,
+.theme-cyberpunk nav button:not(.active)::after,
+.theme-cyberpunk .nav-item-inactive::before,
+.theme-cyberpunk .nav-item-inactive::after,
+.theme-cyberpunk-neon nav button:not(.active)::before,
+.theme-cyberpunk-neon nav button:not(.active)::after,
+.theme-cyberpunk-neon .nav-item-inactive::before,
+.theme-cyberpunk-neon .nav-item-inactive::after,
+[data-theme*="cyberpunk"] nav button:not(.active)::before,
+[data-theme*="cyberpunk"] nav button:not(.active)::after,
+[data-theme*="cyberpunk"] .nav-item-inactive::before,
+[data-theme*="cyberpunk"] .nav-item-inactive::after {
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 4. Ensure Inactive Navigation Icons and Labels are in Pure Crisp White with No Glow Box */
+.theme-cyberpunk nav button:not(.active) svg,
+.theme-cyberpunk nav a:not(.active) svg,
+.theme-cyberpunk .bottom-nav button:not(.active) svg,
+.theme-cyberpunk .bottom-nav-bar button:not(.active) svg,
+.theme-cyberpunk .bottom-nav-item:not(.active) svg,
+.theme-cyberpunk .sidebar a:not(.active) svg,
+.theme-cyberpunk .sidebar button:not(.active) svg,
+.theme-cyberpunk .sidebar-nav button:not(.active) svg,
+.theme-cyberpunk .sidebar-nav-item:not(.active) svg,
+.theme-cyberpunk .nav-item-inactive svg,
+.theme-cyberpunk-neon nav button:not(.active) svg,
+.theme-cyberpunk-neon nav a:not(.active) svg,
+.theme-cyberpunk-neon .bottom-nav button:not(.active) svg,
+.theme-cyberpunk-neon .bottom-nav-bar button:not(.active) svg,
+.theme-cyberpunk-neon .bottom-nav-dock button:not(.active) svg,
+.theme-cyberpunk-neon .bottom-nav-item:not(.active) svg,
+.theme-cyberpunk-neon .sidebar a:not(.active) svg,
+.theme-cyberpunk-neon .sidebar button:not(.active) svg,
+.theme-cyberpunk-neon .sidebar-nav button:not(.active) svg,
+.theme-cyberpunk-neon .sidebar-nav-item:not(.active) svg,
+.theme-cyberpunk-neon .nav-item-inactive svg,
+[data-theme*="cyberpunk"] nav button:not(.active) svg,
+[data-theme*="cyberpunk"] nav a:not(.active) svg,
+[data-theme*="cyberpunk"] .bottom-nav button:not(.active) svg,
+[data-theme*="cyberpunk"] .bottom-nav-bar button:not(.active) svg,
+[data-theme*="cyberpunk"] .bottom-nav-dock button:not(.active) svg,
+[data-theme*="cyberpunk"] .bottom-nav-item:not(.active) svg,
+[data-theme*="cyberpunk"] .sidebar a:not(.active) svg,
+[data-theme*="cyberpunk"] .sidebar button:not(.active) svg,
+[data-theme*="cyberpunk"] .sidebar-nav button:not(.active) svg,
+[data-theme*="cyberpunk"] .sidebar-nav-item:not(.active) svg,
+[data-theme*="cyberpunk"] .nav-item-inactive svg,
+[data-theme*="neon"] nav button:not(.active) svg,
+[data-theme*="neon"] .nav-item-inactive svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+.theme-cyberpunk nav button:not(.active) .nav-label,
+.theme-cyberpunk nav a:not(.active) .nav-label,
+.theme-cyberpunk .bottom-nav button:not(.active) .nav-label,
+.theme-cyberpunk .bottom-nav-bar button:not(.active) .nav-label,
+.theme-cyberpunk .bottom-nav-item:not(.active) .nav-label,
+.theme-cyberpunk .sidebar a:not(.active) .nav-label,
+.theme-cyberpunk .sidebar button:not(.active) .nav-label,
+.theme-cyberpunk .sidebar-nav button:not(.active) .nav-label,
+.theme-cyberpunk .sidebar-nav-item:not(.active) .nav-label,
+.theme-cyberpunk .nav-item-inactive .nav-label,
+.theme-cyberpunk-neon nav button:not(.active) .nav-label,
+.theme-cyberpunk-neon nav a:not(.active) .nav-label,
+.theme-cyberpunk-neon .bottom-nav button:not(.active) .nav-label,
+.theme-cyberpunk-neon .bottom-nav-bar button:not(.active) .nav-label,
+.theme-cyberpunk-neon .bottom-nav-dock button:not(.active) .nav-label,
+.theme-cyberpunk-neon .bottom-nav-item:not(.active) .nav-label,
+.theme-cyberpunk-neon .sidebar a:not(.active) .nav-label,
+.theme-cyberpunk-neon .sidebar button:not(.active) .nav-label,
+.theme-cyberpunk-neon .sidebar-nav button:not(.active) .nav-label,
+.theme-cyberpunk-neon .sidebar-nav-item:not(.active) .nav-label,
+.theme-cyberpunk-neon .nav-item-inactive .nav-label,
+[data-theme*="cyberpunk"] nav button:not(.active) .nav-label,
+[data-theme*="cyberpunk"] nav a:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .bottom-nav button:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .bottom-nav-bar button:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .bottom-nav-dock button:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .bottom-nav-item:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .sidebar a:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .sidebar button:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .sidebar-nav button:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .sidebar-nav-item:not(.active) .nav-label,
+[data-theme*="cyberpunk"] .nav-item-inactive .nav-label,
+[data-theme*="neon"] nav button:not(.active) .nav-label,
+[data-theme*="neon"] .nav-item-inactive .nav-label {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* 5. Hide Nav Aura for Inactive State */
+.theme-cyberpunk .nav-item-inactive .nav-icon-aura,
+.theme-cyberpunk-neon .nav-item-inactive .nav-icon-aura,
+[data-theme*="cyberpunk"] .nav-item-inactive .nav-icon-aura,
+[data-theme*="neon"] .nav-item-inactive .nav-icon-aura {
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* 6. Hover State on Inactive Buttons - No Ugly Box Backgrounds or Outlines */
+.theme-cyberpunk nav button:not(.active):hover,
+.theme-cyberpunk .bottom-nav-item:not(.active):hover,
+.theme-cyberpunk .sidebar-nav-item:not(.active):hover,
+.theme-cyberpunk .nav-item-inactive:hover,
+.theme-cyberpunk-neon nav button:not(.active):hover,
+.theme-cyberpunk-neon .bottom-nav-item:not(.active):hover,
+.theme-cyberpunk-neon .sidebar-nav-item:not(.active):hover,
+.theme-cyberpunk-neon .nav-item-inactive:hover,
+[data-theme*="cyberpunk"] nav button:not(.active):hover,
+[data-theme*="cyberpunk"] .bottom-nav-item:not(.active):hover,
+[data-theme*="cyberpunk"] .sidebar-nav-item:not(.active):hover,
+[data-theme*="cyberpunk"] .nav-item-inactive:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+}
+
+.theme-cyberpunk nav button:not(.active):hover svg,
+.theme-cyberpunk .nav-item-inactive:hover svg,
+.theme-cyberpunk-neon nav button:not(.active):hover svg,
+.theme-cyberpunk-neon .nav-item-inactive:hover svg,
+[data-theme*="cyberpunk"] nav button:not(.active):hover svg,
+[data-theme*="cyberpunk"] .nav-item-inactive:hover svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 /* ================================================================================
