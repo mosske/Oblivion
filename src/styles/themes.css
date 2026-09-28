@@ -4587,47 +4587,440 @@ div[class*="category-wrapper"] {
 /* --------------------------------------------------------------------------------
    TASK 2 DIRECTIVE: UNIVERSAL CARD, MODAL & CONTAINER PURPLE BACK-GLOW
    -------------------------------------------------------------------------------- */
-/* 1. Explore Page Cards */
 /* ================================================================================
-   FIX 2: SUGAR TIME JAZZ - FORCE PURPLE BACK-GLOW ON CARDS & SECTIONS
+   STEP 1: STRIP GLOWS & BORDERS FROM ALL TRANSPARENT HEADERS & SECTION WRAPPERS
    ================================================================================ */
-/* All Card Components, Section Blocks & Grid Tiles (excluding fully transparent containers) */
-.theme-sugar-time-jazz main div[class*="bg-"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
-.theme-sugar-time-jazz section:not(.bg-transparent):not([class*="bg-transparent"]),
-.theme-sugar-time-jazz [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
-.theme-sugar-time-jazz [class*="Card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
-.theme-sugar-time-jazz div[role="dialog"],
-.theme-sugar-time-jazz .explore-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
-.theme-sugar-time-jazz .library-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
-.theme-sugar-time-jazz .settings-page section:not(.bg-transparent):not([class*="bg-transparent"]),
-.theme-sugar-time-jazz .modal-content,
-[data-theme="sugar-time-jazz"] main div[class*="bg-"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
-[data-theme="sugar-time-jazz"] section:not(.bg-transparent):not([class*="bg-transparent"]),
-[data-theme="sugar-time-jazz"] [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
-[data-theme="sugar-time-jazz"] [class*="Card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
-[data-theme="sugar-time-jazz"] div[role="dialog"],
-[data-theme="sugar-time-jazz"] .explore-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
-[data-theme="sugar-time-jazz"] .library-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
-[data-theme="sugar-time-jazz"] .settings-page section:not(.bg-transparent):not([class*="bg-transparent"]),
-[data-theme="sugar-time-jazz"] .modal-content {
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.25), 0 0 2px rgba(192, 132, 252, 0.2) !important;
-  border: 1px solid rgba(168, 85, 247, 0.2) !important;
+/* 1. Header Banners, Section Headers, and Hero Banners */
+.theme-hard-rock section,
+.theme-hard-rock .section-header,
+.theme-hard-rock .hero-banner,
+.theme-hard-rock .explore-header,
+.theme-hard-rock .playlist-header,
+.theme-hard-rock .album-header,
+.theme-hard-rock header,
+.theme-hard-rock h1, 
+.theme-hard-rock h2, 
+.theme-hard-rock h3,
+.theme-sugar-time-jazz section,
+.theme-sugar-time-jazz .section-header,
+.theme-sugar-time-jazz .hero-banner,
+.theme-sugar-time-jazz .explore-header,
+.theme-sugar-time-jazz .playlist-header,
+.theme-sugar-time-jazz .album-header,
+.theme-sugar-time-jazz header,
+.theme-sugar-time-jazz h1, 
+.theme-sugar-time-jazz h2, 
+.theme-sugar-time-jazz h3,
+[data-theme="hard-rock"] section,
+[data-theme="hard-rock"] .section-header,
+[data-theme="hard-rock"] .hero-banner,
+[data-theme="hard-rock"] .explore-header,
+[data-theme="hard-rock"] .playlist-header,
+[data-theme="hard-rock"] .album-header,
+[data-theme="hard-rock"] header,
+[data-theme="hard-rock"] h1, 
+[data-theme="hard-rock"] h2, 
+[data-theme="hard-rock"] h3,
+[data-theme="sugar-time-jazz"] section,
+[data-theme="sugar-time-jazz"] .section-header,
+[data-theme="sugar-time-jazz"] .hero-banner,
+[data-theme="sugar-time-jazz"] .explore-header,
+[data-theme="sugar-time-jazz"] .playlist-header,
+[data-theme="sugar-time-jazz"] .album-header,
+[data-theme="sugar-time-jazz"] header,
+[data-theme="sugar-time-jazz"] h1, 
+[data-theme="sugar-time-jazz"] h2, 
+[data-theme="sugar-time-jazz"] h3,
+[data-theme-alias="hard-rock"] section,
+[data-theme-alias="hard-rock"] .section-header,
+[data-theme-alias="hard-rock"] .hero-banner,
+[data-theme-alias="hard-rock"] .explore-header,
+[data-theme-alias="hard-rock"] .playlist-header,
+[data-theme-alias="hard-rock"] .album-header,
+[data-theme-alias="hard-rock"] header,
+[data-theme-alias="hard-rock"] h1, 
+[data-theme-alias="hard-rock"] h2, 
+[data-theme-alias="hard-rock"] h3,
+[data-theme-alias="sugar-time-jazz"] section,
+[data-theme-alias="sugar-time-jazz"] .section-header,
+[data-theme-alias="sugar-time-jazz"] .hero-banner,
+[data-theme-alias="sugar-time-jazz"] .explore-header,
+[data-theme-alias="sugar-time-jazz"] .playlist-header,
+[data-theme-alias="sugar-time-jazz"] .album-header,
+[data-theme-alias="sugar-time-jazz"] header,
+[data-theme-alias="sugar-time-jazz"] h1, 
+[data-theme-alias="sugar-time-jazz"] h2, 
+[data-theme-alias="sugar-time-jazz"] h3 {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
 }
 
-/* Track list rows across Album/Playlist/Search views */
-.theme-sugar-time-jazz div[data-track-id],
+/* 2. Playlist & Album Detail Title Containers (e.g., "Rock Classics", "Explore & Discover") */
+.theme-hard-rock [class*="title"],
+.theme-hard-rock [class*="header-content"],
+.theme-hard-rock [class*="hero-details"],
+.theme-hard-rock [class*="meta-container"],
+.theme-sugar-time-jazz [class*="title"],
+.theme-sugar-time-jazz [class*="header-content"],
+.theme-sugar-time-jazz [class*="hero-details"],
+.theme-sugar-time-jazz [class*="meta-container"],
+[data-theme="hard-rock"] [class*="title"],
+[data-theme="hard-rock"] [class*="header-content"],
+[data-theme="hard-rock"] [class*="hero-details"],
+[data-theme="hard-rock"] [class*="meta-container"],
+[data-theme="sugar-time-jazz"] [class*="title"],
+[data-theme="sugar-time-jazz"] [class*="header-content"],
+[data-theme="sugar-time-jazz"] [class*="hero-details"],
+[data-theme="sugar-time-jazz"] [class*="meta-container"],
+[data-theme-alias="hard-rock"] [class*="title"],
+[data-theme-alias="hard-rock"] [class*="header-content"],
+[data-theme-alias="hard-rock"] [class*="hero-details"],
+[data-theme-alias="hard-rock"] [class*="meta-container"],
+[data-theme-alias="sugar-time-jazz"] [class*="title"],
+[data-theme-alias="sugar-time-jazz"] [class*="header-content"],
+[data-theme-alias="sugar-time-jazz"] [class*="hero-details"],
+[data-theme-alias="sugar-time-jazz"] [class*="meta-container"] {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* ================================================================================
+   STEP 2: TARGET GLOW STRICTLY TO ACTUAL MEDIA CARDS & TRACK ITEMS ONLY
+   ================================================================================ */
+/* 1. Interactive Album, Playlist, and Media Cards Only */
+.theme-hard-rock .card,
+.theme-hard-rock [class*="card"]:not([class*="card-header"]):not([class*="card-title"]),
+.theme-hard-rock [class*="media-item"],
+.theme-hard-rock [class*="playlist-card"],
+.theme-hard-rock [class*="album-card"],
+.theme-sugar-time-jazz .card,
+.theme-sugar-time-jazz [class*="card"]:not([class*="card-header"]):not([class*="card-title"]),
+.theme-sugar-time-jazz [class*="media-item"],
+.theme-sugar-time-jazz [class*="playlist-card"],
+.theme-sugar-time-jazz [class*="album-card"],
+[data-theme="hard-rock"] .card,
+[data-theme="hard-rock"] [class*="card"]:not([class*="card-header"]):not([class*="card-title"]),
+[data-theme="hard-rock"] [class*="media-item"],
+[data-theme="hard-rock"] [class*="playlist-card"],
+[data-theme="hard-rock"] [class*="album-card"],
+[data-theme="sugar-time-jazz"] .card,
+[data-theme="sugar-time-jazz"] [class*="card"]:not([class*="card-header"]):not([class*="card-title"]),
+[data-theme="sugar-time-jazz"] [class*="media-item"],
+[data-theme="sugar-time-jazz"] [class*="playlist-card"],
+[data-theme="sugar-time-jazz"] [class*="album-card"],
+[data-theme-alias="hard-rock"] .card,
+[data-theme-alias="hard-rock"] [class*="card"]:not([class*="card-header"]):not([class*="card-title"]),
+[data-theme-alias="hard-rock"] [class*="media-item"],
+[data-theme-alias="hard-rock"] [class*="playlist-card"],
+[data-theme-alias="hard-rock"] [class*="album-card"],
+[data-theme-alias="sugar-time-jazz"] .card,
+[data-theme-alias="sugar-time-jazz"] [class*="card"]:not([class*="card-header"]):not([class*="card-title"]),
+[data-theme-alias="sugar-time-jazz"] [class*="media-item"],
+[data-theme-alias="sugar-time-jazz"] [class*="playlist-card"],
+[data-theme-alias="sugar-time-jazz"] [class*="album-card"] {
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.4), 0 0 2px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+  background-color: rgba(20, 15, 25, 0.6) !important; /* Proper dark transparent glass */
+}
+
+/* 2. Individual Track Blocks / Song Items */
+.theme-hard-rock [class*="track-row"],
+.theme-hard-rock [class*="song-item"],
+.theme-hard-rock div[data-track-id],
 .theme-sugar-time-jazz [class*="track-row"],
-.theme-sugar-time-jazz [class*="TrackRow"],
-.theme-sugar-time-jazz [class*="track"],
-.theme-sugar-time-jazz [class*="Track"],
-.theme-sugar-time-jazz [class*="song-row"],
-[data-theme="sugar-time-jazz"] div[data-track-id],
+.theme-sugar-time-jazz [class*="song-item"],
+.theme-sugar-time-jazz div[data-track-id],
+[data-theme="hard-rock"] [class*="track-row"],
+[data-theme="hard-rock"] [class*="song-item"],
+[data-theme="hard-rock"] div[data-track-id],
 [data-theme="sugar-time-jazz"] [class*="track-row"],
-[data-theme="sugar-time-jazz"] [class*="TrackRow"],
-[data-theme="sugar-time-jazz"] [class*="track"],
-[data-theme="sugar-time-jazz"] [class*="Track"],
-[data-theme="sugar-time-jazz"] [class*="song-row"] {
-  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15) !important;
+[data-theme="sugar-time-jazz"] [class*="song-item"],
+[data-theme="sugar-time-jazz"] div[data-track-id],
+[data-theme-alias="hard-rock"] [class*="track-row"],
+[data-theme-alias="hard-rock"] [class*="song-item"],
+[data-theme-alias="hard-rock"] div[data-track-id],
+[data-theme-alias="sugar-time-jazz"] [class*="track-row"],
+[data-theme-alias="sugar-time-jazz"] [class*="song-item"],
+[data-theme-alias="sugar-time-jazz"] div[data-track-id] {
+  box-shadow: 0 2px 10px rgba(147, 51, 234, 0.25) !important;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.15) !important;
+  background: transparent !important;
+}
+
+/* ================================================================================
+   PART 1: DIRECT TEXT HEADING GLOW (NO CONTAINER / NO BOX SHADOW)
+   ================================================================================ */
+.theme-hard-rock h1,
+.theme-hard-rock h2,
+.theme-hard-rock .greeting-text,
+.theme-hard-rock [class*="greeting"],
+.theme-hard-rock [class*="page-title"],
+.theme-sugar-time-jazz h1,
+.theme-sugar-time-jazz h2,
+.theme-sugar-time-jazz .greeting-text,
+.theme-sugar-time-jazz [class*="greeting"],
+.theme-sugar-time-jazz [class*="page-title"],
+[data-theme="hard-rock"] h1,
+[data-theme="hard-rock"] h2,
+[data-theme="hard-rock"] .greeting-text,
+[data-theme="hard-rock"] [class*="greeting"],
+[data-theme="hard-rock"] [class*="page-title"],
+[data-theme="sugar-time-jazz"] h1,
+[data-theme="sugar-time-jazz"] h2,
+[data-theme="sugar-time-jazz"] .greeting-text,
+[data-theme="sugar-time-jazz"] [class*="greeting"],
+[data-theme="sugar-time-jazz"] [class*="page-title"],
+[data-theme-alias="hard-rock"] h1,
+[data-theme-alias="hard-rock"] h2,
+[data-theme-alias="hard-rock"] .greeting-text,
+[data-theme-alias="hard-rock"] [class*="greeting"],
+[data-theme-alias="hard-rock"] [class*="page-title"],
+[data-theme-alias="sugar-time-jazz"] h1,
+[data-theme-alias="sugar-time-jazz"] h2,
+[data-theme-alias="sugar-time-jazz"] .greeting-text,
+[data-theme-alias="sugar-time-jazz"] [class*="greeting"],
+[data-theme-alias="sugar-time-jazz"] [class*="page-title"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #f3e8ff !important;
+  text-shadow: 
+    0 0 10px rgba(168, 85, 247, 0.9),
+    0 0 20px rgba(147, 51, 234, 0.7),
+    0 0 30px rgba(126, 34, 206, 0.5) !important;
+}
+
+/* ================================================================================
+   PART 2: CONTAINER CARD BACK-GLOW (EXPLORE HERO, PLAYLIST HERO, SETTINGS)
+   ================================================================================ */
+/* 1. Explore Banner */
+.theme-hard-rock [class*="explore-banner"],
+.theme-hard-rock [class*="discovery-card"],
+.theme-hard-rock .explore-page > div:first-child,
+.theme-sugar-time-jazz [class*="explore-banner"],
+.theme-sugar-time-jazz [class*="discovery-card"],
+.theme-sugar-time-jazz .explore-page > div:first-child,
+[data-theme="hard-rock"] [class*="explore-banner"],
+[data-theme="hard-rock"] [class*="discovery-card"],
+[data-theme="hard-rock"] .explore-page > div:first-child,
+[data-theme="sugar-time-jazz"] [class*="explore-banner"],
+[data-theme="sugar-time-jazz"] [class*="discovery-card"],
+[data-theme="sugar-time-jazz"] .explore-page > div:first-child,
+[data-theme-alias="hard-rock"] [class*="explore-banner"],
+[data-theme-alias="hard-rock"] [class*="discovery-card"],
+[data-theme-alias="hard-rock"] .explore-page > div:first-child,
+[data-theme-alias="sugar-time-jazz"] [class*="explore-banner"],
+[data-theme-alias="sugar-time-jazz"] [class*="discovery-card"],
+[data-theme-alias="sugar-time-jazz"] .explore-page > div:first-child {
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.35), 0 0 4px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.3) !important;
+  background-color: rgba(22, 16, 32, 0.75) !important;
+  border-radius: 1rem !important;
+}
+
+/* 2. Playlist Header Container Card */
+.theme-hard-rock [class*="playlist-header"],
+.theme-hard-rock [class*="playlist-details-card"],
+.theme-hard-rock [class*="hero-details-container"],
+.theme-sugar-time-jazz [class*="playlist-header"],
+.theme-sugar-time-jazz [class*="playlist-details-card"],
+.theme-sugar-time-jazz [class*="hero-details-container"],
+[data-theme="hard-rock"] [class*="playlist-header"],
+[data-theme="hard-rock"] [class*="playlist-details-card"],
+[data-theme="hard-rock"] [class*="hero-details-container"],
+[data-theme="sugar-time-jazz"] [class*="playlist-header"],
+[data-theme="sugar-time-jazz"] [class*="playlist-details-card"],
+[data-theme="sugar-time-jazz"] [class*="hero-details-container"],
+[data-theme-alias="hard-rock"] [class*="playlist-header"],
+[data-theme-alias="hard-rock"] [class*="playlist-details-card"],
+[data-theme-alias="hard-rock"] [class*="hero-details-container"],
+[data-theme-alias="sugar-time-jazz"] [class*="playlist-header"],
+[data-theme-alias="sugar-time-jazz"] [class*="playlist-details-card"],
+[data-theme-alias="sugar-time-jazz"] [class*="hero-details-container"] {
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.35), 0 0 4px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.3) !important;
+  background-color: rgba(22, 16, 32, 0.75) !important;
+  border-radius: 1rem !important;
+}
+
+/* 3. Settings Cards & Outer Archetype Wrapper Block */
+.theme-hard-rock .settings-page [class*="pwa-card"],
+.theme-hard-rock .settings-page [class*="install-card"],
+.theme-hard-rock .settings-page [class*="archetypes-wrapper"],
+.theme-hard-rock .settings-page [class*="archetype-container"],
+.theme-hard-rock .settings-page > div > div,
+.theme-sugar-time-jazz .settings-page [class*="pwa-card"],
+.theme-sugar-time-jazz .settings-page [class*="install-card"],
+.theme-sugar-time-jazz .settings-page [class*="archetypes-wrapper"],
+.theme-sugar-time-jazz .settings-page [class*="archetype-container"],
+.theme-sugar-time-jazz .settings-page > div > div,
+[data-theme="hard-rock"] .settings-page [class*="pwa-card"],
+[data-theme="hard-rock"] .settings-page [class*="install-card"],
+[data-theme="hard-rock"] .settings-page [class*="archetypes-wrapper"],
+[data-theme="hard-rock"] .settings-page [class*="archetype-container"],
+[data-theme="hard-rock"] .settings-page > div > div,
+[data-theme="sugar-time-jazz"] .settings-page [class*="pwa-card"],
+[data-theme="sugar-time-jazz"] .settings-page [class*="install-card"],
+[data-theme="sugar-time-jazz"] .settings-page [class*="archetypes-wrapper"],
+[data-theme="sugar-time-jazz"] .settings-page [class*="archetype-container"],
+[data-theme="sugar-time-jazz"] .settings-page > div > div,
+[data-theme-alias="hard-rock"] .settings-page [class*="pwa-card"],
+[data-theme-alias="hard-rock"] .settings-page [class*="install-card"],
+[data-theme-alias="hard-rock"] .settings-page [class*="archetypes-wrapper"],
+[data-theme-alias="hard-rock"] .settings-page [class*="archetype-container"],
+[data-theme-alias="hard-rock"] .settings-page > div > div,
+[data-theme-alias="sugar-time-jazz"] .settings-page [class*="pwa-card"],
+[data-theme-alias="sugar-time-jazz"] .settings-page [class*="install-card"],
+[data-theme-alias="sugar-time-jazz"] .settings-page [class*="archetypes-wrapper"],
+[data-theme-alias="sugar-time-jazz"] .settings-page [class*="archetype-container"],
+[data-theme-alias="sugar-time-jazz"] .settings-page > div > div {
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.35), 0 0 4px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.3) !important;
+  background-color: rgba(22, 16, 32, 0.75) !important;
+  border-radius: 1rem !important;
+}
+
+/* ================================================================================
+   EXPLICIT STRUCTURAL CARDS & CONTAINERS AMBIENT PURPLE BACK-GLOW (HARD ROCK / SUGAR TIME JAZZ)
+   ================================================================================ */
+
+/* 1. LIBRARY & DISCOVERY HERO BANNERS & SORT CONTAINERS */
+.theme-hard-rock [class*="explore-hero"],
+.theme-hard-rock [class*="discovery-banner"],
+.theme-hard-rock [class*="sort-container"],
+.theme-hard-rock [class*="filter-bar"],
+.theme-hard-rock [class*="playlist-hero"],
+.theme-hard-rock [class*="hero-card"],
+.theme-sugar-time-jazz [class*="explore-hero"],
+.theme-sugar-time-jazz [class*="discovery-banner"],
+.theme-sugar-time-jazz [class*="sort-container"],
+.theme-sugar-time-jazz [class*="filter-bar"],
+.theme-sugar-time-jazz [class*="playlist-hero"],
+.theme-sugar-time-jazz [class*="hero-card"],
+[data-theme="hard-rock"] [class*="explore-hero"],
+[data-theme="hard-rock"] [class*="discovery-banner"],
+[data-theme="hard-rock"] [class*="sort-container"],
+[data-theme="hard-rock"] [class*="filter-bar"],
+[data-theme="hard-rock"] [class*="playlist-hero"],
+[data-theme="hard-rock"] [class*="hero-card"],
+[data-theme="sugar-time-jazz"] [class*="explore-hero"],
+[data-theme="sugar-time-jazz"] [class*="discovery-banner"],
+[data-theme="sugar-time-jazz"] [class*="sort-container"],
+[data-theme="sugar-time-jazz"] [class*="filter-bar"],
+[data-theme="sugar-time-jazz"] [class*="playlist-hero"],
+[data-theme="sugar-time-jazz"] [class*="hero-card"],
+[data-theme-alias="hard-rock"] [class*="explore-hero"],
+[data-theme-alias="hard-rock"] [class*="discovery-banner"],
+[data-theme-alias="hard-rock"] [class*="sort-container"],
+[data-theme-alias="hard-rock"] [class*="filter-bar"],
+[data-theme-alias="hard-rock"] [class*="playlist-hero"],
+[data-theme-alias="hard-rock"] [class*="hero-card"],
+[data-theme-alias="sugar-time-jazz"] [class*="explore-hero"],
+[data-theme-alias="sugar-time-jazz"] [class*="discovery-banner"],
+[data-theme-alias="sugar-time-jazz"] [class*="sort-container"],
+[data-theme-alias="sugar-time-jazz"] [class*="filter-bar"],
+[data-theme-alias="sugar-time-jazz"] [class*="playlist-hero"],
+[data-theme-alias="sugar-time-jazz"] [class*="hero-card"] {
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35), 0 0 2px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+}
+
+/* 2. GRID MEDIA CARDS (ALBUMS & PLAYLIST TILES) */
+.theme-hard-rock [class*="grid"] > div,
+.theme-hard-rock [class*="media-card"],
+.theme-hard-rock [class*="playlist-card"],
+.theme-hard-rock [class*="album-card"],
+.theme-sugar-time-jazz [class*="grid"] > div,
+.theme-sugar-time-jazz [class*="media-card"],
+.theme-sugar-time-jazz [class*="playlist-card"],
+.theme-sugar-time-jazz [class*="album-card"],
+[data-theme="hard-rock"] [class*="grid"] > div,
+[data-theme="hard-rock"] [class*="media-card"],
+[data-theme="hard-rock"] [class*="playlist-card"],
+[data-theme="hard-rock"] [class*="album-card"],
+[data-theme="sugar-time-jazz"] [class*="grid"] > div,
+[data-theme="sugar-time-jazz"] [class*="media-card"],
+[data-theme="sugar-time-jazz"] [class*="playlist-card"],
+[data-theme="sugar-time-jazz"] [class*="album-card"],
+[data-theme-alias="hard-rock"] [class*="grid"] > div,
+[data-theme-alias="hard-rock"] [class*="media-card"],
+[data-theme-alias="hard-rock"] [class*="playlist-card"],
+[data-theme-alias="hard-rock"] [class*="album-card"],
+[data-theme-alias="sugar-time-jazz"] [class*="grid"] > div,
+[data-theme-alias="sugar-time-jazz"] [class*="media-card"],
+[data-theme-alias="sugar-time-jazz"] [class*="playlist-card"],
+[data-theme-alias="sugar-time-jazz"] [class*="album-card"] {
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35), 0 0 2px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+}
+
+/* 3. SETTINGS CARDS */
+.theme-hard-rock .settings-page [class*="card"],
+.theme-hard-rock .settings-page [class*="section-box"],
+.theme-hard-rock .settings-page div[class*="rounded"],
+.theme-sugar-time-jazz .settings-page [class*="card"],
+.theme-sugar-time-jazz .settings-page [class*="section-box"],
+.theme-sugar-time-jazz .settings-page div[class*="rounded"],
+[data-theme="hard-rock"] .settings-page [class*="card"],
+[data-theme="hard-rock"] .settings-page [class*="section-box"],
+[data-theme="hard-rock"] .settings-page div[class*="rounded"],
+[data-theme="sugar-time-jazz"] .settings-page [class*="card"],
+[data-theme="sugar-time-jazz"] .settings-page [class*="section-box"],
+[data-theme="sugar-time-jazz"] .settings-page div[class*="rounded"],
+[data-theme-alias="hard-rock"] .settings-page [class*="card"],
+[data-theme-alias="hard-rock"] .settings-page [class*="section-box"],
+[data-theme-alias="hard-rock"] .settings-page div[class*="rounded"],
+[data-theme-alias="sugar-time-jazz"] .settings-page [class*="card"],
+[data-theme-alias="sugar-time-jazz"] .settings-page [class*="section-box"],
+[data-theme-alias="sugar-time-jazz"] .settings-page div[class*="rounded"] {
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35), 0 0 2px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+}
+
+/* 4. PLAYLIST ACTION BARS & SEARCH INPUTS & TRACK ROWS */
+.theme-hard-rock [class*="action-bar"],
+.theme-hard-rock [class*="controls-bar"],
+.theme-hard-rock input[type="text"],
+.theme-hard-rock [class*="search-input"],
+.theme-hard-rock [class*="track-item"],
+.theme-hard-rock [class*="search-result"],
+.theme-sugar-time-jazz [class*="action-bar"],
+.theme-sugar-time-jazz [class*="controls-bar"],
+.theme-sugar-time-jazz input[type="text"],
+.theme-sugar-time-jazz [class*="search-input"],
+.theme-sugar-time-jazz [class*="track-item"],
+.theme-sugar-time-jazz [class*="search-result"],
+[data-theme="hard-rock"] [class*="action-bar"],
+[data-theme="hard-rock"] [class*="controls-bar"],
+[data-theme="hard-rock"] input[type="text"],
+[data-theme="hard-rock"] [class*="search-input"],
+[data-theme="hard-rock"] [class*="track-item"],
+[data-theme="hard-rock"] [class*="search-result"],
+[data-theme="sugar-time-jazz"] [class*="action-bar"],
+[data-theme="sugar-time-jazz"] [class*="controls-bar"],
+[data-theme="sugar-time-jazz"] input[type="text"],
+[data-theme="sugar-time-jazz"] [class*="search-input"],
+[data-theme="sugar-time-jazz"] [class*="track-item"],
+[data-theme="sugar-time-jazz"] [class*="search-result"],
+[data-theme-alias="hard-rock"] [class*="action-bar"],
+[data-theme-alias="hard-rock"] [class*="controls-bar"],
+[data-theme-alias="hard-rock"] input[type="text"],
+[data-theme-alias="hard-rock"] [class*="search-input"],
+[data-theme-alias="hard-rock"] [class*="track-item"],
+[data-theme-alias="hard-rock"] [class*="search-result"],
+[data-theme-alias="sugar-time-jazz"] [class*="action-bar"],
+[data-theme-alias="sugar-time-jazz"] [class*="controls-bar"],
+[data-theme-alias="sugar-time-jazz"] input[type="text"],
+[data-theme-alias="sugar-time-jazz"] [class*="search-input"],
+[data-theme-alias="sugar-time-jazz"] [class*="track-item"],
+[data-theme-alias="sugar-time-jazz"] [class*="search-result"] {
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35), 0 0 2px rgba(192, 132, 252, 0.2) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
 }
 
 /* ================================================================================
@@ -4768,34 +5161,34 @@ div[class*="category-wrapper"] {
   filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.85)) !important;
 }
 
-/* General Back-glow for Cards, Content Containers, and Panels (excluding transparent) */
-.theme-sugar-time-jazz .card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
-.theme-sugar-time-jazz .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
-.theme-sugar-time-jazz [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
-.theme-sugar-time-jazz .glass-panel:not(.bg-transparent):not([class*="bg-transparent"]),
+/* Mini player & Floating Dock Glow */
+.theme-hard-rock .mini-player,
 .theme-sugar-time-jazz .mini-player,
-[data-theme="sugar-time-jazz"] .card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
-[data-theme="sugar-time-jazz"] .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
-[data-theme="sugar-time-jazz"] [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
-[data-theme="sugar-time-jazz"] .glass-panel:not(.bg-transparent):not([class*="bg-transparent"]),
-[data-theme="sugar-time-jazz"] .mini-player {
+[data-theme="hard-rock"] .mini-player,
+[data-theme="sugar-time-jazz"] .mini-player,
+[data-theme-alias="hard-rock"] .mini-player {
   box-shadow: var(--purple-ambient-glow) !important;
   border: 1px solid rgba(212, 180, 150, 0.2) !important;
-}
-
-.theme-sugar-time-jazz .card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
-.theme-sugar-time-jazz .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
-.theme-sugar-time-jazz [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):hover,
-[data-theme="sugar-time-jazz"] .card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
-[data-theme="sugar-time-jazz"] .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
-[data-theme="sugar-time-jazz"] [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):hover {
-  box-shadow: var(--purple-ambient-glow-strong), inset 0 0 15px rgba(168, 85, 247, 0.15) !important;
-  border: 1px solid rgba(212, 180, 150, 0.35) !important;
 }
 
 /* ================================================================================
    CRITICAL: REMOVE PURPLE GLOW & BORDERS FOR FULLY TRANSPARENT CARDS & CONTAINERS
    ================================================================================ */
+.theme-hard-rock .bg-transparent,
+.theme-hard-rock [class*="bg-transparent"],
+.theme-hard-rock [class*="bg-opacity-0"],
+.theme-hard-rock div.bg-transparent,
+.theme-hard-rock .card.bg-transparent,
+.theme-hard-rock [class*="card"].bg-transparent,
+.theme-hard-rock [class*="card"][class*="bg-transparent"],
+.theme-hard-rock [class*="Card"].bg-transparent,
+.theme-hard-rock [class*="Card"][class*="bg-transparent"],
+.theme-hard-rock .shelf-card.bg-transparent,
+.theme-hard-rock .glass-panel.bg-transparent,
+.theme-hard-rock [style*="background: transparent"],
+.theme-hard-rock [style*="background-color: transparent"],
+.theme-hard-rock [style*="background:none"],
+.theme-hard-rock [style*="background-color: rgba(0, 0, 0, 0)"],
 .theme-sugar-time-jazz .bg-transparent,
 .theme-sugar-time-jazz [class*="bg-transparent"],
 .theme-sugar-time-jazz [class*="bg-opacity-0"],
@@ -4811,6 +5204,21 @@ div[class*="category-wrapper"] {
 .theme-sugar-time-jazz [style*="background-color: transparent"],
 .theme-sugar-time-jazz [style*="background:none"],
 .theme-sugar-time-jazz [style*="background-color: rgba(0, 0, 0, 0)"],
+[data-theme="hard-rock"] .bg-transparent,
+[data-theme="hard-rock"] [class*="bg-transparent"],
+[data-theme="hard-rock"] [class*="bg-opacity-0"],
+[data-theme="hard-rock"] div.bg-transparent,
+[data-theme="hard-rock"] .card.bg-transparent,
+[data-theme="hard-rock"] [class*="card"].bg-transparent,
+[data-theme="hard-rock"] [class*="card"][class*="bg-transparent"],
+[data-theme="hard-rock"] [class*="Card"].bg-transparent,
+[data-theme="hard-rock"] [class*="Card"][class*="bg-transparent"],
+[data-theme="hard-rock"] .shelf-card.bg-transparent,
+[data-theme="hard-rock"] .glass-panel.bg-transparent,
+[data-theme="hard-rock"] [style*="background: transparent"],
+[data-theme="hard-rock"] [style*="background-color: transparent"],
+[data-theme="hard-rock"] [style*="background:none"],
+[data-theme="hard-rock"] [style*="background-color: rgba(0, 0, 0, 0)"],
 [data-theme="sugar-time-jazz"] .bg-transparent,
 [data-theme="sugar-time-jazz"] [class*="bg-transparent"],
 [data-theme="sugar-time-jazz"] [class*="bg-opacity-0"],
@@ -4825,20 +5233,45 @@ div[class*="category-wrapper"] {
 [data-theme="sugar-time-jazz"] [style*="background: transparent"],
 [data-theme="sugar-time-jazz"] [style*="background-color: transparent"],
 [data-theme="sugar-time-jazz"] [style*="background:none"],
-[data-theme="sugar-time-jazz"] [style*="background-color: rgba(0, 0, 0, 0)"] {
+[data-theme="sugar-time-jazz"] [style*="background-color: rgba(0, 0, 0, 0)"],
+[data-theme-alias="hard-rock"] .bg-transparent,
+[data-theme-alias="hard-rock"] [class*="bg-transparent"],
+[data-theme-alias="hard-rock"] [class*="bg-opacity-0"],
+[data-theme-alias="hard-rock"] div.bg-transparent,
+[data-theme-alias="hard-rock"] .card.bg-transparent,
+[data-theme-alias="hard-rock"] [class*="card"].bg-transparent,
+[data-theme-alias="hard-rock"] [class*="card"][class*="bg-transparent"],
+[data-theme-alias="hard-rock"] [class*="Card"].bg-transparent,
+[data-theme-alias="hard-rock"] [class*="Card"][class*="bg-transparent"],
+[data-theme-alias="hard-rock"] .shelf-card.bg-transparent,
+[data-theme-alias="hard-rock"] .glass-panel.bg-transparent,
+[data-theme-alias="hard-rock"] [style*="background: transparent"],
+[data-theme-alias="hard-rock"] [style*="background-color: transparent"] {
   box-shadow: none !important;
   border-color: transparent !important;
   filter: none !important;
 }
 
+.theme-hard-rock .bg-transparent:hover,
+.theme-hard-rock [class*="bg-transparent"]:hover,
+.theme-hard-rock [class*="card"].bg-transparent:hover,
+.theme-hard-rock [class*="card"][class*="bg-transparent"]:hover,
 .theme-sugar-time-jazz .bg-transparent:hover,
 .theme-sugar-time-jazz [class*="bg-transparent"]:hover,
 .theme-sugar-time-jazz [class*="card"].bg-transparent:hover,
 .theme-sugar-time-jazz [class*="card"][class*="bg-transparent"]:hover,
+[data-theme="hard-rock"] .bg-transparent:hover,
+[data-theme="hard-rock"] [class*="bg-transparent"]:hover,
+[data-theme="hard-rock"] [class*="card"].bg-transparent:hover,
+[data-theme="hard-rock"] [class*="card"][class*="bg-transparent"]:hover,
 [data-theme="sugar-time-jazz"] .bg-transparent:hover,
 [data-theme="sugar-time-jazz"] [class*="bg-transparent"]:hover,
 [data-theme="sugar-time-jazz"] [class*="card"].bg-transparent:hover,
-[data-theme="sugar-time-jazz"] [class*="card"][class*="bg-transparent"]:hover {
+[data-theme="sugar-time-jazz"] [class*="card"][class*="bg-transparent"]:hover,
+[data-theme-alias="hard-rock"] .bg-transparent:hover,
+[data-theme-alias="hard-rock"] [class*="bg-transparent"]:hover,
+[data-theme-alias="hard-rock"] [class*="card"].bg-transparent:hover,
+[data-theme-alias="hard-rock"] [class*="card"][class*="bg-transparent"]:hover {
   box-shadow: none !important;
 }
 
