@@ -88,7 +88,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div id="settings-page" data-testid="settings-page" className="settings-page settings-container flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-64 sm:pb-72 md:pb-52 max-w-5xl select-none">
       {/* Header */}
-      <div>
+      <header className="settings-header settings-title-container">
         <h1 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} tracking-tight flex items-center gap-2.5`}>
           <Settings className={`w-6 h-6 ${designConfig.accentText}`} />
           <span>Oblivion Settings</span>
@@ -96,7 +96,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <p className={`text-xs ${designConfig.headingMuted} mt-1 font-medium`}>
           Customize your full app design layout, audio engine quality, and playback settings.
         </p>
-      </div>
+      </header>
 
       {/* PWA ANDROID APP INSTALLATION SECTION */}
       <section className={`pwa-card install-card section-box p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-4 shadow-md`}>

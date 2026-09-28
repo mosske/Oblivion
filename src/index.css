@@ -2797,6 +2797,7 @@ div[class*="category-wrapper"] {
 }
 
 /* ================================================================================
+/* ================================================================================
    FIX 1: CONTRAST FIX FOR LIGHT BUTTONS (SEARCH & SIGN IN WITH GOOGLE)
    ================================================================================ */
 .theme-hard-rock button[class*="bg-stone"],
@@ -2806,7 +2807,6 @@ div[class*="category-wrapper"] {
 .theme-hard-rock button[class*="bg-primary"],
 .theme-hard-rock .bg-stone-200,
 .theme-hard-rock .bg-stone-300,
-.theme-hard-rock button:has(svg),
 .theme-sugar-time-jazz button[class*="bg-stone"],
 .theme-sugar-time-jazz button[class*="bg-amber"],
 .theme-sugar-time-jazz button[class*="bg-orange"],
@@ -2814,7 +2814,6 @@ div[class*="category-wrapper"] {
 .theme-sugar-time-jazz button[class*="bg-primary"],
 .theme-sugar-time-jazz .bg-stone-200,
 .theme-sugar-time-jazz .bg-stone-300,
-.theme-sugar-time-jazz button:has(svg),
 [data-theme="hard-rock"] button[class*="bg-stone"],
 [data-theme="hard-rock"] button[class*="bg-amber"],
 [data-theme="hard-rock"] button[class*="bg-orange"],
@@ -2822,7 +2821,6 @@ div[class*="category-wrapper"] {
 [data-theme="hard-rock"] button[class*="bg-primary"],
 [data-theme="hard-rock"] .bg-stone-200,
 [data-theme="hard-rock"] .bg-stone-300,
-[data-theme="hard-rock"] button:has(svg),
 [data-theme="sugar-time-jazz"] button[class*="bg-stone"],
 [data-theme="sugar-time-jazz"] button[class*="bg-amber"],
 [data-theme="sugar-time-jazz"] button[class*="bg-orange"],
@@ -2830,7 +2828,6 @@ div[class*="category-wrapper"] {
 [data-theme="sugar-time-jazz"] button[class*="bg-primary"],
 [data-theme="sugar-time-jazz"] .bg-stone-200,
 [data-theme="sugar-time-jazz"] .bg-stone-300,
-[data-theme="sugar-time-jazz"] button:has(svg),
 [data-theme-alias="hard-rock"] button[class*="bg-stone"],
 [data-theme-alias="hard-rock"] button[class*="bg-amber"],
 [data-theme-alias="hard-rock"] button[class*="bg-orange"],
@@ -2838,15 +2835,13 @@ div[class*="category-wrapper"] {
 [data-theme-alias="hard-rock"] button[class*="bg-primary"],
 [data-theme-alias="hard-rock"] .bg-stone-200,
 [data-theme-alias="hard-rock"] .bg-stone-300,
-[data-theme-alias="hard-rock"] button:has(svg),
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-stone"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-amber"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-orange"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-yellow"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-primary"],
 [data-theme-alias="sugar-time-jazz"] .bg-stone-200,
-[data-theme-alias="sugar-time-jazz"] .bg-stone-300,
-[data-theme-alias="sugar-time-jazz"] button:has(svg) {
+[data-theme-alias="sugar-time-jazz"] .bg-stone-300 {
   color: #0f0d13 !important; /* Deep charcoal/black text */
   font-weight: 700 !important;
 }
@@ -2945,14 +2940,218 @@ div[class*="category-wrapper"] {
 }
 
 /* ================================================================================
+   RESTORE HIGH VISIBILITY FOR DARK BUTTONS, ICONS, AND PLAYER CONTROLS
+   ================================================================================ */
+
+/* 1. Secondary Dark Buttons ("Hide/Unhide", "Reorder Songs", "Edit Details", etc.) */
+.theme-hard-rock button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+.theme-hard-rock [class*="badge"],
+.theme-hard-rock [class*="chip"],
+.theme-hard-rock [class*="action-btn"],
+.theme-sugar-time-jazz button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+.theme-sugar-time-jazz [class*="badge"],
+.theme-sugar-time-jazz [class*="chip"],
+.theme-sugar-time-jazz [class*="action-btn"],
+[data-theme="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme="hard-rock"] [class*="badge"],
+[data-theme="hard-rock"] [class*="chip"],
+[data-theme="hard-rock"] [class*="action-btn"],
+[data-theme="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme="sugar-time-jazz"] [class*="badge"],
+[data-theme="sugar-time-jazz"] [class*="chip"],
+[data-theme="sugar-time-jazz"] [class*="action-btn"],
+[data-theme-alias="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme-alias="hard-rock"] [class*="badge"],
+[data-theme-alias="hard-rock"] [class*="chip"],
+[data-theme-alias="hard-rock"] [class*="action-btn"],
+[data-theme-alias="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme-alias="sugar-time-jazz"] [class*="badge"],
+[data-theme-alias="sugar-time-jazz"] [class*="chip"],
+[data-theme-alias="sugar-time-jazz"] [class*="action-btn"] {
+  color: #f3e8ff !important;
+}
+
+.theme-hard-rock button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+.theme-hard-rock [class*="action-btn"] svg,
+.theme-sugar-time-jazz button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+.theme-sugar-time-jazz [class*="action-btn"] svg,
+[data-theme="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme="hard-rock"] [class*="action-btn"] svg,
+[data-theme="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme="sugar-time-jazz"] [class*="action-btn"] svg,
+[data-theme-alias="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme-alias="hard-rock"] [class*="action-btn"] svg,
+[data-theme-alias="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme-alias="sugar-time-jazz"] [class*="action-btn"] svg {
+  color: #d8b4fe !important;
+  stroke: #d8b4fe !important;
+  fill: none !important;
+}
+
+/* 2. Track List Action Icons (Add to Playlist +, Options, Like, etc.) */
+.theme-hard-rock [class*="track-item"] button,
+.theme-hard-rock [class*="song-row"] button,
+.theme-hard-rock [class*="track-row"] svg,
+.theme-hard-rock [class*="track-actions"] svg,
+.theme-hard-rock [class*="track-item"] svg,
+.theme-hard-rock [class*="song-item"] svg,
+.theme-sugar-time-jazz [class*="track-item"] button,
+.theme-sugar-time-jazz [class*="song-row"] button,
+.theme-sugar-time-jazz [class*="track-row"] svg,
+.theme-sugar-time-jazz [class*="track-actions"] svg,
+.theme-sugar-time-jazz [class*="track-item"] svg,
+.theme-sugar-time-jazz [class*="song-item"] svg,
+[data-theme="hard-rock"] [class*="track-item"] button,
+[data-theme="hard-rock"] [class*="song-row"] button,
+[data-theme="hard-rock"] [class*="track-row"] svg,
+[data-theme="hard-rock"] [class*="track-actions"] svg,
+[data-theme="hard-rock"] [class*="track-item"] svg,
+[data-theme="hard-rock"] [class*="song-item"] svg,
+[data-theme="sugar-time-jazz"] [class*="track-item"] button,
+[data-theme="sugar-time-jazz"] [class*="song-row"] button,
+[data-theme="sugar-time-jazz"] [class*="track-row"] svg,
+[data-theme="sugar-time-jazz"] [class*="track-actions"] svg,
+[data-theme="sugar-time-jazz"] [class*="track-item"] svg,
+[data-theme="sugar-time-jazz"] [class*="song-item"] svg,
+[data-theme-alias="hard-rock"] [class*="track-item"] button,
+[data-theme-alias="hard-rock"] [class*="song-row"] button,
+[data-theme-alias="hard-rock"] [class*="track-row"] svg,
+[data-theme-alias="hard-rock"] [class*="track-actions"] svg,
+[data-theme-alias="hard-rock"] [class*="track-item"] svg,
+[data-theme-alias="hard-rock"] [class*="song-item"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="track-item"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="song-row"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="track-row"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="track-actions"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="track-item"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="song-item"] svg {
+  color: #c084fc !important;
+  stroke: #c084fc !important;
+  opacity: 1 !important;
+}
+
+/* 3. Bottom Player Bar Dock Controls (Skip Back/Forward, Shuffle, Repeat, Heart, Like, Expand) */
+.theme-hard-rock [class*="player-dock"] button,
+.theme-hard-rock [class*="bottom-player"] button,
+.theme-hard-rock [class*="player-controls"] button,
+.theme-hard-rock [class*="player-dock"] svg,
+.theme-hard-rock [class*="bottom-player"] svg,
+.theme-hard-rock [class*="mini-player"] button:not([class*="mini-player-play-btn"]):not([class*="play-btn"]):not([class*="play-pause"]),
+.theme-hard-rock [class*="mini-player"] svg:not([class*="play"]),
+.theme-sugar-time-jazz [class*="player-dock"] button,
+.theme-sugar-time-jazz [class*="bottom-player"] button,
+.theme-sugar-time-jazz [class*="player-controls"] button,
+.theme-sugar-time-jazz [class*="player-dock"] svg,
+.theme-sugar-time-jazz [class*="bottom-player"] svg,
+.theme-sugar-time-jazz [class*="mini-player"] button:not([class*="mini-player-play-btn"]):not([class*="play-btn"]):not([class*="play-pause"]),
+.theme-sugar-time-jazz [class*="mini-player"] svg:not([class*="play"]),
+[data-theme="hard-rock"] [class*="player-dock"] button,
+[data-theme="hard-rock"] [class*="bottom-player"] button,
+[data-theme="hard-rock"] [class*="player-controls"] button,
+[data-theme="hard-rock"] [class*="player-dock"] svg,
+[data-theme="hard-rock"] [class*="bottom-player"] svg,
+[data-theme="hard-rock"] [class*="mini-player"] button:not([class*="mini-player-play-btn"]):not([class*="play-btn"]):not([class*="play-pause"]),
+[data-theme="hard-rock"] [class*="mini-player"] svg:not([class*="play"]),
+[data-theme="sugar-time-jazz"] [class*="player-dock"] button,
+[data-theme="sugar-time-jazz"] [class*="bottom-player"] button,
+[data-theme="sugar-time-jazz"] [class*="player-controls"] button,
+[data-theme="sugar-time-jazz"] [class*="player-dock"] svg,
+[data-theme="sugar-time-jazz"] [class*="bottom-player"] svg,
+[data-theme="sugar-time-jazz"] [class*="mini-player"] button:not([class*="mini-player-play-btn"]):not([class*="play-btn"]):not([class*="play-pause"]),
+[data-theme="sugar-time-jazz"] [class*="mini-player"] svg:not([class*="play"]),
+[data-theme-alias="hard-rock"] [class*="player-dock"] button,
+[data-theme-alias="hard-rock"] [class*="bottom-player"] button,
+[data-theme-alias="hard-rock"] [class*="player-controls"] button,
+[data-theme-alias="hard-rock"] [class*="player-dock"] svg,
+[data-theme-alias="hard-rock"] [class*="bottom-player"] svg,
+[data-theme-alias="hard-rock"] [class*="mini-player"] button:not([class*="mini-player-play-btn"]):not([class*="play-btn"]):not([class*="play-pause"]),
+[data-theme-alias="hard-rock"] [class*="mini-player"] svg:not([class*="play"]),
+[data-theme-alias="sugar-time-jazz"] [class*="player-dock"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="bottom-player"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="player-controls"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="player-dock"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="bottom-player"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="mini-player"] button:not([class*="mini-player-play-btn"]):not([class*="play-btn"]):not([class*="play-pause"]),
+[data-theme-alias="sugar-time-jazz"] [class*="mini-player"] svg:not([class*="play"]) {
+  color: #f3e8ff !important;
+  stroke: #f3e8ff !important;
+  opacity: 0.95 !important;
+}
+
+/* Maintain black contrast ONLY for filled light CTA buttons (e.g. "Play All", "Install App") */
+.theme-hard-rock button[class*="bg-stone-200"],
+.theme-hard-rock button[class*="bg-stone-200"] *,
+.theme-hard-rock button[class*="bg-amber"],
+.theme-hard-rock button[class*="bg-amber"] *,
+.theme-hard-rock button[class*="bg-orange"],
+.theme-hard-rock button[class*="bg-orange"] *,
+.theme-hard-rock button[class*="bg-yellow"],
+.theme-hard-rock button[class*="bg-yellow"] *,
+.theme-hard-rock button[class*="bg-primary"],
+.theme-hard-rock button[class*="bg-primary"] *,
+.theme-sugar-time-jazz button[class*="bg-stone-200"],
+.theme-sugar-time-jazz button[class*="bg-stone-200"] *,
+.theme-sugar-time-jazz button[class*="bg-amber"],
+.theme-sugar-time-jazz button[class*="bg-amber"] *,
+.theme-sugar-time-jazz button[class*="bg-orange"],
+.theme-sugar-time-jazz button[class*="bg-orange"] *,
+.theme-sugar-time-jazz button[class*="bg-yellow"],
+.theme-sugar-time-jazz button[class*="bg-yellow"] *,
+.theme-sugar-time-jazz button[class*="bg-primary"],
+.theme-sugar-time-jazz button[class*="bg-primary"] *,
+[data-theme="hard-rock"] button[class*="bg-stone-200"],
+[data-theme="hard-rock"] button[class*="bg-stone-200"] *,
+[data-theme="hard-rock"] button[class*="bg-amber"],
+[data-theme="hard-rock"] button[class*="bg-amber"] *,
+[data-theme="hard-rock"] button[class*="bg-orange"],
+[data-theme="hard-rock"] button[class*="bg-orange"] *,
+[data-theme="hard-rock"] button[class*="bg-yellow"],
+[data-theme="hard-rock"] button[class*="bg-yellow"] *,
+[data-theme="hard-rock"] button[class*="bg-primary"],
+[data-theme="hard-rock"] button[class*="bg-primary"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-stone-200"],
+[data-theme="sugar-time-jazz"] button[class*="bg-stone-200"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-amber"],
+[data-theme="sugar-time-jazz"] button[class*="bg-amber"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-orange"],
+[data-theme="sugar-time-jazz"] button[class*="bg-orange"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-yellow"],
+[data-theme="sugar-time-jazz"] button[class*="bg-yellow"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-primary"],
+[data-theme="sugar-time-jazz"] button[class*="bg-primary"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-stone-200"],
+[data-theme-alias="hard-rock"] button[class*="bg-stone-200"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-amber"],
+[data-theme-alias="hard-rock"] button[class*="bg-amber"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-orange"],
+[data-theme-alias="hard-rock"] button[class*="bg-orange"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-yellow"],
+[data-theme-alias="hard-rock"] button[class*="bg-yellow"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-primary"],
+[data-theme-alias="hard-rock"] button[class*="bg-primary"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-stone-200"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-stone-200"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-amber"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-amber"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-orange"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-orange"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-yellow"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-yellow"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-primary"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-primary"] * {
+  color: #0f0d13 !important;
+  stroke: #0f0d13 !important;
+}
+
+/* ================================================================================
    FIX 2: SETTINGS PAGE CARDS & CONTAINERS PURPLE GLOW (FORCE DOM LEVEL)
    ================================================================================ */
-.theme-hard-rock #settings-page > div,
+.theme-hard-rock #settings-page > section,
 .theme-hard-rock #settings-page section,
 .theme-hard-rock .settings-page section,
-.theme-hard-rock .settings-container > div,
+.theme-hard-rock .settings-container > section,
 .theme-hard-rock .settings-container section,
-.theme-hard-rock [data-testid="settings-page"] > div,
+.theme-hard-rock [data-testid="settings-page"] > section,
 .theme-hard-rock [data-testid="settings-page"] section,
 .theme-hard-rock section[class*="settings"],
 .theme-hard-rock div[class*="pwa"],
@@ -2963,12 +3162,12 @@ div[class*="category-wrapper"] {
 .theme-hard-rock .settings-page [class*="section-box"],
 .theme-hard-rock .settings-page > div > div,
 .theme-hard-rock main > div > div[class*="rounded"],
-.theme-sugar-time-jazz #settings-page > div,
+.theme-sugar-time-jazz #settings-page > section,
 .theme-sugar-time-jazz #settings-page section,
 .theme-sugar-time-jazz .settings-page section,
-.theme-sugar-time-jazz .settings-container > div,
+.theme-sugar-time-jazz .settings-container > section,
 .theme-sugar-time-jazz .settings-container section,
-.theme-sugar-time-jazz [data-testid="settings-page"] > div,
+.theme-sugar-time-jazz [data-testid="settings-page"] > section,
 .theme-sugar-time-jazz [data-testid="settings-page"] section,
 .theme-sugar-time-jazz section[class*="settings"],
 .theme-sugar-time-jazz div[class*="pwa"],
@@ -2979,12 +3178,12 @@ div[class*="category-wrapper"] {
 .theme-sugar-time-jazz .settings-page [class*="section-box"],
 .theme-sugar-time-jazz .settings-page > div > div,
 .theme-sugar-time-jazz main > div > div[class*="rounded"],
-[data-theme="hard-rock"] #settings-page > div,
+[data-theme="hard-rock"] #settings-page > section,
 [data-theme="hard-rock"] #settings-page section,
 [data-theme="hard-rock"] .settings-page section,
-[data-theme="hard-rock"] .settings-container > div,
+[data-theme="hard-rock"] .settings-container > section,
 [data-theme="hard-rock"] .settings-container section,
-[data-theme="hard-rock"] [data-testid="settings-page"] > div,
+[data-theme="hard-rock"] [data-testid="settings-page"] > section,
 [data-theme="hard-rock"] [data-testid="settings-page"] section,
 [data-theme="hard-rock"] section[class*="settings"],
 [data-theme="hard-rock"] div[class*="pwa"],
@@ -2995,12 +3194,12 @@ div[class*="category-wrapper"] {
 [data-theme="hard-rock"] .settings-page [class*="section-box"],
 [data-theme="hard-rock"] .settings-page > div > div,
 [data-theme="hard-rock"] main > div > div[class*="rounded"],
-[data-theme="sugar-time-jazz"] #settings-page > div,
+[data-theme="sugar-time-jazz"] #settings-page > section,
 [data-theme="sugar-time-jazz"] #settings-page section,
 [data-theme="sugar-time-jazz"] .settings-page section,
-[data-theme="sugar-time-jazz"] .settings-container > div,
+[data-theme="sugar-time-jazz"] .settings-container > section,
 [data-theme="sugar-time-jazz"] .settings-container section,
-[data-theme="sugar-time-jazz"] [data-testid="settings-page"] > div,
+[data-theme="sugar-time-jazz"] [data-testid="settings-page"] > section,
 [data-theme="sugar-time-jazz"] [data-testid="settings-page"] section,
 [data-theme="sugar-time-jazz"] section[class*="settings"],
 [data-theme="sugar-time-jazz"] div[class*="pwa"],
@@ -3011,12 +3210,12 @@ div[class*="category-wrapper"] {
 [data-theme="sugar-time-jazz"] .settings-page [class*="section-box"],
 [data-theme="sugar-time-jazz"] .settings-page > div > div,
 [data-theme="sugar-time-jazz"] main > div > div[class*="rounded"],
-[data-theme-alias="hard-rock"] #settings-page > div,
+[data-theme-alias="hard-rock"] #settings-page > section,
 [data-theme-alias="hard-rock"] #settings-page section,
 [data-theme-alias="hard-rock"] .settings-page section,
-[data-theme-alias="hard-rock"] .settings-container > div,
+[data-theme-alias="hard-rock"] .settings-container > section,
 [data-theme-alias="hard-rock"] .settings-container section,
-[data-theme-alias="hard-rock"] [data-testid="settings-page"] > div,
+[data-theme-alias="hard-rock"] [data-testid="settings-page"] > section,
 [data-theme-alias="hard-rock"] [data-testid="settings-page"] section,
 [data-theme-alias="hard-rock"] section[class*="settings"],
 [data-theme-alias="hard-rock"] div[class*="pwa"],
@@ -3027,12 +3226,12 @@ div[class*="category-wrapper"] {
 [data-theme-alias="hard-rock"] .settings-page [class*="section-box"],
 [data-theme-alias="hard-rock"] .settings-page > div > div,
 [data-theme-alias="hard-rock"] main > div > div[class*="rounded"],
-[data-theme-alias="sugar-time-jazz"] #settings-page > div,
+[data-theme-alias="sugar-time-jazz"] #settings-page > section,
 [data-theme-alias="sugar-time-jazz"] #settings-page section,
 [data-theme-alias="sugar-time-jazz"] .settings-page section,
-[data-theme-alias="sugar-time-jazz"] .settings-container > div,
+[data-theme-alias="sugar-time-jazz"] .settings-container > section,
 [data-theme-alias="sugar-time-jazz"] .settings-container section,
-[data-theme-alias="sugar-time-jazz"] [data-testid="settings-page"] > div,
+[data-theme-alias="sugar-time-jazz"] [data-testid="settings-page"] > section,
 [data-theme-alias="sugar-time-jazz"] [data-testid="settings-page"] section,
 [data-theme-alias="sugar-time-jazz"] section[class*="settings"],
 [data-theme-alias="sugar-time-jazz"] div[class*="pwa"],
@@ -3047,6 +3246,79 @@ div[class*="category-wrapper"] {
   border: 1px solid rgba(168, 85, 247, 0.35) !important;
   background-color: rgba(22, 16, 32, 0.8) !important;
   border-radius: 1.5rem !important;
+}
+
+/* ================================================================================
+   STRIP CONTAINER GLOW & BORDER FROM TOP SETTINGS HEADER
+   ================================================================================ */
+.theme-hard-rock .settings-page header,
+.theme-hard-rock .settings-container > header,
+.theme-hard-rock .settings-container > div:first-child,
+.theme-hard-rock [class*="settings-header"],
+.theme-hard-rock [class*="settings-title-container"],
+.theme-sugar-time-jazz .settings-page header,
+.theme-sugar-time-jazz .settings-container > header,
+.theme-sugar-time-jazz .settings-container > div:first-child,
+.theme-sugar-time-jazz [class*="settings-header"],
+.theme-sugar-time-jazz [class*="settings-title-container"],
+[data-theme="hard-rock"] .settings-page header,
+[data-theme="hard-rock"] .settings-container > header,
+[data-theme="hard-rock"] .settings-container > div:first-child,
+[data-theme="hard-rock"] [class*="settings-header"],
+[data-theme="hard-rock"] [class*="settings-title-container"],
+[data-theme="sugar-time-jazz"] .settings-page header,
+[data-theme="sugar-time-jazz"] .settings-container > header,
+[data-theme="sugar-time-jazz"] .settings-container > div:first-child,
+[data-theme="sugar-time-jazz"] [class*="settings-header"],
+[data-theme="sugar-time-jazz"] [class*="settings-title-container"],
+[data-theme-alias="hard-rock"] .settings-page header,
+[data-theme-alias="hard-rock"] .settings-container > header,
+[data-theme-alias="hard-rock"] .settings-container > div:first-child,
+[data-theme-alias="hard-rock"] [class*="settings-header"],
+[data-theme-alias="hard-rock"] [class*="settings-title-container"],
+[data-theme-alias="sugar-time-jazz"] .settings-page header,
+[data-theme-alias="sugar-time-jazz"] .settings-container > header,
+[data-theme-alias="sugar-time-jazz"] .settings-container > div:first-child,
+[data-theme-alias="sugar-time-jazz"] [class*="settings-header"],
+[data-theme-alias="sugar-time-jazz"] [class*="settings-title-container"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Keep text readable without container box */
+.theme-hard-rock .settings-page header h1,
+.theme-hard-rock [class*="settings-header"] h1,
+.theme-sugar-time-jazz .settings-page header h1,
+.theme-sugar-time-jazz [class*="settings-header"] h1,
+[data-theme="hard-rock"] .settings-page header h1,
+[data-theme="hard-rock"] [class*="settings-header"] h1,
+[data-theme="sugar-time-jazz"] .settings-page header h1,
+[data-theme="sugar-time-jazz"] [class*="settings-header"] h1,
+[data-theme-alias="hard-rock"] .settings-page header h1,
+[data-theme-alias="hard-rock"] [class*="settings-header"] h1,
+[data-theme-alias="sugar-time-jazz"] .settings-page header h1,
+[data-theme-alias="sugar-time-jazz"] [class*="settings-header"] h1 {
+  color: #f3e8ff !important;
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.8) !important;
+}
+
+.theme-hard-rock .settings-page header p,
+.theme-hard-rock [class*="settings-header"] p,
+.theme-sugar-time-jazz .settings-page header p,
+.theme-sugar-time-jazz [class*="settings-header"] p,
+[data-theme="hard-rock"] .settings-page header p,
+[data-theme="hard-rock"] [class*="settings-header"] p,
+[data-theme="sugar-time-jazz"] .settings-page header p,
+[data-theme="sugar-time-jazz"] [class*="settings-header"] p,
+[data-theme-alias="hard-rock"] .settings-page header p,
+[data-theme-alias="hard-rock"] [class*="settings-header"] p,
+[data-theme-alias="sugar-time-jazz"] .settings-page header p,
+[data-theme-alias="sugar-time-jazz"] [class*="settings-header"] p {
+  color: #d8b4fe !important;
+  text-shadow: none !important;
 }
 
 /* ================================================================================
