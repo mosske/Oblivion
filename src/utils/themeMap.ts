@@ -257,7 +257,7 @@ export class ThemeRegistry {
     },
     "sugar-time-jazz": {
       id: "sugar-time-jazz",
-      name: "Sugar Time Jazz",
+      name: "Hard Rock",
       description: "Warm beige/tan to dark chocolate gradients, purple back-glow accents, frosted glass panels, and crisp cream typography.",
       category: "Dark",
       previewGradient: "from-[#120e0b] via-[#1a1410] to-[#0d0a08]",

@@ -701,15 +701,15 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
 
   "sugar-time-jazz": {
     id: "sugar-time-jazz",
-    name: "Sugar Time Jazz",
+    name: "Hard Rock",
     subtitle: "Warm Tan to Dark Chocolate Gradients, Purple Back-Glow & Frosted Glass",
-    badge: "SUGAR TIME JAZZ",
+    badge: "HARD ROCK",
     num: "10",
     themePreset: "sugar-time-jazz",
     playerLayout: "floating-dock",
     isSugarTimeJazz: true,
     description:
-      "A soulful, warm late-night jazz lounge aesthetic featuring rich dark chocolate and warm tan gradients, frosted glass panels, high-contrast cream typography, and subtle ambient purple back-glow.",
+      "A soulful, high-energy Hard Rock aesthetic featuring rich dark chocolate and warm tan gradients, frosted glass panels, high-contrast cream typography, and subtle ambient purple back-glow.",
     features: [
       "Warm beige/tan to dark chocolate and espresso gradient canvas",
       "Frosted glass cards & modals with 16px blur and warm tan borders",
@@ -750,9 +750,9 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     bannerGradient: "from-[#d4b496]/20 via-[#9333ea]/15 to-transparent",
     mockup: {
       bannerGradient: "from-[#120e0b] via-[#1a1410] to-[#0d0a08]",
-      heroTitle: "Sugar Time Jazz",
+      heroTitle: "Hard Rock",
       heroSubtitle: "Warm Tan, Dark Chocolate & Purple Glow",
-      chipLabels: ["Jazz Lounge", "Purple Glow", "Warm Beige", "Lossless"],
+      chipLabels: ["Hard Rock", "Purple Glow", "Warm Beige", "Lossless"],
       dockStyle: "bg-[rgba(28,22,17,0.75)] backdrop-blur-2xl border border-[rgba(212,180,150,0.2)] shadow-2xl rounded-full",
     },
 

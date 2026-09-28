@@ -4591,24 +4591,24 @@ div[class*="category-wrapper"] {
 /* ================================================================================
    FIX 2: SUGAR TIME JAZZ - FORCE PURPLE BACK-GLOW ON CARDS & SECTIONS
    ================================================================================ */
-/* All Card Components, Section Blocks & Grid Tiles */
-.theme-sugar-time-jazz main div[class*="bg-"],
-.theme-sugar-time-jazz section,
-.theme-sugar-time-jazz [class*="card"],
-.theme-sugar-time-jazz [class*="Card"],
+/* All Card Components, Section Blocks & Grid Tiles (excluding fully transparent containers) */
+.theme-sugar-time-jazz main div[class*="bg-"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
+.theme-sugar-time-jazz section:not(.bg-transparent):not([class*="bg-transparent"]),
+.theme-sugar-time-jazz [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
+.theme-sugar-time-jazz [class*="Card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
 .theme-sugar-time-jazz div[role="dialog"],
-.theme-sugar-time-jazz .explore-page main > div > div,
-.theme-sugar-time-jazz .library-page main > div > div,
-.theme-sugar-time-jazz .settings-page section,
+.theme-sugar-time-jazz .explore-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
+.theme-sugar-time-jazz .library-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
+.theme-sugar-time-jazz .settings-page section:not(.bg-transparent):not([class*="bg-transparent"]),
 .theme-sugar-time-jazz .modal-content,
-[data-theme="sugar-time-jazz"] main div[class*="bg-"],
-[data-theme="sugar-time-jazz"] section,
-[data-theme="sugar-time-jazz"] [class*="card"],
-[data-theme="sugar-time-jazz"] [class*="Card"],
+[data-theme="sugar-time-jazz"] main div[class*="bg-"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
+[data-theme="sugar-time-jazz"] section:not(.bg-transparent):not([class*="bg-transparent"]),
+[data-theme="sugar-time-jazz"] [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
+[data-theme="sugar-time-jazz"] [class*="Card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
 [data-theme="sugar-time-jazz"] div[role="dialog"],
-[data-theme="sugar-time-jazz"] .explore-page main > div > div,
-[data-theme="sugar-time-jazz"] .library-page main > div > div,
-[data-theme="sugar-time-jazz"] .settings-page section,
+[data-theme="sugar-time-jazz"] .explore-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
+[data-theme="sugar-time-jazz"] .library-page main > div > div:not(.bg-transparent):not([class*="bg-transparent"]),
+[data-theme="sugar-time-jazz"] .settings-page section:not(.bg-transparent):not([class*="bg-transparent"]),
 [data-theme="sugar-time-jazz"] .modal-content {
   box-shadow: 0 0 20px rgba(147, 51, 234, 0.25), 0 0 2px rgba(192, 132, 252, 0.2) !important;
   border: 1px solid rgba(168, 85, 247, 0.2) !important;
@@ -4756,29 +4756,90 @@ div[class*="category-wrapper"] {
   filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.85)) !important;
 }
 
-/* General Back-glow for Cards, Content Containers, and Panels */
-.theme-sugar-time-jazz .card,
-.theme-sugar-time-jazz .shelf-card,
-.theme-sugar-time-jazz [class*="card"],
-.theme-sugar-time-jazz .glass-panel,
+.theme-sugar-time-jazz .jazz-emoji-icon,
+.theme-sugar-time-jazz .emoji-icon,
+[data-theme="sugar-time-jazz"] .jazz-emoji-icon,
+[data-theme="sugar-time-jazz"] .emoji-icon {
+  font-style: normal !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.85)) !important;
+}
+
+/* General Back-glow for Cards, Content Containers, and Panels (excluding transparent) */
+.theme-sugar-time-jazz .card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
+.theme-sugar-time-jazz .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
+.theme-sugar-time-jazz [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
+.theme-sugar-time-jazz .glass-panel:not(.bg-transparent):not([class*="bg-transparent"]),
 .theme-sugar-time-jazz .mini-player,
-[data-theme="sugar-time-jazz"] .card,
-[data-theme="sugar-time-jazz"] .shelf-card,
-[data-theme="sugar-time-jazz"] [class*="card"],
-[data-theme="sugar-time-jazz"] .glass-panel,
+[data-theme="sugar-time-jazz"] .card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
+[data-theme="sugar-time-jazz"] .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]),
+[data-theme="sugar-time-jazz"] [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):not([class*="bg-opacity-0"]):not([class*="border-transparent"]),
+[data-theme="sugar-time-jazz"] .glass-panel:not(.bg-transparent):not([class*="bg-transparent"]),
 [data-theme="sugar-time-jazz"] .mini-player {
   box-shadow: var(--purple-ambient-glow) !important;
   border: 1px solid rgba(212, 180, 150, 0.2) !important;
 }
 
-.theme-sugar-time-jazz .card:hover,
-.theme-sugar-time-jazz .shelf-card:hover,
-.theme-sugar-time-jazz [class*="card"]:hover,
-[data-theme="sugar-time-jazz"] .card:hover,
-[data-theme="sugar-time-jazz"] .shelf-card:hover,
-[data-theme="sugar-time-jazz"] [class*="card"]:hover {
+.theme-sugar-time-jazz .card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
+.theme-sugar-time-jazz .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
+.theme-sugar-time-jazz [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):hover,
+[data-theme="sugar-time-jazz"] .card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
+[data-theme="sugar-time-jazz"] .shelf-card:not(.bg-transparent):not([class*="bg-transparent"]):hover,
+[data-theme="sugar-time-jazz"] [class*="card"]:not(.bg-transparent):not([class*="bg-transparent"]):hover {
   box-shadow: var(--purple-ambient-glow-strong), inset 0 0 15px rgba(168, 85, 247, 0.15) !important;
   border: 1px solid rgba(212, 180, 150, 0.35) !important;
+}
+
+/* ================================================================================
+   CRITICAL: REMOVE PURPLE GLOW & BORDERS FOR FULLY TRANSPARENT CARDS & CONTAINERS
+   ================================================================================ */
+.theme-sugar-time-jazz .bg-transparent,
+.theme-sugar-time-jazz [class*="bg-transparent"],
+.theme-sugar-time-jazz [class*="bg-opacity-0"],
+.theme-sugar-time-jazz div.bg-transparent,
+.theme-sugar-time-jazz .card.bg-transparent,
+.theme-sugar-time-jazz [class*="card"].bg-transparent,
+.theme-sugar-time-jazz [class*="card"][class*="bg-transparent"],
+.theme-sugar-time-jazz [class*="Card"].bg-transparent,
+.theme-sugar-time-jazz [class*="Card"][class*="bg-transparent"],
+.theme-sugar-time-jazz .shelf-card.bg-transparent,
+.theme-sugar-time-jazz .glass-panel.bg-transparent,
+.theme-sugar-time-jazz [style*="background: transparent"],
+.theme-sugar-time-jazz [style*="background-color: transparent"],
+.theme-sugar-time-jazz [style*="background:none"],
+.theme-sugar-time-jazz [style*="background-color: rgba(0, 0, 0, 0)"],
+[data-theme="sugar-time-jazz"] .bg-transparent,
+[data-theme="sugar-time-jazz"] [class*="bg-transparent"],
+[data-theme="sugar-time-jazz"] [class*="bg-opacity-0"],
+[data-theme="sugar-time-jazz"] div.bg-transparent,
+[data-theme="sugar-time-jazz"] .card.bg-transparent,
+[data-theme="sugar-time-jazz"] [class*="card"].bg-transparent,
+[data-theme="sugar-time-jazz"] [class*="card"][class*="bg-transparent"],
+[data-theme="sugar-time-jazz"] [class*="Card"].bg-transparent,
+[data-theme="sugar-time-jazz"] [class*="Card"][class*="bg-transparent"],
+[data-theme="sugar-time-jazz"] .shelf-card.bg-transparent,
+[data-theme="sugar-time-jazz"] .glass-panel.bg-transparent,
+[data-theme="sugar-time-jazz"] [style*="background: transparent"],
+[data-theme="sugar-time-jazz"] [style*="background-color: transparent"],
+[data-theme="sugar-time-jazz"] [style*="background:none"],
+[data-theme="sugar-time-jazz"] [style*="background-color: rgba(0, 0, 0, 0)"] {
+  box-shadow: none !important;
+  border-color: transparent !important;
+  filter: none !important;
+}
+
+.theme-sugar-time-jazz .bg-transparent:hover,
+.theme-sugar-time-jazz [class*="bg-transparent"]:hover,
+.theme-sugar-time-jazz [class*="card"].bg-transparent:hover,
+.theme-sugar-time-jazz [class*="card"][class*="bg-transparent"]:hover,
+[data-theme="sugar-time-jazz"] .bg-transparent:hover,
+[data-theme="sugar-time-jazz"] [class*="bg-transparent"]:hover,
+[data-theme="sugar-time-jazz"] [class*="card"].bg-transparent:hover,
+[data-theme="sugar-time-jazz"] [class*="card"][class*="bg-transparent"]:hover {
+  box-shadow: none !important;
 }
 
 /* Primary Action Buttons Ambient Glow */
