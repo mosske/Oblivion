@@ -2797,55 +2797,293 @@ div[class*="category-wrapper"] {
 }
 
 /* ================================================================================
-/* ================================================================================
-   FIX 1: CONTRAST FIX FOR LIGHT BUTTONS (SEARCH & SIGN IN WITH GOOGLE)
+   STRICT SURGICAL OVERRIDE FOR ALL LIGHT BEIGE / ACTIVE GRADIENT BUTTONS
    ================================================================================ */
+
+/* 1. FORCE DARK TEXT & ICONS ON ALL LIGHT/BEIGE/CREAM BUTTONS (EVERY CHILD ELEMENT) */
 .theme-hard-rock button[class*="bg-stone"],
 .theme-hard-rock button[class*="bg-amber"],
-.theme-hard-rock button[class*="bg-orange"],
 .theme-hard-rock button[class*="bg-yellow"],
+.theme-hard-rock button[class*="bg-orange"],
 .theme-hard-rock button[class*="bg-primary"],
-.theme-hard-rock .bg-stone-200,
-.theme-hard-rock .bg-stone-300,
+.theme-hard-rock button[class*="bg-cream"],
+.theme-hard-rock button[class*="bg-fuchsia-200"],
+.theme-hard-rock button[class*="bg-purple-200"],
 .theme-sugar-time-jazz button[class*="bg-stone"],
 .theme-sugar-time-jazz button[class*="bg-amber"],
-.theme-sugar-time-jazz button[class*="bg-orange"],
 .theme-sugar-time-jazz button[class*="bg-yellow"],
+.theme-sugar-time-jazz button[class*="bg-orange"],
 .theme-sugar-time-jazz button[class*="bg-primary"],
-.theme-sugar-time-jazz .bg-stone-200,
-.theme-sugar-time-jazz .bg-stone-300,
+.theme-sugar-time-jazz button[class*="bg-cream"],
+.theme-sugar-time-jazz button[class*="bg-fuchsia-200"],
+.theme-sugar-time-jazz button[class*="bg-purple-200"],
 [data-theme="hard-rock"] button[class*="bg-stone"],
 [data-theme="hard-rock"] button[class*="bg-amber"],
-[data-theme="hard-rock"] button[class*="bg-orange"],
 [data-theme="hard-rock"] button[class*="bg-yellow"],
+[data-theme="hard-rock"] button[class*="bg-orange"],
 [data-theme="hard-rock"] button[class*="bg-primary"],
-[data-theme="hard-rock"] .bg-stone-200,
-[data-theme="hard-rock"] .bg-stone-300,
+[data-theme="hard-rock"] button[class*="bg-cream"],
+[data-theme="hard-rock"] button[class*="bg-fuchsia-200"],
+[data-theme="hard-rock"] button[class*="bg-purple-200"],
 [data-theme="sugar-time-jazz"] button[class*="bg-stone"],
 [data-theme="sugar-time-jazz"] button[class*="bg-amber"],
-[data-theme="sugar-time-jazz"] button[class*="bg-orange"],
 [data-theme="sugar-time-jazz"] button[class*="bg-yellow"],
+[data-theme="sugar-time-jazz"] button[class*="bg-orange"],
 [data-theme="sugar-time-jazz"] button[class*="bg-primary"],
-[data-theme="sugar-time-jazz"] .bg-stone-200,
-[data-theme="sugar-time-jazz"] .bg-stone-300,
+[data-theme="sugar-time-jazz"] button[class*="bg-cream"],
+[data-theme="sugar-time-jazz"] button[class*="bg-fuchsia-200"],
+[data-theme="sugar-time-jazz"] button[class*="bg-purple-200"],
 [data-theme-alias="hard-rock"] button[class*="bg-stone"],
 [data-theme-alias="hard-rock"] button[class*="bg-amber"],
-[data-theme-alias="hard-rock"] button[class*="bg-orange"],
 [data-theme-alias="hard-rock"] button[class*="bg-yellow"],
+[data-theme-alias="hard-rock"] button[class*="bg-orange"],
 [data-theme-alias="hard-rock"] button[class*="bg-primary"],
-[data-theme-alias="hard-rock"] .bg-stone-200,
-[data-theme-alias="hard-rock"] .bg-stone-300,
+[data-theme-alias="hard-rock"] button[class*="bg-cream"],
+[data-theme-alias="hard-rock"] button[class*="bg-fuchsia-200"],
+[data-theme-alias="hard-rock"] button[class*="bg-purple-200"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-stone"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-amber"],
-[data-theme-alias="sugar-time-jazz"] button[class*="bg-orange"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-yellow"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-orange"],
 [data-theme-alias="sugar-time-jazz"] button[class*="bg-primary"],
-[data-theme-alias="sugar-time-jazz"] .bg-stone-200,
-[data-theme-alias="sugar-time-jazz"] .bg-stone-300 {
-  color: #0f0d13 !important; /* Deep charcoal/black text */
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-cream"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-fuchsia-200"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-purple-200"] {
+  color: #0f0d13 !important;
   font-weight: 700 !important;
 }
 
+/* Target EVERY single child node (spans, svgs, paths) inside these light buttons */
+.theme-hard-rock button[class*="bg-stone"] *,
+.theme-hard-rock button[class*="bg-amber"] *,
+.theme-hard-rock button[class*="bg-yellow"] *,
+.theme-hard-rock button[class*="bg-orange"] *,
+.theme-hard-rock button[class*="bg-primary"] *,
+.theme-hard-rock button[class*="bg-cream"] *,
+.theme-hard-rock button[class*="bg-fuchsia-200"] *,
+.theme-hard-rock button[class*="bg-purple-200"] *,
+.theme-sugar-time-jazz button[class*="bg-stone"] *,
+.theme-sugar-time-jazz button[class*="bg-amber"] *,
+.theme-sugar-time-jazz button[class*="bg-yellow"] *,
+.theme-sugar-time-jazz button[class*="bg-orange"] *,
+.theme-sugar-time-jazz button[class*="bg-primary"] *,
+.theme-sugar-time-jazz button[class*="bg-cream"] *,
+.theme-sugar-time-jazz button[class*="bg-fuchsia-200"] *,
+.theme-sugar-time-jazz button[class*="bg-purple-200"] *,
+[data-theme="hard-rock"] button[class*="bg-stone"] *,
+[data-theme="hard-rock"] button[class*="bg-amber"] *,
+[data-theme="hard-rock"] button[class*="bg-yellow"] *,
+[data-theme="hard-rock"] button[class*="bg-orange"] *,
+[data-theme="hard-rock"] button[class*="bg-primary"] *,
+[data-theme="hard-rock"] button[class*="bg-cream"] *,
+[data-theme="hard-rock"] button[class*="bg-fuchsia-200"] *,
+[data-theme="hard-rock"] button[class*="bg-purple-200"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-stone"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-amber"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-yellow"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-orange"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-primary"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-cream"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-fuchsia-200"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-purple-200"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-stone"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-amber"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-yellow"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-orange"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-primary"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-cream"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-fuchsia-200"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-purple-200"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-stone"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-amber"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-yellow"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-orange"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-primary"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-cream"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-fuchsia-200"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-purple-200"] * {
+  color: #0f0d13 !important;
+  fill: #0f0d13 !important;
+  stroke: #0f0d13 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+
+/* 2. SPECIFICALLY TARGET ACTIVE TABS & PILLS WITH GRADIENTS ("All", "New Releases", "Audio") */
+.theme-hard-rock [class*="tab"][class*="active"],
+.theme-hard-rock [class*="pill"][class*="active"],
+.theme-hard-rock button[data-state="active"],
+.theme-hard-rock button[aria-selected="true"],
+.theme-hard-rock button[class*="bg-gradient"],
+.theme-sugar-time-jazz [class*="tab"][class*="active"],
+.theme-sugar-time-jazz [class*="pill"][class*="active"],
+.theme-sugar-time-jazz button[data-state="active"],
+.theme-sugar-time-jazz button[aria-selected="true"],
+.theme-sugar-time-jazz button[class*="bg-gradient"],
+[data-theme="hard-rock"] [class*="tab"][class*="active"],
+[data-theme="hard-rock"] [class*="pill"][class*="active"],
+[data-theme="hard-rock"] button[data-state="active"],
+[data-theme="hard-rock"] button[aria-selected="true"],
+[data-theme="hard-rock"] button[class*="bg-gradient"],
+[data-theme="sugar-time-jazz"] [class*="tab"][class*="active"],
+[data-theme="sugar-time-jazz"] [class*="pill"][class*="active"],
+[data-theme="sugar-time-jazz"] button[data-state="active"],
+[data-theme="sugar-time-jazz"] button[aria-selected="true"],
+[data-theme="sugar-time-jazz"] button[class*="bg-gradient"],
+[data-theme-alias="hard-rock"] [class*="tab"][class*="active"],
+[data-theme-alias="hard-rock"] [class*="pill"][class*="active"],
+[data-theme-alias="hard-rock"] button[data-state="active"],
+[data-theme-alias="hard-rock"] button[aria-selected="true"],
+[data-theme-alias="hard-rock"] button[class*="bg-gradient"],
+[data-theme-alias="sugar-time-jazz"] [class*="tab"][class*="active"],
+[data-theme-alias="sugar-time-jazz"] [class*="pill"][class*="active"],
+[data-theme-alias="sugar-time-jazz"] button[data-state="active"],
+[data-theme-alias="sugar-time-jazz"] button[aria-selected="true"],
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-gradient"] {
+  color: #0f0d13 !important;
+  font-weight: 700 !important;
+}
+
+.theme-hard-rock [class*="tab"][class*="active"] *,
+.theme-hard-rock [class*="pill"][class*="active"] *,
+.theme-hard-rock button[data-state="active"] *,
+.theme-hard-rock button[aria-selected="true"] *,
+.theme-hard-rock button[class*="bg-gradient"] *,
+.theme-sugar-time-jazz [class*="tab"][class*="active"] *,
+.theme-sugar-time-jazz [class*="pill"][class*="active"] *,
+.theme-sugar-time-jazz button[data-state="active"] *,
+.theme-sugar-time-jazz button[aria-selected="true"] *,
+.theme-sugar-time-jazz button[class*="bg-gradient"] *,
+[data-theme="hard-rock"] [class*="tab"][class*="active"] *,
+[data-theme="hard-rock"] [class*="pill"][class*="active"] *,
+[data-theme="hard-rock"] button[data-state="active"] *,
+[data-theme="hard-rock"] button[aria-selected="true"] *,
+[data-theme="hard-rock"] button[class*="bg-gradient"] *,
+[data-theme="sugar-time-jazz"] [class*="tab"][class*="active"] *,
+[data-theme="sugar-time-jazz"] [class*="pill"][class*="active"] *,
+[data-theme="sugar-time-jazz"] button[data-state="active"] *,
+[data-theme="sugar-time-jazz"] button[aria-selected="true"] *,
+[data-theme="sugar-time-jazz"] button[class*="bg-gradient"] *,
+[data-theme-alias="hard-rock"] [class*="tab"][class*="active"] *,
+[data-theme-alias="hard-rock"] [class*="pill"][class*="active"] *,
+[data-theme-alias="hard-rock"] button[data-state="active"] *,
+[data-theme-alias="hard-rock"] button[aria-selected="true"] *,
+[data-theme-alias="hard-rock"] button[class*="bg-gradient"] *,
+[data-theme-alias="sugar-time-jazz"] [class*="tab"][class*="active"] *,
+[data-theme-alias="sugar-time-jazz"] [class*="pill"][class*="active"] *,
+[data-theme-alias="sugar-time-jazz"] button[data-state="active"] *,
+[data-theme-alias="sugar-time-jazz"] button[aria-selected="true"] *,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-gradient"] * {
+  color: #0f0d13 !important;
+  fill: #0f0d13 !important;
+  stroke: #0f0d13 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+
+/* 3. CENTER PLAY BUTTON IN BOTTOM PLAYER DOCK */
+.theme-hard-rock [class*="player"] button[class*="rounded-full"][class*="bg-"] *,
+.theme-hard-rock [class*="dock"] button[class*="rounded-full"][class*="bg-"] *,
+.theme-sugar-time-jazz [class*="player"] button[class*="rounded-full"][class*="bg-"] *,
+.theme-sugar-time-jazz [class*="dock"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme="hard-rock"] [class*="player"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme="hard-rock"] [class*="dock"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme="sugar-time-jazz"] [class*="player"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme="sugar-time-jazz"] [class*="dock"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme-alias="hard-rock"] [class*="player"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme-alias="hard-rock"] [class*="dock"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button[class*="rounded-full"][class*="bg-"] *,
+[data-theme-alias="sugar-time-jazz"] [class*="dock"] button[class*="rounded-full"][class*="bg-"] * {
+  color: #0f0d13 !important;
+  fill: #0f0d13 !important;
+  stroke: #0f0d13 !important;
+  opacity: 1 !important;
+}
+
+/* 4. SPECIFIC ACTION BUTTONS & CTAS */
+.theme-hard-rock .btn-primary-action,
+.theme-hard-rock #playlist-play-all-btn,
+.theme-hard-rock #identify-music-btn,
+.theme-hard-rock #install-app-android-btn,
+.theme-hard-rock #top-header-search-btn,
+.theme-hard-rock #top-header-signin-btn,
+.theme-sugar-time-jazz .btn-primary-action,
+.theme-sugar-time-jazz #playlist-play-all-btn,
+.theme-sugar-time-jazz #identify-music-btn,
+.theme-sugar-time-jazz #install-app-android-btn,
+.theme-sugar-time-jazz #top-header-search-btn,
+.theme-sugar-time-jazz #top-header-signin-btn,
+[data-theme="hard-rock"] .btn-primary-action,
+[data-theme="hard-rock"] #playlist-play-all-btn,
+[data-theme="hard-rock"] #identify-music-btn,
+[data-theme="hard-rock"] #install-app-android-btn,
+[data-theme="hard-rock"] #top-header-search-btn,
+[data-theme="hard-rock"] #top-header-signin-btn,
+[data-theme="sugar-time-jazz"] .btn-primary-action,
+[data-theme="sugar-time-jazz"] #playlist-play-all-btn,
+[data-theme="sugar-time-jazz"] #identify-music-btn,
+[data-theme="sugar-time-jazz"] #install-app-android-btn,
+[data-theme="sugar-time-jazz"] #top-header-search-btn,
+[data-theme="sugar-time-jazz"] #top-header-signin-btn,
+[data-theme-alias="hard-rock"] .btn-primary-action,
+[data-theme-alias="hard-rock"] #playlist-play-all-btn,
+[data-theme-alias="hard-rock"] #identify-music-btn,
+[data-theme-alias="hard-rock"] #install-app-android-btn,
+[data-theme-alias="hard-rock"] #top-header-search-btn,
+[data-theme-alias="hard-rock"] #top-header-signin-btn,
+[data-theme-alias="sugar-time-jazz"] .btn-primary-action,
+[data-theme-alias="sugar-time-jazz"] #playlist-play-all-btn,
+[data-theme-alias="sugar-time-jazz"] #identify-music-btn,
+[data-theme-alias="sugar-time-jazz"] #install-app-android-btn,
+[data-theme-alias="sugar-time-jazz"] #top-header-search-btn,
+[data-theme-alias="sugar-time-jazz"] #top-header-signin-btn {
+  color: #0f0d13 !important;
+  font-weight: 700 !important;
+}
+
+.theme-hard-rock .btn-primary-action *,
+.theme-hard-rock #playlist-play-all-btn *,
+.theme-hard-rock #identify-music-btn *,
+.theme-hard-rock #install-app-android-btn *,
+.theme-hard-rock #top-header-search-btn *,
+.theme-hard-rock #top-header-signin-btn *,
+.theme-sugar-time-jazz .btn-primary-action *,
+.theme-sugar-time-jazz #playlist-play-all-btn *,
+.theme-sugar-time-jazz #identify-music-btn *,
+.theme-sugar-time-jazz #install-app-android-btn *,
+.theme-sugar-time-jazz #top-header-search-btn *,
+.theme-sugar-time-jazz #top-header-signin-btn *,
+[data-theme="hard-rock"] .btn-primary-action *,
+[data-theme="hard-rock"] #playlist-play-all-btn *,
+[data-theme="hard-rock"] #identify-music-btn *,
+[data-theme="hard-rock"] #install-app-android-btn *,
+[data-theme="hard-rock"] #top-header-search-btn *,
+[data-theme="hard-rock"] #top-header-signin-btn *,
+[data-theme="sugar-time-jazz"] .btn-primary-action *,
+[data-theme="sugar-time-jazz"] #playlist-play-all-btn *,
+[data-theme="sugar-time-jazz"] #identify-music-btn *,
+[data-theme="sugar-time-jazz"] #install-app-android-btn *,
+[data-theme="sugar-time-jazz"] #top-header-search-btn *,
+[data-theme="sugar-time-jazz"] #top-header-signin-btn *,
+[data-theme-alias="hard-rock"] .btn-primary-action *,
+[data-theme-alias="hard-rock"] #playlist-play-all-btn *,
+[data-theme-alias="hard-rock"] #identify-music-btn *,
+[data-theme-alias="hard-rock"] #install-app-android-btn *,
+[data-theme-alias="hard-rock"] #top-header-search-btn *,
+[data-theme-alias="hard-rock"] #top-header-signin-btn *,
+[data-theme-alias="sugar-time-jazz"] .btn-primary-action *,
+[data-theme-alias="sugar-time-jazz"] #playlist-play-all-btn *,
+[data-theme-alias="sugar-time-jazz"] #identify-music-btn *,
+[data-theme-alias="sugar-time-jazz"] #install-app-android-btn *,
+[data-theme-alias="sugar-time-jazz"] #top-header-search-btn *,
+[data-theme-alias="sugar-time-jazz"] #top-header-signin-btn * {
+  color: #0f0d13 !important;
+  stroke: #0f0d13 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+
+/* 6. Top Header Search & Sign In Buttons */
 .theme-hard-rock header button,
 .theme-hard-rock [class*="search-button"],
 .theme-hard-rock [class*="google-btn"],
@@ -2895,7 +3133,7 @@ div[class*="category-wrapper"] {
 [data-theme-alias="sugar-time-jazz"] #library-signin-prompt-btn,
 [data-theme-alias="sugar-time-jazz"] #auth-modal-google-btn {
   color: #0f0d13 !important;
-  background-color: #f3e8ff !important; /* Premium light purple accent */
+  background-color: #f3e8ff !important;
   font-weight: 700 !important;
 }
 
