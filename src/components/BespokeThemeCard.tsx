@@ -531,8 +531,9 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
             </span>
             <button
               type="button"
+              data-settings-control="interactive-swatch-toggle"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-[10px] font-bold text-pink-600 hover:text-pink-700 flex items-center gap-1 transition-colors bg-pink-50 hover:bg-pink-100 px-2 py-0.5 rounded-full border border-pink-200"
+              className="interactive-swatch-btn text-[10px] font-bold text-pink-600 hover:text-pink-700 flex items-center gap-1 transition-colors bg-pink-50 hover:bg-pink-100 px-2 py-0.5 rounded-full border border-pink-200"
             >
               {isExpanded ? (
                 <>
@@ -979,8 +980,10 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
             <div className="flex items-center bg-zinc-100 p-0.5 rounded-lg border border-zinc-200 shrink-0">
               <button
                 type="button"
+                data-settings-control="contrast-mode-auto"
+                data-active={contrastMode === "auto" ? "true" : "false"}
                 onClick={() => handleSetContrastMode("auto")}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${contrastMode === "auto" ? "active-contrast-mode " : ""}${
                   contrastMode === "auto"
                     ? "bg-white text-zinc-900 shadow-sm border border-zinc-200/80"
                     : "text-zinc-500 hover:text-zinc-800"
@@ -990,6 +993,8 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
               </button>
               <button
                 type="button"
+                data-settings-control="contrast-mode-manual"
+                data-active={contrastMode === "manual" ? "true" : "false"}
                 onClick={() => handleSetContrastMode("manual")}
                 className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
                   contrastMode === "manual"

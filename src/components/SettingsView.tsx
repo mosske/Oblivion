@@ -720,8 +720,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     key={size}
                     type="button"
+                    data-settings-control="lyrics-font-size"
+                    data-selected={isSelected ? "true" : "false"}
                     onClick={() => onUpdateSettings({ lyricsFontSize: size })}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${isSelected ? "active-lyrics-size-btn " : ""}${
                       isSelected
                         ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                         : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
@@ -742,8 +744,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
+                data-settings-control="lyrics-alignment"
+                data-selected={(settings.lyricsAlignment || "left") === "left" ? "true" : "false"}
                 onClick={() => onUpdateSettings({ lyricsAlignment: "left" })}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${(settings.lyricsAlignment || "left") === "left" ? "active-lyrics-alignment-btn " : ""}${
                   (settings.lyricsAlignment || "left") === "left"
                     ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                     : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
@@ -754,8 +758,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
               <button
                 type="button"
+                data-settings-control="lyrics-alignment"
+                data-selected={settings.lyricsAlignment === "center" ? "true" : "false"}
                 onClick={() => onUpdateSettings({ lyricsAlignment: "center" })}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${settings.lyricsAlignment === "center" ? "active-lyrics-alignment-btn " : ""}${
                   settings.lyricsAlignment === "center"
                     ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                     : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
