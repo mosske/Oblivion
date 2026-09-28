@@ -983,26 +983,28 @@ export const BespokeThemeCard: React.FC<BespokeThemeCardProps> = ({
                 data-settings-control="contrast-mode-auto"
                 data-active={contrastMode === "auto" ? "true" : "false"}
                 onClick={() => handleSetContrastMode("auto")}
+                style={contrastMode === "auto" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : { color: "#6b7280" }}
                 className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${contrastMode === "auto" ? "active-contrast-mode " : ""}${
                   contrastMode === "auto"
-                    ? "bg-white text-zinc-900 shadow-sm border border-zinc-200/80"
-                    : "text-zinc-500 hover:text-zinc-800"
+                    ? "bg-white shadow-sm border border-zinc-200/80"
+                    : "hover:text-zinc-800"
                 }`}
               >
-                Auto (WCAG)
+                <span style={contrastMode === "auto" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : { color: "#6b7280" }}>Auto (WCAG)</span>
               </button>
               <button
                 type="button"
                 data-settings-control="contrast-mode-manual"
                 data-active={contrastMode === "manual" ? "true" : "false"}
                 onClick={() => handleSetContrastMode("manual")}
+                style={contrastMode === "manual" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : { color: "#6b7280" }}
                 className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
                   contrastMode === "manual"
-                    ? "bg-white text-zinc-900 shadow-sm border border-zinc-200/80"
-                    : "text-zinc-500 hover:text-zinc-800"
+                    ? "bg-white shadow-sm border border-zinc-200/80"
+                    : "hover:text-zinc-800"
                 }`}
               >
-                Manual
+                <span style={contrastMode === "manual" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : { color: "#6b7280" }}>Manual</span>
               </button>
             </div>
           </div>

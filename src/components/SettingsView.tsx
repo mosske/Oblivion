@@ -723,13 +723,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     data-settings-control="lyrics-font-size"
                     data-selected={isSelected ? "true" : "false"}
                     onClick={() => onUpdateSettings({ lyricsFontSize: size })}
+                    style={isSelected ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${isSelected ? "active-lyrics-size-btn " : ""}${
                       isSelected
                         ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                         : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
                     }`}
                   >
-                    {label}
+                    <span style={isSelected ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}>{label}</span>
                   </button>
                 );
               })}
@@ -747,28 +748,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 data-settings-control="lyrics-alignment"
                 data-selected={(settings.lyricsAlignment || "left") === "left" ? "true" : "false"}
                 onClick={() => onUpdateSettings({ lyricsAlignment: "left" })}
+                style={(settings.lyricsAlignment || "left") === "left" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${(settings.lyricsAlignment || "left") === "left" ? "active-lyrics-alignment-btn " : ""}${
                   (settings.lyricsAlignment || "left") === "left"
                     ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                     : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
                 }`}
               >
-                <AlignLeft className="w-3.5 h-3.5" />
-                <span>Left Aligned</span>
+                <AlignLeft className="w-3.5 h-3.5" style={(settings.lyricsAlignment || "left") === "left" ? { color: "#0f0d13", fill: "#0f0d13", stroke: "#0f0d13", opacity: 1 } : undefined} />
+                <span style={(settings.lyricsAlignment || "left") === "left" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}>Left Aligned</span>
               </button>
               <button
                 type="button"
                 data-settings-control="lyrics-alignment"
                 data-selected={settings.lyricsAlignment === "center" ? "true" : "false"}
                 onClick={() => onUpdateSettings({ lyricsAlignment: "center" })}
+                style={settings.lyricsAlignment === "center" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${settings.lyricsAlignment === "center" ? "active-lyrics-alignment-btn " : ""}${
                   settings.lyricsAlignment === "center"
                     ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                     : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
                 }`}
               >
-                <AlignCenter className="w-3.5 h-3.5" />
-                <span>Centered</span>
+                <AlignCenter className="w-3.5 h-3.5" style={settings.lyricsAlignment === "center" ? { color: "#0f0d13", fill: "#0f0d13", stroke: "#0f0d13", opacity: 1 } : undefined} />
+                <span style={settings.lyricsAlignment === "center" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}>Centered</span>
               </button>
             </div>
           </div>

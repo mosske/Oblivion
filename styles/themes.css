@@ -5989,44 +5989,44 @@ div[class*="category-wrapper"] {
    ================================================================================ */
 
 /* 1. Secondary Dark Buttons ("Hide/Unhide", "Reorder Songs", "Edit Details", etc.) */
-.theme-hard-rock button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+.theme-hard-rock button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
 .theme-hard-rock [class*="badge"],
 .theme-hard-rock [class*="chip"],
 .theme-hard-rock [class*="action-btn"],
-.theme-sugar-time-jazz button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+.theme-sugar-time-jazz button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
 .theme-sugar-time-jazz [class*="badge"],
 .theme-sugar-time-jazz [class*="chip"],
 .theme-sugar-time-jazz [class*="action-btn"],
-[data-theme="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
 [data-theme="hard-rock"] [class*="badge"],
 [data-theme="hard-rock"] [class*="chip"],
 [data-theme="hard-rock"] [class*="action-btn"],
-[data-theme="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
 [data-theme="sugar-time-jazz"] [class*="badge"],
 [data-theme="sugar-time-jazz"] [class*="chip"],
 [data-theme="sugar-time-jazz"] [class*="action-btn"],
-[data-theme-alias="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme-alias="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
 [data-theme-alias="hard-rock"] [class*="badge"],
 [data-theme-alias="hard-rock"] [class*="chip"],
 [data-theme-alias="hard-rock"] [class*="action-btn"],
-[data-theme-alias="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
+[data-theme-alias="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn),
 [data-theme-alias="sugar-time-jazz"] [class*="badge"],
 [data-theme-alias="sugar-time-jazz"] [class*="chip"],
 [data-theme-alias="sugar-time-jazz"] [class*="action-btn"] {
   color: #f3e8ff !important;
 }
 
-.theme-hard-rock button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+.theme-hard-rock button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
 .theme-hard-rock [class*="action-btn"] svg,
-.theme-sugar-time-jazz button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+.theme-sugar-time-jazz button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
 .theme-sugar-time-jazz [class*="action-btn"] svg,
-[data-theme="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
 [data-theme="hard-rock"] [class*="action-btn"] svg,
-[data-theme="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
 [data-theme="sugar-time-jazz"] [class*="action-btn"] svg,
-[data-theme-alias="hard-rock"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme-alias="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
 [data-theme-alias="hard-rock"] [class*="action-btn"] svg,
-[data-theme-alias="sugar-time-jazz"] button:not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme-alias="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
 [data-theme-alias="sugar-time-jazz"] [class*="action-btn"] svg {
   color: #d8b4fe !important;
   stroke: #d8b4fe !important;
