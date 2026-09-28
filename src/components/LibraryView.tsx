@@ -172,9 +172,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     return (
       <div className="flex flex-col select-none">
         <div className="flex-1 p-6 md:p-10 pb-40 md:pb-48 max-w-4xl mx-auto w-full">
-          <div className={`p-8 sm:p-12 text-center ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} shadow-xl flex flex-col items-center justify-center space-y-6 mt-4`}>
+          <div className={`auth-card p-8 sm:p-12 text-center ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} shadow-xl flex flex-col items-center justify-center space-y-6 mt-4`}>
             <div className={`w-16 h-16 rounded-2xl ${designConfig.isLight ? "bg-black/5" : "bg-white/5"} text-[var(--accent-primary,#dfb86c)] border ${designConfig.borderSubtle} flex items-center justify-center shadow-inner`}>
-              <Library className="w-8 h-8" />
+              <Library className="library-icon w-8 h-8" />
             </div>
 
             <div className="space-y-2 max-w-md">
@@ -222,7 +222,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               <button
                 id="library-signin-prompt-btn"
                 onClick={onOpenAuthModal}
-                className={`px-8 py-3.5 rounded-2xl ${designConfig.btnPrimary} text-white text-sm font-bold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 mt-2`}
+                className={`google-btn btn-signin px-8 py-3.5 rounded-2xl ${designConfig.btnPrimary} text-white text-sm font-bold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 mt-2`}
               >
                 <LogIn className="w-4 h-4" />
                 <span>Sign In with Google</span>
@@ -241,8 +241,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className={`text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} flex items-center gap-2.5 tracking-tight drop-shadow-xs`}>
-                <Library className={`w-7 h-7 ${designConfig.accentText}`} />
+              <h2 className={`library-title text-2xl sm:text-3xl font-extrabold ${designConfig.headingPrimary} flex items-center gap-2.5 tracking-tight drop-shadow-xs`}>
+                <Library className={`library-icon w-7 h-7 ${designConfig.accentText}`} />
                 <span>Library Playlists</span>
               </h2>
               <p className={`text-xs ${designConfig.headingSecondary || "text-slate-300"} mt-1 font-medium`}>

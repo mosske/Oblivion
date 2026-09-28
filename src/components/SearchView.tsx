@@ -318,7 +318,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
     return (
       <div
         key={item.id ? `${item.id}_${idx}` : (item.videoId || item.youtubeVideoId ? `${item.videoId || item.youtubeVideoId}_${idx}` : `search_track_${idx}`)}
-        className={`group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
+        className={`search-result-item track-card search-track-row group flex items-center justify-between p-3 rounded-2xl transition-all relative shadow-sm ${
           isCurrent
             ? `${designConfig.cardBg} shadow-lg ring-2`
             : `${designConfig.cardBg} ${designConfig.cardHover} border border-transparent`
@@ -452,7 +452,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 pb-64 sm:pb-72 md:pb-52 select-none">
+    <div className="search-page flex-1 p-4 sm:p-6 md:p-8 space-y-6 pb-64 sm:pb-72 md:pb-52 select-none">
       {/* Search Header Bar */}
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">

@@ -58,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => {
             setActiveTab("search");
           }}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
+          className={`search-button flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
             activeTab === "search"
               ? `${designConfig.btnPrimary} text-white shadow-md`
               : `${designConfig.btnSecondary} ${designConfig.textPrimary} hover:scale-105 active:scale-95 border border-zinc-300/80`
