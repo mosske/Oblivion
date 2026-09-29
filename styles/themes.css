@@ -5751,7 +5751,7 @@ div[class*="category-wrapper"] {
   font-weight: 700 !important;
 }
 
-.theme-hard-rock [class*="pill"][class*="active"] *,
+.theme-hard-rock [class*="pill"][class*="active"] *:not(svg):not(svg *):not(path):not(circle):not(line),
 .theme-hard-rock [class*="tab"][class*="active"]:not([class*="nav"]):not([class*="sidebar"]):not([id*="nav-"]) *,
 .theme-hard-rock button[data-state="active"]:not([class*="nav"]):not([class*="sidebar"]):not([id*="nav-"]) *,
 .theme-hard-rock button[aria-selected="true"]:not([class*="nav"]):not([class*="sidebar"]):not([id*="nav-"]) *,
@@ -7360,4 +7360,230 @@ div[class*="category-wrapper"] {
   opacity: 1 !important;
   filter: none !important;
   text-shadow: none !important;
+}
+
+/* ================================================================================
+   SURGICAL OVERRIDE FOR AUDIO RECOGNITION / IDENTIFY MUSIC MODAL ICONS
+   ================================================================================ */
+
+/* 1. Fix the large central Microphone listening button graphic */
+.theme-hard-rock [class*="identify"] button svg,
+.theme-hard-rock [class*="recognition"] button svg,
+.theme-hard-rock [class*="audio-search"] button svg,
+.theme-hard-rock [class*="modal"] [class*="mic"] svg,
+.theme-hard-rock [class*="modal"] [class*="listen"] svg,
+.theme-sugar-time-jazz [class*="identify"] button svg,
+.theme-sugar-time-jazz [class*="recognition"] button svg,
+.theme-sugar-time-jazz [class*="audio-search"] button svg,
+.theme-sugar-time-jazz [class*="modal"] [class*="mic"] svg,
+.theme-sugar-time-jazz [class*="modal"] [class*="listen"] svg,
+[data-theme="hard-rock"] [class*="identify"] button svg,
+[data-theme="hard-rock"] [class*="recognition"] button svg,
+[data-theme="hard-rock"] [class*="audio-search"] button svg,
+[data-theme="hard-rock"] [class*="modal"] [class*="mic"] svg,
+[data-theme="hard-rock"] [class*="modal"] [class*="listen"] svg,
+[data-theme="sugar-time-jazz"] [class*="identify"] button svg,
+[data-theme="sugar-time-jazz"] [class*="recognition"] button svg,
+[data-theme="sugar-time-jazz"] [class*="audio-search"] button svg,
+[data-theme="sugar-time-jazz"] [class*="modal"] [class*="mic"] svg,
+[data-theme="sugar-time-jazz"] [class*="modal"] [class*="listen"] svg,
+[data-theme-alias="hard-rock"] [class*="identify"] button svg,
+[data-theme-alias="hard-rock"] [class*="recognition"] button svg,
+[data-theme-alias="hard-rock"] [class*="audio-search"] button svg,
+[data-theme-alias="hard-rock"] [class*="modal"] [class*="mic"] svg,
+[data-theme-alias="hard-rock"] [class*="modal"] [class*="listen"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="identify"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="recognition"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="audio-search"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] [class*="mic"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] [class*="listen"] svg {
+  fill: none !important;
+  stroke: #0f0d13 !important;
+  color: #0f0d13 !important;
+  stroke-width: 2px !important;
+}
+
+.theme-hard-rock [class*="identify"] button svg path,
+.theme-hard-rock [class*="recognition"] button svg path,
+.theme-hard-rock [class*="audio-search"] button svg path,
+.theme-hard-rock [class*="modal"] [class*="mic"] svg path,
+.theme-hard-rock [class*="modal"] [class*="listen"] svg path,
+.theme-hard-rock [class*="modal"] [class*="mic"] svg circle,
+.theme-hard-rock [class*="modal"] [class*="listen"] svg circle,
+.theme-sugar-time-jazz [class*="identify"] button svg path,
+.theme-sugar-time-jazz [class*="recognition"] button svg path,
+.theme-sugar-time-jazz [class*="audio-search"] button svg path,
+.theme-sugar-time-jazz [class*="modal"] [class*="mic"] svg path,
+.theme-sugar-time-jazz [class*="modal"] [class*="listen"] svg path,
+.theme-sugar-time-jazz [class*="modal"] [class*="mic"] svg circle,
+.theme-sugar-time-jazz [class*="modal"] [class*="listen"] svg circle,
+[data-theme="hard-rock"] [class*="identify"] button svg path,
+[data-theme="hard-rock"] [class*="recognition"] button svg path,
+[data-theme="hard-rock"] [class*="audio-search"] button svg path,
+[data-theme="hard-rock"] [class*="modal"] [class*="mic"] svg path,
+[data-theme="hard-rock"] [class*="modal"] [class*="listen"] svg path,
+[data-theme="hard-rock"] [class*="modal"] [class*="mic"] svg circle,
+[data-theme="hard-rock"] [class*="modal"] [class*="listen"] svg circle,
+[data-theme="sugar-time-jazz"] [class*="identify"] button svg path,
+[data-theme="sugar-time-jazz"] [class*="recognition"] button svg path,
+[data-theme="sugar-time-jazz"] [class*="audio-search"] button svg path,
+[data-theme="sugar-time-jazz"] [class*="modal"] [class*="mic"] svg path,
+[data-theme="sugar-time-jazz"] [class*="modal"] [class*="listen"] svg path,
+[data-theme="sugar-time-jazz"] [class*="modal"] [class*="mic"] svg circle,
+[data-theme="sugar-time-jazz"] [class*="modal"] [class*="listen"] svg circle,
+[data-theme-alias="hard-rock"] [class*="identify"] button svg path,
+[data-theme-alias="hard-rock"] [class*="recognition"] button svg path,
+[data-theme-alias="hard-rock"] [class*="audio-search"] button svg path,
+[data-theme-alias="hard-rock"] [class*="modal"] [class*="mic"] svg path,
+[data-theme-alias="hard-rock"] [class*="modal"] [class*="listen"] svg path,
+[data-theme-alias="hard-rock"] [class*="modal"] [class*="mic"] svg circle,
+[data-theme-alias="hard-rock"] [class*="modal"] [class*="listen"] svg circle,
+[data-theme-alias="sugar-time-jazz"] [class*="identify"] button svg path,
+[data-theme-alias="sugar-time-jazz"] [class*="recognition"] button svg path,
+[data-theme-alias="sugar-time-jazz"] [class*="audio-search"] button svg path,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] [class*="mic"] svg path,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] [class*="listen"] svg path,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] [class*="mic"] svg circle,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] [class*="listen"] svg circle {
+  fill: none !important;
+  stroke: #0f0d13 !important;
+}
+
+/* 2. Target action buttons inside Identify Music modal */
+.theme-hard-rock [class*="identify"] button[class*="bg-"] svg,
+.theme-hard-rock [class*="recognition"] button[class*="bg-"] svg,
+.theme-sugar-time-jazz [class*="identify"] button[class*="bg-"] svg,
+.theme-sugar-time-jazz [class*="recognition"] button[class*="bg-"] svg,
+[data-theme="hard-rock"] [class*="identify"] button[class*="bg-"] svg,
+[data-theme="hard-rock"] [class*="recognition"] button[class*="bg-"] svg,
+[data-theme="sugar-time-jazz"] [class*="identify"] button[class*="bg-"] svg,
+[data-theme="sugar-time-jazz"] [class*="recognition"] button[class*="bg-"] svg,
+[data-theme-alias="hard-rock"] [class*="identify"] button[class*="bg-"] svg,
+[data-theme-alias="hard-rock"] [class*="recognition"] button[class*="bg-"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="identify"] button[class*="bg-"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="recognition"] button[class*="bg-"] svg {
+  fill: none !important;
+  stroke: #0f0d13 !important;
+  stroke-width: 2px !important;
+}
+
+.theme-hard-rock [class*="identify"] button[class*="bg-"] svg *,
+.theme-hard-rock [class*="recognition"] button[class*="bg-"] svg *,
+.theme-sugar-time-jazz [class*="identify"] button[class*="bg-"] svg *,
+.theme-sugar-time-jazz [class*="recognition"] button[class*="bg-"] svg *,
+[data-theme="hard-rock"] [class*="identify"] button[class*="bg-"] svg *,
+[data-theme="hard-rock"] [class*="recognition"] button[class*="bg-"] svg *,
+[data-theme="sugar-time-jazz"] [class*="identify"] button[class*="bg-"] svg *,
+[data-theme="sugar-time-jazz"] [class*="recognition"] button[class*="bg-"] svg *,
+[data-theme-alias="hard-rock"] [class*="identify"] button[class*="bg-"] svg *,
+[data-theme-alias="hard-rock"] [class*="recognition"] button[class*="bg-"] svg *,
+[data-theme-alias="sugar-time-jazz"] [class*="identify"] button[class*="bg-"] svg *,
+[data-theme-alias="sugar-time-jazz"] [class*="recognition"] button[class*="bg-"] svg * {
+  fill: none !important;
+  stroke: #0f0d13 !important;
+}
+
+/* 3. General rule for line-art icons on light/beige buttons across the theme */
+.theme-hard-rock button[class*="bg-amber"] svg.lucide,
+.theme-hard-rock button[class*="bg-yellow"] svg.lucide,
+.theme-hard-rock button[class*="bg-stone"] svg.lucide,
+.theme-hard-rock button[class*="bg-primary"] svg.lucide,
+.theme-hard-rock button[class*="bg-cream"] svg.lucide,
+.theme-sugar-time-jazz button[class*="bg-amber"] svg.lucide,
+.theme-sugar-time-jazz button[class*="bg-yellow"] svg.lucide,
+.theme-sugar-time-jazz button[class*="bg-stone"] svg.lucide,
+.theme-sugar-time-jazz button[class*="bg-primary"] svg.lucide,
+.theme-sugar-time-jazz button[class*="bg-cream"] svg.lucide,
+[data-theme="hard-rock"] button[class*="bg-amber"] svg.lucide,
+[data-theme="hard-rock"] button[class*="bg-yellow"] svg.lucide,
+[data-theme="hard-rock"] button[class*="bg-stone"] svg.lucide,
+[data-theme="hard-rock"] button[class*="bg-primary"] svg.lucide,
+[data-theme="hard-rock"] button[class*="bg-cream"] svg.lucide,
+[data-theme="sugar-time-jazz"] button[class*="bg-amber"] svg.lucide,
+[data-theme="sugar-time-jazz"] button[class*="bg-yellow"] svg.lucide,
+[data-theme="sugar-time-jazz"] button[class*="bg-stone"] svg.lucide,
+[data-theme="sugar-time-jazz"] button[class*="bg-primary"] svg.lucide,
+[data-theme="sugar-time-jazz"] button[class*="bg-cream"] svg.lucide,
+[data-theme-alias="hard-rock"] button[class*="bg-amber"] svg.lucide,
+[data-theme-alias="hard-rock"] button[class*="bg-yellow"] svg.lucide,
+[data-theme-alias="hard-rock"] button[class*="bg-stone"] svg.lucide,
+[data-theme-alias="hard-rock"] button[class*="bg-primary"] svg.lucide,
+[data-theme-alias="hard-rock"] button[class*="bg-cream"] svg.lucide,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-amber"] svg.lucide,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-yellow"] svg.lucide,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-stone"] svg.lucide,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-primary"] svg.lucide,
+[data-theme-alias="sugar-time-jazz"] button[class*="bg-cream"] svg.lucide {
+  fill: none !important;
+  stroke: #0f0d13 !important;
+}
+
+.theme-hard-rock button[class*="bg-amber"] svg.lucide *,
+.theme-hard-rock button[class*="bg-yellow"] svg.lucide *,
+.theme-hard-rock button[class*="bg-stone"] svg.lucide *,
+.theme-hard-rock button[class*="bg-primary"] svg.lucide *,
+.theme-hard-rock button[class*="bg-cream"] svg.lucide *,
+.theme-sugar-time-jazz button[class*="bg-amber"] svg.lucide *,
+.theme-sugar-time-jazz button[class*="bg-yellow"] svg.lucide *,
+.theme-sugar-time-jazz button[class*="bg-stone"] svg.lucide *,
+.theme-sugar-time-jazz button[class*="bg-primary"] svg.lucide *,
+.theme-sugar-time-jazz button[class*="bg-cream"] svg.lucide *,
+[data-theme="hard-rock"] button[class*="bg-amber"] svg.lucide *,
+[data-theme="hard-rock"] button[class*="bg-yellow"] svg.lucide *,
+[data-theme="hard-rock"] button[class*="bg-stone"] svg.lucide *,
+[data-theme="hard-rock"] button[class*="bg-primary"] svg.lucide *,
+[data-theme="hard-rock"] button[class*="bg-cream"] svg.lucide *,
+[data-theme-alias="hard-rock"] button[class*="bg-amber"] svg.lucide *,
+[data-theme-alias="hard-rock"] button[class*="bg-yellow"] svg.lucide *,
+[data-theme-alias="hard-rock"] button[class*="bg-stone"] svg.lucide *,
+[data-theme-alias="hard-rock"] button[class*="bg-primary"] svg.lucide *,
+[data-theme-alias="hard-rock"] button[class*="bg-cream"] svg.lucide * {
+  fill: none !important;
+  stroke: #0f0d13 !important;
+}
+
+/* ================================================================================
+   DEFINITIVE OVERRIDE FOR IDENTIFY MUSIC MODAL SVG ICONS (STROKE LINE-ART)
+   ================================================================================ */
+.theme-hard-rock [class*="identify"] svg,
+.theme-hard-rock [class*="identify"] svg *,
+.theme-hard-rock [class*="modal"] button svg,
+.theme-hard-rock [class*="modal"] button svg *,
+.theme-sugar-time-jazz [class*="identify"] svg,
+.theme-sugar-time-jazz [class*="identify"] svg *,
+.theme-sugar-time-jazz [class*="modal"] button svg,
+.theme-sugar-time-jazz [class*="modal"] button svg *,
+[data-theme="hard-rock"] [class*="identify"] svg,
+[data-theme="hard-rock"] [class*="identify"] svg *,
+[data-theme="hard-rock"] [class*="modal"] button svg,
+[data-theme="hard-rock"] [class*="modal"] button svg *,
+[data-theme="sugar-time-jazz"] [class*="identify"] svg,
+[data-theme="sugar-time-jazz"] [class*="identify"] svg *,
+[data-theme="sugar-time-jazz"] [class*="modal"] button svg,
+[data-theme="sugar-time-jazz"] [class*="modal"] button svg *,
+[data-theme-alias="hard-rock"] [class*="identify"] svg,
+[data-theme-alias="hard-rock"] [class*="identify"] svg *,
+[data-theme-alias="hard-rock"] [class*="modal"] button svg,
+[data-theme-alias="hard-rock"] [class*="modal"] button svg *,
+[data-theme-alias="sugar-time-jazz"] [class*="identify"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="identify"] svg *,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] button svg * {
+  fill: none !important;
+  stroke: #120f14 !important;
+  color: #120f14 !important;
+}
+
+/* IDENTIFY MUSIC MODAL SVG FILL RESET */
+.theme-hard-rock [class*="identify"] svg,
+.theme-hard-rock [class*="identify"] svg *,
+.theme-sugar-time-jazz [class*="identify"] svg,
+.theme-sugar-time-jazz [class*="identify"] svg *,
+[data-theme="hard-rock"] [class*="identify"] svg,
+[data-theme="hard-rock"] [class*="identify"] svg *,
+[data-theme="sugar-time-jazz"] [class*="identify"] svg,
+[data-theme="sugar-time-jazz"] [class*="identify"] svg * {
+  fill: none !important;
+  stroke: #120f14 !important;
+  color: #120f14 !important;
 }

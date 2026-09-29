@@ -598,13 +598,18 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
               title={status === "listening" ? "Stop Listening" : "Tap to listen"}
             >
               {status === "listening" ? (
-                <Mic className={`w-9 h-9 animate-bounce ${themeStyles.iconColor}`} />
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#120f14" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 animate-bounce" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }}>
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="none" />
+                  <path d="M19 10v1a7 7 0 0 1-14 0v-1" fill="none" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
               ) : status === "analyzing" ? (
                 <Sparkles className="w-9 h-9 animate-spin" stroke="currentColor" />
               ) : status === "matched" ? (
                 <RotateCcw className="w-8 h-8 text-white" />
               ) : (
-                <Mic className={`w-9 h-9 ${themeStyles.iconColor}`} />
+                <Mic className="w-9 h-9 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
               )}
             </button>
           </div>
@@ -675,7 +680,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
               onClick={handleSearchSong}
               className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold ${themeStyles.btnPrimary} transition-all shadow-md flex items-center justify-center gap-2 active:scale-95`}
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
               <span>Search Song</span>
             </button>
           ) : (
@@ -690,12 +695,12 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
             >
               {status === "listening" ? (
                 <>
-                  <MicOff className="w-4 h-4" />
+                  <MicOff className="w-4 h-4 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
                   <span>Stop</span>
                 </>
               ) : (
                 <>
-                  <Mic className="w-4 h-4" />
+                  <Mic className="w-4 h-4 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
                   <span>{status === "idle" ? "Listen" : "Listen Again"}</span>
                 </>
               )}
