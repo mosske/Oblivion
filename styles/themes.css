@@ -7587,3 +7587,21 @@ div[class*="category-wrapper"] {
   stroke: #120f14 !important;
   color: #120f14 !important;
 }
+
+/* ================================================================================
+   PLAYLIST VIEW SEARCH INPUT MAGNIFYING GLASS ICON GOLD ACCENT OVERRIDE
+   ================================================================================ */
+.theme-hard-rock [class*="playlist"] input[placeholder*="Search"] ~ svg,
+.theme-hard-rock [class*="playlist"] div:has(> input[placeholder*="Search"]) svg,
+.theme-hard-rock [class*="playlist"] [class*="search"] svg,
+.theme-sugar-time-jazz [class*="playlist"] input[placeholder*="Search"] ~ svg,
+.theme-sugar-time-jazz [class*="playlist"] div:has(> input[placeholder*="Search"]) svg,
+[data-theme="hard-rock"] [class*="playlist"] input[placeholder*="Search"] ~ svg,
+[data-theme="hard-rock"] [class*="playlist"] div:has(> input[placeholder*="Search"]) svg,
+[data-theme-alias="hard-rock"] [class*="playlist"] input[placeholder*="Search"] ~ svg,
+[data-theme-alias="hard-rock"] [class*="playlist"] div:has(> input[placeholder*="Search"]) svg {
+  color: #d4af37 !important;
+  stroke: #d4af37 !important;
+  opacity: 1 !important;
+  fill: none !important;
+}

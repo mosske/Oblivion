@@ -603,9 +603,9 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 {/* In-Header Search Field */}
                 <div className="flex-1 max-w-xl relative min-w-0">
                   <Search 
-                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
-                      isBespoke ? "text-[var(--bespoke-icon-color,#0f172a)]" : designConfig.textMuted
-                    }`} 
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{ color: "#d4af37", stroke: "#d4af37", opacity: 1, fill: "none" }}
+                    strokeWidth={2}
                   />
                   <input
                     type="text"
