@@ -601,9 +601,14 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 </button>
 
                 {/* In-Header Search Field */}
-                <div className="flex-1 max-w-xl relative min-w-0">
+                <div 
+                  className="flex-1 max-w-xl relative min-w-0 playlist-search-container"
+                  style={{ color: "#d4af37", stroke: "#d4af37", opacity: 1 }}
+                >
                   <Search 
-                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none playlist-search-icon"
+                    color="#d4af37"
+                    stroke="#d4af37"
                     style={{ color: "#d4af37", stroke: "#d4af37", opacity: 1, fill: "none" }}
                     strokeWidth={2}
                   />

@@ -267,11 +267,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               </button>
 
               <button
+                id="library-new-playlist-btn"
                 onClick={onCreatePlaylist}
+                style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}
                 className={`px-4 py-2.5 ${designConfig.btnPrimary} rounded-xl transition-all font-bold flex items-center gap-2 text-xs shadow-lg active:scale-95`}
               >
-                <Plus className="w-4 h-4" />
-                <span>New Playlist</span>
+                <Plus className="w-4 h-4" color="#0f0d13" stroke="#0f0d13" style={{ color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }} strokeWidth={2.5} />
+                <span style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}>New Playlist</span>
               </button>
             </div>
           </div>
@@ -343,11 +345,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               ) : (
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <button
+                    id="library-empty-create-playlist-btn"
                     onClick={onCreatePlaylist}
+                    style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}
                     className={`px-4 py-2 text-xs font-bold ${designConfig.btnPrimary} rounded-xl shadow-md flex items-center gap-2`}
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>Create Playlist</span>
+                    <Plus className="w-4 h-4" color="#0f0d13" stroke="#0f0d13" style={{ color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }} strokeWidth={2.5} />
+                    <span style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}>Create Playlist</span>
                   </button>
                   {!user?.isLoggedIn && onOpenAuthModal && (
                     <button

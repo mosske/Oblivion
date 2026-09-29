@@ -7605,3 +7605,55 @@ div[class*="category-wrapper"] {
   opacity: 1 !important;
   fill: none !important;
 }
+
+/* ================================================================================
+   PLAYLIST SEARCH ICON & LIBRARY NEW PLAYLIST BUTTON CONTRAST OVERRIDES
+   ================================================================================ */
+/* Playlist Search Input Magnifying Glass */
+.playlist-search-icon,
+svg.playlist-search-icon,
+.playlist-search-container svg,
+.playlist-top-bar .playlist-search-icon,
+.playlist-top-bar svg.playlist-search-icon,
+[data-theme="bespoke"] .playlist-top-bar .playlist-search-icon,
+[data-theme="bespoke"] .playlist-top-bar svg.playlist-search-icon,
+.theme-hard-rock .playlist-search-icon,
+.theme-hard-rock [class*="playlist"] svg.playlist-search-icon,
+.theme-sugar-time-jazz .playlist-search-icon,
+[data-theme="hard-rock"] .playlist-search-icon,
+[data-theme="hard-rock"] svg.playlist-search-icon,
+[data-theme-alias="hard-rock"] .playlist-search-icon,
+[data-theme-alias="hard-rock"] svg.playlist-search-icon {
+  color: #d4af37 !important;
+  stroke: #d4af37 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+
+/* Library + New Playlist Button */
+#library-new-playlist-btn,
+#library-new-playlist-btn *,
+#library-new-playlist-btn span,
+#library-new-playlist-btn svg,
+#library-empty-create-playlist-btn,
+#library-empty-create-playlist-btn *,
+#create-playlist-btn,
+#create-playlist-btn *,
+.theme-hard-rock #library-new-playlist-btn,
+.theme-hard-rock #library-new-playlist-btn *,
+.theme-hard-rock #library-new-playlist-btn span,
+.theme-hard-rock #library-new-playlist-btn svg,
+.theme-hard-rock #create-playlist-btn,
+.theme-hard-rock #create-playlist-btn *,
+.theme-sugar-time-jazz #library-new-playlist-btn,
+.theme-sugar-time-jazz #library-new-playlist-btn *,
+[data-theme="hard-rock"] #library-new-playlist-btn,
+[data-theme="hard-rock"] #library-new-playlist-btn *,
+[data-theme-alias="hard-rock"] #library-new-playlist-btn,
+[data-theme-alias="hard-rock"] #library-new-playlist-btn * {
+  color: #0f0d13 !important;
+  stroke: #0f0d13 !important;
+  fill: none !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}

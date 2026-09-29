@@ -107,10 +107,11 @@ export const PlaylistsView: React.FC<PlaylistsViewProps> = ({
           <button
             id="create-playlist-btn"
             onClick={onCreatePlaylist}
+            style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}
             className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg transition-all transform hover:scale-105 active:scale-95 ${designConfig.btnPrimary}`}
           >
-            <Plus className="w-4 h-4" />
-            <span>Create Playlist</span>
+            <Plus className="w-4 h-4" color="#0f0d13" stroke="#0f0d13" style={{ color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }} strokeWidth={2.5} />
+            <span style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}>Create Playlist</span>
           </button>
         </div>
       </div>
