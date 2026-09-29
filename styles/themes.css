@@ -7657,3 +7657,119 @@ svg.playlist-search-icon,
   opacity: 1 !important;
   font-weight: 700 !important;
 }
+
+
+/* ================================================================================
+   PLAYLIST DETAIL VIEW: SEARCH ICON & EDIT DETAILS BUTTON CONTRAST OVERRIDES
+   ================================================================================ */
+/* 1. Magnifying Glass Icon in Playlist Search */
+.playlist-search-icon,
+svg.playlist-search-icon,
+.playlist-search-icon circle,
+.playlist-search-icon line,
+.playlist-search-icon path,
+.playlist-search-icon *,
+.playlist-search-container svg,
+.playlist-search-container svg circle,
+.playlist-search-container svg line,
+.playlist-search-container svg path,
+.playlist-search-container svg *,
+.playlist-top-bar .playlist-search-icon,
+.playlist-top-bar svg.playlist-search-icon,
+.playlist-top-bar svg.playlist-search-icon *,
+.theme-hard-rock .playlist-search-icon,
+.theme-hard-rock .playlist-search-icon *,
+.theme-hard-rock [class*="playlist"] svg.playlist-search-icon,
+.theme-hard-rock [class*="playlist"] svg.playlist-search-icon *,
+.theme-sugar-time-jazz .playlist-search-icon,
+.theme-sugar-time-jazz .playlist-search-icon *,
+[data-theme="hard-rock"] .playlist-search-icon,
+[data-theme="hard-rock"] .playlist-search-icon *,
+[data-theme="hard-rock"] svg.playlist-search-icon,
+[data-theme="hard-rock"] svg.playlist-search-icon *,
+[data-theme-alias="hard-rock"] .playlist-search-icon,
+[data-theme-alias="hard-rock"] .playlist-search-icon *,
+[data-theme-alias="hard-rock"] svg.playlist-search-icon,
+[data-theme-alias="hard-rock"] svg.playlist-search-icon *,
+[data-theme="sugar-time-jazz"] .playlist-search-icon,
+[data-theme="sugar-time-jazz"] .playlist-search-icon *,
+[data-theme-alias="sugar-time-jazz"] .playlist-search-icon,
+[data-theme-alias="sugar-time-jazz"] .playlist-search-icon * {
+  color: #d4af37 !important;
+  stroke: #d4af37 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+
+/* 2. High-Contrast "Edit Details" Button in Playlist Detail View */
+#playlist-edit-details-btn,
+.playlist-edit-details-btn,
+.theme-hard-rock #playlist-edit-details-btn,
+.theme-hard-rock .playlist-edit-details-btn,
+.theme-sugar-time-jazz #playlist-edit-details-btn,
+.theme-sugar-time-jazz .playlist-edit-details-btn,
+[data-theme="hard-rock"] #playlist-edit-details-btn,
+[data-theme="hard-rock"] .playlist-edit-details-btn,
+[data-theme="sugar-time-jazz"] #playlist-edit-details-btn,
+[data-theme="sugar-time-jazz"] .playlist-edit-details-btn,
+[data-theme-alias="hard-rock"] #playlist-edit-details-btn,
+[data-theme-alias="hard-rock"] .playlist-edit-details-btn,
+[data-theme-alias="sugar-time-jazz"] #playlist-edit-details-btn,
+[data-theme-alias="sugar-time-jazz"] .playlist-edit-details-btn {
+  color: #f5eae1 !important;
+  opacity: 1 !important;
+}
+
+#playlist-edit-details-btn span,
+.playlist-edit-details-btn span,
+.theme-hard-rock #playlist-edit-details-btn span,
+.theme-hard-rock .playlist-edit-details-btn span,
+.theme-sugar-time-jazz #playlist-edit-details-btn span,
+.theme-sugar-time-jazz .playlist-edit-details-btn span,
+[data-theme="hard-rock"] #playlist-edit-details-btn span,
+[data-theme="hard-rock"] .playlist-edit-details-btn span,
+[data-theme="sugar-time-jazz"] #playlist-edit-details-btn span,
+[data-theme="sugar-time-jazz"] .playlist-edit-details-btn span,
+[data-theme-alias="hard-rock"] #playlist-edit-details-btn span,
+[data-theme-alias="hard-rock"] .playlist-edit-details-btn span,
+[data-theme-alias="sugar-time-jazz"] #playlist-edit-details-btn span,
+[data-theme-alias="sugar-time-jazz"] .playlist-edit-details-btn span {
+  color: #f5eae1 !important;
+  opacity: 1 !important;
+  font-weight: 600 !important;
+}
+
+#playlist-edit-details-btn svg,
+#playlist-edit-details-btn svg *,
+.playlist-edit-details-btn svg,
+.playlist-edit-details-btn svg *,
+.theme-hard-rock #playlist-edit-details-btn svg,
+.theme-hard-rock #playlist-edit-details-btn svg *,
+.theme-hard-rock .playlist-edit-details-btn svg,
+.theme-hard-rock .playlist-edit-details-btn svg *,
+.theme-sugar-time-jazz #playlist-edit-details-btn svg,
+.theme-sugar-time-jazz #playlist-edit-details-btn svg *,
+.theme-sugar-time-jazz .playlist-edit-details-btn svg,
+.theme-sugar-time-jazz .playlist-edit-details-btn svg *,
+[data-theme="hard-rock"] #playlist-edit-details-btn svg,
+[data-theme="hard-rock"] #playlist-edit-details-btn svg *,
+[data-theme="hard-rock"] .playlist-edit-details-btn svg,
+[data-theme="hard-rock"] .playlist-edit-details-btn svg *,
+[data-theme="sugar-time-jazz"] #playlist-edit-details-btn svg,
+[data-theme="sugar-time-jazz"] #playlist-edit-details-btn svg *,
+[data-theme="sugar-time-jazz"] .playlist-edit-details-btn svg,
+[data-theme="sugar-time-jazz"] .playlist-edit-details-btn svg *,
+[data-theme-alias="hard-rock"] #playlist-edit-details-btn svg,
+[data-theme-alias="hard-rock"] #playlist-edit-details-btn svg *,
+[data-theme-alias="hard-rock"] .playlist-edit-details-btn svg,
+[data-theme-alias="hard-rock"] .playlist-edit-details-btn svg *,
+[data-theme-alias="sugar-time-jazz"] #playlist-edit-details-btn svg,
+[data-theme-alias="sugar-time-jazz"] #playlist-edit-details-btn svg *,
+[data-theme-alias="sugar-time-jazz"] .playlist-edit-details-btn svg,
+[data-theme-alias="sugar-time-jazz"] .playlist-edit-details-btn svg * {
+  color: #d4b496 !important;
+  stroke: #d4b496 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+

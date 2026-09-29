@@ -606,7 +606,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                   style={{ color: "#d4af37", stroke: "#d4af37", opacity: 1 }}
                 >
                   <Search 
-                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none playlist-search-icon"
+                    size={18}
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none z-20 playlist-search-icon"
                     color="#d4af37"
                     stroke="#d4af37"
                     style={{ color: "#d4af37", stroke: "#d4af37", opacity: 1, fill: "none" }}
@@ -794,12 +795,22 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           <div className="flex flex-col items-end gap-2">
             {!effectiveIsAlbum && onEditPlaylist && (
               <button
+                type="button"
+                id="playlist-edit-details-btn"
                 onClick={() => onEditPlaylist(item as Playlist)}
-                className={`btn-primary-action flex items-center gap-1.5 px-3 py-2 ${isBespoke ? "" : designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} rounded-xl border border-transparent transition-colors text-xs font-semibold`}
+                className={`playlist-edit-details-btn flex items-center gap-1.5 px-3 py-2 ${isBespoke ? "" : designConfig.btnSecondary} rounded-xl border border-[rgba(212,180,150,0.25)] hover:border-[rgba(212,180,150,0.5)] transition-all text-xs font-semibold shadow-sm active:scale-95`}
+                style={{ color: "#f5eae1", stroke: "#f5eae1" }}
                 title="Edit Playlist Details"
               >
-                <Edit className="w-3.5 h-3.5" />
-                <span>Edit Details</span>
+                <Edit 
+                  size={14}
+                  className="w-3.5 h-3.5"
+                  color="#d4b496"
+                  stroke="#d4b496"
+                  strokeWidth={2}
+                  style={{ color: "#d4b496", stroke: "#d4b496", fill: "none", opacity: 1 }}
+                />
+                <span style={{ color: "#f5eae1", opacity: 1, fontWeight: 600 }}>Edit Details</span>
               </button>
             )}
             {!effectiveIsAlbum && (
