@@ -5314,15 +5314,22 @@ div[class*="category-wrapper"] {
   box-shadow: 0 0 22px rgba(168, 85, 247, 0.8) !important;
 }
 
-.theme-sugar-time-jazz .mini-player .mini-player-play-btn svg,
 .theme-sugar-time-jazz .full-player-play-btn svg,
 .theme-sugar-time-jazz .play-pause-btn svg,
-[data-theme="sugar-time-jazz"] .mini-player .mini-player-play-btn svg,
 [data-theme="sugar-time-jazz"] .full-player-play-btn svg,
 [data-theme="sugar-time-jazz"] .play-pause-btn svg {
   fill: #120e0b !important;
   color: #120e0b !important;
   stroke: #120e0b !important;
+}
+
+.theme-sugar-time-jazz .mini-player .mini-player-play-btn svg,
+.theme-hard-rock .mini-player .mini-player-play-btn svg,
+[data-theme="sugar-time-jazz"] .mini-player .mini-player-play-btn svg,
+[data-theme="hard-rock"] .mini-player .mini-player-play-btn svg {
+  fill: #e8d5b5 !important;
+  color: #e8d5b5 !important;
+  stroke: #e8d5b5 !important;
 }
 
 /* --------------------------------------------------------------------------------
@@ -7772,4 +7779,57 @@ svg.playlist-search-icon,
   fill: none !important;
   opacity: 1 !important;
 }
+
+
+
+/* ================================================================================
+   HARD ROCK THEME BASELINE VARIABLES
+   ================================================================================ */
+.theme-hard-rock,
+.theme-sugar-time-jazz,
+[data-theme="hard-rock"],
+[data-theme="sugar-time-jazz"] {
+  --hard-rock-gold: #e8d5b5;
+  --hard-rock-dark: #120e16;
+  --hard-rock-tan: #a89379;
+}
+
+/* ================================================================================
+   HARD ROCK FULL PLAYER & MINI PLAYER CONTROLS COLOR CONTRAST
+   ================================================================================ */
+.theme-hard-rock .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn),
+.theme-sugar-time-jazz .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn),
+[data-theme="hard-rock"] .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn),
+[data-theme="sugar-time-jazz"] .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn),
+.theme-hard-rock .mini-player button:not(.mini-player-play-btn):not(.player-play-btn),
+.theme-sugar-time-jazz .mini-player button:not(.mini-player-play-btn):not(.player-play-btn),
+[data-theme="hard-rock"] .mini-player button:not(.mini-player-play-btn):not(.player-play-btn),
+[data-theme="sugar-time-jazz"] .mini-player button:not(.mini-player-play-btn):not(.player-play-btn),
+.theme-hard-rock #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn),
+.theme-sugar-time-jazz #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn),
+[data-theme="hard-rock"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn),
+[data-theme="sugar-time-jazz"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn) {
+  background-color: transparent !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.theme-hard-rock .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn) svg,
+.theme-sugar-time-jazz .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn) svg,
+[data-theme="hard-rock"] .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn) svg,
+[data-theme="sugar-time-jazz"] .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn) svg,
+.theme-hard-rock .mini-player button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+.theme-sugar-time-jazz .mini-player button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+[data-theme="hard-rock"] .mini-player button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+[data-theme="sugar-time-jazz"] .mini-player button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+.theme-hard-rock #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+.theme-sugar-time-jazz #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+[data-theme="hard-rock"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn) svg,
+[data-theme="sugar-time-jazz"] #app-mini-player-floating-dock button:not(.mini-player-play-btn):not(.player-play-btn) svg {
+  color: #e8d5b5 !important;
+  stroke: #e8d5b5 !important;
+  opacity: 1 !important;
+}
+
 

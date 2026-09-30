@@ -31,7 +31,7 @@ import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes"
 import { calculateWcagText, hexToRgba } from "../theme/colorUtils";
 import { getBespokeColors, getBespokeConfig } from "../theme/themeService";
 
-interface PlayerProps {
+export interface PlayerProps {
   playerState: PlayerState;
   setPlayerState: React.Dispatch<React.SetStateAction<PlayerState>>;
   onNextTrack: () => void;
@@ -540,41 +540,41 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
       };
     case "sugar-time-jazz":
       return {
-        bgCanvas: "bg-[var(--bg-main,#120e0b)]",
+        bgCanvas: "bg-[var(--bg-main,#120e16)]",
         orb1: "bg-[#9333ea]/35",
         orb2: "bg-[#a855f7]/30",
-        auroraBeam1: "bg-gradient-to-r from-[#9333ea]/40 via-[#d4b496]/25 to-[#a855f7]/35",
-        auroraBeam2: "bg-gradient-to-r from-[#a855f7]/35 via-[#1a1410]/50 to-[#9333ea]/40",
-        orbitalGlow1: "bg-gradient-to-tr from-[#9333ea]/50 via-[#d4b496]/30 to-[#a855f7]/45",
-        orbitalGlow2: "bg-gradient-to-bl from-[#a855f7]/40 via-[#1a1410]/60 to-[#9333ea]/45",
-        driftAuraGlow: "bg-gradient-to-br from-[#9333ea]/20 via-[#d4b496]/15 to-transparent",
-        veil: "bg-gradient-to-b from-[#120e0b]/55 via-[#1a1410]/20 to-[#0d0a08]/85",
-        topBar: "bg-[var(--bg-modal,rgba(28,22,17,0.75))] backdrop-blur-3xl border border-[var(--bg-card-border,rgba(212,180,150,0.18))] text-[#f5eae1] shadow-[0_12px_36px_rgba(0,0,0,0.6),0_0_25px_rgba(147,51,234,0.35)] rounded-2xl",
-        minimizeBtn: "bg-white/[0.05] hover:bg-white/[0.14] text-[#f5eae1] border border-[rgba(212,180,150,0.2)] backdrop-blur-2xl shadow-md rounded-xl transition-all",
-        nowPlayingDot: "bg-[#a855f7] shadow-[0_0_12px_#a855f7]",
-        nowPlayingLabel: "text-[#d4b496] font-bold tracking-widest drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]",
-        nowPlayingTitle: "text-[#f5eae1] drop-shadow-sm font-sans",
-        tabActive: "bg-gradient-to-r from-[#d4b496] via-[#c4b5a5] to-[#9333ea] text-[#120e0b] shadow-[0_0_24px_rgba(147,51,234,0.5),inset_0_1px_1px_rgba(255,255,255,0.7)] font-black border-t border-white/60 border-b border-black/40 rounded-xl",
-        tabInactive: "bg-white/[0.04] hover:bg-white/[0.10] text-[#c4b5a5] border border-[rgba(212,180,150,0.15)] backdrop-blur-2xl rounded-xl",
-        artGlowRing: "from-[#9333ea]/60 via-[#d4b496]/40 to-[#a855f7]/60",
-        artBorder: "border border-[var(--bg-card-border,rgba(212,180,150,0.25))] shadow-[0_24px_60px_rgba(0,0,0,0.8),0_0_35px_rgba(147,51,234,0.45)] rounded-3xl",
-        stageTitle: "text-[#f5eae1] drop-shadow-[0_0_14px_rgba(168,85,247,0.6)] font-black",
-        stageArtist: "text-[#d4b496] font-bold drop-shadow-[0_0_8px_rgba(147,51,234,0.4)]",
-        stageTagAccent: "bg-[#9333ea]/25 border border-[rgba(212,180,150,0.35)] text-[#f5eae1] font-bold shadow-[0_0_14px_rgba(147,51,234,0.35)]",
-        stageTagNeutral: "bg-white/[0.04] border border-[rgba(212,180,150,0.18)] text-[#c4b5a5] backdrop-blur-2xl",
-        bottomDeck: "bg-[var(--bg-modal,rgba(28,22,17,0.75))] backdrop-blur-3xl border border-[var(--bg-card-border,rgba(212,180,150,0.2))] text-[#f5eae1] shadow-[0_16px_48px_rgba(0,0,0,0.7),0_0_35px_rgba(147,51,234,0.35)] rounded-3xl",
-        seekbarTrack: "bg-white/[0.08] border border-[rgba(212,180,150,0.15)] shadow-inner backdrop-blur-md",
-        seekbarFill: "bg-gradient-to-r from-[#d4b496] via-[#c4b5a5] to-[#9333ea] shadow-[0_0_18px_rgba(168,85,247,0.7)]",
-        seekbarThumb: "bg-[#f5eae1] border-2 border-[#9333ea] shadow-[0_0_18px_rgba(168,85,247,0.85)]",
+        auroraBeam1: "bg-gradient-to-r from-[#9333ea]/40 via-[#d4af37]/25 to-[#a855f7]/35",
+        auroraBeam2: "bg-gradient-to-r from-[#a855f7]/35 via-[#16121a]/50 to-[#9333ea]/40",
+        orbitalGlow1: "bg-gradient-to-tr from-[#9333ea]/50 via-[#d4af37]/30 to-[#a855f7]/45",
+        orbitalGlow2: "bg-gradient-to-bl from-[#a855f7]/40 via-[#16121a]/60 to-[#9333ea]/45",
+        driftAuraGlow: "bg-gradient-to-br from-[#9333ea]/20 via-[#d4af37]/15 to-transparent",
+        veil: "bg-gradient-to-b from-[#120e16]/65 via-[#16121a]/25 to-[#0d0a08]/90",
+        topBar: "bg-[rgba(22,18,26,0.85)] backdrop-blur-3xl border border-[rgba(212,175,55,0.2)] text-[#e8d5b5] shadow-[0_12px_36px_rgba(0,0,0,0.6),0_0_25px_rgba(168,85,247,0.35)] rounded-2xl",
+        minimizeBtn: "bg-transparent hover:bg-white/[0.08] text-[#e8d5b5] border-none shadow-none rounded-xl transition-all",
+        nowPlayingDot: "bg-[#d4af37] shadow-[0_0_12px_#d4af37]",
+        nowPlayingLabel: "text-[#d4af37] font-bold tracking-widest drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]",
+        nowPlayingTitle: "text-[#e8d5b5] drop-shadow-sm font-sans font-semibold",
+        tabActive: "bg-[#e8d5b5] text-[#120e16] shadow-[0_0_24px_rgba(168,85,247,0.5)] font-bold border border-[rgba(212,175,55,0.4)] rounded-xl",
+        tabInactive: "bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.12)] text-[#e8d5b5] border border-[rgba(212,175,55,0.2)] backdrop-blur-2xl rounded-xl",
+        artGlowRing: "from-[#9333ea]/60 via-[#d4af37]/40 to-[#a855f7]/60",
+        artBorder: "border border-[rgba(168,85,247,0.45)] shadow-[0_24px_60px_rgba(0,0,0,0.8),0_0_35px_rgba(168,85,247,0.45)] rounded-3xl",
+        stageTitle: "text-[#e8d5b5] drop-shadow-[0_0_14px_rgba(168,85,247,0.6)] font-semibold text-xl",
+        stageArtist: "text-[#a89379] font-medium drop-shadow-[0_0_8px_rgba(147,51,234,0.4)]",
+        stageTagAccent: "bg-[#9333ea]/25 border border-[rgba(212,175,55,0.35)] text-[#e8d5b5] font-bold shadow-[0_0_14px_rgba(147,51,234,0.35)]",
+        stageTagNeutral: "bg-white/[0.04] border border-[rgba(212,175,55,0.18)] text-[#e8d5b5] backdrop-blur-2xl",
+        bottomDeck: "bg-[rgba(26,20,32,0.95)] backdrop-blur-3xl border border-[rgba(168,85,247,0.35)] text-[#e8d5b5] shadow-[0_16px_48px_rgba(0,0,0,0.8),0_0_35px_rgba(168,85,247,0.35)] rounded-3xl",
+        seekbarTrack: "bg-white/[0.08] border border-[rgba(212,175,55,0.18)] shadow-inner backdrop-blur-md",
+        seekbarFill: "bg-gradient-to-r from-[#a855f7] via-[#c4b5a5] to-[#d4af37] shadow-[0_0_18px_rgba(168,85,247,0.7)]",
+        seekbarThumb: "bg-[#e8d5b5] border-2 border-[#d4af37] shadow-[0_0_18px_rgba(212,175,55,0.85)]",
         seekbarGlow: "shadow-purple-500/50",
-        seekbarAccent: "accent-[#a855f7]",
-        timeText: "text-[#c4b5a5] font-mono",
-        playBtn: "full-player-play-btn play-pause-btn bg-gradient-to-r from-[#e6d5c3] via-[#d4b496] to-[#9333ea] hover:brightness-110 text-[#120e0b] shadow-[0_0_25px_rgba(168,85,247,0.65),inset_0_1.5px_1px_rgba(255,255,255,0.7)] border-t border-white/60 border-b border-black/40 rounded-full transition-all active:scale-95",
-        playIconFill: "fill-[#120e0b]",
-        ctrlBtn: "control-btn bg-white/[0.05] hover:bg-white/[0.14] text-[#f5eae1] border border-[rgba(212,180,150,0.2)] backdrop-blur-2xl shadow-md rounded-2xl transition-all",
-        activeText: "text-[#f5eae1] drop-shadow-[0_0_10px_rgba(168,85,247,0.7)]",
-        mutedText: "text-[#c4b5a5] hover:text-[#f5eae1]",
-        volSlider: "bg-white/[0.08] accent-[#a855f7]",
+        seekbarAccent: "accent-[#d4af37]",
+        timeText: "text-[#e8d5b5] font-mono font-semibold",
+        playBtn: "full-player-play-btn play-pause-btn bg-gradient-to-r from-[#f0e2ca] via-[#d4af37] to-[#c59b27] hover:brightness-110 text-[#120e16] shadow-[0_0_25px_rgba(168,85,247,0.6)] border border-[rgba(212,175,55,0.5)] rounded-full transition-all active:scale-95",
+        playIconFill: "fill-[#120e16]",
+        ctrlBtn: "control-btn bg-transparent hover:bg-white/[0.08] text-[#e8d5b5] border-none shadow-none rounded-2xl transition-all",
+        activeText: "text-[#d4af37] drop-shadow-[0_0_10px_rgba(212,175,55,0.7)]",
+        mutedText: "text-[#e8d5b5] hover:text-[#f5eae1]",
+        volSlider: "bg-white/[0.08] accent-[#d4af37]",
       };
   }
 }
@@ -713,6 +713,13 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
   const hasBespokeColors = Boolean(bespokeColors && bespokeColors.length >= 2);
 
+  const isHardRock = Boolean(
+    designConfig.id === "sugar-time-jazz" ||
+    (designConfig.id as string) === "hard-rock" ||
+    designConfig.name === "Hard Rock" ||
+    designConfig.themePreset === "sugar-time-jazz"
+  );
+
   return (
     <div
       ref={containerRef}
@@ -733,8 +740,9 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
       style={{
         touchAction: "none",
         ...(hasBespokeColors ? ({ "--accent-primary": bespokeColors![1] } as React.CSSProperties) : {}),
+        ...(isHardRock ? { background: "transparent", border: "none", boxShadow: "none" } : {}),
       }}
-      className={`progress-waveform-container progress-bar-track-housing group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-2 rounded-xl ${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"} transition-all ${className}`}
+      className={`progress-waveform-container progress-bar-track-housing group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-1 transition-all ${isHardRock ? "" : `${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"}`} ${className}`}
       title="Click or drag anywhere on waveform to seek"
     >
       {/* Waveform Bars */}
@@ -755,7 +763,17 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
               } w-full rounded-full transition-[height,background-color] duration-150`}
               style={{
                 height: `${heightPct}%`,
-                ...(hasBespokeColors && isPassed
+                ...(isHardRock
+                  ? (isPassed
+                      ? {
+                          background: "linear-gradient(180deg, #f0e2ca 0%, #a855f7 100%)",
+                          boxShadow: "0 0 8px rgba(168, 85, 247, 0.7), 0 0 3px rgba(240, 226, 202, 0.5)",
+                        }
+                      : {
+                          background: "rgba(232, 213, 181, 0.22)",
+                          boxShadow: "none",
+                        })
+                  : hasBespokeColors && isPassed
                   ? {
                       background: `linear-gradient(90deg, ${bespokeColors![0]}, ${bespokeColors![1]})`,
                       boxShadow: `0 0 8px ${bespokeColors![1]}`,
@@ -779,11 +797,15 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
         }`}
         style={{
           left: `${progressPercent}%`,
-          background: hasBespokeColors
+          background: isHardRock
+            ? "linear-gradient(135deg, #f0e2ca, #c59b27)"
+            : hasBespokeColors
             ? `linear-gradient(135deg, ${bespokeColors![0]}, ${bespokeColors![1]})`
             : "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
           border: "2px solid #ffffff",
-          boxShadow: hasBespokeColors
+          boxShadow: isHardRock
+            ? "0 0 14px rgba(168, 85, 247, 0.85), 0 2px 6px rgba(0,0,0,0.6)"
+            : hasBespokeColors
             ? `0 0 12px ${bespokeColors![1]}, 0 2px 6px rgba(0,0,0,0.5)`
             : "0 0 10px var(--accent-primary), 0 2px 6px rgba(0,0,0,0.5)",
         }}
@@ -1246,6 +1268,12 @@ export const Player: React.FC<PlayerProps> = ({
   } = playerState;
 
   const isBespoke = Boolean(designConfig.id === "bespoke" || designConfig.isBespoke);
+  const isHardRock = Boolean(
+    designConfig.id === "sugar-time-jazz" ||
+    (designConfig.id as string) === "hard-rock" ||
+    designConfig.name === "Hard Rock" ||
+    designConfig.themePreset === "sugar-time-jazz"
+  );
 
   const [bespokeColors, setBespokeColors] = useState<[string, string, string, string]>(() => {
     if (designConfig.swatchColors && designConfig.swatchColors.length >= 4) {
@@ -3309,10 +3337,14 @@ export const Player: React.FC<PlayerProps> = ({
 
           {/* Top Bar Navigation with Swipe Handle */}
           <div
-            className={`full-player-header relative z-20 shrink-0 flex flex-col px-3.5 pt-2 pb-2.5 sm:px-6 sm:py-3.5 border-b backdrop-blur-2xl ${fpTheme.topBar}`}
+            className={`full-player-header relative z-20 shrink-0 flex flex-col px-3.5 pt-2 pb-2.5 sm:px-6 sm:py-3.5 backdrop-blur-2xl ${isHardRock ? "" : `border-b ${fpTheme.topBar}`}`}
             style={isBespoke ? {
               background: `linear-gradient(180deg, ${hexToRgba(bespokeColors[0], 0.4)} 0%, rgba(10, 10, 16, 0.75) 100%)`,
               borderBottomColor: hexToRgba(bespokeColors[2], 0.3),
+            } : isHardRock ? {
+              backgroundColor: "rgba(22, 18, 26, 0.85)",
+              borderBottom: "none",
+              boxShadow: "0 12px 28px -4px rgba(168, 85, 247, 0.4)",
             } : undefined}
           >
             {/* Gesture Pull-Down Pill Indicator (Mobile / Touch Friendly) */}
@@ -3321,98 +3353,319 @@ export const Player: React.FC<PlayerProps> = ({
             </div>
 
             {/* Brand Header */}
-            <div className="full-player-top-brand">
+            <div className="full-player-top-brand flex items-center justify-center gap-2 mb-1.5 sm:mb-2">
               <Logo size={24} designId={designConfig.id} className="w-6 h-6" withAura animated />
-              <span className={`font-bold tracking-widest uppercase text-sm ${designConfig.textPrimary || "text-white"}`}>
+              <span
+                className={`font-bold tracking-widest uppercase text-sm ${designConfig.textPrimary || "text-white"}`}
+                style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.22em", textShadow: "0 0 16px rgba(168, 85, 247, 0.45)" } : undefined}
+              >
                 OBLIVION
               </span>
             </div>
 
-            <div className="flex items-center justify-between w-full">
-              {/* Left: Minimize Button */}
-              <button
-                onClick={handleMinimizeFullPlayer}
-                className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
-                title="Minimize Full Player (or swipe down)"
-              >
-                <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span className="text-xs font-semibold hidden sm:inline">Minimize</span>
-              </button>
+            {isHardRock ? (
+              /* Hard Rock Top Tab Bar matching reference image EXACTLY */
+              <div className="flex items-center justify-between w-full max-w-xl mx-auto px-1 sm:px-2">
+                {/* Chevron Minimize: Clean transparent button without bounding box */}
+                <button
+                  onClick={handleMinimizeFullPlayer}
+                  className="transition-all hover:scale-105 active:scale-95 flex items-center justify-center shrink-0 cursor-pointer p-2"
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                  }}
+                  title="Minimize Full Player (or swipe down)"
+                >
+                  <ChevronDown
+                    size={24}
+                    style={{ color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
+                  />
+                </button>
 
-            {/* Center: YouTube Music Audio / Video Switcher */}
-            <div className="flex items-center p-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg">
-              <button
-                id="player-toggle-audio-mode"
-                onClick={(e) => handleTabSwitch("audio", e)}
-                className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar
-                    ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
-                    : "text-white/70 hover:text-white"
-                }`}
-                style={isBespoke && (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? {
-                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                  color: calculateWcagText(bespokeColors[1]),
-                } : undefined}
-                title="Switch to Audio Mode"
-              >
-                <Music2 className="w-3.5 h-3.5" />
-                <span>Audio</span>
-              </button>
-              <button
-                id="player-toggle-video-mode"
-                onClick={(e) => handleTabSwitch("video", e)}
-                className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  playerState.mediaMode === "video"
-                    ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
-                    : "text-white/70 hover:text-white"
-                }`}
-                style={isBespoke && playerState.mediaMode === "video" ? {
-                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                  color: calculateWcagText(bespokeColors[1]),
-                } : undefined}
-                title="Switch to Video Mode"
-              >
-                <Video className="w-3.5 h-3.5" />
-                <span>Video</span>
-              </button>
-            </div>
+                {/* 4 Tabs Capsule: Audio, Video, Lyrics, Radio */}
+                <div
+                  className="flex items-center backdrop-blur-xl"
+                  style={{
+                    backgroundColor: "rgba(26, 20, 32, 0.9)",
+                    border: "1px solid rgba(232, 213, 181, 0.2)",
+                    borderRadius: "9999px",
+                    padding: "4px 5px",
+                    gap: "3px",
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(168, 85, 247, 0.2)",
+                  }}
+                >
+                  {/* Audio Tab */}
+                  <button
+                    id="player-toggle-audio-mode"
+                    onClick={(e) => handleTabSwitch("audio", e)}
+                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    style={
+                      (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar
+                        ? {
+                            backgroundColor: "#e8d5b5",
+                            color: "#120e16",
+                            fontWeight: "bold",
+                            borderRadius: "9999px",
+                            padding: "6px 14px",
+                            border: "none",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                          }
+                        : {
+                            backgroundColor: "transparent",
+                            color: "#e8d5b5",
+                            opacity: 1,
+                            borderRadius: "9999px",
+                            padding: "6px 12px",
+                            border: "none",
+                          }
+                    }
+                    title="Switch to Audio Mode"
+                  >
+                    <Music2
+                      size={15}
+                      style={{
+                        color: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        stroke: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        opacity: 1,
+                      }}
+                    />
+                    <span
+                      style={{
+                        color: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        fontWeight: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "bold" : "500",
+                      }}
+                    >
+                      Audio
+                    </span>
+                  </button>
 
-            {/* Right: Quick Toggles (Lyrics, Radio) */}
-            <div className="flex items-center gap-1.5 sm:gap-3">
-              <button
-                onClick={(e) => handleTabSwitch("lyrics", e)}
-                className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
-                  showLyrics ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
-                }`}
-                style={isBespoke && showLyrics ? {
-                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                  color: calculateWcagText(bespokeColors[1]),
-                  borderColor: "transparent",
-                  boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                } : undefined}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Lyrics</span>
-              </button>
+                  {/* Video Tab */}
+                  <button
+                    id="player-toggle-video-mode"
+                    onClick={(e) => handleTabSwitch("video", e)}
+                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    style={
+                      playerState.mediaMode === "video" && !showLyrics && !showSimilar
+                        ? {
+                            backgroundColor: "#e8d5b5",
+                            color: "#120e16",
+                            fontWeight: "bold",
+                            borderRadius: "9999px",
+                            padding: "6px 14px",
+                            border: "none",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                          }
+                        : {
+                            backgroundColor: "transparent",
+                            color: "#e8d5b5",
+                            opacity: 1,
+                            borderRadius: "9999px",
+                            padding: "6px 12px",
+                            border: "none",
+                          }
+                    }
+                    title="Switch to Video Mode"
+                  >
+                    <Video
+                      size={15}
+                      style={{
+                        color: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        stroke: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        opacity: 1,
+                      }}
+                    />
+                    <span
+                      style={{
+                        color: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        fontWeight: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "bold" : "500",
+                      }}
+                    >
+                      Video
+                    </span>
+                  </button>
 
-              <button
-                onClick={(e) => handleTabSwitch("radio", e)}
-                className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
-                  showSimilar ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
-                }`}
-                style={isBespoke && showSimilar ? {
-                  background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                  color: calculateWcagText(bespokeColors[1]),
-                  borderColor: "transparent",
-                  boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                } : undefined}
-              >
-                <Radio className="w-3.5 h-3.5" />
-                <span>Radio</span>
-              </button>
-            </div>
+                  {/* Lyrics Tab */}
+                  <button
+                    id="player-toggle-lyrics-mode"
+                    onClick={(e) => handleTabSwitch("lyrics", e)}
+                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    style={
+                      showLyrics
+                        ? {
+                            backgroundColor: "#e8d5b5",
+                            color: "#120e16",
+                            fontWeight: "bold",
+                            borderRadius: "9999px",
+                            padding: "6px 14px",
+                            border: "none",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                          }
+                        : {
+                            backgroundColor: "transparent",
+                            color: "#e8d5b5",
+                            opacity: 1,
+                            borderRadius: "9999px",
+                            padding: "6px 12px",
+                            border: "none",
+                          }
+                    }
+                    title="Toggle Lyrics"
+                  >
+                    <Sparkles
+                      size={15}
+                      style={{
+                        color: showLyrics ? "#120e16" : "#e8d5b5",
+                        stroke: showLyrics ? "#120e16" : "#e8d5b5",
+                        opacity: 1,
+                      }}
+                    />
+                    <span
+                      style={{
+                        color: showLyrics ? "#120e16" : "#e8d5b5",
+                        fontWeight: showLyrics ? "bold" : "500",
+                      }}
+                    >
+                      Lyrics
+                    </span>
+                  </button>
+
+                  {/* Radio Tab */}
+                  <button
+                    id="player-toggle-radio-mode"
+                    onClick={(e) => handleTabSwitch("radio", e)}
+                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    style={
+                      showSimilar
+                        ? {
+                            backgroundColor: "#e8d5b5",
+                            color: "#120e16",
+                            fontWeight: "bold",
+                            borderRadius: "9999px",
+                            padding: "6px 14px",
+                            border: "none",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                          }
+                        : {
+                            backgroundColor: "transparent",
+                            color: "#e8d5b5",
+                            opacity: 1,
+                            borderRadius: "9999px",
+                            padding: "6px 12px",
+                            border: "none",
+                          }
+                    }
+                    title="Toggle Radio"
+                  >
+                    <Radio
+                      size={15}
+                      style={{
+                        color: showSimilar ? "#120e16" : "#e8d5b5",
+                        stroke: showSimilar ? "#120e16" : "#e8d5b5",
+                        opacity: 1,
+                      }}
+                    />
+                    <span
+                      style={{
+                        color: showSimilar ? "#120e16" : "#e8d5b5",
+                        fontWeight: showSimilar ? "bold" : "500",
+                      }}
+                    >
+                      Radio
+                    </span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Other Themes Default Top Row */
+              <div className="flex items-center justify-between w-full">
+                {/* Left: Minimize Button */}
+                <button
+                  onClick={handleMinimizeFullPlayer}
+                  className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
+                  style={{ color: "#e8d5b5" }}
+                  title="Minimize Full Player (or swipe down)"
+                >
+                  <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }} size={20} />
+                  <span className="text-xs font-semibold hidden sm:inline" style={{ color: "#e8d5b5", opacity: 1 }}>Minimize</span>
+                </button>
+
+                {/* Center: YouTube Music Audio / Video Switcher */}
+                <div className="flex items-center p-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg">
+                  <button
+                    id="player-toggle-audio-mode"
+                    onClick={(e) => handleTabSwitch("audio", e)}
+                    className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar
+                        ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
+                        : "text-white/70 hover:text-white"
+                    }`}
+                    style={isBespoke && (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? {
+                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                      color: calculateWcagText(bespokeColors[1]),
+                    } : undefined}
+                    title="Switch to Audio Mode"
+                  >
+                    <Music2 className="w-3.5 h-3.5" />
+                    <span>Audio</span>
+                  </button>
+                  <button
+                    id="player-toggle-video-mode"
+                    onClick={(e) => handleTabSwitch("video", e)}
+                    className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      playerState.mediaMode === "video"
+                        ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
+                        : "text-white/70 hover:text-white"
+                    }`}
+                    style={isBespoke && playerState.mediaMode === "video" ? {
+                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                      color: calculateWcagText(bespokeColors[1]),
+                    } : undefined}
+                    title="Switch to Video Mode"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Video</span>
+                  </button>
+                </div>
+
+                {/* Right: Quick Toggles (Lyrics, Radio) */}
+                <div className="flex items-center gap-1.5 sm:gap-3">
+                  <button
+                    onClick={(e) => handleTabSwitch("lyrics", e)}
+                    className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
+                      showLyrics ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
+                    }`}
+                    style={isBespoke && showLyrics ? {
+                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                      color: calculateWcagText(bespokeColors[1]),
+                      borderColor: "transparent",
+                      boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                    } : (!showLyrics ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" style={!showLyrics ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
+                    <span style={!showLyrics ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Lyrics</span>
+                  </button>
+
+                  <button
+                    onClick={(e) => handleTabSwitch("radio", e)}
+                    className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
+                      showSimilar ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
+                    }`}
+                    style={isBespoke && showSimilar ? {
+                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                      color: calculateWcagText(bespokeColors[1]),
+                      borderColor: "transparent",
+                      boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                    } : (!showSimilar ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
+                  >
+                    <Radio className="w-3.5 h-3.5" style={!showSimilar ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
+                    <span style={!showSimilar ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Radio</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
 
           {/* Main Fullscreen Center Body */}
           <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center px-3 py-1 sm:px-6 sm:py-3 overflow-hidden">
@@ -3458,20 +3711,21 @@ export const Player: React.FC<PlayerProps> = ({
                 />
 
                 {/* Song Title & Artist - lowered with clean gap below the video screen and clear of shadows */}
-                <div className="relative z-30 text-center space-y-0.5 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-2.5 sm:mt-4 pt-0.5">
+                <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
                   <MarqueeText
                     as="h2"
                     text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    className={`text-sm sm:text-xl md:text-2xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
+                    className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
                     containerClassName="w-full mx-auto text-center"
+                    style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
                     speed={30}
                   />
                   <MarqueeText
                     as="p"
                     text={currentTrack.artist || "Unknown Artist"}
-                    className={`text-xs sm:text-sm font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
+                    className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
                     containerClassName="w-full mx-auto text-center"
-                    style={isBespoke ? { color: bespokeColors[1] } : undefined}
+                    style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
                     speed={26}
                   />
                 </div>
@@ -3482,7 +3736,14 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* Audio Artwork Card (Slim Line + Soft Ambient Glow) */}
                 <div
                   className="full-player-artwork-card art-container glass-card relative group"
-                  style={isBespoke ? {
+                  style={isHardRock ? {
+                    borderRadius: "28px",
+                    overflow: "hidden",
+                    border: "1px solid rgba(232, 213, 181, 0.18)",
+                    boxShadow: "0 0 50px rgba(168, 85, 247, 0.45), 0 20px 40px rgba(0, 0, 0, 0.75)",
+                    maxWidth: "min(84vw, 360px)",
+                    aspectRatio: "1/1",
+                  } : isBespoke ? {
                     borderColor: hexToRgba(bespokeColors[0], 0.6),
                     boxShadow: `0 0 30px ${hexToRgba(bespokeColors[0], 0.35)}`,
                   } : undefined}
@@ -3501,20 +3762,21 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
 
                 {/* Song Title & Artist - lowered with clean gap below album artwork and clear of shadows */}
-                <div className="relative z-30 text-center space-y-0.5 sm:space-y-1.5 max-w-[min(90vw,480px)] w-full px-2 mt-2.5 sm:mt-4 pt-0.5">
+                <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
                   <MarqueeText
                     as="h2"
                     text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    className={`text-sm sm:text-xl md:text-2xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
+                    className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
                     containerClassName="w-full mx-auto text-center"
+                    style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
                     speed={30}
                   />
                   <MarqueeText
                     as="p"
                     text={currentTrack.artist || "Unknown Artist"}
-                    className={`text-xs sm:text-sm font-semibold ${fpTheme.stageArtist} text-center`}
+                    className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-semibold ${fpTheme.stageArtist} text-center`}
                     containerClassName="w-full mx-auto text-center"
-                    style={isBespoke ? { color: bespokeColors[1] } : undefined}
+                    style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
                     speed={26}
                   />
                 </div>
@@ -3524,31 +3786,55 @@ export const Player: React.FC<PlayerProps> = ({
 
           {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
           <div
-            className={`full-player-bottom-bar full-player-controls-container full-player-bottom-dock relative z-20 shrink-0 p-2.5 sm:p-4 pb-4 sm:pb-6 border-t backdrop-blur-2xl space-y-2 sm:space-y-3 max-w-3xl mx-auto w-full rounded-t-3xl ${fpTheme.bottomDeck}`}
-            style={isBespoke ? {
+            className={`full-player-bottom-bar full-player-controls-container full-player-bottom-dock relative z-20 shrink-0 p-3 sm:p-5 pb-5 sm:pb-7 max-w-2xl mx-auto w-full select-none ${isHardRock ? "" : `border-t backdrop-blur-2xl space-y-2 sm:space-y-3 rounded-t-3xl ${fpTheme.bottomDeck}`}`}
+            style={isHardRock ? {
+              backgroundColor: "rgba(26, 20, 32, 0.95)",
+              borderRadius: "24px",
+              border: "1px solid rgba(168, 85, 247, 0.35)",
+              boxShadow: "0 0 35px rgba(168, 85, 247, 0.35), 0 -12px 35px rgba(0, 0, 0, 0.75)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+            } : isBespoke ? {
               background: `linear-gradient(180deg, ${hexToRgba(bespokeColors[0], 0.45)} 0%, rgba(10, 10, 16, 0.9) 100%)`,
               borderTopColor: hexToRgba(bespokeColors[2], 0.35),
+            } : designConfig.id === "sugar-time-jazz" ? {
+              backgroundColor: "rgba(26, 20, 32, 0.95)",
+              borderRadius: "28px",
+              border: "1px solid rgba(212, 175, 55, 0.3)",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.8), 0 0 35px rgba(168, 85, 247, 0.35)",
+              padding: "18px 24px",
             } : undefined}
           >
             {/* Top Row Controls: Like, Add, Prev, Play/Pause, Next, Shuffle, Repeat, Volume */}
-            <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+            <div className="flex items-center justify-between gap-1 sm:gap-2 px-1">
               {/* Left Group: Like, Add to Playlist */}
-              <div className="flex-1 flex items-center justify-start gap-1 sm:gap-1.5">
+              <div className="flex-1 flex items-center justify-start gap-1 sm:gap-2">
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
-                  className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${
-                    isLiked
-                      ? "bg-rose-500/20 text-rose-500 border-rose-500/30"
-                      : fpTheme.ctrlBtn
-                  }`}
-                  style={isLiked && isBespoke ? {
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn rounded-xl border ${isLiked ? "bg-rose-500/20 text-rose-500 border-rose-500/30" : fpTheme.ctrlBtn}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "8px",
+                    opacity: 1,
+                  } : (isLiked && isBespoke ? {
                     backgroundColor: hexToRgba(bespokeColors[1], 0.2),
                     borderColor: hexToRgba(bespokeColors[1], 0.4),
                     color: bespokeColors[1],
-                  } : undefined}
+                  } : (!isLiked ? { color: "#e8d5b5" } : undefined))}
                   title="Like track"
                 >
-                  <Heart className={`control-icon w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <Heart
+                    className={`control-icon w-5 h-5 sm:w-6 sm:h-6 ${!isHardRock && isLiked ? "fill-rose-500 text-rose-500" : ""}`}
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: isLiked ? "#e8d5b5" : "none",
+                      opacity: 1,
+                    } : (!isLiked ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
+                  />
                 </button>
 
                 {/* Add to Playlist Button */}
@@ -3561,89 +3847,222 @@ export const Player: React.FC<PlayerProps> = ({
                       setShowAddToPlaylistModal(true);
                     }
                   }}
-                  className={`player-control-btn p-2 sm:p-2.5 rounded-xl border transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn rounded-xl border text-xs font-semibold ${fpTheme.ctrlBtn}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "8px",
+                    opacity: 1,
+                  } : { color: "#e8d5b5" }}
                   title="Add to Playlist"
                 >
-                  <Plus className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="hidden md:inline">Add</span>
+                  <Plus
+                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
+                  />
                 </button>
               </div>
 
               {/* Center Group: Previous (Back), Play/Pause in Center, Next (Forward) */}
-              <div className="flex items-center justify-center gap-2 sm:gap-4 shrink-0">
+              <div className="flex items-center justify-center gap-3 sm:gap-5 shrink-0">
                 <button
                   onClick={handlePrevTrack}
-                  className={`player-control-btn control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn control-btn rounded-xl border ${fpTheme.ctrlBtn}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "8px",
+                    opacity: 1,
+                  } : { color: "#e8d5b5" }}
                   title="Previous Song"
                 >
-                  <SkipBack className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
+                  <SkipBack
+                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
+                  />
                 </button>
 
-                <button
-                  onClick={() => handleUserTogglePlay()}
-                  className={`player-play-btn full-player-play-btn play-pause-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-lg ${fpTheme.playBtn}`}
-                  style={isBespoke ? {
-                    background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                    color: calculateWcagText(bespokeColors[1]),
-                    boxShadow: `0 0 26px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                  } : undefined}
-                  title={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? (
-                    <Pause className={`w-5 h-5 sm:w-6 sm:h-6 ${fpTheme.playIconFill}`} />
-                  ) : (
-                    <Play className={`w-5 h-5 sm:w-6 sm:h-6 ${fpTheme.playIconFill} ml-0.5`} />
-                  )}
-                </button>
+                {/* Central Play/Pause Button with bright purple glowing aura */}
+                <div className="relative flex items-center justify-center">
+                  <div
+                    className="absolute rounded-full pointer-events-none"
+                    style={isHardRock ? {
+                      width: "74px",
+                      height: "74px",
+                      background: "radial-gradient(circle, rgba(168, 85, 247, 0.75) 0%, rgba(168, 85, 247, 0.2) 55%, transparent 75%)",
+                      boxShadow: "0 0 35px rgba(168, 85, 247, 0.8), 0 0 15px rgba(168, 85, 247, 0.6)",
+                      filter: "blur(4px)",
+                    } : undefined}
+                  />
+                  <button
+                    id="player-fullscreen-main-play-btn"
+                    onClick={() => handleUserTogglePlay()}
+                    className={`player-play-btn full-player-play-btn play-pause-btn relative z-10 flex items-center justify-center transition-all active:scale-95 cursor-pointer ${isHardRock ? "" : `w-11 h-11 sm:w-13 sm:h-13 rounded-full shadow-lg ${fpTheme.playBtn}`}`}
+                    style={isHardRock ? {
+                      width: "56px",
+                      height: "56px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #f0e2ca, #c59b27)",
+                      border: "none",
+                      boxShadow: "0 0 25px rgba(168, 85, 247, 0.7), 0 4px 14px rgba(0, 0, 0, 0.6)",
+                    } : isBespoke ? {
+                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                      color: calculateWcagText(bespokeColors[1]),
+                      boxShadow: `0 0 26px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                    } : undefined}
+                    title={isPlaying ? "Pause" : "Play"}
+                  >
+                    {isPlaying ? (
+                      <Pause
+                        size={24}
+                        style={isHardRock ? {
+                          color: "#120e16",
+                          stroke: "#120e16",
+                          fill: "#120e16",
+                          opacity: 1,
+                        } : undefined}
+                        className={isHardRock ? "" : fpTheme.playIconFill}
+                      />
+                    ) : (
+                      <Play
+                        size={24}
+                        style={isHardRock ? {
+                          color: "#120e16",
+                          stroke: "#120e16",
+                          fill: "#120e16",
+                          opacity: 1,
+                          marginLeft: "3px",
+                        } : undefined}
+                        className={isHardRock ? "" : `${fpTheme.playIconFill} ml-0.5`}
+                      />
+                    )}
+                  </button>
+                </div>
 
                 <button
                   onClick={handleNextTrack}
-                  className={`player-control-btn control-btn p-2 sm:p-2.5 rounded-xl border transition-all active:scale-95 ${fpTheme.ctrlBtn}`}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn control-btn rounded-xl border ${fpTheme.ctrlBtn}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "8px",
+                    opacity: 1,
+                  } : { color: "#e8d5b5" }}
                   title="Next Song"
                 >
-                  <SkipForward className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
+                  <SkipForward
+                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
+                  />
                 </button>
               </div>
 
-              {/* Right Group: Remaining controls sitting after Forward/Next (Shuffle, Repeat, Volume) */}
-              <div className="flex-1 flex items-center justify-end gap-1.5 sm:gap-2">
+              {/* Right Group: Shuffle, Repeat, Volume */}
+              <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
                 <button
                   onClick={() =>
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
-                  className={`player-control-btn control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
-                    isShuffle ? fpTheme.activeText : fpTheme.mutedText
-                  }`}
-                  style={isShuffle && isBespoke ? { color: bespokeColors[1] } : undefined}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn control-btn rounded-xl ${isShuffle ? fpTheme.activeText : fpTheme.mutedText}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "8px",
+                    opacity: 1,
+                  } : (isShuffle && isBespoke ? { color: bespokeColors[1] } : (!isShuffle ? { color: "#e8d5b5" } : undefined))}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
-                  <Shuffle className="control-icon w-4 h-4 sm:w-5 sm:h-5" />
+                  <Shuffle
+                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: isShuffle ? 1 : 0.8,
+                    } : (!isShuffle ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
+                  />
                 </button>
 
                 <button
                   onClick={cycleRepeatMode}
-                  className={`player-control-btn control-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${
-                    repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText
-                  }`}
-                  style={repeatMode !== "off" && isBespoke ? { color: bespokeColors[1] } : undefined}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn control-btn rounded-xl ${repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "8px",
+                    opacity: 1,
+                  } : (repeatMode !== "off" && isBespoke ? { color: bespokeColors[1] } : (repeatMode === "off" ? { color: "#e8d5b5" } : undefined))}
                   title={`Repeat: ${repeatMode}`}
                 >
-                  {repeatMode === "one" ? <Repeat1 className="control-icon w-4 h-4 sm:w-5 sm:h-5" /> : <Repeat className="control-icon w-4 h-4 sm:w-5 sm:h-5" />}
+                  {repeatMode === "one" ? (
+                    <Repeat1
+                      className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                      style={isHardRock ? {
+                        color: "#e8d5b5",
+                        stroke: "#e8d5b5",
+                        fill: "none",
+                        opacity: 1,
+                      } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
+                    />
+                  ) : (
+                    <Repeat
+                      className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                      style={isHardRock ? {
+                        color: "#e8d5b5",
+                        stroke: "#e8d5b5",
+                        fill: "none",
+                        opacity: repeatMode === "off" ? 0.8 : 1,
+                      } : (repeatMode === "off" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
+                    />
+                  )}
                 </button>
 
                 {/* Volume Slider on sm+ screens */}
-                <div className="hidden sm:flex items-center gap-1.5">
+                <div className="hidden sm:flex items-center gap-1.5 ml-2">
                   <button
                     onClick={() =>
                       setPlayerState((prev) => ({ ...prev, isMuted: !prev.isMuted }))
                     }
-                    className={`player-control-btn p-1.5 transition-colors ${fpTheme.mutedText}`}
+                    className={`transition-colors cursor-pointer ${isHardRock ? "p-1.5" : `player-control-btn p-1.5 ${fpTheme.mutedText}`}`}
+                    style={isHardRock ? {
+                      backgroundColor: "transparent",
+                      border: "none",
+                      boxShadow: "none",
+                      outline: "none",
+                      color: "#e8d5b5",
+                      opacity: 1,
+                    } : undefined}
                     title={isMuted ? "Unmute" : "Mute"}
                   >
                     {isMuted || volume === 0 ? (
                       <VolumeX className="control-icon w-4 h-4 text-rose-400" />
                     ) : (
-                      <Volume2 className="control-icon w-4 h-4" />
+                      <Volume2 className="control-icon w-4 h-4" style={isHardRock ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined} />
                     )}
                   </button>
                   <input
@@ -3654,14 +4073,14 @@ export const Player: React.FC<PlayerProps> = ({
                     value={isMuted ? 0 : volume}
                     onChange={(e) => onVolumeChange(Number(e.target.value))}
                     className={`w-16 md:w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
-                    style={isBespoke ? { accentColor: bespokeColors[1] } : undefined}
+                    style={isHardRock ? { accentColor: "#e8d5b5" } : (isBespoke ? { accentColor: bespokeColors[1] } : undefined)}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Bottom Row: Waveform Scrubber & Timestamps matching Mini Player */}
-            <div className="flex items-center gap-3 pt-0.5">
+            {/* Bottom Row: Waveform Scrubber & Timestamps matching Reference Image */}
+            <div className="flex items-center gap-3 pt-3">
               <WaveformScrubber
                 currentTime={isScrubbing && scrubTime !== null ? scrubTime : currentTime}
                 duration={(duration && duration > 0) ? duration : (currentTrack?.duration || 0)}
@@ -3673,7 +4092,10 @@ export const Player: React.FC<PlayerProps> = ({
                 isMini={false}
               />
 
-              <div className={`player-time-display text-[11px] sm:text-xs font-mono font-medium ${designConfig.textMuted || fpTheme.timeText || "text-slate-400"} shrink-0 whitespace-nowrap`}>
+              <div
+                className="player-time-display text-[12px] sm:text-xs font-mono font-semibold shrink-0 whitespace-nowrap"
+                style={isHardRock ? { color: "#e8d5b5", opacity: 1 } : undefined}
+              >
                 <span>{Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) / 60)}:{String(Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) % 60)).padStart(2, "0")}</span>
                 <span className="mx-1">/</span>
                 <span>{Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) / 60)}:{String(Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) % 60)).padStart(2, "0")}</span>
@@ -3710,7 +4132,14 @@ export const Player: React.FC<PlayerProps> = ({
               transition: isMiniDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease-out",
               touchAction: "pan-x",
               cursor: isMiniDraggingDown ? "grabbing" : "default",
-              ...(isBespoke
+              ...(isHardRock
+                ? {
+                    background: "rgba(26, 20, 32, 0.95)",
+                    borderColor: "rgba(168, 85, 247, 0.35)",
+                    boxShadow: "0 12px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(168, 85, 247, 0.35)",
+                    borderRadius: "20px",
+                  }
+                : isBespoke
                 ? {
                     background: "var(--bespoke-mini-player-bg, linear-gradient(135deg, var(--bespoke-c2), var(--bespoke-c3)))",
                     opacity: 1,
@@ -3721,7 +4150,7 @@ export const Player: React.FC<PlayerProps> = ({
                 : {}),
             }}
             data-theme={designConfig.id}
-            className={`mini-player-container mini-player fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${designConfig.cardBg} ${isBespoke ? "" : "backdrop-blur-2xl"} border ${designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${designConfig.accentBorder}`}
+            className={`mini-player-container mini-player fixed bottom-16 md:bottom-4 left-1/2 w-[calc(100%-24px)] md:w-[680px] max-w-2xl ${isHardRock ? "" : designConfig.cardBg} ${isBespoke || isHardRock ? "" : "backdrop-blur-2xl"} border ${isHardRock ? "" : designConfig.borderSubtle} rounded-2xl p-3 px-4 flex flex-col gap-2.5 z-40 select-none shadow-2xl ring-1 ${isHardRock ? "ring-purple-500/30" : designConfig.accentBorder}`}
           >
             {/* Top Drag-Down Bar Handle */}
             <div
@@ -3735,7 +4164,7 @@ export const Player: React.FC<PlayerProps> = ({
               {/* Left: Track Artwork Thumbnail */}
               <div 
                 onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 border ${designConfig.borderSubtle} shadow-sm bg-slate-800 flex items-center justify-center cursor-pointer group`}
+                className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 border ${isHardRock ? "border-[rgba(232,213,181,0.25)] shadow-[0_0_12px_rgba(168,85,247,0.35)]" : `${designConfig.borderSubtle} shadow-sm`} bg-slate-800 flex items-center justify-center cursor-pointer group`}
                 title="Click to open Full Player"
               >
                 <img
@@ -3773,14 +4202,16 @@ export const Player: React.FC<PlayerProps> = ({
                 >
                   <MarqueeText
                     text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors text-center`}
+                    className={`text-xs sm:text-sm font-bold ${isHardRock ? "" : designConfig.textPrimary} group-hover:${designConfig.accentText} transition-colors text-center`}
                     containerClassName="w-full max-w-[200px] xs:max-w-[250px] sm:max-w-[320px] mx-auto text-center"
+                    style={isHardRock ? { color: "#e8d5b5" } : undefined}
                     speed={28}
                   />
                   <MarqueeText
                     text={`${currentTrack.artist} • HD Studio`}
-                    className={`text-[10px] sm:text-[11px] ${designConfig.textMuted} text-center`}
+                    className={`text-[10px] sm:text-[11px] ${isHardRock ? "" : designConfig.textMuted} text-center`}
                     containerClassName="w-full max-w-[180px] xs:max-w-[220px] sm:max-w-[280px] mx-auto text-center"
+                    style={isHardRock ? { color: "#a89379" } : undefined}
                     speed={24}
                   />
                 </div>
@@ -3789,17 +4220,42 @@ export const Player: React.FC<PlayerProps> = ({
                 <div className="mini-player-controls flex items-center justify-center gap-1.5 sm:gap-2.5 shrink-0">
                   <button
                     onClick={handlePrevTrack}
-                    className={`player-control-btn action-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                    className={`player-control-btn action-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${isHardRock ? "" : `${designConfig.textMuted} hover:${designConfig.textPrimary}`}`}
+                    style={isHardRock ? {
+                      backgroundColor: "transparent",
+                      border: "none",
+                      boxShadow: "none",
+                      outline: "none",
+                      padding: "6px",
+                      opacity: 1,
+                    } : undefined}
                     title="Previous"
                   >
-                    <SkipBack className="control-icon w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    <SkipBack
+                      className="control-icon w-4 h-4 sm:w-4.5 sm:h-4.5"
+                      style={isHardRock ? {
+                        color: "#e8d5b5",
+                        stroke: "#e8d5b5",
+                        fill: "none",
+                        opacity: 1,
+                      } : undefined}
+                    />
                   </button>
 
                   <button
                     onClick={() => handleUserTogglePlay()}
-                    className={`player-play-btn mini-player-play-btn w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isBespoke ? "" : designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                    className={`player-play-btn mini-player-play-btn w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isHardRock || isBespoke ? "" : designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
                     style={
-                      isBespoke
+                      isHardRock
+                        ? {
+                            width: "38px",
+                            height: "38px",
+                            borderRadius: "50%",
+                            background: "linear-gradient(135deg, #f0e2ca, #c59b27)",
+                            border: "none",
+                            boxShadow: "0 0 16px rgba(168, 85, 247, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5)",
+                          }
+                        : isBespoke
                         ? {
                             background: "var(--bespoke-mini-player-play-bg, #0f172a)",
                             color: "var(--bespoke-mini-player-play-icon, #ffffff)",
@@ -3809,18 +4265,40 @@ export const Player: React.FC<PlayerProps> = ({
                     title={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
-                      <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5" style={isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" }} />
+                      <Pause
+                        className="w-4 h-4 sm:w-4.5 sm:h-4.5"
+                        style={isHardRock ? { color: "#120e16", stroke: "#120e16", fill: "#120e16", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                      />
                     ) : (
-                      <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5" style={isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" }} />
+                      <Play
+                        className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5"
+                        style={isHardRock ? { color: "#120e16", stroke: "#120e16", fill: "#120e16", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                      />
                     )}
                   </button>
 
                   <button
                     onClick={handleNextTrack}
-                    className={`player-control-btn action-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${designConfig.textMuted} hover:${designConfig.textPrimary}`}
+                    className={`player-control-btn action-btn p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 ${isHardRock ? "" : `${designConfig.textMuted} hover:${designConfig.textPrimary}`}`}
+                    style={isHardRock ? {
+                      backgroundColor: "transparent",
+                      border: "none",
+                      boxShadow: "none",
+                      outline: "none",
+                      padding: "6px",
+                      opacity: 1,
+                    } : undefined}
                     title="Next"
                   >
-                    <SkipForward className="control-icon w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    <SkipForward
+                      className="control-icon w-4 h-4 sm:w-4.5 sm:h-4.5"
+                      style={isHardRock ? {
+                        color: "#e8d5b5",
+                        stroke: "#e8d5b5",
+                        fill: "none",
+                        opacity: 1,
+                      } : undefined}
+                    />
                   </button>
                 </div>
               </div>
@@ -3832,29 +4310,89 @@ export const Player: React.FC<PlayerProps> = ({
                     setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
                   }
                   className={`player-control-btn action-btn p-1.5 transition-colors ${
-                    isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                    isHardRock ? "" : (isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`)
                   }`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "6px",
+                    opacity: 1,
+                  } : undefined}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
-                  <Shuffle className="control-icon w-3.5 h-3.5" />
+                  <Shuffle
+                    className="control-icon w-3.5 h-3.5"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: isShuffle ? 1 : 0.75,
+                    } : undefined}
+                  />
                 </button>
 
                 <button
                   onClick={cycleRepeatMode}
                   className={`player-control-btn action-btn p-1.5 transition-colors ${
-                    repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`
+                    isHardRock ? "" : (repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`)
                   }`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "6px",
+                    opacity: 1,
+                  } : undefined}
                   title={`Repeat: ${repeatMode}`}
                 >
-                  {repeatMode === "one" ? <Repeat1 className="control-icon w-3.5 h-3.5" /> : <Repeat className="control-icon w-3.5 h-3.5" />}
+                  {repeatMode === "one" ? (
+                    <Repeat1
+                      className="control-icon w-3.5 h-3.5"
+                      style={isHardRock ? {
+                        color: "#e8d5b5",
+                        stroke: "#e8d5b5",
+                        fill: "none",
+                        opacity: 1,
+                      } : undefined}
+                    />
+                  ) : (
+                    <Repeat
+                      className="control-icon w-3.5 h-3.5"
+                      style={isHardRock ? {
+                        color: "#e8d5b5",
+                        stroke: "#e8d5b5",
+                        fill: "none",
+                        opacity: repeatMode === "off" ? 0.75 : 1,
+                      } : undefined}
+                    />
+                  )}
                 </button>
 
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
-                  className="player-control-btn action-btn p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
+                  className={`player-control-btn action-btn p-1.5 transition-colors ${isHardRock ? "" : "text-slate-400 hover:text-rose-500"}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "6px",
+                    opacity: 1,
+                  } : undefined}
                   title="Favorite"
                 >
-                  <Heart className={`control-icon w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <Heart
+                    className={`control-icon w-3.5 h-3.5 sm:w-4 sm:h-4 ${!isHardRock && isLiked ? "fill-rose-500 text-rose-500" : ""}`}
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: isLiked ? "#e8d5b5" : "none",
+                      opacity: 1,
+                    } : undefined}
+                  />
                 </button>
 
                 {/* Add to Playlist button on Mini Player */}
@@ -3867,18 +4405,50 @@ export const Player: React.FC<PlayerProps> = ({
                       setShowAddToPlaylistModal(true);
                     }
                   }}
-                  className={`player-control-btn action-btn p-1.5 ${designConfig.textMuted} hover:${designConfig.accentText} transition-colors`}
+                  className={`player-control-btn action-btn p-1.5 transition-colors ${isHardRock ? "" : `${designConfig.textMuted} hover:${designConfig.accentText}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "6px",
+                    opacity: 1,
+                  } : undefined}
                   title="Add to Playlist"
                 >
-                  <Plus className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Plus
+                    className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : undefined}
+                  />
                 </button>
 
                 <button
                   onClick={() => setPlayerState((prev) => ({ ...prev, isFullscreen: true }))}
-                  className={`player-control-btn action-btn p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} transition-colors`}
+                  className={`player-control-btn action-btn p-1.5 transition-colors ${isHardRock ? "" : `${designConfig.textMuted} hover:${designConfig.textPrimary}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "6px",
+                    opacity: 1,
+                  } : undefined}
                   title="Full View"
                 >
-                  <Maximize2 className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Maximize2
+                    className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : undefined}
+                  />
                 </button>
               </div>
             </div>
@@ -3896,7 +4466,10 @@ export const Player: React.FC<PlayerProps> = ({
                 isMini={true}
               />
 
-              <div className={`player-time-display text-[11px] font-mono font-medium ${designConfig.textMuted} shrink-0 whitespace-nowrap`}>
+              <div
+                className={`player-time-display text-[11px] font-mono font-medium ${isHardRock ? "" : designConfig.textMuted} shrink-0 whitespace-nowrap`}
+                style={isHardRock ? { color: "#e8d5b5", opacity: 1 } : undefined}
+              >
                 <span>{Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) / 60)}:{String(Math.floor((isScrubbing && scrubTime !== null ? scrubTime : currentTime) % 60)).padStart(2, "0")}</span>
                 <span className="mx-1">/</span>
                 <span>{Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) / 60)}:{String(Math.floor(((duration && duration > 0) ? duration : (currentTrack?.duration || 0)) % 60)).padStart(2, "0")}</span>

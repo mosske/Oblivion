@@ -88,15 +88,15 @@ export const MarqueeText: React.FC<MarqueeTextProps> = ({
           className={`animate-marquee-continuous ${pauseOnHover ? "hover:[animation-play-state:paused]" : ""}`}
           style={{ "--marquee-duration": `${duration}s` } as React.CSSProperties}
         >
-          <span ref={textRef} className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`}>
+          <span ref={textRef} style={style} className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`}>
             {safeText}
           </span>
-          <span className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`} aria-hidden="true">
+          <span style={style} className={`shrink-0 pr-8 inline-block whitespace-nowrap ${className}`} aria-hidden="true">
             {safeText}
           </span>
         </div>
       ) : (
-        <span ref={textRef} className={`block truncate ${className}`}>
+        <span ref={textRef} style={style} className={`block truncate ${className}`}>
           {safeText}
         </span>
       )}

@@ -7773,3 +7773,238 @@ svg.playlist-search-icon,
   opacity: 1 !important;
 }
 
+
+
+/* ================================================================================
+   FULL PLAYER INACTIVE CONTROLS LIGHT BEIGE CONTRAST OVERRIDE
+   ================================================================================ */
+.theme-hard-rock [class*="full-player"] button:not(.active) svg,
+.theme-hard-rock [class*="expanded-player"] button:not(.active) svg,
+.theme-hard-rock [class*="player"] .transport-controls svg,
+.theme-sugar-time-jazz [class*="full-player"] button:not(.active) svg,
+.theme-sugar-time-jazz [class*="expanded-player"] button:not(.active) svg,
+.theme-sugar-time-jazz [class*="player"] .transport-controls svg,
+[data-theme="hard-rock"] [class*="full-player"] button:not(.active) svg,
+[data-theme="hard-rock"] [class*="expanded-player"] button:not(.active) svg,
+[data-theme="hard-rock"] [class*="player"] .transport-controls svg,
+[data-theme-alias="hard-rock"] [class*="full-player"] button:not(.active) svg,
+[data-theme-alias="hard-rock"] [class*="expanded-player"] button:not(.active) svg,
+[data-theme-alias="hard-rock"] [class*="player"] .transport-controls svg,
+[data-theme="sugar-time-jazz"] [class*="full-player"] button:not(.active) svg,
+[data-theme="sugar-time-jazz"] [class*="expanded-player"] button:not(.active) svg,
+[data-theme="sugar-time-jazz"] [class*="player"] .transport-controls svg,
+[data-theme-alias="sugar-time-jazz"] [class*="full-player"] button:not(.active) svg,
+[data-theme-alias="sugar-time-jazz"] [class*="expanded-player"] button:not(.active) svg,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] .transport-controls svg {
+  color: #e8d5b5 !important;
+  stroke: #e8d5b5 !important;
+  fill: none !important;
+  opacity: 0.9 !important;
+}
+
+
+
+/* ================================================================================
+   EXPANDED FULL PLAYER HARD ROCK CONTRAST OVERRIDE (!important)
+   ================================================================================ */
+.theme-hard-rock [class*="player"] button:not([class*="bg-"]),
+.theme-hard-rock [class*="Player"] button:not([class*="bg-"]),
+.theme-hard-rock [class*="modal"] button:not([class*="bg-"]),
+.theme-sugar-time-jazz [class*="player"] button:not([class*="bg-"]),
+.theme-sugar-time-jazz [class*="Player"] button:not([class*="bg-"]),
+.theme-sugar-time-jazz [class*="modal"] button:not([class*="bg-"]),
+[data-theme="hard-rock"] [class*="player"] button:not([class*="bg-"]),
+[data-theme="hard-rock"] [class*="Player"] button:not([class*="bg-"]),
+[data-theme="hard-rock"] [class*="modal"] button:not([class*="bg-"]),
+[data-theme-alias="hard-rock"] [class*="player"] button:not([class*="bg-"]),
+[data-theme-alias="hard-rock"] [class*="Player"] button:not([class*="bg-"]),
+[data-theme-alias="hard-rock"] [class*="modal"] button:not([class*="bg-"]),
+[data-theme="sugar-time-jazz"] [class*="player"] button:not([class*="bg-"]),
+[data-theme="sugar-time-jazz"] [class*="Player"] button:not([class*="bg-"]),
+[data-theme="sugar-time-jazz"] [class*="modal"] button:not([class*="bg-"]),
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button:not([class*="bg-"]),
+[data-theme-alias="sugar-time-jazz"] [class*="Player"] button:not([class*="bg-"]),
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] button:not([class*="bg-"]) {
+  color: #e8d5b5 !important;
+}
+
+.theme-hard-rock [class*="player"] button:not([class*="bg-"]) svg,
+.theme-hard-rock [class*="Player"] button:not([class*="bg-"]) svg,
+.theme-hard-rock [class*="modal"] button:not([class*="bg-"]) svg,
+.theme-sugar-time-jazz [class*="player"] button:not([class*="bg-"]) svg,
+.theme-sugar-time-jazz [class*="Player"] button:not([class*="bg-"]) svg,
+.theme-sugar-time-jazz [class*="modal"] button:not([class*="bg-"]) svg,
+[data-theme="hard-rock"] [class*="player"] button:not([class*="bg-"]) svg,
+[data-theme="hard-rock"] [class*="Player"] button:not([class*="bg-"]) svg,
+[data-theme="hard-rock"] [class*="modal"] button:not([class*="bg-"]) svg,
+[data-theme-alias="hard-rock"] [class*="player"] button:not([class*="bg-"]) svg,
+[data-theme-alias="hard-rock"] [class*="Player"] button:not([class*="bg-"]) svg,
+[data-theme-alias="hard-rock"] [class*="modal"] button:not([class*="bg-"]) svg,
+[data-theme="sugar-time-jazz"] [class*="player"] button:not([class*="bg-"]) svg,
+[data-theme="sugar-time-jazz"] [class*="Player"] button:not([class*="bg-"]) svg,
+[data-theme="sugar-time-jazz"] [class*="modal"] button:not([class*="bg-"]) svg,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button:not([class*="bg-"]) svg,
+[data-theme-alias="sugar-time-jazz"] [class*="Player"] button:not([class*="bg-"]) svg,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] button:not([class*="bg-"]) svg {
+  color: #e8d5b5 !important;
+  stroke: #e8d5b5 !important;
+  opacity: 0.9 !important;
+  fill: none !important;
+}
+
+
+
+/* ================================================================================
+   UNIVERSAL BEIGE FOR ALL INACTIVE PLAYER BUTTONS & SVGs IN HARD ROCK
+   ================================================================================ */
+.theme-hard-rock [class*="player"] button svg,
+.theme-hard-rock [class*="Player"] button svg,
+.theme-hard-rock [class*="fullscreen"] button svg,
+.theme-hard-rock [class*="overlay"] button svg,
+.theme-hard-rock [class*="modal"] button svg,
+.theme-hard-rock div[class*="player"] svg,
+.theme-hard-rock div[class*="Player"] svg,
+.theme-sugar-time-jazz [class*="player"] button svg,
+.theme-sugar-time-jazz [class*="Player"] button svg,
+.theme-sugar-time-jazz [class*="fullscreen"] button svg,
+.theme-sugar-time-jazz [class*="overlay"] button svg,
+.theme-sugar-time-jazz [class*="modal"] button svg,
+.theme-sugar-time-jazz div[class*="player"] svg,
+.theme-sugar-time-jazz div[class*="Player"] svg,
+[data-theme="hard-rock"] [class*="player"] button svg,
+[data-theme="hard-rock"] [class*="Player"] button svg,
+[data-theme="hard-rock"] [class*="fullscreen"] button svg,
+[data-theme="hard-rock"] [class*="overlay"] button svg,
+[data-theme="hard-rock"] [class*="modal"] button svg,
+[data-theme="hard-rock"] div[class*="player"] svg,
+[data-theme="hard-rock"] div[class*="Player"] svg,
+[data-theme-alias="hard-rock"] [class*="player"] button svg,
+[data-theme-alias="hard-rock"] [class*="Player"] button svg,
+[data-theme-alias="hard-rock"] [class*="fullscreen"] button svg,
+[data-theme-alias="hard-rock"] [class*="overlay"] button svg,
+[data-theme-alias="hard-rock"] [class*="modal"] button svg,
+[data-theme-alias="hard-rock"] div[class*="player"] svg,
+[data-theme-alias="hard-rock"] div[class*="Player"] svg,
+[data-theme="sugar-time-jazz"] [class*="player"] button svg,
+[data-theme="sugar-time-jazz"] [class*="Player"] button svg,
+[data-theme="sugar-time-jazz"] [class*="fullscreen"] button svg,
+[data-theme="sugar-time-jazz"] [class*="overlay"] button svg,
+[data-theme="sugar-time-jazz"] [class*="modal"] button svg,
+[data-theme="sugar-time-jazz"] div[class*="player"] svg,
+[data-theme="sugar-time-jazz"] div[class*="Player"] svg,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="Player"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="fullscreen"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="overlay"] button svg,
+[data-theme-alias="sugar-time-jazz"] [class*="modal"] button svg,
+[data-theme-alias="sugar-time-jazz"] div[class*="player"] svg,
+[data-theme-alias="sugar-time-jazz"] div[class*="Player"] svg {
+  color: #e8d5b5 !important;
+  stroke: #e8d5b5 !important;
+  fill: none !important;
+  opacity: 0.9 !important;
+}
+
+.theme-hard-rock [class*="player"] button,
+.theme-hard-rock [class*="Player"] button,
+.theme-hard-rock [class*="fullscreen"] button,
+.theme-sugar-time-jazz [class*="player"] button,
+.theme-sugar-time-jazz [class*="Player"] button,
+.theme-sugar-time-jazz [class*="fullscreen"] button,
+[data-theme="hard-rock"] [class*="player"] button,
+[data-theme="hard-rock"] [class*="Player"] button,
+[data-theme="hard-rock"] [class*="fullscreen"] button,
+[data-theme-alias="hard-rock"] [class*="player"] button,
+[data-theme-alias="hard-rock"] [class*="Player"] button,
+[data-theme-alias="hard-rock"] [class*="fullscreen"] button,
+[data-theme="sugar-time-jazz"] [class*="player"] button,
+[data-theme="sugar-time-jazz"] [class*="Player"] button,
+[data-theme="sugar-time-jazz"] [class*="fullscreen"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="Player"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="fullscreen"] button {
+  color: #e8d5b5 !important;
+  opacity: 0.9 !important;
+}
+
+/* PRESERVE ACTIVE AUDIO HIGHLIGHT BUTTON */
+.theme-hard-rock [class*="player"] button[class*="bg-"],
+.theme-hard-rock [class*="Player"] button[class*="bg-"],
+.theme-sugar-time-jazz [class*="player"] button[class*="bg-"],
+.theme-sugar-time-jazz [class*="Player"] button[class*="bg-"],
+[data-theme="hard-rock"] [class*="player"] button[class*="bg-"],
+[data-theme="hard-rock"] [class*="Player"] button[class*="bg-"],
+[data-theme-alias="hard-rock"] [class*="player"] button[class*="bg-"],
+[data-theme-alias="hard-rock"] [class*="Player"] button[class*="bg-"],
+[data-theme="sugar-time-jazz"] [class*="player"] button[class*="bg-"],
+[data-theme="sugar-time-jazz"] [class*="Player"] button[class*="bg-"],
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button[class*="bg-"],
+[data-theme-alias="sugar-time-jazz"] [class*="Player"] button[class*="bg-"] {
+  color: #0f0d13 !important;
+}
+
+
+
+/* ================================================================================
+   STRICT OPACITY & BEIGE OVERRIDE FOR HARD ROCK PLAYER CONTROLS
+   ================================================================================ */
+.theme-hard-rock [class*="player"] button,
+.theme-hard-rock [class*="Player"] button,
+.theme-sugar-time-jazz [class*="player"] button,
+.theme-sugar-time-jazz [class*="Player"] button,
+[data-theme="hard-rock"] [class*="player"] button,
+[data-theme="hard-rock"] [class*="Player"] button,
+[data-theme-alias="hard-rock"] [class*="player"] button,
+[data-theme-alias="hard-rock"] [class*="Player"] button,
+[data-theme="sugar-time-jazz"] [class*="player"] button,
+[data-theme="sugar-time-jazz"] [class*="Player"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button,
+[data-theme-alias="sugar-time-jazz"] [class*="Player"] button {
+  opacity: 1 !important;
+}
+
+.theme-hard-rock [class*="player"] button:not([class*="bg-"]) *,
+.theme-hard-rock [class*="Player"] button:not([class*="bg-"]) *,
+.theme-sugar-time-jazz [class*="player"] button:not([class*="bg-"]) *,
+.theme-sugar-time-jazz [class*="Player"] button:not([class*="bg-"]) *,
+[data-theme="hard-rock"] [class*="player"] button:not([class*="bg-"]) *,
+[data-theme="hard-rock"] [class*="Player"] button:not([class*="bg-"]) *,
+[data-theme-alias="hard-rock"] [class*="player"] button:not([class*="bg-"]) *,
+[data-theme-alias="hard-rock"] [class*="Player"] button:not([class*="bg-"]) *,
+[data-theme="sugar-time-jazz"] [class*="player"] button:not([class*="bg-"]) *,
+[data-theme="sugar-time-jazz"] [class*="Player"] button:not([class*="bg-"]) *,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button:not([class*="bg-"]) *,
+[data-theme-alias="sugar-time-jazz"] [class*="Player"] button:not([class*="bg-"]) * {
+  color: #e8d5b5 !important;
+  stroke: #e8d5b5 !important;
+  opacity: 1 !important;
+  fill: none !important;
+}
+
+
+
+/* ================================================================================
+   FULL PLAYER CONTAINER & BUTTON BACKGROUND / OPACITY FIX (HARD ROCK)
+   ================================================================================ */
+.theme-hard-rock [class*="player"] button:not(.active-tab):not([class*="bg-amber"]):not([class*="bg-primary"]),
+.theme-sugar-time-jazz [class*="player"] button:not(.active-tab):not([class*="bg-amber"]):not([class*="bg-primary"]),
+[data-theme="hard-rock"] [class*="player"] button:not(.active-tab):not([class*="bg-amber"]):not([class*="bg-primary"]),
+[data-theme-alias="hard-rock"] [class*="player"] button:not(.active-tab):not([class*="bg-amber"]):not([class*="bg-primary"]),
+[data-theme="sugar-time-jazz"] [class*="player"] button:not(.active-tab):not([class*="bg-amber"]):not([class*="bg-primary"]),
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button:not(.active-tab):not([class*="bg-amber"]):not([class*="bg-primary"]) {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #e8d5b5 !important;
+  opacity: 1 !important;
+}
+
+.theme-hard-rock [class*="player"] button:not(.active-tab) svg,
+.theme-sugar-time-jazz [class*="player"] button:not(.active-tab) svg,
+[data-theme="hard-rock"] [class*="player"] button:not(.active-tab) svg,
+[data-theme-alias="hard-rock"] [class*="player"] button:not(.active-tab) svg,
+[data-theme="sugar-time-jazz"] [class*="player"] button:not(.active-tab) svg,
+[data-theme-alias="sugar-time-jazz"] [class*="player"] button:not(.active-tab) svg {
+  color: #e8d5b5 !important;
+  stroke: #e8d5b5 !important;
+  opacity: 1 !important;
+}
+
