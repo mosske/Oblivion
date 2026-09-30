@@ -1613,8 +1613,8 @@ export default function App() {
     });
   };
 
-  // Next Track with immediate auto-play, queue synchronization, and full Shuffle support
-  const handleNextTrack = () => {
+  // Next Track with immediate auto-play, deterministic queue synchronization, and full Shuffle support
+  const handleNextTrack = useCallback(() => {
     setPlayerState((prev) => {
       let activeQueue = prev.queue || [];
       if (activeQueue.length === 0 && prev.currentTrack) {
@@ -1643,11 +1643,22 @@ export default function App() {
       } else {
         nextIndex = currentIndex + 1;
         if (nextIndex >= activeQueue.length) {
+          if (prev.repeatMode === "off") {
+            // End of explicit playlist reached with repeat off: stop playback, reset to start of playlist
+            return {
+              ...prev,
+              isPlaying: false,
+              currentTime: 0,
+              queueIndex: 0,
+              currentTrack: activeQueue[0],
+            };
+          }
           nextIndex = 0;
         }
       }
 
       const nextTrack = activeQueue[nextIndex];
+      if (!nextTrack) return prev;
       return {
         ...prev,
         queue: activeQueue,
@@ -1657,10 +1668,10 @@ export default function App() {
         isPlaying: true,
       };
     });
-  };
+  }, []);
 
-  // Previous Track with immediate auto-play, queue synchronization, and full Shuffle support
-  const handlePrevTrack = () => {
+  // Previous Track with immediate auto-play, deterministic queue synchronization, and full Shuffle support
+  const handlePrevTrack = useCallback(() => {
     setPlayerState((prev) => {
       let activeQueue = prev.queue || [];
       if (activeQueue.length === 0 && prev.currentTrack) {
@@ -1694,6 +1705,7 @@ export default function App() {
       }
 
       const prevTrack = activeQueue[prevIndex];
+      if (!prevTrack) return prev;
       return {
         ...prev,
         queue: activeQueue,
@@ -1703,10 +1715,10 @@ export default function App() {
         isPlaying: true,
       };
     });
-  };
+  }, []);
 
   // Toggle Like
-  const handleToggleLike = (trackId: string) => {
+  const handleToggleLike = useCallback((trackId: string) => {
     setPlayerState((prev) => {
       const isLiked = prev.likedTrackIds.includes(trackId);
       const updated = isLiked
@@ -1714,7 +1726,39 @@ export default function App() {
         : [...prev.likedTrackIds, trackId];
       return { ...prev, likedTrackIds: updated };
     });
-  };
+  }, []);
+
+  const handleTogglePlay = useCallback(() => {
+    setPlayerState((prev) => ({ ...prev, isPlaying: !prev.isPlaying }));
+  }, []);
+
+  const handleSeek = useCallback((t: number) => {
+    setPlayerState((prev) => ({ ...prev, currentTime: t }));
+  }, []);
+
+  const handleVolumeChange = useCallback((v: number) => {
+    setPlayerState((prev) => ({ ...prev, volume: v, isMuted: false }));
+  }, []);
+
+  const handleRegisterRadioQueue = useCallback((radioTracks: Track[]) => {
+    if (!radioTracks || radioTracks.length === 0) return;
+    setPlayerState((prev) => {
+      const curQueueIds = (prev.queue || []).map((t) => t.id || t.youtubeVideoId).join(",");
+      const newQueueIds = radioTracks.map((t) => t.id || t.youtubeVideoId).join(",");
+      if (curQueueIds === newQueueIds) {
+        return prev;
+      }
+      const curId = prev.currentTrack?.id || prev.currentTrack?.youtubeVideoId;
+      const curIdx = radioTracks.findIndex(
+        (t) => (t.id || t.youtubeVideoId) === curId
+      );
+      return {
+        ...prev,
+        queue: radioTracks,
+        queueIndex: curIdx >= 0 ? curIdx : 0,
+      };
+    });
+  }, []);
 
   // Create or Update Playlist
   const handleSavePlaylist = async (
@@ -2720,28 +2764,14 @@ export default function App() {
         setPlayerState={setPlayerState}
         onNextTrack={handleNextTrack}
         onPrevTrack={handlePrevTrack}
-        onTogglePlay={() =>
-          setPlayerState((prev) => ({ ...prev, isPlaying: !prev.isPlaying }))
-        }
-        onSeek={(t) => setPlayerState((prev) => ({ ...prev, currentTime: t }))}
-        onVolumeChange={(v) => setPlayerState((prev) => ({ ...prev, volume: v, isMuted: false }))}
+        onTogglePlay={handleTogglePlay}
+        onSeek={handleSeek}
+        onVolumeChange={handleVolumeChange}
         onToggleLike={handleToggleLike}
         isLiked={!!playerState.currentTrack && playerState.likedTrackIds.includes(playerState.currentTrack.id)}
         onPlayTrack={handlePlayTrack}
         onPlayQueue={handlePlayQueue}
-        onRegisterRadioQueue={(radioTracks) => {
-          setPlayerState((prev) => {
-            const curId = prev.currentTrack?.id || prev.currentTrack?.youtubeVideoId;
-            const curIdx = radioTracks.findIndex(
-              (t) => (t.id || t.youtubeVideoId) === curId
-            );
-            return {
-              ...prev,
-              queue: radioTracks,
-              queueIndex: curIdx >= 0 ? curIdx : 0,
-            };
-          });
-        }}
+        onRegisterRadioQueue={handleRegisterRadioQueue}
         onAddToQueue={handleAddToQueue}
         settings={settings}
         playlists={playlists}

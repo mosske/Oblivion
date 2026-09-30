@@ -69,13 +69,23 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   const isAutoScrollingRef = useRef<boolean>(false);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const sanitized = useMemo(() => sanitizeLyricsQuery(track.title, track.artist), [track.title, track.artist]);
-  const cleanTitle = sanitized.cleanTitle || cleanTrackTitle(track.title, track.artist);
-  const videoId = track.youtubeVideoId || (track.id && !track.id.startsWith("local_") ? track.id.split("_")[0] : "");
+  const sanitized = useMemo(() => sanitizeLyricsQuery(track?.title || "", track?.artist || ""), [track?.title, track?.artist]);
+  const cleanTitle = sanitized.cleanTitle || (track ? cleanTrackTitle(track.title, track.artist) : "");
+  const videoId = track ? (track.youtubeVideoId || (track.id && !track.id.startsWith("local_") ? track.id.split("_")[0] : "")) : "";
 
   // Multi-Source Lyrics Fallback Pipeline
   useEffect(() => {
     let isCancelled = false;
+
+    if (!track || (!track.title && !track.id)) {
+      setOriginalLines([]);
+      setIsSynced(false);
+      setLyricsSource("none");
+      setLyricsProviderName(undefined);
+      setLrcDuration(undefined);
+      setLoading(false);
+      return;
+    }
 
     const loadTrackLyrics = async () => {
       setLoading(true);
@@ -173,7 +183,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [track.id, track.title, track.artist, track.duration, track.lyricsRaw, track.album, videoId]);
+  }, [track?.id, track?.title, track?.artist, track?.duration, track?.lyricsRaw, track?.album, videoId]);
 
   // Per-Track LocalStorage Persistence & Auto-Offset Duration Delta Calculation
   useEffect(() => {
@@ -471,6 +481,11 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   id="lyrics-offset-minus-btn"
                   onClick={() => handleAdjustOffset(-0.5)}
                   className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.12)",
+                    color: "#e8d5b5",
+                    border: "1px solid rgba(232, 213, 181, 0.2)",
+                  }}
                   title="Advance lyrics by 0.5s (use if lyrics lag behind the song)"
                   aria-label="Advance lyrics by 0.5s"
                 >
@@ -481,16 +496,18 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                 <button
                   id="lyrics-align-vocal-btn"
                   onClick={handleAlignVocal}
-                  className={`lyrics-timing-btn px-2 py-1 rounded-xl text-[10px] font-extrabold transition-all active:scale-95 cursor-pointer flex items-center gap-1 ${
-                    lyricsSource === "auto_karaoke"
-                      ? `${designConfig.accentText} bg-[var(--accent-color,var(--primary))]/10 border border-[var(--accent-color,var(--primary))]/20`
-                      : "opacity-80 hover:opacity-100"
-                  }`}
+                  className="lyrics-timing-btn px-2 py-1 rounded-xl text-[10px] font-extrabold transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.12)",
+                    color: "#e8d5b5",
+                    stroke: "#e8d5b5",
+                    border: "1px solid rgba(232, 213, 181, 0.2)",
+                  }}
                   title="1-Tap Align: Snaps lyric timing to current singing position"
                   aria-label="Align lyrics to current time"
                 >
-                  <Sparkles className="w-2.5 h-2.5" />
-                  <span>Sync Here</span>
+                  <Sparkles className="w-2.5 h-2.5" style={{ color: "#e8d5b5", stroke: "#e8d5b5" }} />
+                  <span style={{ color: "#e8d5b5" }}>Sync Here</span>
                 </button>
 
                 {/* Dynamic Text Badge */}
@@ -499,6 +516,11 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   className={`lyrics-timing-badge px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold tracking-tight whitespace-nowrap transition-all ${
                     offset !== 0 ? "active-offset" : ""
                   }`}
+                  style={{
+                    color: "#e8d5b5",
+                    backgroundColor: offset !== 0 ? "rgba(168, 85, 247, 0.3)" : "rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(232, 213, 181, 0.2)",
+                  }}
                   title={
                     offset !== 0
                       ? `Active timing calibration offset: ${offset >= 0 ? "+" : ""}${offset.toFixed(1)}s`
@@ -513,6 +535,11 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   id="lyrics-offset-plus-btn"
                   onClick={() => handleAdjustOffset(0.5)}
                   className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.12)",
+                    color: "#e8d5b5",
+                    border: "1px solid rgba(232, 213, 181, 0.2)",
+                  }}
                   title="Delay lyrics by 0.5s (use if lyrics start too fast/early)"
                   aria-label="Delay lyrics by 0.5s"
                 >
@@ -523,13 +550,17 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                 <button
                   id="lyrics-offset-reset-btn"
                   onClick={handleResetOffset}
-                  className={`lyrics-timing-btn p-1 rounded-xl text-[11px] transition-all active:scale-90 cursor-pointer ${
-                    offset !== 0 ? "opacity-100 text-amber-400" : "opacity-40 hover:opacity-80"
-                  }`}
+                  className="lyrics-timing-btn p-1 rounded-xl text-[11px] transition-all active:scale-90 cursor-pointer flex items-center justify-center"
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.12)",
+                    color: "#e8d5b5",
+                    stroke: "#e8d5b5",
+                    border: "1px solid rgba(232, 213, 181, 0.2)",
+                  }}
                   title="Reset timing calibration to 0.0s"
                   aria-label="Reset timing offset to 0.0s"
                 >
-                  <RotateCcw className="w-3 h-3" />
+                  <RotateCcw className="w-3 h-3" style={{ color: "#e8d5b5", stroke: "#e8d5b5" }} />
                 </button>
               </div>
             </>

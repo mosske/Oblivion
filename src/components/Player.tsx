@@ -814,68 +814,6 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   );
 };
 
-interface VideoPlayerProps {
-  videoId: string;
-  isBespoke?: boolean;
-  bespokeColor?: string;
-  initialStartSeconds?: number;
-}
-
-// TASK 2: ISOLATE PROGRESS/TIME SYNCHRONIZATION
-// Wrap YouTube Iframe component inside React.memo comparing videoId, start seconds, and themes
-const VideoPlayer = React.memo(
-  ({ videoId, isBespoke, bespokeColor, initialStartSeconds = 0 }: VideoPlayerProps) => {
-    const originParam =
-      typeof window !== "undefined" && window.location.origin
-        ? `&origin=${encodeURIComponent(window.location.origin)}`
-        : "";
-    const startSec = Math.max(0, Math.floor(initialStartSeconds));
-    const startParam = startSec > 0 ? `&start=${startSec}` : "";
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1${originParam}${startParam}`;
-
-    useEffect(() => {
-      return () => {
-        const iframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
-        if (iframe) {
-          try {
-            iframe.contentWindow?.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
-            iframe.src = "about:blank";
-          } catch {}
-        }
-      };
-    }, []);
-
-    return (
-      <div
-        className="full-player-video-card"
-        style={
-          isBespoke && bespokeColor
-            ? {
-                borderColor: bespokeColor,
-                boxShadow: `0 0 25px ${hexToRgba(bespokeColor, 0.35)}`,
-              }
-            : undefined
-        }
-      >
-        <iframe
-          key={`${videoId}_${startSec}`}
-          id="oblivion-full-player-video-iframe"
-          src={embedUrl}
-          title="YouTube Video Player"
-          className="w-full h-full rounded-2xl"
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-        />
-      </div>
-    );
-  },
-  (prevProps, nextProps) =>
-    prevProps.videoId === nextProps.videoId &&
-    prevProps.initialStartSeconds === nextProps.initialStartSeconds &&
-    prevProps.isBespoke === nextProps.isBespoke &&
-    prevProps.bespokeColor === nextProps.bespokeColor
-);
-
 export const Player: React.FC<PlayerProps> = ({
   playerState,
   setPlayerState,
@@ -898,8 +836,8 @@ export const Player: React.FC<PlayerProps> = ({
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const ytPlayerRef = useRef<any>(null);
-  const isYtReadyRef = useRef<boolean>(false);
+  const playerRef = useRef<any>(null);
+  const isPlayerReadyRef = useRef<boolean>(false);
   const isChangingTrackRef = useRef<boolean>(false);
   const isChangingTrackTimeoutRef = useRef<any>(null);
   const userManualPauseRef = useRef<boolean>(false);
@@ -1016,17 +954,6 @@ export const Player: React.FC<PlayerProps> = ({
     };
   }, []);
 
-  // Video Mode State and Synchronization Refs (Audio/Video Engine Hand-off)
-  const [videoStartTime, setVideoStartTime] = useState<number>(0);
-  const videoStartTimeRef = useRef<number>(0);
-  const videoPlayerRef = useRef<any>(null);
-  const videoCurrentTimeRef = useRef<number>(0);
-  const currentVideoTrackIdRef = useRef<string | null>(null);
-  const lastActiveVideoTrackIdRef = useRef<string | null>(null);
-  const isSeekingToVideoStartRef = useRef<boolean>(false);
-  const hasAppliedVideoStartRef = useRef<boolean>(false);
-  const handleSwitchToAudioModeRef = useRef<() => void>(() => {});
-
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubTime, setScrubTime] = useState<number | null>(null);
@@ -1038,6 +965,34 @@ export const Player: React.FC<PlayerProps> = ({
     setScrubTime(time);
     isScrubbingRef.current = scrubbing;
   }, []);
+
+  // Section 4: Dynamic Position State for Android OS Progress Bar
+  const updatePositionState = useCallback((targetPosition?: number, targetDuration?: number) => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator) || !("setPositionState" in navigator.mediaSession)) {
+      return;
+    }
+    const curDur = (targetDuration !== undefined && targetDuration > 0)
+      ? targetDuration
+      : ((durationRef.current && durationRef.current > 0) ? durationRef.current : (playerState.currentTrack?.duration || 0));
+
+    const curPos = (targetPosition !== undefined && targetPosition >= 0)
+      ? targetPosition
+      : (currentTimeRef.current || 0);
+
+    if (curDur > 0 && !isNaN(curDur) && typeof curPos === "number" && !isNaN(curPos) && curPos >= 0) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: Math.max(curDur, 1),
+          playbackRate: 1.0,
+          position: Math.min(Math.max(curPos, 0), curDur),
+        });
+      } catch {
+        // Safe catch if clamped bounds
+      }
+    }
+  }, [playerState.currentTrack?.duration]);
+
+
 
   // Dedicated radioSeedTrack state that locks to the song that initiated the radio station
   const [radioSeedTrack, setRadioSeedTrack] = useState<Track | null>(null);
@@ -1071,10 +1026,10 @@ export const Player: React.FC<PlayerProps> = ({
         audioRef.current.currentTime = 0;
         audioRef.current.src = "";
       }
-      if (ytPlayerRef.current && ytPlayerRef.current.pauseVideo) {
+      if (playerRef.current && playerRef.current.pauseVideo) {
         try {
-          ytPlayerRef.current.pauseVideo();
-          ytPlayerRef.current.stopVideo?.();
+          playerRef.current.pauseVideo();
+          playerRef.current.stopVideo?.();
         } catch {}
       }
       setPlayerState((prev) => ({
@@ -1241,9 +1196,6 @@ export const Player: React.FC<PlayerProps> = ({
 
     // Minimize if swiped down past 75px or quick flick down > 35px
     if ((deltaY > 75 || (deltaY > 35 && velocityY > 0.35)) && deltaY > Math.abs(deltaX)) {
-      if (playerState.mediaMode === "video") {
-        handleSwitchToAudioModeRef.current?.();
-      }
       setPlayerState((prev) => ({ ...prev, isFullscreen: false }));
     }
 
@@ -1266,6 +1218,15 @@ export const Player: React.FC<PlayerProps> = ({
     showLyrics,
     showSimilar,
   } = playerState;
+
+  // Unified activeTab across full player: "audio" | "video" | "lyrics" | "radio"
+  const activeTab: "audio" | "video" | "lyrics" | "radio" = showLyrics
+    ? "lyrics"
+    : showSimilar
+    ? "radio"
+    : playerState.mediaMode === "video"
+    ? "video"
+    : "audio";
 
   const isBespoke = Boolean(designConfig.id === "bespoke" || designConfig.isBespoke);
   const isHardRock = Boolean(
@@ -1306,16 +1267,18 @@ export const Player: React.FC<PlayerProps> = ({
     };
   }, []);
 
+  const swatchColorsKey = designConfig.swatchColors ? designConfig.swatchColors.slice(0, 4).join(",") : "";
   useEffect(() => {
     if (designConfig.swatchColors && designConfig.swatchColors.length >= 4) {
-      setBespokeColors([
-        designConfig.swatchColors[0],
-        designConfig.swatchColors[1],
-        designConfig.swatchColors[2],
-        designConfig.swatchColors[3],
-      ]);
+      const [c0, c1, c2, c3] = designConfig.swatchColors;
+      setBespokeColors((prev) => {
+        if (prev[0] === c0 && prev[1] === c1 && prev[2] === c2 && prev[3] === c3) {
+          return prev;
+        }
+        return [c0, c1, c2, c3];
+      });
     }
-  }, [designConfig.swatchColors]);
+  }, [swatchColorsKey]);
 
   const fpTheme = getFullPlayerThemeStyles(designConfig, isBespoke ? bespokeColors : undefined);
   const currentThemeLogo = (designConfig as any)?.logoUrl || "/logo.svg";
@@ -1359,328 +1322,7 @@ export const Player: React.FC<PlayerProps> = ({
     }
   }, [playerState.mediaMode]);
 
-  // TASK 1: MUTE/PAUSE HTML5 AUDIO & BACKGROUND AUDIO ENGINE WHEN VIDEO MODE IS ACTIVE
-  useEffect(() => {
-    if (playerState.mediaMode === "video") {
-      // Pause primary HTML5 audio element so only the video outputs sound
-      if (audioRef.current && !audioRef.current.paused) {
-        try {
-          audioRef.current.pause();
-        } catch {}
-      }
-      if (silentAudioRef.current && !silentAudioRef.current.paused) {
-        try {
-          silentAudioRef.current.pause();
-        } catch {}
-      }
-      // Pause and mute the background YouTube audio streaming engine
-      if (ytPlayerRef.current) {
-        try {
-          ytPlayerRef.current.pauseVideo?.();
-          ytPlayerRef.current.mute?.();
-        } catch {}
-      }
-    } else if (playerState.mediaMode === "song") {
-      // Resume primary audio element when returning to Audio mode
-      if (ytPlayerRef.current) {
-        try {
-          ytPlayerRef.current.unMute?.();
-          ytPlayerRef.current.setVolume?.(volume * 100);
-          if (isPlayingRef.current && !userManualPauseRef.current) {
-            ytPlayerRef.current.playVideo?.();
-          }
-        } catch {}
-      }
-      if (isPlayingRef.current && !userManualPauseRef.current) {
-        startSilentAnchor();
-      }
-    }
-  }, [playerState.mediaMode, isPlaying, volume, startSilentAnchor]);
-
-  // ================================================================================
-  // TASK 2: SYNCHRONIZE TRACK CHANGES WHILE IN VIDEO MODE
-  // ================================================================================
-  useEffect(() => {
-    if (playerState.mediaMode !== "video") {
-      lastActiveVideoTrackIdRef.current = null;
-      return;
-    }
-    if (!currentTrack) return;
-    const vid = activeVideoId || extractCleanYoutubeId(currentTrack);
-    if (!vid) return;
-
-    // GUARD: If entering video mode for the first time for this track, DO NOT reset start time!
-    if (lastActiveVideoTrackIdRef.current === null) {
-      lastActiveVideoTrackIdRef.current = vid;
-      currentVideoTrackIdRef.current = vid;
-      return;
-    }
-
-    // GUARD: If this is the exact same track, do NOT reset start time to 0!
-    if (lastActiveVideoTrackIdRef.current === vid) {
-      return;
-    }
-
-    // Only actual track change (Next / Prev track while already in video mode) should reset to 0:
-    lastActiveVideoTrackIdRef.current = vid;
-    currentVideoTrackIdRef.current = vid;
-    activeVideoIdRef.current = vid;
-    isSeekingToVideoStartRef.current = false;
-    hasAppliedVideoStartRef.current = false;
-    videoStartTimeRef.current = 0;
-    videoCurrentTimeRef.current = 0;
-    currentTimeRef.current = 0;
-    setVideoStartTime(0);
-
-    // 1. Clear and stop any background audioRef instances completely
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.muted = true;
-        audioRef.current.src = getSilentAudioUrl();
-        audioRef.current.currentTime = 0;
-      } catch {}
-    }
-    if (silentAudioRef.current && !silentAudioRef.current.paused) {
-      try {
-        silentAudioRef.current.pause();
-      } catch {}
-    }
-    if (ytPlayerRef.current) {
-      try {
-        ytPlayerRef.current.pauseVideo?.();
-        ytPlayerRef.current.stopVideo?.();
-        ytPlayerRef.current.mute?.();
-      } catch {}
-    }
-
-    // 2. Load and auto-play the new video in the YouTube iframe from beginning
-    if (videoPlayerRef.current && typeof videoPlayerRef.current.loadVideoById === "function") {
-      try {
-        videoPlayerRef.current.loadVideoById({
-          videoId: vid,
-          startSeconds: 0,
-        });
-        videoPlayerRef.current.unMute?.();
-        videoPlayerRef.current.setVolume?.(volume * 100);
-        videoPlayerRef.current.playVideo?.();
-      } catch (err) {
-        console.warn("[Player] Error reloading video by ID on track change:", err);
-      }
-    }
-  }, [activeVideoId, currentTrack, playerState.mediaMode, volume]);
-
-  // ================================================================================
-  // TASK 1: COMPLETE AUDIO ELEMENT PURGE UPON ENTERING VIDEO MODE
-  // ================================================================================
-  const handleSwitchToVideoMode = useCallback(() => {
-    // 1. Capture exact current playback timestamp across all media layers
-    let currentSeconds = 0;
-    if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === "function") {
-      try {
-        const ytTime = ytPlayerRef.current.getCurrentTime();
-        if (typeof ytTime === "number" && !isNaN(ytTime) && ytTime > 0) {
-          currentSeconds = ytTime;
-        }
-      } catch {}
-    }
-    if (currentSeconds <= 0 && typeof currentTimeRef.current === "number" && !isNaN(currentTimeRef.current) && currentTimeRef.current > 0) {
-      currentSeconds = currentTimeRef.current;
-    }
-    if (currentSeconds <= 0 && typeof currentTime === "number" && !isNaN(currentTime) && currentTime > 0) {
-      currentSeconds = currentTime;
-    }
-    if (currentSeconds <= 0 && typeof playerState.currentTime === "number" && !isNaN(playerState.currentTime) && playerState.currentTime > 0) {
-      currentSeconds = playerState.currentTime;
-    }
-    currentSeconds = Math.max(0, Math.floor(currentSeconds));
-
-    // 2. Set media mode ref immediately to block any background playback loops
-    mediaModeRef.current = "video";
-
-    // IMMEDIATELY pause, stop and mute background engines so they cannot emit sound
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.muted = true;
-        audioRef.current.src = getSilentAudioUrl();
-        audioRef.current.currentTime = 0;
-      } catch {}
-    }
-    if (silentAudioRef.current) {
-      try {
-        silentAudioRef.current.pause();
-      } catch {}
-    }
-    if (ytPlayerRef.current) {
-      try {
-        ytPlayerRef.current.pauseVideo?.();
-        ytPlayerRef.current.stopVideo?.();
-        ytPlayerRef.current.mute?.();
-      } catch {}
-    }
-
-    const vid = activeVideoId || extractCleanYoutubeId(currentTrack);
-
-    // 3. Mark the active video track so the track-change effect doesn't reset start time
-    lastActiveVideoTrackIdRef.current = vid;
-    currentVideoTrackIdRef.current = vid;
-    activeVideoIdRef.current = vid;
-    isSeekingToVideoStartRef.current = currentSeconds > 0;
-    hasAppliedVideoStartRef.current = currentSeconds <= 0;
-    videoStartTimeRef.current = currentSeconds;
-    videoCurrentTimeRef.current = currentSeconds;
-    currentTimeRef.current = currentSeconds;
-    setVideoStartTime(currentSeconds);
-
-    // If an existing video player is already mounted, immediately seek to current second
-    if (videoPlayerRef.current) {
-      try {
-        if (currentSeconds > 0 && typeof videoPlayerRef.current.seekTo === "function") {
-          videoPlayerRef.current.seekTo(currentSeconds, true);
-        }
-        videoPlayerRef.current.unMute?.();
-        videoPlayerRef.current.setVolume?.(volume * 100);
-        videoPlayerRef.current.playVideo?.();
-        hasAppliedVideoStartRef.current = true;
-      } catch {}
-    }
-
-    // Auto-clear seeking guard after 4 seconds
-    setTimeout(() => {
-      isSeekingToVideoStartRef.current = false;
-    }, 4000);
-
-    // Switch to Video mode without exiting full player
-    setPlayerState((prev) => ({
-      ...prev,
-      mediaMode: "video",
-      currentTime: currentSeconds,
-      isPlaying: true,
-      showLyrics: false,
-      showSimilar: false,
-      isFullscreen: true,
-    }));
-  }, [activeVideoId, currentTrack, currentTime, playerState.currentTime, setPlayerState, volume]);
-
-  // ================================================================================
-  // TASK 3: ATOMIC SWAP FROM VIDEO TO AUDIO MODE
-  // ================================================================================
-  const handleSwitchToAudio = useCallback(async () => {
-    if (playerState.mediaMode === "video" || mediaModeRef.current === "video") {
-      mediaModeRef.current = "song";
-
-      // 1. Capture exact playback time from YouTube Player
-      let currentVideoTime = 0;
-      if (videoPlayerRef.current && typeof videoPlayerRef.current.getCurrentTime === "function") {
-        try {
-          const t = videoPlayerRef.current.getCurrentTime();
-          if (typeof t === "number" && !isNaN(t) && t >= 0) {
-            currentVideoTime = Math.max(currentVideoTime, t);
-          }
-        } catch {}
-      }
-      if (videoCurrentTimeRef.current && videoCurrentTimeRef.current > 0) {
-        currentVideoTime = Math.max(currentVideoTime, videoCurrentTimeRef.current);
-      }
-      if (currentTimeRef.current && currentTimeRef.current > 0) {
-        currentVideoTime = Math.max(currentVideoTime, currentTimeRef.current);
-      }
-      if (currentTime && currentTime > 0) {
-        currentVideoTime = Math.max(currentVideoTime, currentTime);
-      }
-      if (playerState.currentTime && playerState.currentTime > 0) {
-        currentVideoTime = Math.max(currentVideoTime, playerState.currentTime);
-      }
-      currentVideoTime = Math.max(0, Math.floor(currentVideoTime));
-
-      // 2. IMMEDIATELY pause, mute, stop and destroy the YouTube video player:
-      const vIframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
-      if (vIframe) {
-        try {
-          vIframe.contentWindow?.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
-          vIframe.src = "about:blank";
-        } catch {}
-      }
-      if (videoPlayerRef.current) {
-        try {
-          videoPlayerRef.current.pauseVideo?.();
-          videoPlayerRef.current.stopVideo?.();
-          videoPlayerRef.current.destroy?.();
-        } catch {}
-        videoPlayerRef.current = null;
-      }
-      if (vIframe) {
-        try {
-          vIframe.remove();
-        } catch {}
-      }
-      activeVideoIdRef.current = null;
-      lastActiveVideoTrackIdRef.current = null;
-      currentVideoTrackIdRef.current = null;
-      isSeekingToVideoStartRef.current = false;
-      hasAppliedVideoStartRef.current = false;
-
-      // 3. Set playerMode = 'audio' (mediaMode: 'song') & keep isFullscreen: true
-      setPlayerState((prev) => ({
-        ...prev,
-        mediaMode: "song",
-        currentTime: currentVideoTime,
-        isPlaying: true,
-        showLyrics: false,
-        showSimilar: false,
-        isFullscreen: true,
-      }));
-
-      userManualPauseRef.current = false;
-      currentTimeRef.current = currentVideoTime;
-      onSeek(currentVideoTime);
-
-      // Keep native audio strictly silent
-      if (audioRef.current) {
-        try {
-          audioRef.current.pause();
-          audioRef.current.src = getSilentAudioUrl();
-          audioRef.current.currentTime = 0;
-        } catch {}
-      }
-
-      // 4. Resume background YouTube stream engine with the EXACT SAME currentTrack
-      const activeVid =
-        extractCleanYoutubeId(currentTrack) ||
-        (currentTrack as any)?.videoId ||
-        currentTrack?.youtubeVideoId ||
-        (currentTrack as any)?.youtubeId ||
-        currentTrack?.id;
-
-      if (activeVid && ytPlayerRef.current && isYtReadyRef.current) {
-        try {
-          ytPlayerRef.current.unMute?.();
-          ytPlayerRef.current.setVolume?.(volume * 100);
-          if (typeof ytPlayerRef.current.loadVideoById === "function") {
-            ytPlayerRef.current.loadVideoById({
-              videoId: activeVid,
-              startSeconds: currentVideoTime,
-            });
-          } else if (typeof ytPlayerRef.current.seekTo === "function") {
-            ytPlayerRef.current.seekTo(currentVideoTime, true);
-          }
-          ytPlayerRef.current.playVideo?.();
-        } catch (err) {
-          console.error("[Player] YT stream resume error:", err);
-        }
-      }
-
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "playing";
-      }
-    }
-  }, [currentTrack, currentTime, onSeek, playerState.currentTime, playerState.mediaMode, setPlayerState, volume]);
-
-  const handleSwitchToAudioMode = handleSwitchToAudio;
-  handleSwitchToAudioModeRef.current = handleSwitchToAudio;
-
-  // TASK 2: Prevent Full Player Exit & Audio Stopping on Tab Toggle
+  // ZERO-LATENCY TAB SWITCHING VIA CSS ONLY (Continuous Unified Audio & Video)
   const handleTabSwitch = useCallback(
     (newMode: "audio" | "video" | "lyrics" | "radio", e?: React.MouseEvent) => {
       if (e) {
@@ -1688,31 +1330,33 @@ export const Player: React.FC<PlayerProps> = ({
         e.stopPropagation();
       }
 
-      // DO NOT trigger onClose() or dismiss full player modal
       if (newMode === "audio") {
-        if (playerState.mediaMode === "video") {
-          handleSwitchToAudioMode();
-        } else {
-          // Already in audio mode: dismiss lyrics/radio overlay and ensure isFullscreen remains true
-          setPlayerState((prev) => ({
-            ...prev,
-            mediaMode: "song",
-            showLyrics: false,
-            showSimilar: false,
-            isFullscreen: true,
-          }));
-        }
+        setPlayerState((prev) => ({
+          ...prev,
+          mediaMode: "song",
+          showLyrics: false,
+          showSimilar: false,
+          isFullscreen: true,
+        }));
       } else if (newMode === "video") {
-        if (playerState.mediaMode !== "video") {
-          handleSwitchToVideoMode();
-        } else {
-          setPlayerState((prev) => ({
-            ...prev,
-            showLyrics: false,
-            showSimilar: false,
-            isFullscreen: true,
-          }));
+        // Query live YouTube player instance time immediately to eliminate 0:00 / jumpy timestamp
+        let liveTime: number | null = null;
+        if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+          try {
+            const t = playerRef.current.getCurrentTime();
+            if (typeof t === "number" && !isNaN(t) && t >= 0) {
+              liveTime = t;
+            }
+          } catch {}
         }
+        setPlayerState((prev) => ({
+          ...prev,
+          mediaMode: "video",
+          showLyrics: false,
+          showSimilar: false,
+          isFullscreen: true,
+          ...(liveTime !== null ? { currentTime: liveTime } : {}),
+        }));
       } else if (newMode === "lyrics") {
         setPlayerState((prev) => ({
           ...prev,
@@ -1735,15 +1379,12 @@ export const Player: React.FC<PlayerProps> = ({
         });
       }
     },
-    [handleSwitchToAudioMode, handleSwitchToVideoMode, playerState.mediaMode, currentTrack, setPlayerState]
+    [currentTrack, setPlayerState]
   );
 
   const handleMinimizeFullPlayer = useCallback(() => {
-    if (playerState.mediaMode === "video") {
-      handleSwitchToAudioMode();
-    }
     setPlayerState((prev) => ({ ...prev, isFullscreen: false }));
-  }, [handleSwitchToAudioMode, playerState.mediaMode, setPlayerState]);
+  }, [setPlayerState]);
 
   // Section 1: Track if playback was paused due to transient system audio focus loss (e.g. WhatsApp chime)
   const interruptedWhilePlayingRef = useRef<boolean>(false);
@@ -1843,8 +1484,6 @@ export const Player: React.FC<PlayerProps> = ({
     userManualPauseRef.current = false;
     interruptedWhilePlayingRef.current = false;
     activeVideoIdRef.current = null; // Clear active video ref so new video loads immediately
-    videoStartTimeRef.current = 0;
-    videoCurrentTimeRef.current = 0;
     currentTimeRef.current = 0;
     if (isChangingTrackTimeoutRef.current) clearTimeout(isChangingTrackTimeoutRef.current);
     isChangingTrackTimeoutRef.current = setTimeout(() => {
@@ -1858,8 +1497,6 @@ export const Player: React.FC<PlayerProps> = ({
     userManualPauseRef.current = false;
     interruptedWhilePlayingRef.current = false;
     activeVideoIdRef.current = null; // Clear active video ref so new video loads immediately
-    videoStartTimeRef.current = 0;
-    videoCurrentTimeRef.current = 0;
     currentTimeRef.current = 0;
     if (isChangingTrackTimeoutRef.current) clearTimeout(isChangingTrackTimeoutRef.current);
     isChangingTrackTimeoutRef.current = setTimeout(() => {
@@ -1877,10 +1514,10 @@ export const Player: React.FC<PlayerProps> = ({
     const curRepeat = repeatModeRef.current;
     if (curRepeat === "one") {
       // Repeat current track from start
-      if (isYtReadyRef.current && ytPlayerRef.current) {
+      if (isPlayerReadyRef.current && playerRef.current) {
         try {
-          ytPlayerRef.current.seekTo?.(0, true);
-          ytPlayerRef.current.playVideo?.();
+          playerRef.current.seekTo?.(0, true);
+          playerRef.current.playVideo?.();
         } catch {}
       }
       if (audioRef.current) {
@@ -1915,8 +1552,8 @@ export const Player: React.FC<PlayerProps> = ({
 
   // Section 2: Enforce unmuted state & max volume on YouTube player to prevent background auto-mute
   const enforceUnmutedState = useCallback(() => {
-    const player = ytPlayerRef.current;
-    if (player && isYtReadyRef.current) {
+    const player = playerRef.current;
+    if (player && isPlayerReadyRef.current) {
       try {
         if (typeof player.isMuted === "function" && player.isMuted()) {
           player.unMute();
@@ -1930,40 +1567,14 @@ export const Player: React.FC<PlayerProps> = ({
     }
   }, []);
 
-  // Section 4: Dynamic Position State for Android OS Progress Bar
-  const updatePositionState = useCallback((targetPosition?: number, targetDuration?: number) => {
-    if (typeof navigator === "undefined" || !("mediaSession" in navigator) || !("setPositionState" in navigator.mediaSession)) {
-      return;
-    }
-    const curDur = (targetDuration !== undefined && targetDuration > 0)
-      ? targetDuration
-      : ((durationRef.current && durationRef.current > 0) ? durationRef.current : (currentTrack?.duration || 0));
-
-    const curPos = (targetPosition !== undefined && targetPosition >= 0)
-      ? targetPosition
-      : (currentTimeRef.current || 0);
-
-    if (curDur > 0 && !isNaN(curDur) && typeof curPos === "number" && !isNaN(curPos) && curPos >= 0) {
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: Math.max(curDur, 1),
-          playbackRate: 1.0,
-          position: Math.min(Math.max(curPos, 0), curDur),
-        });
-      } catch {
-        // Safe catch if clamped bounds
-      }
-    }
-  }, [currentTrack?.duration]);
-
   // Section 1: Automatic Audio Focus Recovery & Ducking (Fix WhatsApp / Message Pause)
   const handleFocusReturn = useCallback(() => {
-    if (interruptedWhilePlayingRef.current && ytPlayerRef.current) {
+    if (interruptedWhilePlayingRef.current && playerRef.current) {
       try {
         startSilentAnchor();
-        ytPlayerRef.current.playVideo?.();
-        ytPlayerRef.current.unMute?.();
-        ytPlayerRef.current.setVolume?.(100);
+        playerRef.current.playVideo?.();
+        playerRef.current.unMute?.();
+        playerRef.current.setVolume?.(100);
       } catch {}
       interruptedWhilePlayingRef.current = false;
       setPlayerState((prev) => ({ ...prev, isPlaying: true }));
@@ -1976,177 +1587,81 @@ export const Player: React.FC<PlayerProps> = ({
   // Custom seek forward/back: execute seek directly on active engine (Audio or Video)
   const handleSeekInternal = useCallback((time: number) => {
     if (isNaN(time) || time < 0) return;
-
     const maxDur = (durationRef.current && durationRef.current > 0) ? durationRef.current : (currentTrack?.duration || 1000);
     const targetTime = Math.max(0, Math.min(time, maxDur));
 
-    // Immediately update player state optimistically so UI slider updates instantly without lag
     setPlayerState((prev) => ({ ...prev, currentTime: targetTime }));
 
-    if (playerState.mediaMode === "video") {
-      videoCurrentTimeRef.current = targetTime;
-      if (videoPlayerRef.current && typeof videoPlayerRef.current.seekTo === "function") {
-        try {
-          videoPlayerRef.current.seekTo(targetTime, true);
-          if (isPlayingRef.current) {
-            videoPlayerRef.current.playVideo?.();
-          }
-        } catch {}
-      } else {
-        const iframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "seekTo", args: [targetTime, true] }), "*");
+    if (isPlayerReadyRef.current && playerRef.current) {
+      try {
+        playerRef.current.seekTo?.(targetTime, true);
+        if (isPlayingRef.current) {
+          playerRef.current.playVideo?.();
         }
-      }
-    } else {
-      if (audioRef.current) {
-        try {
-          audioRef.current.currentTime = targetTime;
-        } catch {}
-      }
-      // Execute youtubePlayer.seekTo(targetTime, true) directly on the YouTube player instance
-      if (isYtReadyRef.current && ytPlayerRef.current) {
-        try {
-          ytPlayerRef.current.seekTo?.(targetTime, true);
-          if (isPlayingRef.current) {
-            ytPlayerRef.current.playVideo?.();
-          }
-        } catch (err) {
-          console.warn("[Player] Seek YouTube error:", err);
-        }
+      } catch (err) {
+        console.warn("[Player] Seek error:", err);
       }
     }
 
     onSeek(targetTime);
-  }, [currentTrack?.duration, onSeek, setPlayerState, playerState.mediaMode]);
+  }, [currentTrack?.duration, onSeek, setPlayerState]);
 
-  // Initialize and update YouTube IFrame Player with single source of truth
+  // SINGLE UNIFIED ENGINE: Initialize & Track Sync for Single YouTube IFrame Player
   useEffect(() => {
     if (!currentTrack) return;
 
-    // Reset manual pause ref and reset currentTime to 0 when a new track is queued or changed
     userManualPauseRef.current = false;
     setPlayerState((prev) => (prev.currentTime === 0 ? prev : { ...prev, currentTime: 0 }));
-    videoStartTimeRef.current = 0;
-    setVideoStartTime(0);
 
-    // Reset native audio element timestamp
-    if (audioRef.current) {
-      try {
-        audioRef.current.currentTime = 0;
-      } catch {}
-    }
-
-    // Mark track change in progress to avoid YouTube's internal buffering pause event from toggling isPlaying
-    isChangingTrackRef.current = true;
-    if (isChangingTrackTimeoutRef.current) clearTimeout(isChangingTrackTimeoutRef.current);
-    isChangingTrackTimeoutRef.current = setTimeout(() => {
-      isChangingTrackRef.current = false;
-    }, 2500);
-
-    const cleanVideoId = (id?: string) => {
-      if (!id) return "";
-      let clean = id.trim();
-      if (clean.includes("watch?v=")) clean = clean.split("watch?v=")[1].split("&")[0];
-      else if (clean.includes("youtu.be/")) clean = clean.split("youtu.be/")[1].split("?")[0];
-      return clean.replace(/[^a-zA-Z0-9_-]/g, "");
-    };
-
-    const isDirect11CharId = (id?: string) => Boolean(id && id.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(id));
-
-    let videoId: string | null = null;
-    const candidates = [
-      (currentTrack as any).youtubeId,
-      currentTrack.youtubeVideoId,
-      currentTrack.id,
-    ];
-    for (const cand of candidates) {
-      const cleaned = cleanVideoId(cand);
-      if (isDirect11CharId(cleaned)) {
-        videoId = cleaned;
-        break;
-      }
-    }
-
-    const finalVid = videoId || (currentTrack ? ((currentTrack as any).videoId || currentTrack.youtubeVideoId || (currentTrack as any).youtubeId || (currentTrack.id && currentTrack.id.length === 11 ? currentTrack.id : "")) : "");
+    const finalVid = extractCleanYoutubeId(currentTrack) || (currentTrack as any)?.videoId || (currentTrack as any)?.youtubeId || (currentTrack.id && currentTrack.id.length === 11 ? currentTrack.id : "");
     if (!finalVid) return;
 
     const executePlay = (targetVid: string) => {
-      // TASK 1 & TASK 2: In video mode, route audio exclusively to Video Player while syncing background audio sources
-      if (playerState.mediaMode === "video") {
-        if (audioRef.current) {
-          try {
-            audioRef.current.pause();
-            audioRef.current.muted = true;
-            audioRef.current.src = getSilentAudioUrl();
-            audioRef.current.currentTime = 0;
-          } catch {}
-        }
-        if (ytPlayerRef.current) {
-          try {
-            if (typeof ytPlayerRef.current.cueVideoById === "function") {
-              ytPlayerRef.current.cueVideoById({
-                videoId: targetVid,
-                startSeconds: 0,
-              });
-            }
-            ytPlayerRef.current.pauseVideo?.();
-            ytPlayerRef.current.mute?.();
-          } catch {}
-        }
-        if (silentAudioRef.current && !silentAudioRef.current.paused) {
-          try {
-            silentAudioRef.current.pause();
-          } catch {}
-        }
-        return;
-      }
-
-      if (!isYtReadyRef.current || !ytPlayerRef.current) return;
+      if (!isPlayerReadyRef.current || !playerRef.current) return;
       try {
-        if (typeof ytPlayerRef.current.unMute === "function") {
-          ytPlayerRef.current.unMute();
+        if (typeof playerRef.current.unMute === "function" && !isMuted) {
+          playerRef.current.unMute();
         }
-        if (typeof ytPlayerRef.current.setVolume === "function") {
-          ytPlayerRef.current.setVolume(100);
+        if (typeof playerRef.current.setVolume === "function") {
+          playerRef.current.setVolume(volume * 100);
         }
 
         if (isPlayingRef.current && !userManualPauseRef.current) {
-          ytPlayerRef.current.loadVideoById({
+          playerRef.current.loadVideoById({
             videoId: targetVid,
             startSeconds: 0,
           });
-          ytPlayerRef.current.playVideo?.();
+          playerRef.current.playVideo?.();
         } else {
-          if (typeof ytPlayerRef.current.cueVideoById === "function") {
-            ytPlayerRef.current.cueVideoById({
+          if (typeof playerRef.current.cueVideoById === "function") {
+            playerRef.current.cueVideoById({
               videoId: targetVid,
               startSeconds: 0,
             });
           } else {
-            ytPlayerRef.current.loadVideoById({
+            playerRef.current.loadVideoById({
               videoId: targetVid,
               startSeconds: 0,
             });
-            ytPlayerRef.current.pauseVideo?.();
+            playerRef.current.pauseVideo?.();
           }
         }
       } catch (e) {
-        console.warn("[Player] YT executePlay error:", e);
+        console.warn("[Player] Single engine executePlay error:", e);
       }
     };
 
     const initYT = (vid: string) => {
       try {
-        const streamContainer = document.getElementById("oblivion-yt-stream-engine");
-        if (!streamContainer) return;
+        const container = document.getElementById("oblivion-unified-yt-player");
+        if (!container) return;
 
-        ytPlayerRef.current = new window.YT.Player("oblivion-yt-stream-engine", {
+        playerRef.current = new window.YT.Player("oblivion-unified-yt-player", {
           height: "100%",
           width: "100%",
           videoId: vid,
           playerVars: {
-            autoplay: isPlayingRef.current && !userManualPauseRef.current && mediaModeRef.current !== "video" ? 1 : 0,
+            autoplay: isPlayingRef.current && !userManualPauseRef.current ? 1 : 0,
             controls: 1,
             disablekb: 0,
             fs: 1,
@@ -2158,21 +1673,13 @@ export const Player: React.FC<PlayerProps> = ({
           },
           events: {
             onReady: (event: any) => {
-              isYtReadyRef.current = true;
-              if (mediaModeRef.current === "video") {
-                try {
-                  event.target.pauseVideo?.();
-                  event.target.stopVideo?.();
-                  event.target.mute?.();
-                } catch {}
-                return;
-              }
+              isPlayerReadyRef.current = true;
               try {
-                if (typeof event.target.unMute === "function") {
+                if (typeof event.target.unMute === "function" && !isMuted) {
                   event.target.unMute();
                 }
                 if (typeof event.target.setVolume === "function") {
-                  event.target.setVolume(100);
+                  event.target.setVolume(volume * 100);
                 }
               } catch {}
               if (isPlayingRef.current && !userManualPauseRef.current) {
@@ -2184,26 +1691,17 @@ export const Player: React.FC<PlayerProps> = ({
               }
             },
             onStateChange: (event: any) => {
-              if (mediaModeRef.current === "video") {
-                try {
-                  event.target.pauseVideo?.();
-                  event.target.stopVideo?.();
-                  event.target.mute?.();
-                } catch {}
-                return;
-              }
-              // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING, 5 = CUED, -1 = UNSTARTED
               if (event.data === 1) { // PLAYING
                 isChangingTrackRef.current = false;
                 userManualPauseRef.current = false;
                 interruptedWhilePlayingRef.current = false;
                 startSilentAnchor();
                 try {
-                  if (typeof event.target.unMute === "function") {
+                  if (typeof event.target.unMute === "function" && !isMuted) {
                     event.target.unMute();
                   }
                   if (typeof event.target.setVolume === "function") {
-                    event.target.setVolume(100);
+                    event.target.setVolume(volume * 100);
                   }
                 } catch {}
                 const dur = event.target.getDuration?.() || 0;
@@ -2233,12 +1731,12 @@ export const Player: React.FC<PlayerProps> = ({
               }
             },
             onError: (err: any) => {
-              console.warn("[Player] YouTube player event error:", err);
+              console.warn("[Player] Single YouTube engine error:", err);
             },
           },
         });
       } catch (e) {
-        console.warn("[Player] YT Player init error:", e);
+        console.warn("[Player] Single engine init error:", e);
       }
     };
 
@@ -2249,30 +1747,29 @@ export const Player: React.FC<PlayerProps> = ({
       return;
     }
 
-    if (!ytPlayerRef.current) {
+    if (!playerRef.current) {
       initYT(finalVid);
     } else {
       executePlay(finalVid);
     }
-  }, [currentTrack?.id, currentTrack?.youtubeVideoId, (currentTrack as any)?.youtubeId]);
+  }, [currentTrack?.id, currentTrack?.youtubeVideoId, (currentTrack as any)?.youtubeId, isMuted, volume, startSilentAnchor, stopSilentAnchor, updatePositionState, setPlayerState]);
 
-  // 2. SYNCHRONIZED PLAY/PAUSE CONTROLS: Sync isPlaying state directly to YouTube player & silent anchor
+  // Play/Pause Synchronization on Single Engine
   useEffect(() => {
-    if (playerState.mediaMode === "video") return;
-    if (isYtReadyRef.current && ytPlayerRef.current) {
+    if (isPlayerReadyRef.current && playerRef.current) {
       try {
         if (isPlaying) {
           startSilentAnchor();
           if (!isMuted) {
-            ytPlayerRef.current.unMute?.();
-            ytPlayerRef.current.setVolume?.(volume * 100);
+            playerRef.current.unMute?.();
+            playerRef.current.setVolume?.(volume * 100);
           } else {
-            ytPlayerRef.current.mute?.();
+            playerRef.current.mute?.();
           }
-          ytPlayerRef.current.playVideo?.();
+          playerRef.current.playVideo?.();
         } else if (!isChangingTrackRef.current) {
           stopSilentAnchor();
-          ytPlayerRef.current.pauseVideo?.();
+          playerRef.current.pauseVideo?.();
         }
       } catch {}
     } else {
@@ -2282,79 +1779,38 @@ export const Player: React.FC<PlayerProps> = ({
         stopSilentAnchor();
       }
     }
-  }, [isPlaying, isMuted, volume, startSilentAnchor, stopSilentAnchor, playerState.mediaMode]);
+  }, [isPlaying, isMuted, volume, startSilentAnchor, stopSilentAnchor]);
 
-  // Sync volume state directly to YouTube IFrame player
+  // Volume Synchronization on Single Engine
   useEffect(() => {
-    if (isYtReadyRef.current && ytPlayerRef.current) {
+    if (isPlayerReadyRef.current && playerRef.current) {
       try {
         if (isMuted) {
-          ytPlayerRef.current.mute?.();
+          playerRef.current.mute?.();
         } else {
-          ytPlayerRef.current.unMute?.();
-          ytPlayerRef.current.setVolume?.(volume * 100);
+          playerRef.current.unMute?.();
+          playerRef.current.setVolume?.(volume * 100);
         }
       } catch {}
     }
   }, [volume, isMuted]);
 
-  // 1. SINGLE SOURCE OF TRUTH: Active timer loop polling YouTube player instance
+  // 1. SINGLE GLOBAL PLAYHEAD SYNC EFFECT: Continuous 100ms Polling Loop
   useEffect(() => {
-    const pollRate = 100; // 100ms for smooth progress bar and lyrics sync
+    const pollRate = 100;
     const interval = setInterval(() => {
-      // Suspend polling updates to UI when user is actively scrubbing
       if (isScrubbingRef.current) return;
-
-      // When in Video Mode, synchronize with active video player engine
-      if (playerState.mediaMode === "video") {
-        const vPlayer = videoPlayerRef.current;
-        if (vPlayer) {
-          try {
-            const vState = typeof vPlayer.getPlayerState === "function" ? vPlayer.getPlayerState() : -1;
-            const vCurTime = typeof vPlayer.getCurrentTime === "function" ? vPlayer.getCurrentTime() : undefined;
-            const vDur = typeof vPlayer.getDuration === "function" ? vPlayer.getDuration() : undefined;
-
-            if (typeof vCurTime === "number" && !isNaN(vCurTime) && vCurTime >= 0) {
-              if (videoStartTimeRef.current > 0 && !hasAppliedVideoStartRef.current) {
-                if (vCurTime < videoStartTimeRef.current - 1.5) {
-                  return;
-                }
-                hasAppliedVideoStartRef.current = true;
-                isSeekingToVideoStartRef.current = false;
-              }
-              videoCurrentTimeRef.current = vCurTime;
-              setPlayerState((prev) => {
-                if (prev.mediaMode !== "video") return prev;
-                return {
-                  ...prev,
-                  currentTime: vCurTime,
-                  duration: (vDur && vDur > 0) ? vDur : prev.duration,
-                  ...(vState === 1 ? { isPlaying: true } : vState === 2 ? { isPlaying: false } : {}),
-                };
-              });
-              updatePositionState(vCurTime, vDur);
-            }
-          } catch {}
-        }
-        return;
-      }
-
-      if ((mediaModeRef.current as string) === "video") return;
-
-      const player = ytPlayerRef.current;
-      if (!player || !isYtReadyRef.current) return;
+      const player = playerRef.current;
+      if (!player || !isPlayerReadyRef.current) return;
 
       try {
         const state = typeof player.getPlayerState === "function" ? player.getPlayerState() : -1;
-        // YT.PlayerState: 1 = PLAYING, 2 = PAUSED, 0 = ENDED
-        if (state === 1) { // PLAYING
-          interruptedWhilePlayingRef.current = false;
-          // Continuously verify that isMuted() remains false and volume is at 100
-          if (typeof player.isMuted === "function" && player.isMuted()) {
-            player.unMute();
-          }
-          if (typeof player.getVolume === "function" && player.getVolume() < 100) {
-            player.setVolume(100);
+        if (state === 1 || state === 3 || isPlayingRef.current) {
+          if (state === 1) {
+            interruptedWhilePlayingRef.current = false;
+            if (typeof player.isMuted === "function" && player.isMuted() && !isMuted) {
+              player.unMute();
+            }
           }
 
           const curTime = player.getCurrentTime?.();
@@ -2362,27 +1818,33 @@ export const Player: React.FC<PlayerProps> = ({
           const validDur = (ytDur && ytDur > 0) ? ytDur : (currentTrack?.duration || 0);
 
           if (typeof curTime === "number" && !isNaN(curTime) && curTime >= 0) {
-            setPlayerState((prev) => ({
-              ...prev,
-              isPlaying: true,
-              currentTime: curTime,
-              duration: validDur > 0 ? validDur : prev.duration,
-            }));
+            setPlayerState((prev) => {
+              if (
+                Math.abs(prev.currentTime - curTime) < 0.05 &&
+                (validDur > 0 ? Math.abs((prev.duration || 0) - validDur) < 0.5 : true) &&
+                prev.isPlaying === (state === 1 || isPlayingRef.current)
+              ) {
+                return prev;
+              }
+              return {
+                ...prev,
+                isPlaying: state === 1 ? true : prev.isPlaying,
+                currentTime: curTime,
+                duration: validDur > 0 ? validDur : prev.duration,
+              };
+            });
 
-            // Sync OS notification progress bar smoothly
             if (Math.abs(curTime - lastMediaSessionPositionRef.current) >= 0.8) {
               lastMediaSessionPositionRef.current = curTime;
               updatePositionState(curTime, validDur);
             }
           }
         } else if (state === 2) { // PAUSED
-          if (!isChangingTrackRef.current) {
-            if (isPlayingRef.current) {
-              setPlayerState((prev) => (prev.isPlaying ? { ...prev, isPlaying: false } : prev));
-              stopSilentAnchor();
-              if ("mediaSession" in navigator) {
-                navigator.mediaSession.playbackState = "paused";
-              }
+          if (!isChangingTrackRef.current && isPlayingRef.current) {
+            setPlayerState((prev) => (prev.isPlaying ? { ...prev, isPlaying: false } : prev));
+            stopSilentAnchor();
+            if ("mediaSession" in navigator) {
+              navigator.mediaSession.playbackState = "paused";
             }
           }
         } else if (state === 0) { // ENDED
@@ -2394,262 +1856,25 @@ export const Player: React.FC<PlayerProps> = ({
     }, pollRate);
 
     return () => clearInterval(interval);
-  }, [currentTrack?.id, currentTrack?.youtubeVideoId, currentTrack?.duration, updatePositionState, stopSilentAnchor, playerState.mediaMode]);
+  }, [currentTrack?.id, currentTrack?.youtubeVideoId, currentTrack?.duration, updatePositionState, stopSilentAnchor, isMuted]);
 
-  // Section: Video Mode YouTube Player Instance & Message Sync
-  useEffect(() => {
-    if (playerState.mediaMode !== "video") {
-      if (videoPlayerRef.current) {
-        try {
-          videoPlayerRef.current.destroy?.();
-        } catch {}
-        videoPlayerRef.current = null;
-      }
-      activeVideoIdRef.current = null;
-      return;
-    }
-
-    let isDisposed = false;
-
-    const attachVideoPlayer = () => {
-      if (isDisposed) return;
-      const iframeElem = document.getElementById("oblivion-full-player-video-iframe");
-      if (!iframeElem || !window.YT || !window.YT.Player) return;
-
-      try {
-        videoPlayerRef.current = new window.YT.Player("oblivion-full-player-video-iframe", {
-          events: {
-            onReady: (event: any) => {
-              if (isDisposed) return;
-              try {
-                if (typeof event.target.unMute === "function") {
-                  event.target.unMute();
-                }
-                if (typeof event.target.setVolume === "function") {
-                  event.target.setVolume(volume * 100);
-                }
-                const seekTarget = videoStartTimeRef.current || currentTimeRef.current || 0;
-                if (seekTarget > 0 && typeof event.target.seekTo === "function") {
-                  event.target.seekTo(seekTarget, true);
-                }
-                event.target.playVideo();
-              } catch {}
-            },
-            onStateChange: (event: any) => {
-              if (isDisposed) return;
-              // 1 = PLAYING, 2 = PAUSED, 0 = ENDED
-              if (event.data === 1) { // PLAYING
-                const curTime = event.target.getCurrentTime?.() || 0;
-                const dur = event.target.getDuration?.() || 0;
-
-                if (!hasAppliedVideoStartRef.current && videoStartTimeRef.current > 0) {
-                  if (curTime < videoStartTimeRef.current - 1.5) {
-                    try {
-                      event.target.seekTo(videoStartTimeRef.current, true);
-                    } catch {}
-                    return;
-                  }
-                  hasAppliedVideoStartRef.current = true;
-                  isSeekingToVideoStartRef.current = false;
-                }
-
-                videoCurrentTimeRef.current = curTime;
-                setPlayerState((prev) => ({
-                  ...prev,
-                  isPlaying: true,
-                  currentTime: curTime,
-                  duration: dur > 0 ? dur : prev.duration,
-                }));
-                if ("mediaSession" in navigator) {
-                  navigator.mediaSession.playbackState = "playing";
-                }
-                updatePositionState(curTime, dur);
-              } else if (event.data === 2) { // PAUSED
-                setPlayerState((prev) => (!prev.isPlaying ? prev : { ...prev, isPlaying: false }));
-                if ("mediaSession" in navigator) {
-                  navigator.mediaSession.playbackState = "paused";
-                }
-              } else if (event.data === 0) { // ENDED
-                handleEndedRef.current?.();
-              }
-            },
-          },
-        });
-      } catch (e) {
-        console.warn("[Player] Video YT.Player attachment error:", e);
-      }
-    };
-
-    const timer = setTimeout(attachVideoPlayer, 200);
-
-    // Cross-origin postMessage listener for YouTube iframe infoDelivery
-    const handlePostMessage = (e: MessageEvent) => {
-      try {
-        let data = e.data;
-        if (typeof data === "string") {
-          try {
-            data = JSON.parse(data);
-          } catch {
-            return;
-          }
-        }
-        if (!data) return;
-
-        if (data.event === "infoDelivery" && data.info) {
-          if (typeof data.info.currentTime === "number") {
-            const rawTime = data.info.currentTime;
-            if (!hasAppliedVideoStartRef.current && videoStartTimeRef.current > 0) {
-              if (rawTime < videoStartTimeRef.current - 1.5) {
-                return;
-              }
-              hasAppliedVideoStartRef.current = true;
-              isSeekingToVideoStartRef.current = false;
-            }
-            videoCurrentTimeRef.current = rawTime;
-            if (!isScrubbingRef.current) {
-              setPlayerState((prev) => {
-                if (prev.mediaMode !== "video") return prev;
-                return {
-                  ...prev,
-                  currentTime: rawTime,
-                  duration: data.info.duration > 0 ? data.info.duration : prev.duration,
-                  ...(data.info.playerState === 1
-                    ? { isPlaying: true }
-                    : data.info.playerState === 2
-                    ? { isPlaying: false }
-                    : {}),
-                };
-              });
-            }
-          }
-        } else if (data.event === "onStateChange") {
-          if (data.info === 1) {
-            setPlayerState((prev) => ({ ...prev, isPlaying: true }));
-          } else if (data.info === 2) {
-            setPlayerState((prev) => ({ ...prev, isPlaying: false }));
-          } else if (data.info === 0) {
-            handleEndedRef.current?.();
-          }
-        }
-      } catch {}
-    };
-
-    window.addEventListener("message", handlePostMessage);
-
-    return () => {
-      isDisposed = true;
-      clearTimeout(timer);
-      window.removeEventListener("message", handlePostMessage);
-      if (videoPlayerRef.current) {
-        try {
-          videoPlayerRef.current.destroy?.();
-        } catch {}
-        videoPlayerRef.current = null;
-      }
-    };
-  }, [playerState.mediaMode, activeVideoId, updatePositionState, setPlayerState]);
-
-  // Sync volume state directly to YouTube Video Player
-  useEffect(() => {
-    if (playerState.mediaMode === "video" && videoPlayerRef.current) {
-      try {
-        if (isMuted) {
-          videoPlayerRef.current.mute?.();
-        } else {
-          videoPlayerRef.current.unMute?.();
-          videoPlayerRef.current.setVolume?.(volume * 100);
-        }
-      } catch {}
-    }
-  }, [volume, isMuted, playerState.mediaMode]);
-
-  // Continuously verify unmuted state across navigation view transitions
-  useEffect(() => {
-    enforceUnmutedState();
-  }, [isFullscreen, playerState.mediaMode, showLyrics, showSimilar, enforceUnmutedState]);
-
-  // ================================================================================
-  // TASK 4: GLOBAL PLAY/PAUSE EVENT BUS SANITY GUARD (Single Active Media Controller)
-  // ================================================================================
+  // UNIFIED PLAY/PAUSE CONTROLLERS
   const playMedia = useCallback(async () => {
     userManualPauseRef.current = false;
     interruptedWhilePlayingRef.current = false;
+    startSilentAnchor();
 
-    if (playerState.mediaMode === "video") {
-      // IN VIDEO MODE: Purge and pause HTML5 audioRef, play video player
-      if (audioRef.current) {
-        try {
-          audioRef.current.pause();
-          audioRef.current.muted = true;
-        } catch {}
-      }
-      if (silentAudioRef.current && !silentAudioRef.current.paused) {
-        try {
-          silentAudioRef.current.pause();
-        } catch {}
-      }
-      if (ytPlayerRef.current) {
-        try {
-          ytPlayerRef.current.pauseVideo?.();
-          ytPlayerRef.current.stopVideo?.();
-          ytPlayerRef.current.mute?.();
-        } catch {}
-      }
-
-      if (videoPlayerRef.current) {
-        try {
-          if (typeof videoPlayerRef.current.unMute === "function") {
-            videoPlayerRef.current.unMute();
-          }
-          if (typeof videoPlayerRef.current.setVolume === "function") {
-            videoPlayerRef.current.setVolume(volume * 100);
-          }
-          if (typeof videoPlayerRef.current.playVideo === "function") {
-            videoPlayerRef.current.playVideo();
-          }
-        } catch {}
-      } else {
-        const iframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
+    if (isPlayerReadyRef.current && playerRef.current) {
+      try {
+        if (!isMuted && typeof playerRef.current.unMute === "function") {
+          playerRef.current.unMute();
         }
-      }
-    } else {
-      // IN AUDIO MODE: Stop video player completely, resume audio element
-      if (videoPlayerRef.current) {
-        try {
-          videoPlayerRef.current.stopVideo?.();
-        } catch {}
-      }
-      if (ytPlayerRef.current) {
-        try {
-          ytPlayerRef.current.stopVideo?.();
-        } catch {}
-      }
-
-      startSilentAnchor();
-
-      if (audioRef.current) {
-        try {
-          audioRef.current.muted = false;
-          await audioRef.current.play();
-        } catch (err) {
-          console.warn("[Player] playMedia audio error:", err);
+        if (typeof playerRef.current.setVolume === "function") {
+          playerRef.current.setVolume(volume * 100);
         }
-      }
-
-      if (isYtReadyRef.current && ytPlayerRef.current) {
-        try {
-          if (typeof ytPlayerRef.current.unMute === "function") {
-            ytPlayerRef.current.unMute();
-          }
-          if (typeof ytPlayerRef.current.setVolume === "function") {
-            ytPlayerRef.current.setVolume(100);
-          }
-          ytPlayerRef.current.playVideo?.();
-        } catch (err) {
-          console.warn("[Player] playMedia YT error:", err);
-        }
+        playerRef.current.playVideo?.();
+      } catch (err) {
+        console.warn("[Player] playMedia error:", err);
       }
     }
 
@@ -2657,31 +1882,15 @@ export const Player: React.FC<PlayerProps> = ({
     if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
       navigator.mediaSession.playbackState = "playing";
     }
-  }, [playerState.mediaMode, setPlayerState, startSilentAnchor, volume]);
+  }, [isMuted, setPlayerState, startSilentAnchor, volume]);
 
   const pauseMedia = useCallback(() => {
     userManualPauseRef.current = true;
     stopSilentAnchor();
 
-    // Immediately pause all engines
-    if (audioRef.current) {
+    if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
       try {
-        audioRef.current.pause();
-      } catch {}
-    }
-    if (videoPlayerRef.current && typeof videoPlayerRef.current.pauseVideo === "function") {
-      try {
-        videoPlayerRef.current.pauseVideo();
-      } catch {}
-    } else {
-      const iframe = document.getElementById("oblivion-full-player-video-iframe") as HTMLIFrameElement | null;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
-      }
-    }
-    if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
-      try {
-        ytPlayerRef.current.pauseVideo();
+        playerRef.current.pauseVideo();
       } catch {}
     }
 
@@ -2691,7 +1900,6 @@ export const Player: React.FC<PlayerProps> = ({
     }
   }, [setPlayerState, stopSilentAnchor]);
 
-  // User manual play/pause toggle handler routed via playMedia / pauseMedia
   const handleUserTogglePlay = useCallback(
     (explicitPlay?: boolean) => {
       const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlaying;
@@ -2713,7 +1921,7 @@ export const Player: React.FC<PlayerProps> = ({
       } else if (isPlayingRef.current && !userManualPauseRef.current) {
         try {
           // Keep YouTube stream active & playing
-          ytPlayerRef.current?.playVideo?.();
+          playerRef.current?.playVideo?.();
         } catch {}
       }
     };
@@ -2822,8 +2030,8 @@ export const Player: React.FC<PlayerProps> = ({
       navigator.mediaSession.setActionHandler("seekto", (details) => {
         try {
           if (details.seekTime !== undefined && !isNaN(details.seekTime)) {
-            if (ytPlayerRef.current && typeof ytPlayerRef.current.seekTo === "function") {
-              ytPlayerRef.current.seekTo(details.seekTime, true);
+            if (playerRef.current && typeof playerRef.current.seekTo === "function") {
+              playerRef.current.seekTo(details.seekTime, true);
             }
             if (audioRef.current) {
               audioRef.current.currentTime = details.seekTime;
@@ -2879,8 +2087,8 @@ export const Player: React.FC<PlayerProps> = ({
           userManualPauseRef.current = true;
           interruptedWhilePlayingRef.current = false;
           stopSilentAnchor();
-          if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
-            ytPlayerRef.current.pauseVideo();
+          if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
+            playerRef.current.pauseVideo();
           }
           if (audioRef.current) {
             audioRef.current.pause();
@@ -3052,16 +2260,7 @@ export const Player: React.FC<PlayerProps> = ({
 
   return (
     <>
-      {/* Background YouTube stream engine for audio mode */}
-      <div
-        id="oblivion-yt-wrapper"
-        className="yt-iframe-hidden-container"
-      >
-        <div
-          id="oblivion-yt-stream-engine"
-          className="w-full h-full"
-        />
-      </div>
+
 
       {/* Hidden Silent HTML5 Audio Anchor for Android Chrome MediaSession Lock */}
       <audio
@@ -3134,38 +2333,46 @@ export const Player: React.FC<PlayerProps> = ({
             </div>
           </div>
         </div>
-      )}      {/* Fullscreen Player Modal / Expansion - 100% Full-Screen Opaque Immersive Studio */}
-      {isFullscreen && (
-        <div
-          ref={fullPlayerContainerRef}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={() => {
-            setTouchStartY(null);
-            setTouchStartX(null);
-            setDragOffsetY(0);
-            setIsDraggingDown(false);
-          }}
-          style={{
-            transform: dragOffsetY > 0 ? `translate3d(0, ${dragOffsetY}px, 0)` : undefined,
-            opacity: dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1,
-            transition: isDraggingDown ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
-            ...(isBespoke
-              ? {
-                  background: `radial-gradient(circle at 10% 10%, ${bespokeColors[0]} 0%, ${bespokeColors[2]} 40%, #050508 80%)`,
-                }
-              : designConfig.id === "sugar-time-jazz"
-              ? {
-                  background: "var(--bg-main, linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%))",
-                  color: "var(--text-primary, #f5eae1)",
-                }
-              : {}),
-          }}
-          id="player-fullscreen-dock"
-          data-theme={designConfig.id}
-          className={`full-player-overlay full-player-container fixed inset-0 z-[100] w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in ${designConfig.id === 'sugar-time-jazz' ? 'theme-sugar-time-jazz' : ''}`}
-        >
+          )}
+      {/* Full Player View - Permanently mounted in DOM without display:none so YouTube iframe context remains active */}
+      <div
+        ref={fullPlayerContainerRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => {
+          setTouchStartY(null);
+          setTouchStartX(null);
+          setDragOffsetY(0);
+          setIsDraggingDown(false);
+        }}
+        id="player-fullscreen-dock"
+        data-theme={designConfig.id}
+        className={`full-player-overlay full-player-container fixed inset-0 w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in ${designConfig.id === 'sugar-time-jazz' ? 'theme-sugar-time-jazz' : ''}`}
+        style={{
+          zIndex: isFullscreen ? 100 : -1,
+          opacity: isFullscreen ? (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1) : 0,
+          pointerEvents: isFullscreen ? "auto" : "none",
+          transform: !isFullscreen
+            ? "translate3d(0, 110%, 0)"
+            : dragOffsetY > 0
+            ? `translate3d(0, ${dragOffsetY}px, 0)`
+            : "none",
+          transition: isDraggingDown
+            ? "none"
+            : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
+          ...(isBespoke
+            ? {
+                background: `radial-gradient(circle at 10% 10%, ${bespokeColors[0]} 0%, ${bespokeColors[2]} 40%, #050508 80%)`,
+              }
+            : designConfig.id === "sugar-time-jazz"
+            ? {
+                background: "var(--bg-main, linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%))",
+                color: "var(--text-primary, #f5eae1)",
+              }
+            : {}),
+        }}
+      >
           {/* Animated Dynamic Ambient Background based on the HD Cover Art / Video Thumbnail & Active Theme */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
             {settings.playerBackgroundAnimation === "ambient-drift" ? (
@@ -3402,7 +2609,7 @@ export const Player: React.FC<PlayerProps> = ({
                     onClick={(e) => handleTabSwitch("audio", e)}
                     className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
                     style={
-                      (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar
+                      activeTab === "audio"
                         ? {
                             backgroundColor: "#e8d5b5",
                             color: "#120e16",
@@ -3426,15 +2633,15 @@ export const Player: React.FC<PlayerProps> = ({
                     <Music2
                       size={15}
                       style={{
-                        color: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
-                        stroke: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "audio" ? "#120e16" : "#e8d5b5",
+                        stroke: activeTab === "audio" ? "#120e16" : "#e8d5b5",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
-                        fontWeight: (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? "bold" : "500",
+                        color: activeTab === "audio" ? "#120e16" : "#e8d5b5",
+                        fontWeight: activeTab === "audio" ? "bold" : "500",
                       }}
                     >
                       Audio
@@ -3447,7 +2654,7 @@ export const Player: React.FC<PlayerProps> = ({
                     onClick={(e) => handleTabSwitch("video", e)}
                     className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
                     style={
-                      playerState.mediaMode === "video" && !showLyrics && !showSimilar
+                      activeTab === "video"
                         ? {
                             backgroundColor: "#e8d5b5",
                             color: "#120e16",
@@ -3471,15 +2678,15 @@ export const Player: React.FC<PlayerProps> = ({
                     <Video
                       size={15}
                       style={{
-                        color: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
-                        stroke: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "video" ? "#120e16" : "#e8d5b5",
+                        stroke: activeTab === "video" ? "#120e16" : "#e8d5b5",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "#120e16" : "#e8d5b5",
-                        fontWeight: playerState.mediaMode === "video" && !showLyrics && !showSimilar ? "bold" : "500",
+                        color: activeTab === "video" ? "#120e16" : "#e8d5b5",
+                        fontWeight: activeTab === "video" ? "bold" : "500",
                       }}
                     >
                       Video
@@ -3492,7 +2699,7 @@ export const Player: React.FC<PlayerProps> = ({
                     onClick={(e) => handleTabSwitch("lyrics", e)}
                     className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
                     style={
-                      showLyrics
+                      activeTab === "lyrics"
                         ? {
                             backgroundColor: "#e8d5b5",
                             color: "#120e16",
@@ -3516,15 +2723,15 @@ export const Player: React.FC<PlayerProps> = ({
                     <Sparkles
                       size={15}
                       style={{
-                        color: showLyrics ? "#120e16" : "#e8d5b5",
-                        stroke: showLyrics ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "lyrics" ? "#120e16" : "#e8d5b5",
+                        stroke: activeTab === "lyrics" ? "#120e16" : "#e8d5b5",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: showLyrics ? "#120e16" : "#e8d5b5",
-                        fontWeight: showLyrics ? "bold" : "500",
+                        color: activeTab === "lyrics" ? "#120e16" : "#e8d5b5",
+                        fontWeight: activeTab === "lyrics" ? "bold" : "500",
                       }}
                     >
                       Lyrics
@@ -3537,7 +2744,7 @@ export const Player: React.FC<PlayerProps> = ({
                     onClick={(e) => handleTabSwitch("radio", e)}
                     className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
                     style={
-                      showSimilar
+                      activeTab === "radio"
                         ? {
                             backgroundColor: "#e8d5b5",
                             color: "#120e16",
@@ -3561,15 +2768,15 @@ export const Player: React.FC<PlayerProps> = ({
                     <Radio
                       size={15}
                       style={{
-                        color: showSimilar ? "#120e16" : "#e8d5b5",
-                        stroke: showSimilar ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "radio" ? "#120e16" : "#e8d5b5",
+                        stroke: activeTab === "radio" ? "#120e16" : "#e8d5b5",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: showSimilar ? "#120e16" : "#e8d5b5",
-                        fontWeight: showSimilar ? "bold" : "500",
+                        color: activeTab === "radio" ? "#120e16" : "#e8d5b5",
+                        fontWeight: activeTab === "radio" ? "bold" : "500",
                       }}
                     >
                       Radio
@@ -3597,11 +2804,11 @@ export const Player: React.FC<PlayerProps> = ({
                     id="player-toggle-audio-mode"
                     onClick={(e) => handleTabSwitch("audio", e)}
                     className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar
+                      activeTab === "audio"
                         ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
                         : "text-white/70 hover:text-white"
                     }`}
-                    style={isBespoke && (playerState.mediaMode || "song") === "song" && !showLyrics && !showSimilar ? {
+                    style={isBespoke && activeTab === "audio" ? {
                       background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
                       color: calculateWcagText(bespokeColors[1]),
                     } : undefined}
@@ -3614,11 +2821,11 @@ export const Player: React.FC<PlayerProps> = ({
                     id="player-toggle-video-mode"
                     onClick={(e) => handleTabSwitch("video", e)}
                     className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      playerState.mediaMode === "video"
+                      activeTab === "video"
                         ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
                         : "text-white/70 hover:text-white"
                     }`}
-                    style={isBespoke && playerState.mediaMode === "video" ? {
+                    style={isBespoke && activeTab === "video" ? {
                       background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
                       color: calculateWcagText(bespokeColors[1]),
                     } : undefined}
@@ -3634,33 +2841,33 @@ export const Player: React.FC<PlayerProps> = ({
                   <button
                     onClick={(e) => handleTabSwitch("lyrics", e)}
                     className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
-                      showLyrics ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
+                      activeTab === "lyrics" ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
                     }`}
-                    style={isBespoke && showLyrics ? {
+                    style={isBespoke && activeTab === "lyrics" ? {
                       background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
                       color: calculateWcagText(bespokeColors[1]),
                       borderColor: "transparent",
                       boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                    } : (!showLyrics ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
+                    } : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
                   >
-                    <Sparkles className="w-3.5 h-3.5" style={!showLyrics ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
-                    <span style={!showLyrics ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Lyrics</span>
+                    <Sparkles className="w-3.5 h-3.5" style={activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
+                    <span style={activeTab !== "lyrics" ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Lyrics</span>
                   </button>
 
                   <button
                     onClick={(e) => handleTabSwitch("radio", e)}
                     className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
-                      showSimilar ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
+                      activeTab === "radio" ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
                     }`}
-                    style={isBespoke && showSimilar ? {
+                    style={isBespoke && activeTab === "radio" ? {
                       background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
                       color: calculateWcagText(bespokeColors[1]),
                       borderColor: "transparent",
                       boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                    } : (!showSimilar ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
+                    } : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
                   >
-                    <Radio className="w-3.5 h-3.5" style={!showSimilar ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
-                    <span style={!showSimilar ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Radio</span>
+                    <Radio className="w-3.5 h-3.5" style={activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
+                    <span style={activeTab !== "radio" ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Radio</span>
                   </button>
                 </div>
               </div>
@@ -3669,119 +2876,147 @@ export const Player: React.FC<PlayerProps> = ({
 
           {/* Main Fullscreen Center Body */}
           <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center px-3 py-1 sm:px-6 sm:py-3 overflow-hidden">
-            {/* Lyrics View overlay if active */}
-            {showLyrics ? (
-              <div className="w-full max-w-2xl h-full flex items-center justify-center">
-                <LyricsView
-                  track={currentTrack}
-                  currentTime={currentTime}
-                  onSeek={(t) => {
-                    if (audioRef.current) audioRef.current.currentTime = t;
-                    onSeek(t);
-                  }}
-                  settings={settings}
+            {/* 1. Lyrics View - Always mounted, toggled via CSS */}
+            <div
+              className="w-full max-w-2xl h-full flex items-center justify-center"
+              style={{ display: activeTab === "lyrics" ? "flex" : "none" }}
+            >
+              <LyricsView
+                track={currentTrack}
+                currentTime={currentTime}
+                onSeek={(t) => {
+                  if (audioRef.current) audioRef.current.currentTime = t;
+                  onSeek(t);
+                }}
+                settings={settings}
+                designConfig={designConfig}
+              />
+            </div>
+
+            {/* 2. Radio Pop-Up Window - Always mounted, toggled via CSS */}
+            <div
+              className="w-full max-w-md h-full flex flex-col items-center justify-center py-1 sm:py-2"
+              style={{ display: activeTab === "radio" ? "flex" : "none" }}
+            >
+              <div className="w-full flex-1 min-h-0 flex items-center justify-center">
+                <SimilarTracksDrawer
+                  currentTrack={currentTrack}
+                  seedTrack={radioSeedTrack || currentTrack}
+                  isPlaying={isPlaying}
+                  onPlayTrack={onPlayTrack}
+                  onPlayQueue={onPlayQueue}
+                  onRegisterRadioQueue={onRegisterRadioQueue}
+                  onAddToQueue={onAddToQueue}
+                  onClose={() => setPlayerState((prev) => ({ ...prev, showSimilar: false }))}
                   designConfig={designConfig}
                 />
               </div>
-            ) : showSimilar ? (
-              <div className="w-full max-w-md h-full flex flex-col items-center justify-center py-1 sm:py-2">
-                {/* Radio Pop-Up Window */}
-                <div className="w-full flex-1 min-h-0 flex items-center justify-center">
-                  <SimilarTracksDrawer
-                    currentTrack={currentTrack}
-                    seedTrack={radioSeedTrack || currentTrack}
-                    isPlaying={isPlaying}
-                    onPlayTrack={onPlayTrack}
-                    onPlayQueue={onPlayQueue}
-                    onRegisterRadioQueue={onRegisterRadioQueue}
-                    onAddToQueue={onAddToQueue}
-                    onClose={() => setPlayerState((prev) => ({ ...prev, showSimilar: false }))}
-                    designConfig={designConfig}
-                  />
-                </div>
-              </div>
-            ) : playerState.mediaMode === "video" ? (
-              /* Music Video Mode on Center Stage (TASK 2: Memoized VideoPlayer isolated from progress updates) */
-              <div className="full-player-modal-content flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-0.5">
-                <VideoPlayer
-                  videoId={activeVideoId}
-                  isBespoke={isBespoke}
-                  bespokeColor={bespokeColors[0]}
-                  initialStartSeconds={videoStartTime}
-                />
+            </div>
 
-                {/* Song Title & Artist - lowered with clean gap below the video screen and clear of shadows */}
-                <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
-                  <MarqueeText
-                    as="h2"
-                    text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
-                    containerClassName="w-full mx-auto text-center"
-                    style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
-                    speed={30}
-                  />
-                  <MarqueeText
-                    as="p"
-                    text={currentTrack.artist || "Unknown Artist"}
-                    className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
-                    containerClassName="w-full mx-auto text-center"
-                    style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
-                    speed={26}
-                  />
-                </div>
-              </div>
-            ) : (
-              /* Audio / Song Mode: Central HD Album Artwork & Dynamic Stage */
-              <div className="full-player-modal-content flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto py-0.5">
-                {/* Audio Artwork Card (Slim Line + Soft Ambient Glow) */}
-                <div
-                  className="full-player-artwork-card art-container glass-card relative group"
-                  style={isHardRock ? {
-                    borderRadius: "28px",
-                    overflow: "hidden",
-                    border: "1px solid rgba(232, 213, 181, 0.18)",
-                    boxShadow: "0 0 50px rgba(168, 85, 247, 0.45), 0 20px 40px rgba(0, 0, 0, 0.75)",
-                    maxWidth: "min(84vw, 360px)",
-                    aspectRatio: "1/1",
-                  } : isBespoke ? {
-                    borderColor: hexToRgba(bespokeColors[0], 0.6),
-                    boxShadow: `0 0 30px ${hexToRgba(bespokeColors[0], 0.35)}`,
-                  } : undefined}
-                >
-                  <img
-                    src={getHdCoverUrl(currentTrack.coverUrl)}
-                    alt={currentTrack.title}
-                    onError={(e) => {
-                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                        e.currentTarget.src = currentTrack.coverUrl;
-                      } else {
-                        e.currentTarget.src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=95";
+            {/* 3. Music Video Mode on Center Stage - Always mounted in DOM, toggled via off-screen positioning ONLY */}
+            <div
+              className="full-player-modal-content flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-0.5"
+              style={{
+                position: activeTab === 'video' ? 'relative' : 'absolute',
+                left: activeTab === 'video' ? '0' : '-9999px',
+                top: activeTab === 'video' ? '0' : '-9999px',
+                width: '100%',
+                height: activeTab === 'video' ? 'auto' : '1px',
+                opacity: activeTab === 'video' ? 1 : 0.001,
+                pointerEvents: activeTab === 'video' ? 'auto' : 'none'
+              }}
+            >
+              <div
+                className="full-player-video-card"
+                style={
+                  isBespoke && bespokeColors[0]
+                    ? {
+                        borderColor: bespokeColors[0],
+                        boxShadow: `0 0 25px ${hexToRgba(bespokeColors[0], 0.35)}`,
                       }
-                    }}
-                  />
-                </div>
-
-                {/* Song Title & Artist - lowered with clean gap below album artwork and clear of shadows */}
-                <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
-                  <MarqueeText
-                    as="h2"
-                    text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                    className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
-                    containerClassName="w-full mx-auto text-center"
-                    style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
-                    speed={30}
-                  />
-                  <MarqueeText
-                    as="p"
-                    text={currentTrack.artist || "Unknown Artist"}
-                    className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-semibold ${fpTheme.stageArtist} text-center`}
-                    containerClassName="w-full mx-auto text-center"
-                    style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
-                    speed={26}
-                  />
-                </div>
+                    : undefined
+                }
+              >
+                <div
+                  id="oblivion-unified-yt-player"
+                  className="w-full h-full rounded-2xl overflow-hidden"
+                />
               </div>
-            )}
+
+              {/* Song Title & Artist - lowered with clean gap below the video screen and clear of shadows */}
+              <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
+                <MarqueeText
+                  as="h2"
+                  text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                  className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
+                  containerClassName="w-full mx-auto text-center"
+                  style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
+                  speed={30}
+                />
+                <MarqueeText
+                  as="p"
+                  text={currentTrack.artist || "Unknown Artist"}
+                  className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
+                  containerClassName="w-full mx-auto text-center"
+                  style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
+                  speed={26}
+                />
+              </div>
+            </div>
+
+            {/* 4. Audio / Song Mode: Central HD Album Artwork & Dynamic Stage - Always mounted, toggled via CSS */}
+            <div
+              className="full-player-modal-content flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto py-0.5"
+              style={{ display: activeTab === "audio" ? "flex" : "none" }}
+            >
+              {/* Audio Artwork Card (Slim Line + Soft Ambient Glow) */}
+              <div
+                className="full-player-artwork-card art-container glass-card relative group"
+                style={isHardRock ? {
+                  borderRadius: "28px",
+                  overflow: "hidden",
+                  border: "1px solid rgba(232, 213, 181, 0.18)",
+                  boxShadow: "0 0 50px rgba(168, 85, 247, 0.45), 0 20px 40px rgba(0, 0, 0, 0.75)",
+                  maxWidth: "min(84vw, 360px)",
+                  aspectRatio: "1/1",
+                } : isBespoke ? {
+                  borderColor: hexToRgba(bespokeColors[0], 0.6),
+                  boxShadow: `0 0 30px ${hexToRgba(bespokeColors[0], 0.35)}`,
+                } : undefined}
+              >
+                <img
+                  src={getHdCoverUrl(currentTrack.coverUrl)}
+                  alt={currentTrack.title}
+                  onError={(e) => {
+                    if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
+                      e.currentTarget.src = currentTrack.coverUrl;
+                    } else {
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=95";
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Song Title & Artist - lowered with clean gap below album artwork and clear of shadows */}
+              <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
+                <MarqueeText
+                  as="h2"
+                  text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
+                  className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
+                  containerClassName="w-full mx-auto text-center"
+                  style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
+                  speed={30}
+                />
+                <MarqueeText
+                  as="p"
+                  text={currentTrack.artist || "Unknown Artist"}
+                  className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-semibold ${fpTheme.stageArtist} text-center`}
+                  containerClassName="w-full mx-auto text-center"
+                  style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
+                  speed={26}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
@@ -4103,7 +3338,6 @@ export const Player: React.FC<PlayerProps> = ({
             </div>
           </div>
         </div>
-      )}
 
       {/* Dynamic Multi-Layout Mini Player Deck - Unified Designer Floating Dock with Waveform across all 6 App Designs */}
       {!isFullscreen && (() => {
@@ -4134,8 +3368,10 @@ export const Player: React.FC<PlayerProps> = ({
               cursor: isMiniDraggingDown ? "grabbing" : "default",
               ...(isHardRock
                 ? {
-                    background: "rgba(26, 20, 32, 0.95)",
-                    borderColor: "rgba(168, 85, 247, 0.35)",
+                    backgroundColor: "rgba(18, 14, 22, 0.72)",
+                    backdropFilter: "blur(20px) saturate(180%)",
+                    WebkitBackdropFilter: "blur(20px) saturate(180%)",
+                    border: "1px solid rgba(232, 213, 181, 0.15)",
                     boxShadow: "0 12px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(168, 85, 247, 0.35)",
                     borderRadius: "20px",
                   }
@@ -4244,15 +3480,15 @@ export const Player: React.FC<PlayerProps> = ({
 
                   <button
                     onClick={() => handleUserTogglePlay()}
-                    className={`player-play-btn mini-player-play-btn w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isHardRock || isBespoke ? "" : designConfig.btnPrimary} text-white flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
+                    className={`player-play-btn mini-player-play-btn w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isHardRock || isBespoke ? "" : designConfig.btnPrimary} flex items-center justify-center shadow-md transition-transform active:scale-95 shrink-0`}
                     style={
                       isHardRock
                         ? {
                             width: "38px",
                             height: "38px",
                             borderRadius: "50%",
-                            background: "linear-gradient(135deg, #f0e2ca, #c59b27)",
-                            border: "none",
+                            backgroundColor: "rgba(38, 28, 48, 0.9)",
+                            border: "1px solid rgba(232, 213, 181, 0.25)",
                             boxShadow: "0 0 16px rgba(168, 85, 247, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5)",
                           }
                         : isBespoke
@@ -4267,12 +3503,12 @@ export const Player: React.FC<PlayerProps> = ({
                     {isPlaying ? (
                       <Pause
                         className="w-4 h-4 sm:w-4.5 sm:h-4.5"
-                        style={isHardRock ? { color: "#120e16", stroke: "#120e16", fill: "#120e16", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                        style={isHardRock ? { color: "#e8d5b5", stroke: "#e8d5b5", fill: "#e8d5b5", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
                       />
                     ) : (
                       <Play
                         className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5"
-                        style={isHardRock ? { color: "#120e16", stroke: "#120e16", fill: "#120e16", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                        style={isHardRock ? { color: "#e8d5b5", stroke: "#e8d5b5", fill: "#e8d5b5", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
                       />
                     )}
                   </button>

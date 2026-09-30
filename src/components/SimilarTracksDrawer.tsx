@@ -34,26 +34,35 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [addedIds, setAddedIds] = useState<string[]>([]);
 
+  const activeSeedId = activeSeed?.id || activeSeed?.youtubeVideoId || "";
+  const activeSeedTitle = activeSeed?.title || "";
+  const activeSeedArtist = activeSeed?.artist || "";
+  const activeSeedGenre = activeSeed?.genre || "";
+
   // Disambiguate input seed track metadata
   const parsedMeta = React.useMemo(() => {
-    return parseTrackMetadata(activeSeed.title, activeSeed.artist);
-  }, [activeSeed.title, activeSeed.artist]);
-
-  const activeSeedId = activeSeed.id || activeSeed.youtubeVideoId || "";
-  const activeSeedTitle = activeSeed.title || "";
+    if (!activeSeedTitle) return { title: "", artist: "", uploader: "" };
+    return parseTrackMetadata(activeSeedTitle, activeSeedArtist);
+  }, [activeSeedTitle, activeSeedArtist]);
 
   useEffect(() => {
+    if (!activeSeedId && !activeSeedTitle) {
+      setSimilarTracks([]);
+      setLoading(false);
+      return;
+    }
+
     let isMounted = true;
     const fetchSimilar = async () => {
       setLoading(true);
       try {
-        const targetArtist = parsedMeta.artist || activeSeed.artist || "";
-        const targetTitle = parsedMeta.title || activeSeed.title || "";
+        const targetArtist = parsedMeta.artist || activeSeedArtist || "";
+        const targetTitle = parsedMeta.title || activeSeedTitle || "";
         const res = await fetch(
           `/api/youtube/similar?trackId=${encodeURIComponent(activeSeedId)}&title=${encodeURIComponent(
             targetTitle
           )}&artist=${encodeURIComponent(targetArtist)}&genre=${encodeURIComponent(
-            activeSeed.genre || ""
+            activeSeedGenre
           )}`
         );
         const data = await res.json().catch(() => ({}));
@@ -81,7 +90,7 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [activeSeedId, activeSeedTitle, parsedMeta.artist, parsedMeta.title]);
+  }, [activeSeedId, activeSeedTitle, parsedMeta.artist, parsedMeta.title, activeSeedArtist, activeSeedGenre]);
 
   const handleAddQueue = (track: Track) => {
     onAddToQueue(track);
@@ -104,9 +113,10 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
 
   // Construct complete Radio Station queue (seed track at top, followed by similar tracks in order)
   const fullRadioQueue = React.useMemo(() => {
+    if (!activeSeed) return [];
     const list: Track[] = [];
     const seedId = activeSeed?.id || activeSeed?.youtubeVideoId;
-    if (activeSeed && seedId) {
+    if (seedId) {
       list.push({ ...activeSeed, id: seedId });
     }
     for (const t of cleanSimilar) {
@@ -119,11 +129,19 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
   }, [activeSeed, cleanSimilar]);
 
   // Register the active Radio station list into global audio playback queue once loaded
+  const onRegisterRadioQueueRef = React.useRef(onRegisterRadioQueue);
   useEffect(() => {
-    if (cleanSimilar.length > 0 && fullRadioQueue.length > 0) {
-      onRegisterRadioQueue?.(fullRadioQueue);
-    }
-  }, [cleanSimilar.length, fullRadioQueue, onRegisterRadioQueue]);
+    onRegisterRadioQueueRef.current = onRegisterRadioQueue;
+  }, [onRegisterRadioQueue]);
+
+  const lastRegisteredKeyRef = React.useRef<string>("");
+
+  const queueKey = React.useMemo(() => {
+    if (!activeSeedId || cleanSimilar.length === 0) return "";
+    return `${activeSeedId}_${cleanSimilar.length}_${fullRadioQueue.map((t) => t.id || t.youtubeVideoId).join(",")}`;
+  }, [activeSeedId, cleanSimilar.length, fullRadioQueue]);
+
+// Automatic radio queue registration disabled to protect active playlist queue
 
   // Play a specific item from the Radio queue, guaranteeing sequential top-to-bottom playback
   const handlePlayRadioItem = (track: Track, fallbackIdx = 0) => {
