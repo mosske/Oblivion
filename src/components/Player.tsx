@@ -852,9 +852,7 @@ export const Player: React.FC<PlayerProps> = ({
   const isAudioSeekingRef = useRef<boolean>(false);
   const activeAudioSourceRef = useRef<"audio" | "youtube">("youtube");
   const mediaModeRef = useRef<"song" | "video">(playerState.mediaMode === "video" ? "video" : "song");
-  useEffect(() => {
-    mediaModeRef.current = playerState.mediaMode === "video" ? "video" : "song";
-  }, [playerState.mediaMode]);
+  mediaModeRef.current = playerState.mediaMode === "video" ? "video" : "song";
 
   // SECTION 1: HIDDEN SILENT HTML5 AUDIO ANCHOR (Permanent Android MediaSession Fix)
   useEffect(() => {
@@ -875,7 +873,7 @@ export const Player: React.FC<PlayerProps> = ({
   }, []);
 
   const startSilentAnchor = useCallback(() => {
-    if (playerState.mediaMode === "video") return;
+    if (mediaModeRef.current === "video") return;
     try {
       if (silentAudioRef.current && silentAudioRef.current.paused) {
         silentAudioRef.current.play().catch(() => {});
@@ -884,7 +882,7 @@ export const Player: React.FC<PlayerProps> = ({
         audioRef.current.play().catch(() => {});
       }
     } catch {}
-  }, [playerState.mediaMode]);
+  }, []);
 
   const stopSilentAnchor = useCallback(() => {
     try {
@@ -1339,23 +1337,12 @@ export const Player: React.FC<PlayerProps> = ({
           isFullscreen: true,
         }));
       } else if (newMode === "video") {
-        // Query live YouTube player instance time immediately to eliminate 0:00 / jumpy timestamp
-        let liveTime: number | null = null;
-        if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
-          try {
-            const t = playerRef.current.getCurrentTime();
-            if (typeof t === "number" && !isNaN(t) && t >= 0) {
-              liveTime = t;
-            }
-          } catch {}
-        }
         setPlayerState((prev) => ({
           ...prev,
           mediaMode: "video",
           showLyrics: false,
           showSimilar: false,
           isFullscreen: true,
-          ...(liveTime !== null ? { currentTime: liveTime } : {}),
         }));
       } else if (newMode === "lyrics") {
         setPlayerState((prev) => ({
@@ -1610,11 +1597,17 @@ export const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     if (!currentTrack) return;
 
-    userManualPauseRef.current = false;
-    setPlayerState((prev) => (prev.currentTime === 0 ? prev : { ...prev, currentTime: 0 }));
-
     const finalVid = extractCleanYoutubeId(currentTrack) || (currentTrack as any)?.videoId || (currentTrack as any)?.youtubeId || (currentTrack.id && currentTrack.id.length === 11 ? currentTrack.id : "");
     if (!finalVid) return;
+
+    // GUARD: If this video is ALREADY loaded into the persistent player, DO NOT reload, pause, or reset currentTime!
+    if (activeVideoIdRef.current === finalVid && playerRef.current) {
+      return;
+    }
+
+    activeVideoIdRef.current = finalVid;
+    userManualPauseRef.current = false;
+    setPlayerState((prev) => (prev.currentTime === 0 ? prev : { ...prev, currentTime: 0 }));
 
     const executePlay = (targetVid: string) => {
       if (!isPlayerReadyRef.current || !playerRef.current) return;
@@ -1752,7 +1745,7 @@ export const Player: React.FC<PlayerProps> = ({
     } else {
       executePlay(finalVid);
     }
-  }, [currentTrack?.id, currentTrack?.youtubeVideoId, (currentTrack as any)?.youtubeId, isMuted, volume, startSilentAnchor, stopSilentAnchor, updatePositionState, setPlayerState]);
+  }, [currentTrack?.id, currentTrack?.youtubeVideoId, (currentTrack as any)?.youtubeId]);
 
   // Play/Pause Synchronization on Single Engine
   useEffect(() => {
