@@ -1233,6 +1233,13 @@ export const Player: React.FC<PlayerProps> = ({
     designConfig.name === "Hard Rock" ||
     designConfig.themePreset === "sugar-time-jazz"
   );
+  const isCandyland = Boolean(
+    (designConfig.id as string) === "candyland" ||
+    (designConfig.id as string) === "candyland-pastel" ||
+    (designConfig as any).isCandy ||
+    (designConfig as any).themePreset === "candyland" ||
+    designConfig.name === "Candyland Pastel"
+  );
 
   const [bespokeColors, setBespokeColors] = useState<[string, string, string, string]>(() => {
     if (designConfig.swatchColors && designConfig.swatchColors.length >= 4) {
@@ -2784,11 +2791,20 @@ export const Player: React.FC<PlayerProps> = ({
                 <button
                   onClick={handleMinimizeFullPlayer}
                   className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
-                  style={{ color: "#e8d5b5" }}
+                  style={isCandyland ? { color: "#2563eb" } : { color: "#e8d5b5" }}
                   title="Minimize Full Player (or swipe down)"
                 >
-                  <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }} size={20} />
-                  <span className="text-xs font-semibold hidden sm:inline" style={{ color: "#e8d5b5", opacity: 1 }}>Minimize</span>
+                  <ChevronDown
+                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    style={isCandyland ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
+                    size={20}
+                  />
+                  <span
+                    className="text-xs font-semibold hidden sm:inline"
+                    style={isCandyland ? { color: "#2563eb", opacity: 1 } : { color: "#e8d5b5", opacity: 1 }}
+                  >
+                    Minimize
+                  </span>
                 </button>
 
                 {/* Center: YouTube Music Audio / Video Switcher */}
@@ -2836,15 +2852,36 @@ export const Player: React.FC<PlayerProps> = ({
                     className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                       activeTab === "lyrics" ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
                     }`}
-                    style={isBespoke && activeTab === "lyrics" ? {
-                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                      color: calculateWcagText(bespokeColors[1]),
-                      borderColor: "transparent",
-                      boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                    } : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
+                    style={
+                      isBespoke && activeTab === "lyrics"
+                        ? {
+                            background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                            color: calculateWcagText(bespokeColors[1]),
+                            borderColor: "transparent",
+                            boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                          }
+                        : isCandyland && activeTab !== "lyrics"
+                        ? { color: "#2563eb" }
+                        : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
+                    }
                   >
-                    <Sparkles className="w-3.5 h-3.5" style={activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
-                    <span style={activeTab !== "lyrics" ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Lyrics</span>
+                    <Sparkles
+                      className="w-3.5 h-3.5"
+                      style={
+                        isCandyland && activeTab !== "lyrics"
+                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
+                          : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
+                      }
+                    />
+                    <span
+                      style={
+                        isCandyland && activeTab !== "lyrics"
+                          ? { color: "#2563eb", opacity: 1 }
+                          : (activeTab !== "lyrics" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
+                      }
+                    >
+                      Lyrics
+                    </span>
                   </button>
 
                   <button
@@ -2852,15 +2889,36 @@ export const Player: React.FC<PlayerProps> = ({
                     className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
                       activeTab === "radio" ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
                     }`}
-                    style={isBespoke && activeTab === "radio" ? {
-                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                      color: calculateWcagText(bespokeColors[1]),
-                      borderColor: "transparent",
-                      boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                    } : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)}
+                    style={
+                      isBespoke && activeTab === "radio"
+                        ? {
+                            background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                            color: calculateWcagText(bespokeColors[1]),
+                            borderColor: "transparent",
+                            boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                          }
+                        : isCandyland && activeTab !== "radio"
+                        ? { color: "#2563eb" }
+                        : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
+                    }
                   >
-                    <Radio className="w-3.5 h-3.5" style={activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined} />
-                    <span style={activeTab !== "radio" ? { color: "#e8d5b5", opacity: 0.85 } : undefined}>Radio</span>
+                    <Radio
+                      className="w-3.5 h-3.5"
+                      style={
+                        isCandyland && activeTab !== "radio"
+                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
+                          : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
+                      }
+                    />
+                    <span
+                      style={
+                        isCandyland && activeTab !== "radio"
+                          ? { color: "#2563eb", opacity: 1 }
+                          : (activeTab !== "radio" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
+                      }
+                    >
+                      Radio
+                    </span>
                   </button>
                 </div>
               </div>
