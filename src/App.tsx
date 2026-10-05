@@ -737,6 +737,7 @@ export default function App() {
       } else {
         const vars = themeVariables[activeFullDesign.id] || themeVariables.designer;
         document.documentElement.style.setProperty("--accent-color", vars.accent);
+        document.documentElement.style.setProperty("--active-lyric-color", vars.accent);
         document.documentElement.style.setProperty("--primary", vars.accent);
         document.documentElement.style.setProperty("--accent-primary", vars.accent);
         document.documentElement.style.setProperty("--accent-secondary", vars.secondary);

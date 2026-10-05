@@ -7480,24 +7480,36 @@ app.get("/api/youtube/similar", async (req, res) => {
   const currentId = (req.query.trackId as string) || "";
 
   try {
-    const accessToken = await getValidAccessToken(req);
+    const accessToken = await getValidAccessToken(req).catch(() => null);
     const cleanMeta = parseTrackMetadataServer(title, artist);
     const targetArtist = cleanMeta.artist && cleanMeta.artist !== "Unknown Artist" ? cleanMeta.artist : artist;
     const targetTitle = cleanMeta.title && cleanMeta.title !== "Untitled Track" ? cleanMeta.title : title;
 
-    // Search genuine songs using specialized searchYouTubeMusicSongs
-    let songResults: any[] = [];
-    if (targetArtist && targetArtist !== "Unknown Artist") {
-      songResults = await searchYouTubeMusicSongs(`${targetArtist} ${genre} songs`, accessToken || undefined);
-    }
-    if (songResults.length < 10 && targetTitle) {
-      const moreSongs = await searchYouTubeMusicSongs(`${targetArtist} ${targetTitle} music`, accessToken || undefined);
-      songResults = [...songResults, ...moreSongs];
-    }
-    if (songResults.length < 10) {
-      const fallbackResults = await searchYouTubeMusic(`${targetArtist || genre || "Top"} music songs`, accessToken || undefined);
-      songResults = [...songResults, ...fallbackResults];
-    }
+    // Search genuine songs using specialized searchYouTubeMusicSongs with timeout protection
+    const fetchWithTimeout = async () => {
+      let songResults: any[] = [];
+      if (targetArtist && targetArtist !== "Unknown Artist") {
+        try {
+          songResults = await searchYouTubeMusicSongs(`${targetArtist} ${genre} songs`, accessToken || undefined);
+        } catch {}
+      }
+      if (songResults.length < 10 && targetTitle) {
+        try {
+          const moreSongs = await searchYouTubeMusicSongs(`${targetArtist} ${targetTitle} music`, accessToken || undefined);
+          songResults = [...songResults, ...moreSongs];
+        } catch {}
+      }
+      if (songResults.length < 5) {
+        try {
+          const fallbackResults = await searchYouTubeMusic(`${targetArtist || genre || "Top"} music songs`, accessToken || undefined);
+          songResults = [...songResults, ...fallbackResults];
+        } catch {}
+      }
+      return songResults;
+    };
+
+    const timeoutPromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 6500));
+    const songResults = await Promise.race([fetchWithTimeout(), timeoutPromise]);
 
     const filtered = deduplicateById(songResults).filter((tr: any) => {
       const trId = tr.id || tr.youtubeVideoId;
@@ -7506,7 +7518,7 @@ app.get("/api/youtube/similar", async (req, res) => {
 
     res.json({ similarTracks: filtered });
   } catch (err) {
-    console.error("Error in /api/youtube/similar:", err);
+    console.warn("Notice in /api/youtube/similar:", err);
     res.json({ similarTracks: [] });
   }
 });

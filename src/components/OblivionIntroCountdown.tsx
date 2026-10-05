@@ -9,6 +9,7 @@ interface OblivionIntroCountdownProps {
   label?: string;
   designConfig?: FullAppDesignConfig;
   onCountdownComplete?: () => void;
+  progressPercent?: number;
 }
 
 export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
@@ -19,6 +20,7 @@ export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
   label,
   designConfig,
   onCountdownComplete,
+  progressPercent,
 }) => {
   const targetVocalTime = vocalStartTime || firstLineTime || 0;
 
@@ -39,17 +41,23 @@ export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // Fill percentage calculation: ((currentPlaybackTime - startTime) / (targetVocalTime - startTime)) * 100
+  // Fill percentage calculation: can be explicitly provided via progressPercent or derived from vocalStartTime
   const fillPercent = useMemo(() => {
+    if (typeof progressPercent === "number" && !isNaN(progressPercent)) {
+      return Math.min(100, Math.max(0, progressPercent));
+    }
     const totalSpan = targetVocalTime - startTime;
     if (totalSpan <= 0) return 0;
     const elapsed = currentPlaybackTime - startTime;
     const pct = (elapsed / totalSpan) * 100;
     return Math.min(100, Math.max(0, pct));
-  }, [currentPlaybackTime, targetVocalTime, startTime]);
+  }, [progressPercent, currentPlaybackTime, targetVocalTime, startTime]);
 
   // Exit phase detection: smoothly fade out over 500ms when reaching vocalStartTime - 0.5s or 99.5%
-  const isExiting = fillPercent >= 99.5 || (targetVocalTime > 0 && currentPlaybackTime >= targetVocalTime - 0.5);
+  const isExiting =
+    typeof progressPercent === "number"
+      ? false
+      : fillPercent >= 99.5 || (targetVocalTime > 0 && currentPlaybackTime >= targetVocalTime - 0.5);
 
   useEffect(() => {
     if (isExiting && onCountdownComplete) {
@@ -65,7 +73,7 @@ export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
   // At 100% fill -> y = 5 (full)
   const liquidY = useMemo(() => {
     const totalHeight = 170;
-    return 175 - (totalHeight * (fillPercent / 100));
+    return 175 - totalHeight * (fillPercent / 100);
   }, [fillPercent]);
 
   // Generate continuous sinusoidal wave paths
@@ -98,6 +106,10 @@ export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
     path += ` L ${w + 20} 200 L -20 200 Z`;
     return path;
   }, [liquidY, waveOffset, fillPercent]);
+
+  // Outer circle circumference: 2 * Math.PI * 78 ≈ 490.09
+  const ringCircumference = 490.09;
+  const ringOffset = ringCircumference - (ringCircumference * fillPercent) / 100;
 
   return (
     <div
@@ -193,9 +205,31 @@ export const OblivionIntroCountdown: React.FC<OblivionIntroCountdownProps> = ({
             strokeWidth="2"
             opacity="0.85"
           />
+
+          {/* Circular Countdown Progress Stroke around the 'O' Vessel */}
+          <circle
+            cx="90"
+            cy="90"
+            r="78"
+            fill="none"
+            stroke="url(#oblivion-vessel-stroke-grad)"
+            strokeWidth="3.5"
+            strokeDasharray={ringCircumference}
+            strokeDashoffset={ringOffset}
+            strokeLinecap="round"
+            transform="rotate(-90 90 90)"
+            className="transition-[stroke-dashoffset] duration-100 ease-linear"
+            style={{
+              filter: "drop-shadow(0 0 8px var(--accent-color, rgba(197, 155, 39, 0.6)))",
+            }}
+          />
         </svg>
       </div>
+      {label && (
+        <span className="mt-2 text-xs font-semibold tracking-wider uppercase opacity-75">
+          {label}
+        </span>
+      )}
     </div>
   );
 };
-

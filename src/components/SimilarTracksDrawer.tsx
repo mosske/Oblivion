@@ -53,22 +53,62 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
     }
 
     let isMounted = true;
+    const controller = new AbortController();
+
     const fetchSimilar = async () => {
       setLoading(true);
       try {
         const targetArtist = parsedMeta.artist || activeSeedArtist || "";
         const targetTitle = parsedMeta.title || activeSeedTitle || "";
-        const res = await fetch(
-          `/api/youtube/similar?trackId=${encodeURIComponent(activeSeedId)}&title=${encodeURIComponent(
-            targetTitle
-          )}&artist=${encodeURIComponent(targetArtist)}&genre=${encodeURIComponent(
-            activeSeedGenre
-          )}`
-        );
-        const data = await res.json().catch(() => ({}));
-        if (isMounted && data?.similarTracks) {
+
+        let tracks: Track[] = [];
+
+        // 1. Primary: Query /api/youtube/similar
+        try {
+          const res = await fetch(
+            `/api/youtube/similar?trackId=${encodeURIComponent(activeSeedId)}&title=${encodeURIComponent(
+              targetTitle
+            )}&artist=${encodeURIComponent(targetArtist)}&genre=${encodeURIComponent(
+              activeSeedGenre
+            )}`,
+            { signal: controller.signal }
+          );
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (Array.isArray(data?.similarTracks) && data.similarTracks.length > 0) {
+              tracks = data.similarTracks;
+            }
+          }
+        } catch (fetchErr: any) {
+          if (fetchErr?.name === "AbortError") return;
+        }
+
+        // 2. Secondary fallback: Query /api/youtube/search if similar returned empty or failed
+        if (tracks.length === 0 && (targetArtist || targetTitle)) {
+          try {
+            const query = targetArtist ? `${targetArtist} songs` : `${targetTitle} music`;
+            const searchRes = await fetch(
+              `/api/youtube/search?q=${encodeURIComponent(query)}&type=track`,
+              { signal: controller.signal }
+            );
+            if (searchRes.ok) {
+              const searchData = await searchRes.json().catch(() => ({}));
+              const results = searchData?.tracks || searchData?.results || [];
+              if (Array.isArray(results) && results.length > 0) {
+                tracks = results.filter((t: any) => {
+                  const tId = t.id || t.youtubeVideoId;
+                  return tId && tId !== activeSeedId;
+                });
+              }
+            }
+          } catch (searchErr: any) {
+            if (searchErr?.name === "AbortError") return;
+          }
+        }
+
+        if (isMounted) {
           // Disambiguate results to strictly separate artist from channel
-          const sanitizedTracks = (data.similarTracks as Track[]).map((t) => {
+          const sanitizedTracks = tracks.map((t) => {
             const meta = parseTrackMetadata(t.title, t.artist || t.uploader);
             return {
               ...t,
@@ -79,8 +119,10 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
           });
           setSimilarTracks(sanitizedTracks);
         }
-      } catch (err) {
-        console.error("Similar tracks error:", err);
+      } catch (err: any) {
+        if (err?.name !== "AbortError") {
+          console.warn("Notice loading similar tracks:", err?.message || err);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -89,6 +131,7 @@ export const SimilarTracksDrawer: React.FC<SimilarTracksDrawerProps> = ({
     fetchSimilar();
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [activeSeedId, activeSeedTitle, parsedMeta.artist, parsedMeta.title, activeSeedArtist, activeSeedGenre]);
 

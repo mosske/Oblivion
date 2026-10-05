@@ -1626,25 +1626,19 @@ export const Player: React.FC<PlayerProps> = ({
           playerRef.current.setVolume(volume * 100);
         }
 
-        if (isPlayingRef.current && !userManualPauseRef.current) {
+        // Prepare video buffer via cueVideoById.
+        // Firing playVideo() is strictly deferred to onStateChange (State 5 / CUED)
+        // to prevent premature invocation while the video buffer is still initializing.
+        if (typeof playerRef.current.cueVideoById === "function") {
+          playerRef.current.cueVideoById({
+            videoId: targetVid,
+            startSeconds: 0,
+          });
+        } else if (typeof playerRef.current.loadVideoById === "function") {
           playerRef.current.loadVideoById({
             videoId: targetVid,
             startSeconds: 0,
           });
-          playerRef.current.playVideo?.();
-        } else {
-          if (typeof playerRef.current.cueVideoById === "function") {
-            playerRef.current.cueVideoById({
-              videoId: targetVid,
-              startSeconds: 0,
-            });
-          } else {
-            playerRef.current.loadVideoById({
-              videoId: targetVid,
-              startSeconds: 0,
-            });
-            playerRef.current.pauseVideo?.();
-          }
         }
       } catch (e) {
         console.warn("[Player] Single engine executePlay error:", e);
@@ -1661,7 +1655,7 @@ export const Player: React.FC<PlayerProps> = ({
           width: "100%",
           videoId: vid,
           playerVars: {
-            autoplay: isPlayingRef.current && !userManualPauseRef.current ? 1 : 0,
+            autoplay: !userManualPauseRef.current ? 1 : 0,
             controls: 1,
             disablekb: 0,
             fs: 1,
@@ -1682,8 +1676,10 @@ export const Player: React.FC<PlayerProps> = ({
                   event.target.setVolume(volume * 100);
                 }
               } catch {}
-              if (isPlayingRef.current && !userManualPauseRef.current) {
-                event.target.playVideo();
+              if (!userManualPauseRef.current) {
+                try {
+                  event.target.playVideo();
+                } catch {}
               } else {
                 try {
                   event.target.pauseVideo();
@@ -1722,6 +1718,15 @@ export const Player: React.FC<PlayerProps> = ({
                 setPlayerState((prev) => (!prev.isPlaying ? prev : { ...prev, isPlaying: false }));
                 if ("mediaSession" in navigator) {
                   navigator.mediaSession.playbackState = "paused";
+                }
+              } else if (event.data === 5 || event.data === (window.YT?.PlayerState?.CUED ?? 5)) { // CUED (State 5)
+                // Automatically execute playVideo() when cued to guarantee immediate playback every time
+                if (!userManualPauseRef.current) {
+                  try {
+                    event.target.playVideo();
+                  } catch {
+                    playerRef.current?.playVideo?.();
+                  }
                 }
               } else if (event.data === 0) { // ENDED
                 stopSilentAnchor();
@@ -3182,58 +3187,90 @@ export const Player: React.FC<PlayerProps> = ({
                   />
                 </button>
 
-                {/* Central Play/Pause Button with bright purple glowing aura */}
+                {/* Central Play/Pause Button with perfectly centered radial ambient glow */}
                 <div className="relative flex items-center justify-center">
                   <div
-                    className="absolute rounded-full pointer-events-none"
-                    style={isHardRock ? {
-                      width: "74px",
-                      height: "74px",
-                      background: "radial-gradient(circle, rgba(168, 85, 247, 0.75) 0%, rgba(168, 85, 247, 0.2) 55%, transparent 75%)",
-                      boxShadow: "0 0 35px rgba(168, 85, 247, 0.8), 0 0 15px rgba(168, 85, 247, 0.6)",
-                      filter: "blur(4px)",
-                    } : undefined}
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full w-20 h-20"
+                    style={
+                      isHardRock
+                        ? {
+                            background:
+                              "radial-gradient(circle, rgba(168, 85, 247, 0.75) 0%, rgba(168, 85, 247, 0.2) 55%, transparent 75%)",
+                            boxShadow:
+                              "0 0 35px rgba(168, 85, 247, 0.8), 0 0 15px rgba(168, 85, 247, 0.6)",
+                            filter: "blur(4px)",
+                          }
+                        : isBespoke
+                        ? {
+                            background: `radial-gradient(circle, ${hexToRgba(bespokeColors[1], 0.6)} 0%, ${hexToRgba(bespokeColors[1], 0.15)} 55%, transparent 75%)`,
+                            boxShadow: `0 0 30px ${hexToRgba(bespokeColors[1], 0.45)}`,
+                            filter: "blur(4px)",
+                          }
+                        : {
+                            background:
+                              "radial-gradient(circle, var(--accent-glow, rgba(197, 155, 39, 0.5)) 0%, transparent 70%)",
+                            filter: "blur(4px)",
+                          }
+                    }
                   />
                   <button
                     id="player-fullscreen-main-play-btn"
                     onClick={() => handleUserTogglePlay()}
-                    className={`player-play-btn full-player-play-btn play-pause-btn relative z-10 flex items-center justify-center transition-all active:scale-95 cursor-pointer ${isHardRock ? "" : `w-11 h-11 sm:w-13 sm:h-13 rounded-full shadow-lg ${fpTheme.playBtn}`}`}
-                    style={isHardRock ? {
-                      width: "56px",
-                      height: "56px",
-                      borderRadius: "50%",
-                      background: "linear-gradient(135deg, #f0e2ca, #c59b27)",
-                      border: "none",
-                      boxShadow: "0 0 25px rgba(168, 85, 247, 0.7), 0 4px 14px rgba(0, 0, 0, 0.6)",
-                    } : isBespoke ? {
-                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                      color: calculateWcagText(bespokeColors[1]),
-                      boxShadow: `0 0 26px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                    } : undefined}
+                    className={`player-play-btn full-player-play-btn play-pause-btn relative z-10 flex items-center justify-center active:scale-95 cursor-pointer ${
+                      isHardRock
+                        ? "transition-transform duration-150"
+                        : `transition-all w-11 h-11 sm:w-13 sm:h-13 rounded-full shadow-lg ${fpTheme.playBtn}`
+                    }`}
+                    style={
+                      isHardRock
+                        ? {
+                            width: "56px",
+                            height: "56px",
+                            borderRadius: "50%",
+                            background: "linear-gradient(135deg, #f0e2ca, #c59b27)",
+                            border: "none",
+                            boxShadow:
+                              "0 0 25px rgba(168, 85, 247, 0.7), 0 4px 14px rgba(0, 0, 0, 0.6)",
+                          }
+                        : isBespoke
+                        ? {
+                            background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
+                            color: calculateWcagText(bespokeColors[1]),
+                            boxShadow: `0 0 26px ${hexToRgba(bespokeColors[1], 0.6)}`,
+                          }
+                        : undefined
+                    }
                     title={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
                       <Pause
                         size={24}
-                        style={isHardRock ? {
-                          color: "#120e16",
-                          stroke: "#120e16",
-                          fill: "#120e16",
-                          opacity: 1,
-                        } : undefined}
+                        style={
+                          isHardRock
+                            ? {
+                                color: "#120e16",
+                                stroke: "#120e16",
+                                fill: "#120e16",
+                                opacity: 1,
+                              }
+                            : undefined
+                        }
                         className={isHardRock ? "" : fpTheme.playIconFill}
                       />
                     ) : (
                       <Play
                         size={24}
-                        style={isHardRock ? {
-                          color: "#120e16",
-                          stroke: "#120e16",
-                          fill: "#120e16",
-                          opacity: 1,
-                          marginLeft: "3px",
-                        } : undefined}
-                        className={isHardRock ? "" : `${fpTheme.playIconFill} ml-0.5`}
+                        style={
+                          isHardRock
+                            ? {
+                                color: "#120e16",
+                                stroke: "#120e16",
+                                fill: "#120e16",
+                                opacity: 1,
+                              }
+                            : undefined
+                        }
+                        className={isHardRock ? "" : fpTheme.playIconFill}
                       />
                     )}
                   </button>

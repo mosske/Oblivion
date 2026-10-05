@@ -2,16 +2,16 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { LyricLine, Track, UserSettings, LyricsMode } from "../types";
 import {
   Music2,
-  ArrowDown,
   Mic2,
   FileText,
   CheckCircle2,
   Sparkles,
   Layers,
-  RotateCcw,
+  LocateFixed,
 } from "lucide-react";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import {
+  fetchSyncedLyrics,
   fetchLyricsMultiSource,
   parsePlainLyrics,
   createDualLyricLines,
@@ -54,9 +54,13 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   const [lyricsSource, setLyricsSource] = useState<LyricsSourceType>("none");
   const [lyricsProviderName, setLyricsProviderName] = useState<string | undefined>(undefined);
   const [lrcDuration, setLrcDuration] = useState<number | undefined>(undefined);
-  const [offset, setOffset] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isUserScrolled, setIsUserScrolled] = useState<boolean>(false);
+
+  // User scrolling interaction state with Programmatic Scroll Guard
+  const [isUserScrolling, setIsUserScrolling] = useState<boolean>(false);
+  const userHasScrolled = isUserScrolling;
+  const isUserScrolled = isUserScrolling;
+  const setUserHasScrolled = setIsUserScrolling;
 
   // Pure client-side Romanization & Dual-Line view modes (Active when lyrics are synced)
   const [mode, setMode] = useState<LyricsMode>(
@@ -64,16 +68,43 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   );
   const [isDualLine, setIsDualLine] = useState<boolean>(settings.lyricsDualLine ?? true);
 
+  const lyricRefs = useRef<(HTMLDivElement | null)[]>([]);
   const activeLineRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const isAutoScrollingRef = useRef<boolean>(false);
+  const isProgrammaticScroll = useRef<boolean>(false);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const userInteractionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const sanitized = useMemo(() => sanitizeLyricsQuery(track?.title || "", track?.artist || ""), [track?.title, track?.artist]);
   const cleanTitle = sanitized.cleanTitle || (track ? cleanTrackTitle(track.title, track.artist) : "");
   const videoId = track ? (track.youtubeVideoId || (track.id && !track.id.startsWith("local_") ? track.id.split("_")[0] : "")) : "";
+  const trackKey = track ? (track.youtubeVideoId || (track as any).youtubeId || track.id || "") : "";
 
-  // Multi-Source Lyrics Fallback Pipeline
+  // 1. RESTORE AUTOMATIC SCROLL TRIGGER ON MOUNT & SONG CHANGE:
+  // Reset isUserScrolling back to false whenever currentTrack changes so autoscroll engages immediately
+  useEffect(() => {
+    isProgrammaticScroll.current = false;
+    setIsUserScrolling(false);
+    lyricRefs.current = [];
+    if (userInteractionTimerRef.current) {
+      clearTimeout(userInteractionTimerRef.current);
+      userInteractionTimerRef.current = null;
+    }
+  }, [track?.id, trackKey]);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (userInteractionTimerRef.current) {
+        clearTimeout(userInteractionTimerRef.current);
+      }
+      if (userScrollTimeoutRef.current) {
+        clearTimeout(userScrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Multi-Provider & Multi-Source Lyrics Pipeline
   useEffect(() => {
     let isCancelled = false;
 
@@ -89,7 +120,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
 
     const loadTrackLyrics = async () => {
       setLoading(true);
-      setIsUserScrolled(false);
+      setUserHasScrolled(false);
 
       try {
         // 1. If track already has preloaded raw LRC / plain lyrics
@@ -123,10 +154,19 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           return;
         }
 
-        // 2. Query Multi-Source Lyrics Fallback Chain:
-        //    Tier 1: LRCLIB Synced LRC / Plain Text (/api/get & /search with all title/artist variants)
-        //    Tier 2: Native YouTube Music InnerTube Official Lyrics
-        //    Tier 3: Tertiary Public Lyrics (Genius & Lyrics.ovh)
+        // 2. Fast Parallel Multi-Provider Synced Engine (YouLyPlus & LRCLib Exact race with in-memory caching):
+        const syncedLines = await fetchSyncedLyrics(track.title, track.artist, track.duration || 0);
+        if (!isCancelled && syncedLines && syncedLines.length > 0) {
+          setOriginalLines(syncedLines);
+          setIsSynced(true);
+          setLyricsSource((syncedLines as any).source || "lrclib");
+          setLyricsProviderName((syncedLines as any).provider || "Synced Lyrics");
+          setLrcDuration(track.duration);
+          setLoading(false);
+          return;
+        }
+
+        // 3. Fallback to Multi-Source Pipeline (YouTube captions, Server Proxy, Auto-Karaoke, Lyrics.ovh)
         const result = await fetchLyricsMultiSource(track.title, track.artist, track.duration, videoId, track.album);
 
         if (!isCancelled) {
@@ -183,60 +223,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [track?.id, track?.title, track?.artist, track?.duration, track?.lyricsRaw, track?.album, videoId]);
-
-  // Per-Track LocalStorage Persistence & Auto-Offset Duration Delta Calculation
-  useEffect(() => {
-    const key = videoId || track.id;
-    if (!key) return;
-
-    const storageKey = `oblivion_lyric_offset_${key}`;
-    const saved = localStorage.getItem(storageKey);
-
-    if (saved !== null && saved !== "") {
-      const parsed = parseFloat(saved);
-      if (!isNaN(parsed)) {
-        setOffset(parsed);
-        return;
-      }
-    }
-
-    // Default offset is 0.0s unless explicitly set or calibrated by the user
-    setOffset(0);
-  }, [videoId, track.id]);
-
-  // Manual Timing Offset Adjustment Handlers
-  const handleAdjustOffset = (delta: number) => {
-    const key = videoId || track.id;
-    const newOffset = Math.round((offset + delta) * 10) / 10;
-    setOffset(newOffset);
-    if (key) {
-      localStorage.setItem(`oblivion_lyric_offset_${key}`, newOffset.toString());
-    }
-  };
-
-  const handleResetOffset = () => {
-    const key = videoId || track.id;
-    setOffset(0);
-    if (key) {
-      localStorage.setItem(`oblivion_lyric_offset_${key}`, "0");
-    }
-  };
-
-  // 1-Tap Instant Vocal Alignment (Sync to Current Playback Time)
-  const handleAlignVocal = () => {
-    if (!isSynced || displayedLyrics.length === 0) return;
-    const targetIdx = activeIndex >= 0 ? activeIndex : 0;
-    const targetLine = displayedLyrics[targetIdx];
-    if (targetLine && targetLine.time >= 0) {
-      const newOffset = Math.round((currentTime - targetLine.time) * 10) / 10;
-      setOffset(newOffset);
-      const key = videoId || track.id;
-      if (key) {
-        localStorage.setItem(`oblivion_lyric_offset_${key}`, newOffset.toString());
-      }
-    }
-  };
+  }, [trackKey, track?.title, track?.artist, track?.duration, track?.lyricsRaw, track?.album, videoId]);
 
   // Instant Client-Side Romanization calculation (< 1ms, 0 latency, 100% offline)
   const romanizedLines = useMemo<LyricLine[]>(() => {
@@ -271,85 +258,130 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     return firstLine && typeof firstLine.time === "number" && firstLine.time > 0 ? firstLine.time : 0;
   }, [displayedLyrics, isSynced]);
 
-  // Effective calibrated playback time
-  const effectivePlaybackTime = Math.max(0, currentTime - offset);
-
   // Check if instrumental prelude countdown visual should be active (ONLY when vocalStartTime > 3 AND currentTime < vocalStartTime - 0.5)
   const showIntroCountdown = useMemo(() => {
-    return isSynced && !loading && vocalStartTime > 3 && effectivePlaybackTime < vocalStartTime - 0.5;
-  }, [isSynced, loading, vocalStartTime, effectivePlaybackTime]);
+    return isSynced && !loading && vocalStartTime > 3 && currentTime < vocalStartTime - 0.5;
+  }, [isSynced, loading, vocalStartTime, currentTime]);
 
-  // Find active line index based on current playback time and calibration offset:
-  // activeIndex = lyrics.findLastIndex(line => line.time <= currentTime)
+  // Bind current active lyric line highlighting strictly to currentTime from global player state:
+  // Finds the LAST line whose timestamp is <= current player time without any artificial offset additions or subtractions
   const activeIndex = useMemo(() => {
     if (!isSynced || displayedLyrics.length === 0) return -1;
-    
-    // Real-Time Sync Adjustment using effectiveTime
-    const effectiveTime = currentTime - offset;
+    return displayedLyrics.reduce((acc, line, idx) => {
+      return typeof line.time === "number" && line.time >= 0 && line.time <= currentTime
+        ? idx
+        : acc;
+    }, -1);
+  }, [displayedLyrics, currentTime, isSynced]);
 
-    for (let i = displayedLyrics.length - 1; i >= 0; i--) {
-      if (displayedLyrics[i].time <= effectiveTime) {
-        return i;
-      }
+  // Dynamic Active Line Time Range & Countdown 'O' Ring Completion Percentage Calculation:
+  //   lineDuration = nextLine.time - currentLine.time
+  //   elapsed = currentTime - currentLine.time
+  //   progressPercent = Math.min(100, Math.max(0, (elapsed / lineDuration) * 100))
+  const activeLineProgress = useMemo(() => {
+    if (!isSynced || activeIndex < 0 || activeIndex >= displayedLyrics.length) {
+      return 0;
     }
-    return -1;
-  }, [displayedLyrics, currentTime, offset, isSynced]);
 
-  // Smooth centered auto-scroll:
-  // targetScroll = activeLineElement.offsetTop - (container.clientHeight / 2) + (activeLineElement.clientHeight / 2)
-  const scrollToActiveLine = useCallback((smooth = true) => {
-    if (activeLineRef.current && containerRef.current && isSynced) {
-      const container = containerRef.current;
-      const activeLine = activeLineRef.current;
-      isAutoScrollingRef.current = true;
+    const currentLine = displayedLyrics[activeIndex];
+    const nextLine = displayedLyrics[activeIndex + 1];
 
-      const targetScroll =
-        activeLine.offsetTop - (container.clientHeight / 2) + (activeLine.clientHeight / 2);
+    if (!currentLine || typeof currentLine.time !== "number" || currentLine.time < 0) {
+      return 0;
+    }
 
-      if (smooth) {
-        container.scrollTo({
-          top: Math.max(0, targetScroll),
-          behavior: "smooth",
-        });
-      } else {
-        container.scrollTop = Math.max(0, targetScroll);
-      }
+    // lineDuration = nextLine.time - currentLine.time
+    let lineDuration = 4;
+    if (nextLine && typeof nextLine.time === "number" && nextLine.time > currentLine.time) {
+      lineDuration = nextLine.time - currentLine.time;
+    } else if (track.duration && track.duration > currentLine.time) {
+      lineDuration = Math.min(6, Math.max(2, track.duration - currentLine.time));
+    }
 
+    if (lineDuration <= 0) lineDuration = 1;
+
+    const elapsed = currentTime - currentLine.time;
+
+    // progressPercent = Math.min(100, Math.max(0, (elapsed / lineDuration) * 100))
+    const progressPercent = Math.min(100, Math.max(0, (elapsed / lineDuration) * 100));
+    return progressPercent;
+  }, [isSynced, activeIndex, displayedLyrics, currentTime, track.duration]);
+
+  // 1. RESTORE AUTOMATIC SCROLL TRIGGER:
+  // Hook listening to activeIndex and isUserScrolling
+  useEffect(() => {
+    if (activeIndex < 0 || isUserScrolling) return;
+
+    const activeElement = lyricRefs.current[activeIndex] || activeLineRef.current;
+    if (activeElement) {
+      isProgrammaticScroll.current = true;
+      activeElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
       if (userScrollTimeoutRef.current) clearTimeout(userScrollTimeoutRef.current);
       userScrollTimeoutRef.current = setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 400);
+        isProgrammaticScroll.current = false;
+      }, 600);
     }
+  }, [activeIndex, isUserScrolling]);
+
+  // 2. RE-ENABLE TIMED AUTO-RESUME AFTER MANUAL INTERACTION:
+  // Programmatic scroll guard in onScroll listener:
+  const handleContainerScroll = useCallback(() => {
+    if (!isSynced) return;
+    if (isProgrammaticScroll.current) {
+      isProgrammaticScroll.current = false;
+      return; // Ignore programmatic autoscroll events completely
+    }
+    // Only register user scrolling if triggered by touch, wheel, or manual drag
+    setIsUserScrolling(true);
+
+    if (userInteractionTimerRef.current) {
+      clearTimeout(userInteractionTimerRef.current);
+    }
+    userInteractionTimerRef.current = setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 4000);
   }, [isSynced]);
 
-  // Automatic scrolling when line changes and user hasn't scrolled away (only when synced)
-  useEffect(() => {
-    if (isSynced && activeIndex >= 0 && !isUserScrolled && !loading && !showIntroCountdown) {
-      scrollToActiveLine(true);
-    }
-  }, [activeIndex, isSynced, isUserScrolled, loading, showIntroCountdown, scrollToActiveLine]);
-
-  // Handle user manual scroll detection
-  const handleScroll = () => {
+  const handleUserWheelOrTouch = useCallback(() => {
     if (!isSynced) return;
-    if (isAutoScrollingRef.current) return;
-    if (!isUserScrolled) {
-      setIsUserScrolled(true);
-    }
-  };
+    setIsUserScrolling(true);
 
-  const handleUserWheelOrTouch = () => {
-    if (!isSynced) return;
-    if (!isUserScrolled) {
-      setIsUserScrolled(true);
+    if (userInteractionTimerRef.current) {
+      clearTimeout(userInteractionTimerRef.current);
     }
-  };
+    userInteractionTimerRef.current = setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 4000);
+  }, [isSynced]);
 
-  // Re-enable autoscroll on button click
-  const handleResumeAutoscroll = () => {
-    setIsUserScrolled(false);
-    scrollToActiveLine(true);
-  };
+  // 3. SYNC / CENTER BUTTON ACTION:
+  // Clicking the static "Sync / Center" header button must immediately execute
+  // activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' }) AND set isUserScrolling = false.
+  const scrollToActiveLine = useCallback(() => {
+    if (userInteractionTimerRef.current) {
+      clearTimeout(userInteractionTimerRef.current);
+      userInteractionTimerRef.current = null;
+    }
+    setIsUserScrolling(false);
+
+    const activeElement = (activeIndex >= 0 ? lyricRefs.current[activeIndex] : null) || activeLineRef.current;
+    if (activeElement) {
+      isProgrammaticScroll.current = true;
+      activeElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      if (userScrollTimeoutRef.current) clearTimeout(userScrollTimeoutRef.current);
+      userScrollTimeoutRef.current = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 600);
+    }
+  }, [activeIndex]);
+
+  const handleResumeAutoscroll = scrollToActiveLine;
 
   // Font size configuration
   const fontSizeClass =
@@ -366,208 +398,131 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
       ? "text-base sm:text-lg"
       : "text-sm sm:text-base";
 
-  const alignClass = settings.lyricsAlignment === "center" ? "text-center" : "text-left";
+  // Alignment configuration
+  const alignClass =
+    settings.lyricsAlignment === "center"
+      ? "text-center"
+      : "text-left";
 
-  const pillBgClass = (designConfig as any).pillBg || (designConfig.isLight ? "bg-black/5" : "bg-white/10");
-  const isCandy = Boolean(designConfig.isCandy);
+  const isCandy = Boolean(
+    (designConfig.id as string) === "candyland" ||
+    (designConfig.id as string) === "candyland-pastel" ||
+    (designConfig as any).isCandy ||
+    designConfig.name === "Candyland Pastel"
+  );
 
-  // Provider Badge Label
+  const pillBgClass = designConfig.pillBg || "bg-white/10 backdrop-blur-md";
+
+  // Determine Provider Display Label
   const badgeLabel = useMemo(() => {
-    if (isSynced) {
-      if (isCandy) return lyricsSource === "auto_karaoke" ? "🎤 Karaoke Sync" : "🍫 Synced LRC";
-      if (lyricsSource === "auto_karaoke") return "Synced (Karaoke Machine)";
-      if (lyricsSource === "lrclib") return "Synced (LRCLIB)";
-      return lyricsProviderName || "Synced";
+    if (lyricsProviderName) return lyricsProviderName;
+    switch (lyricsSource) {
+      case "lyricsplus":
+        return "Synced (LyricsPlus)";
+      case "lrclib":
+        return "Synced (LRCLIB)";
+      case "youtube_music":
+        return "Synced (YouTube Music)";
+      case "genius":
+        return "Synced (Genius)";
+      case "lyrics_ovh":
+        return "Synced (Lyrics.ovh)";
+      case "auto_karaoke":
+        return "Synced (Karaoke Machine)";
+      default:
+        return isSynced ? "Synced Lyrics" : "Plain Text";
     }
-    if (isCandy) return "🍦 Plain Text";
-    if (lyricsSource === "youtube_music") {
-      return "Plain Text (YouTube Music)";
-    }
-    if (lyricsSource === "lrclib") {
-      return "Plain Text (LRCLIB)";
-    }
-    if (lyricsSource === "genius") {
-      return "Plain Text (Genius)";
-    }
-    if (lyricsSource === "lyrics_ovh") {
-      return "Plain Text (Lyrics.ovh)";
-    }
-    return lyricsProviderName || "Plain Text";
-  }, [isSynced, lyricsSource, lyricsProviderName, isCandy]);
+  }, [lyricsProviderName, lyricsSource, isSynced]);
 
   return (
-    <div
-      className={`flex flex-col h-full w-full ${designConfig.cardBg} rounded-3xl border ${designConfig.borderSubtle} p-4 sm:p-6 backdrop-blur-2xl relative overflow-hidden select-none shadow-2xl transition-all`}
-    >
-      {/* Top Header: Track Metadata + Provider Badge + Synced Romanization Controls + Calibration Bar */}
-      <div
-        className={`flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b ${designConfig.borderSubtle} mb-2 shrink-0 gap-3`}
-      >
-        {/* Left: Track Information with Marquee */}
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div className={`p-1.5 rounded-xl ${pillBgClass} shrink-0`}>
-            <Mic2 className={`w-4 h-4 ${designConfig.accentText}`} />
-          </div>
-          <div className="min-w-0 flex-1">
+    <div className="relative w-full h-full flex flex-col overflow-hidden select-none">
+      {/* Top Header / Mode Switcher Toolbar */}
+      <div className="flex-none px-3 py-2 sm:px-6 sm:py-3 z-10 flex flex-col gap-2 border-b border-white/5 backdrop-blur-md">
+        <div className="flex items-center justify-between gap-2 max-w-2xl w-full mx-auto">
+          {/* Left: Track Info Summary */}
+          <div className="min-w-0 flex-1 flex flex-col pr-2">
             <MarqueeText
+              as="h3"
               text={cleanTitle}
-              className={`text-xs sm:text-sm font-bold ${designConfig.textPrimary}`}
-              containerClassName="w-full max-w-[200px] sm:max-w-xs"
+              className={`text-sm sm:text-base font-bold truncate ${designConfig.textPrimary}`}
+              containerClassName="w-full"
               speed={28}
             />
-            <p className={`text-[11px] ${designConfig.textMuted} truncate`}>
-              {track.artist}
+            <p className={`text-xs truncate ${designConfig.textMuted}`}>
+              {track.artist || "Unknown Artist"}
             </p>
           </div>
-        </div>
 
-        {/* Center & Right: Romanization Controls & Timing Calibration (Synced only) + UI Badge */}
-        <div className="flex items-center flex-wrap gap-2 justify-between sm:justify-end">
-          {/* Controls available strictly when lyrics are synced */}
-          {isSynced && (
-            <>
-              {/* Segmented Pill: Original vs Romanized */}
-              <div className={`p-0.5 rounded-2xl flex items-center gap-1 border ${designConfig.borderSubtle} ${pillBgClass}`}>
+          {/* Right: Romanization & Dual-Line Controls (Only when Synced) */}
+          {isSynced && originalLines.length > 0 && (
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {/* Romanized vs Original Toggle */}
+              <div className={`p-0.5 rounded-full flex items-center border ${designConfig.borderSubtle} ${pillBgClass}`}>
                 <button
-                  id="lyrics-mode-original-btn"
                   onClick={() => setMode("original")}
-                  aria-selected={mode === "original"}
-                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    mode === "original" ? "active" : ""
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
+                    mode === "original"
+                      ? `${designConfig.pillActive} shadow-sm font-bold !text-[#2b1810]`
+                      : `${designConfig.textMuted} hover:text-white`
                   }`}
-                  title="Display original lyrics"
+                  style={mode === "original" ? { color: "#2b1810" } : undefined}
+                  title="Show lyrics in original language"
                 >
-                  <span>{isCandy ? "🍭 Original" : "Original"}</span>
+                  Original
                 </button>
-
                 <button
-                  id="lyrics-mode-romanized-btn"
                   onClick={() => setMode("romanized")}
-                  aria-selected={mode === "romanized"}
-                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    mode === "romanized" ? "active" : ""
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
+                    mode === "romanized"
+                      ? `${designConfig.pillActive} shadow-sm font-bold !text-[#2b1810]`
+                      : `${designConfig.textMuted} hover:text-white`
                   }`}
-                  title="Display instant phonetic Romanized (Romaji / Pinyin / Revised Korean) lyrics"
+                  style={mode === "romanized" ? { color: "#2b1810" } : undefined}
+                  title="Show romanized / phonetic transliteration"
                 >
-                  {!isCandy && <Sparkles className="w-3.5 h-3.5" />}
-                  <span>{isCandy ? "🍬 Romanized" : "Romanized"}</span>
+                  <Sparkles className="w-3 h-3" />
+                  <span>Rom</span>
                 </button>
               </div>
 
-              {/* Dual-Line Interleaved Toggle (Available when in Romanized mode) */}
+              {/* Dual-Line Interleaved Toggle (Visible only when Romanized is active) */}
               {mode === "romanized" && (
                 <button
-                  id="lyrics-toggle-dualline-btn"
                   onClick={() => setIsDualLine(!isDualLine)}
-                  aria-pressed={isDualLine}
-                  className={`lyrics-mode-pill px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                    isDualLine ? "active" : ""
+                  className={`p-1.5 rounded-full border transition-all ${
+                    isDualLine
+                      ? `${designConfig.accentBorder} ${designConfig.pillActive} shadow-sm`
+                      : `${designConfig.borderSubtle} ${pillBgClass} ${designConfig.textMuted} hover:text-white`
                   }`}
-                  title={isDualLine ? "Disable interleaved dual-line display" : "Enable interleaved dual-line display"}
+                  title={isDualLine ? "Disable dual-line view" : "Enable dual-line view (Original + Romanized)"}
                 >
-                  {!isCandy && <Layers className="w-3.5 h-3.5" />}
-                  <span>{isCandy ? "🧁 Dual-Line" : "Dual-Line"}</span>
+                  <Layers className="w-3.5 h-3.5" />
                 </button>
               )}
-
-              {/* Manual Lyric Timing Calibration Control Bar */}
-              <div
-                id="lyrics-timing-calibration-bar"
-                className={`lyrics-timing-bar flex items-center p-0.5 rounded-2xl border ${designConfig.borderSubtle} ${pillBgClass} gap-0.5 sm:gap-1 shadow-sm`}
-                title="Lyric Timing Calibration (Sync Offset)"
-              >
-                {/* [Earlier / Advance] Button (Shifts lyrics earlier if lyrics lag behind) */}
-                <button
-                  id="lyrics-offset-minus-btn"
-                  onClick={() => handleAdjustOffset(-0.5)}
-                  className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.12)",
-                    color: "#e8d5b5",
-                    border: "1px solid rgba(232, 213, 181, 0.2)",
-                  }}
-                  title="Advance lyrics by 0.5s (use if lyrics lag behind the song)"
-                  aria-label="Advance lyrics by 0.5s"
-                >
-                  -0.5s
-                </button>
-
-                {/* 1-Tap Align Vocal Button */}
-                <button
-                  id="lyrics-align-vocal-btn"
-                  onClick={handleAlignVocal}
-                  className="lyrics-timing-btn px-2 py-1 rounded-xl text-[10px] font-extrabold transition-all active:scale-95 cursor-pointer flex items-center gap-1"
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.12)",
-                    color: "#e8d5b5",
-                    stroke: "#e8d5b5",
-                    border: "1px solid rgba(232, 213, 181, 0.2)",
-                  }}
-                  title="1-Tap Align: Snaps lyric timing to current singing position"
-                  aria-label="Align lyrics to current time"
-                >
-                  <Sparkles className="w-2.5 h-2.5" style={{ color: "#e8d5b5", stroke: "#e8d5b5" }} />
-                  <span style={{ color: "#e8d5b5" }}>Sync Here</span>
-                </button>
-
-                {/* Dynamic Text Badge */}
-                <div
-                  id="lyrics-offset-badge"
-                  className={`lyrics-timing-badge px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold tracking-tight whitespace-nowrap transition-all ${
-                    offset !== 0 ? "active-offset" : ""
-                  }`}
-                  style={{
-                    color: "#e8d5b5",
-                    backgroundColor: offset !== 0 ? "rgba(168, 85, 247, 0.3)" : "rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(232, 213, 181, 0.2)",
-                  }}
-                  title={
-                    offset !== 0
-                      ? `Active timing calibration offset: ${offset >= 0 ? "+" : ""}${offset.toFixed(1)}s`
-                      : "Timing calibrated at default (0.0s)"
-                  }
-                >
-                  {offset !== 0 ? `${offset >= 0 ? "+" : ""}${offset.toFixed(1)}s` : "0.0s"}
-                </div>
-
-                {/* [Later / Delay] Button (Shifts lyrics later if lyrics start too fast) */}
-                <button
-                  id="lyrics-offset-plus-btn"
-                  onClick={() => handleAdjustOffset(0.5)}
-                  className="lyrics-timing-btn px-2 py-1 rounded-xl text-[11px] font-bold transition-all active:scale-95 cursor-pointer hover:opacity-90"
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.12)",
-                    color: "#e8d5b5",
-                    border: "1px solid rgba(232, 213, 181, 0.2)",
-                  }}
-                  title="Delay lyrics by 0.5s (use if lyrics start too fast/early)"
-                  aria-label="Delay lyrics by 0.5s"
-                >
-                  +0.5s
-                </button>
-
-                {/* [Reset] Icon Button */}
-                <button
-                  id="lyrics-offset-reset-btn"
-                  onClick={handleResetOffset}
-                  className="lyrics-timing-btn p-1 rounded-xl text-[11px] transition-all active:scale-90 cursor-pointer flex items-center justify-center"
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.12)",
-                    color: "#e8d5b5",
-                    stroke: "#e8d5b5",
-                    border: "1px solid rgba(232, 213, 181, 0.2)",
-                  }}
-                  title="Reset timing calibration to 0.0s"
-                  aria-label="Reset timing offset to 0.0s"
-                >
-                  <RotateCcw className="w-3 h-3" style={{ color: "#e8d5b5", stroke: "#e8d5b5" }} />
-                </button>
-              </div>
-            </>
+            </div>
           )}
+        </div>
 
-          {/* Provider & Sync Status Badge */}
-          {displayedLyrics.length > 0 && !loading && (
+        {/* Provider & Sync Status Badge & Static Sync / Center Button */}
+        {displayedLyrics.length > 0 && !loading && (
+          <div className="flex items-center justify-end gap-2 max-w-2xl w-full mx-auto pt-1">
+            {isSynced && (
+              <button
+                type="button"
+                onClick={scrollToActiveLine}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                  isUserScrolling
+                    ? `${designConfig.accentBorder} ${designConfig.pillActive} shadow-sm !text-[#2b1810]`
+                    : `${designConfig.borderSubtle} ${pillBgClass} ${designConfig.textMuted} hover:text-white`
+                }`}
+                style={isUserScrolling ? { color: "#2b1810" } : undefined}
+                title="Sync / Center on active lyric line"
+              >
+                <LocateFixed className="w-3 h-3" />
+                <span>Sync / Center</span>
+              </button>
+            )}
+
             <div className="shrink-0 flex items-center">
               {isSynced ? (
                 <span
@@ -585,20 +540,21 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                 </span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Lyrics Scrollable Body */}
       <div
         ref={containerRef}
-        onScroll={handleScroll}
+        onScroll={handleContainerScroll}
         onWheel={handleUserWheelOrTouch}
         onTouchMove={handleUserWheelOrTouch}
         style={{
+          "--active-lyric-color": "var(--accent-color, var(--accent-primary, var(--primary, #dfb86c)))",
           scrollbarColor: "var(--accent-color, var(--accent-primary, var(--primary))) transparent",
           scrollBehavior: "smooth",
-        }}
+        } as React.CSSProperties}
         className={`flex-1 overflow-y-auto custom-scrollbar relative scroll-smooth ${
           isSynced ? "space-y-7 sm:space-y-8 py-14 px-2 sm:px-6" : "space-y-4 sm:space-y-5 py-8 px-3 sm:px-8"
         }`}
@@ -612,7 +568,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               <Mic2 className={`w-4 h-4 absolute inset-0 m-auto ${designConfig.accentText} text-[var(--accent-color,var(--accent-primary,var(--primary)))]`} stroke="currentColor" />
             </div>
             <p className={`text-sm font-medium ${designConfig.textSecondary}`}>Fetching lyrics...</p>
-            <p className="text-xs opacity-75">Checking LRCLIB & YouTube Music database</p>
+            <p className="text-xs opacity-75">Checking Multi-Provider Database (LyricsPlus, LRCLIB, YouTube Music)</p>
           </div>
         ) : displayedLyrics.length === 0 ? (
           <div className={`flex flex-col items-center justify-center h-full ${designConfig.textMuted} space-y-3 py-12`}>
@@ -629,64 +585,131 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
             {/* Fluid Oblivion 'O' Instrumental Countdown Visual for tracks with intro >= 3s */}
             {showIntroCountdown && (
               <OblivionIntroCountdown
-                currentPlaybackTime={effectivePlaybackTime}
+                currentPlaybackTime={currentTime}
                 vocalStartTime={vocalStartTime}
                 firstLineTime={vocalStartTime}
                 designConfig={designConfig}
                 onCountdownComplete={() => {
-                  scrollToActiveLine(true);
+                  const activeElement = lyricRefs.current[0] || activeLineRef.current;
+                  if (activeElement) {
+                    activeElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }
                 }}
               />
             )}
 
-            {/* Synced Lyrics rendering with line-by-line highlighting and timestamp seek */}
+            {/* Synced Lyrics rendering with line-by-line highlighting, dynamic countdown 'O' ring, and timestamp seek */}
             {displayedLyrics.map((line, idx) => {
               const isActive = idx === activeIndex;
 
               return (
                 <div
                   key={`${idx}-${line.time}`}
-                  ref={isActive ? activeLineRef : null}
-                  onClick={() => {
-                    if (line.time >= 0) {
-                      const targetTime = Math.max(0, line.time + offset);
-                      onSeek(targetTime);
-                      setIsUserScrolled(false);
+                  ref={(el) => {
+                    lyricRefs.current[idx] = el;
+                    if (isActive) {
+                      activeLineRef.current = el;
                     }
                   }}
-                  className={`transition-all duration-300 transform origin-left leading-relaxed ${alignClass} ${
-                    line.time >= 0 ? "cursor-pointer active:scale-[0.98]" : ""
+                  onClick={() => {
+                    if (line.time >= 0) {
+                      const targetTime = Math.max(0, line.time);
+                      onSeek(targetTime);
+                      setIsUserScrolling(false);
+                    }
+                  }}
+                  className={`transform origin-left leading-relaxed ${alignClass} ${
+                    line.time >= 0 && !isActive ? "cursor-pointer active:scale-[0.98] hover:opacity-80" : ""
                   } ${
                     isActive
-                      ? "scale-[1.02] sm:scale-105 drop-shadow-md tracking-tight opacity-100 font-black"
-                      : "opacity-35 hover:opacity-80 font-medium"
+                      ? "scale-[1.02] sm:scale-105 tracking-tight opacity-100 font-black cursor-default select-none"
+                      : "opacity-35 font-medium"
                   }`}
                   style={{
                     color: isActive
-                      ? "var(--accent-color, var(--accent-primary, var(--primary)))"
+                      ? "var(--active-lyric-color, var(--accent-color, var(--primary, #dfb86c)))"
                       : undefined,
                     textShadow: isActive
-                      ? "0 0 16px var(--accent-color, var(--accent-primary, rgba(197, 155, 39, 0.45)))"
+                      ? "0 0 16px var(--active-lyric-color, var(--accent-color, rgba(197, 155, 39, 0.45)))"
                       : undefined,
+                    transition: "transform 200ms ease-out, opacity 150ms ease-out",
                   }}
                 >
-                  {/* Primary Lyric Line */}
-                  <div className={`${fontSizeClass} ${isActive ? "font-black" : "font-semibold"}`}>
-                    {line.text}
+                  {/* Primary Lyric Line with Count-Down 'O' Ring Animation */}
+                  <div
+                    className={`flex items-center ${
+                      alignClass === "text-center" ? "justify-center" : "justify-start"
+                    } flex-wrap gap-x-2`}
+                  >
+                    {/* Dynamic Active Line 'O' Countdown Ring Animation */}
+                    {isActive && (
+                      <span
+                        className="inline-flex items-center justify-center shrink-0 select-none animate-fade-in"
+                        title={`Line progress: ${Math.round(activeLineProgress)}%`}
+                        aria-label={`Line timing: ${Math.round(activeLineProgress)}%`}
+                      >
+                        <span className="relative w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center">
+                          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 36 36">
+                            <defs>
+                              <linearGradient id={`active-ring-grad-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="var(--accent-secondary, #f59e0b)" />
+                                <stop offset="100%" stopColor="var(--accent-color, var(--primary, #c59b27))" />
+                              </linearGradient>
+                            </defs>
+                            {/* Track Circle */}
+                            <circle
+                              cx="18"
+                              cy="18"
+                              r="14"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.8"
+                              className="opacity-25"
+                            />
+                            {/* Dynamic Animated 'O' Ring Stroke Filling via strokeDashoffset */}
+                            <circle
+                              cx="18"
+                              cy="18"
+                              r="14"
+                              fill="none"
+                              stroke={`url(#active-ring-grad-${idx})`}
+                              strokeWidth="3.2"
+                              strokeDasharray="87.96"
+                              strokeDashoffset={87.96 - (87.96 * activeLineProgress) / 100}
+                              strokeLinecap="round"
+                              className="transition-[stroke-dashoffset] duration-100 ease-linear"
+                            />
+                          </svg>
+                          <span
+                            className="absolute inset-0 flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-tighter"
+                            style={{
+                              color: "var(--active-lyric-color, var(--accent-color, var(--primary, #c59b27)))",
+                            }}
+                          >
+                            O
+                          </span>
+                        </span>
+                      </span>
+                    )}
+
+                    <span className={`${fontSizeClass} ${isActive ? "font-black" : "font-semibold"}`}>
+                      {line.text}
+                    </span>
                   </div>
 
                   {/* Sub-Lyric Line (Interleaved Phonetic Romanization) */}
                   {line.subText && (
                     <div
-                      className={`${subFontSizeClass} mt-1.5 tracking-wide transition-opacity duration-300 ${
+                      className={`${subFontSizeClass} mt-1.5 tracking-wide ${
                         isActive
                           ? "opacity-90 italic font-medium"
                           : "opacity-40 italic font-normal"
                       }`}
                       style={{
                         color: isActive
-                          ? "var(--accent-color, var(--accent-primary, var(--primary)))"
+                          ? "var(--active-lyric-color, var(--accent-color, var(--primary, #dfb86c)))"
                           : undefined,
+                        transition: "opacity 150ms ease-out",
                       }}
                     >
                       {line.subText}
@@ -711,18 +734,6 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         )}
       </div>
 
-      {/* Floating "Resume Autoscroll" Pill Button (Only when Synced lyrics are active) */}
-      {isUserScrolled && isSynced && displayedLyrics.length > 0 && (
-        <div className="absolute bottom-5 inset-x-0 flex justify-center z-20 pointer-events-none animate-fade-in">
-          <button
-            onClick={handleResumeAutoscroll}
-            className={`pointer-events-auto px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 shadow-xl border transition-all transform hover:scale-105 active:scale-95 ${designConfig.btnPrimary}`}
-          >
-            {isCandy ? <span>🍩</span> : <ArrowDown className="w-4 h-4 animate-bounce" />}
-            <span>Resume Autoscroll</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 };

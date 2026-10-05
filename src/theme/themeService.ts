@@ -124,6 +124,8 @@ export function applyBespokeCssVariables(
   document.documentElement.style.setProperty('--bespoke-accent-gradient', `linear-gradient(135deg, ${c1}, ${c2})`);
   document.documentElement.style.setProperty('--accent-primary', c2);
   document.documentElement.style.setProperty('--accent-secondary', c3);
+  document.documentElement.style.setProperty('--accent-color', c2);
+  document.documentElement.style.setProperty('--active-lyric-color', c2);
 
   // Determine text contrast mode
   const isAuto = bespokeConfig.mode === 'auto';
