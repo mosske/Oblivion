@@ -38,9 +38,8 @@ import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
 import { useContextualScrollRecovery } from "../utils/scrollRecovery";
-import { getInMemoryToken, getStoredAuthToken } from "../services/authService";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
-import { getCachedPlaylistTracks, setCachedPlaylistTracks } from "../services/playlistService";
+import { getCachedPlaylistTracks, setCachedPlaylistTracks, syncPlaylistWithRemote, revalidatePlaylist, cleanVideoId } from "../services/playlistService";
 import { apiFetch } from "../services/apiClient";
 import {
   getPlaylistCustomArtwork,
@@ -48,7 +47,7 @@ import {
   isVideoThumbnailUrl,
 } from "../utils/customCoversStorage";
 
-interface PlaylistDetailViewProps {
+export interface PlaylistDetailViewProps {
   item: Playlist | Album;
   isAlbum?: boolean;
   onBack: () => void;
@@ -208,65 +207,32 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     };
   }, [item.id, item.tracks]);
 
-  // Execute silent background track fetch on open
+  // Stale-While-Revalidate Sync: Execute silent background track fetch on open
   const executeSilentFetch = async () => {
     // Freeze background polling and auto-refetches while reorder mode is active
     if (isReorderMode) return;
 
     try {
-      const titleParam = encodeURIComponent(item.title || "");
-      const artistParam = encodeURIComponent((item as any).artist || (item as any).description || "");
-      const typeParam = effectiveIsAlbum ? "album" : "playlist";
-      
-      let res = await apiFetch(
-        `/api/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`
-      );
-      if (!res.ok) {
-        res = await apiFetch(
-          `/api/youtube/playlists/${item.id}/items?title=${titleParam}&artist=${artistParam}&type=${typeParam}&refresh=true&_t=${Date.now()}`
-        );
-      }
-      
-      // ZERO-OVERWRITE GUARD: If network request failed or timed out, reject update completely
-      if (!res || !res.ok) {
-        console.warn(`[PlaylistDetailView] ZERO-OVERWRITE GUARD: Network request failed with status ${res?.status}. Preserving cached tracks.`);
-        return;
-      }
+      // 1. Immediately read current local cache
+      const currentLocal = getCachedPlaylistTracks(item.id).length > 0
+        ? getCachedPlaylistTracks(item.id)
+        : (tracks.length > 0 ? tracks : (item.tracks || []));
 
-      const data = await res.json().catch(() => null);
-      const incomingTracks = data?.tracks;
+      // 2. Concurrently fetch remote items from YouTube proxy, purge deleted songs, and insert additions
+      const { syncedTracks, hasChanges } = await revalidatePlaylist(item.id, currentLocal, {
+        title: item.title,
+        artist: (item as any).artist || (item as any).description,
+        type: effectiveIsAlbum ? "album" : "playlist",
+      });
 
-      // ZERO-OVERWRITE GUARD: If empty array or null, REJECT update completely
-      if (!incomingTracks || !Array.isArray(incomingTracks) || incomingTracks.length === 0) {
-        console.warn(`[PlaylistDetailView] ZERO-OVERWRITE GUARD: Empty or invalid tracks array returned from YouTube API. Preserving cached tracks.`);
-        return;
-      }
-
-      const clean: Track[] = incomingTracks
-        .filter(Boolean)
-        .filter((t: any) => Boolean(t && (t.id || t.youtubeVideoId || t.title)))
-        .map((t: any, idx: number) => {
-          const vidId = t.youtubeVideoId || t.id;
-          const uniqueId = t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : `${vidId || "track"}_${idx}`);
-          return {
-            ...t,
-            id: uniqueId,
-            playlistItemId: t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vidId ? t.id : undefined),
-            youtubeVideoId: vidId || t.id,
-          };
-        });
-
-      // ONLY update state and local cache if YouTube returns a valid array containing actual track objects
-      if (clean.length > 0) {
-        setTracks(clean);
-        setCachedPlaylistTracks(item.id, clean);
-        savePlaylistTracksToDBCache(item.id, clean);
-        setLastSyncedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      } else {
-        console.warn(`[PlaylistDetailView] ZERO-OVERWRITE GUARD: Clean tracks array was empty. Preserving cached tracks.`);
+      // 3. Soft UI state refresh if differences detected or initial load
+      if (hasChanges || tracks.length === 0) {
+        setTracks(syncedTracks);
+        savePlaylistTracksToDBCache(item.id, syncedTracks);
+        setLastSyncedTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       }
     } catch (err) {
-      console.warn("[PlaylistDetailView] ZERO-OVERWRITE GUARD: Background tracks fetch error:", err);
+      console.warn("[PlaylistDetailView] ZERO-OVERWRITE GUARD: Background tracks sync notice:", err);
     } finally {
       setIsLoadingTracks(false);
     }
@@ -275,6 +241,38 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   // Trigger silent track fetch immediately in background whenever this playlist is opened
   useEffect(() => {
     executeSilentFetch();
+  }, [item.id]);
+
+  // Listen for unplayable / purged tracks auto-skipped by Player:
+  // IMMEDIATELY remove from active playlist array in React state and persist directly into localStorage
+  useEffect(() => {
+    const handleTrackPurged = (e: any) => {
+      const { videoId, trackId } = e.detail || {};
+      if (!videoId && !trackId) return;
+      setTracks((prev) => {
+        const filtered = prev.filter((t) => {
+          const tVid = cleanVideoId(t.youtubeVideoId || (t as any).youtubeId || t.id);
+          const matches =
+            (videoId && (tVid === videoId || tVid.replace(/^VL/, "") === videoId)) ||
+            (trackId && (t.id === trackId || (t as any).playlistItemId === trackId));
+          return !matches;
+        });
+        if (filtered.length !== prev.length) {
+          // Persist the updated playlist array directly into localStorage so the deleted track NEVER appears again upon refresh
+          setCachedPlaylistTracks(item.id, filtered);
+          savePlaylistTracksToDBCache(item.id, filtered);
+          return filtered;
+        }
+        return prev;
+      });
+    };
+
+    window.addEventListener("oblivion_track_purged" as any, handleTrackPurged);
+    window.addEventListener("oblivion_track_unavailable" as any, handleTrackPurged);
+    return () => {
+      window.removeEventListener("oblivion_track_purged" as any, handleTrackPurged);
+      window.removeEventListener("oblivion_track_unavailable" as any, handleTrackPurged);
+    };
   }, [item.id]);
 
   const safeTracks = React.useMemo(() => (Array.isArray(tracks) ? tracks.filter(Boolean) : []), [tracks]);

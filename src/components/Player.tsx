@@ -20,13 +20,15 @@ import {
   Music2,
   Plus,
   Share2,
-  Video
+  Video,
+  AlertTriangle
 } from "lucide-react";
 import { LyricsView } from "./LyricsView";
 import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { MarqueeText } from "./MarqueeText";
 import { OblivionLogo as Logo } from "./OblivionLogo";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl, extractCleanYoutubeId } from "../utils/formatters";
+import { cleanVideoId, purgeTrackFromStorage } from "../services/playlistService";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { calculateWcagText, hexToRgba } from "../theme/colorUtils";
 import { getBespokeColors, getBespokeConfig } from "../theme/themeService";
@@ -42,6 +44,7 @@ export interface PlayerProps {
   onToggleLike: (trackId: string) => void;
   isLiked: boolean;
   onPlayTrack: (track: Track) => void;
+  onSelectTrack?: (track: Track) => void;
   onPlayQueue?: (tracks: Track[], startIndex: number) => void;
   onRegisterRadioQueue?: (tracks: Track[]) => void;
   onAddToQueue: (track: Track) => void;
@@ -825,6 +828,7 @@ export const Player: React.FC<PlayerProps> = ({
   onToggleLike,
   isLiked,
   onPlayTrack,
+  onSelectTrack,
   onPlayQueue,
   onRegisterRadioQueue,
   onAddToQueue,
@@ -895,15 +899,41 @@ export const Player: React.FC<PlayerProps> = ({
     } catch {}
   }, []);
 
-  // Unlock audio anchor on first user touch/click gesture for strict mobile browsers
+  // Ensure user interaction unlocks the Web Audio context / YouTube iframe API instance on the first touch event
   useEffect(() => {
     const handleFirstGesture = () => {
-      if (isPlayingRef.current) {
-        startSilentAnchor();
+      // 1. Unlock Web Audio Context if suspended
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const testCtx = new AudioCtx();
+          if (testCtx.state === "suspended") {
+            testCtx.resume().catch(() => {});
+          }
+        }
+      } catch {}
+
+      // 2. Unlock silent audio anchor
+      startSilentAnchor();
+
+      // 3. Unlock YouTube iframe player instance
+      if (playerRef.current) {
+        try {
+          if (isPlayingRef.current) {
+            playerRef.current.playVideo?.();
+          }
+        } catch {}
       }
     };
-    window.addEventListener("pointerdown", handleFirstGesture, { passive: true });
-    return () => window.removeEventListener("pointerdown", handleFirstGesture);
+
+    window.addEventListener("pointerdown", handleFirstGesture, { passive: true, once: true });
+    window.addEventListener("touchstart", handleFirstGesture, { passive: true, once: true });
+    window.addEventListener("click", handleFirstGesture, { passive: true, once: true });
+    return () => {
+      window.removeEventListener("pointerdown", handleFirstGesture);
+      window.removeEventListener("touchstart", handleFirstGesture);
+      window.removeEventListener("click", handleFirstGesture);
+    };
   }, [startSilentAnchor]);
 
   // Synchronize HTML5 <audio> element events directly with Android OS Media Session
@@ -1532,6 +1562,110 @@ export const Player: React.FC<PlayerProps> = ({
     handleEndedRef.current = handleEnded;
   }, [handleEnded]);
 
+  // Synchronized state and track references for background handlers and callbacks
+  const currentTrackRef = useRef<Track | null>(playerState.currentTrack);
+  useEffect(() => {
+    currentTrackRef.current = playerState.currentTrack;
+  }, [playerState.currentTrack]);
+
+  const playerStateRef = useRef<PlayerState>(playerState);
+  useEffect(() => {
+    playerStateRef.current = playerState;
+  }, [playerState]);
+
+  const unplayableAutoSkipCountRef = useRef<number>(0);
+  const isRecoveringFromErrorRef = useRef<boolean>(false);
+  const [playerToast, setPlayerToast] = useState<string | null>(null);
+  const playerToastTimerRef = useRef<any>(null);
+
+  const showPlayerToast = useCallback((msg: string) => {
+    setPlayerToast(msg);
+    if (playerToastTimerRef.current) clearTimeout(playerToastTimerRef.current);
+    playerToastTimerRef.current = setTimeout(() => {
+      setPlayerToast(null);
+    }, 3500);
+
+    try {
+      window.dispatchEvent(new CustomEvent("oblivion_toast", { detail: { message: msg } }));
+    } catch {}
+  }, []);
+
+  // Dedicated YouTube IFrame onError listener for unplayable / restricted / deleted videos
+  const handleYouTubePlayerError = useCallback((event: any) => {
+    const rawCode = typeof event === "object" && event !== null && "data" in event ? event.data : event;
+    const errorCode = Number(rawCode) || rawCode;
+    console.warn(`[Player] YouTube iframe player reported error: code ${errorCode}`, event);
+
+    // Error codes:
+    // 100: The video requested was not found (removed, deleted, or private)
+    // 101: The owner of the requested video does not allow it to be played in embedded players
+    // 150: Same as 101 (embedding restricted/geo-blocked)
+    // 2: Invalid parameter
+    // 5: HTML5 player error
+    const isUnplayable =
+      errorCode === 100 ||
+      errorCode === 101 ||
+      errorCode === 150 ||
+      String(errorCode) === "100" ||
+      String(errorCode) === "101" ||
+      String(errorCode) === "150" ||
+      errorCode === 2 ||
+      errorCode === 5;
+
+    if (!isUnplayable) return;
+
+    if (isRecoveringFromErrorRef.current) return;
+    isRecoveringFromErrorRef.current = true;
+
+    const badTrack = currentTrackRef.current;
+    const badVid = cleanVideoId(badTrack?.youtubeVideoId || (badTrack as any)?.youtubeId || badTrack?.id);
+    const badTrackId = badTrack?.id;
+
+    console.warn(`[Player] Unplayable YouTube video encountered: "${badTrack?.title || 'Unknown'}" (${badVid || badTrackId}). Auto-skipping to next track.`);
+
+    // 1. IMMEDIATELY remove the broken youtubeId / track from the active playlist / queue array in React state
+    setPlayerState((prev) => {
+      const filteredQueue = (prev.queue || []).filter((t) => {
+        const tVid = cleanVideoId(t.youtubeVideoId || (t as any).youtubeId || t.id);
+        const matches =
+          (badVid && tVid === badVid) ||
+          (badTrackId && (t.id === badTrackId || (t as any).playlistItemId === badTrackId));
+        return !matches;
+      });
+
+      return {
+        ...prev,
+        queue: filteredQueue,
+      };
+    });
+
+    // 2. Persist the updated playlist array directly into localStorage so the deleted track NEVER appears in the list again upon app refresh
+    purgeTrackFromStorage(badVid || badTrackId || "");
+
+    // 3. Show brief toast notification: "Track unavailable on YouTube, skipping..."
+    showPlayerToast("Track unavailable on YouTube, skipping...");
+
+    // 4. Instantly skip to the next track (nextTrack())
+    const currentQueueLength = playerStateRef.current.queue.length || 1;
+    if (unplayableAutoSkipCountRef.current < currentQueueLength) {
+      unplayableAutoSkipCountRef.current += 1;
+      setTimeout(() => {
+        isRecoveringFromErrorRef.current = false;
+        handleNextTrack();
+      }, 100);
+    } else {
+      console.warn("[Player] All songs in queue appear unplayable on YouTube. Pausing playback.");
+      setPlayerState((prev) => ({ ...prev, isPlaying: false }));
+      isRecoveringFromErrorRef.current = false;
+      unplayableAutoSkipCountRef.current = 0;
+    }
+  }, [handleNextTrack, showPlayerToast, setPlayerState]);
+
+  const handleYouTubePlayerErrorRef = useRef(handleYouTubePlayerError);
+  useEffect(() => {
+    handleYouTubePlayerErrorRef.current = handleYouTubePlayerError;
+  }, [handleYouTubePlayerError]);
+
   // Load YouTube IFrame API script once
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1626,19 +1760,25 @@ export const Player: React.FC<PlayerProps> = ({
           playerRef.current.setVolume(volume * 100);
         }
 
-        // Prepare video buffer via cueVideoById.
-        // Firing playVideo() is strictly deferred to onStateChange (State 5 / CUED)
-        // to prevent premature invocation while the video buffer is still initializing.
-        if (typeof playerRef.current.cueVideoById === "function") {
-          playerRef.current.cueVideoById({
-            videoId: targetVid,
-            startSeconds: 0,
-          });
-        } else if (typeof playerRef.current.loadVideoById === "function") {
+        // ZERO-FAIL INSTANT PLAYBACK ENGINE:
+        // Call loadVideoById immediately followed by playVideo() in the same execution
+        // to bypass mobile browser autoplay suspension and eliminate intermittent paused state
+        if (typeof playerRef.current.loadVideoById === "function") {
           playerRef.current.loadVideoById({
             videoId: targetVid,
             startSeconds: 0,
           });
+        } else if (typeof playerRef.current.cueVideoById === "function") {
+          playerRef.current.cueVideoById({
+            videoId: targetVid,
+            startSeconds: 0,
+          });
+        }
+
+        if (!userManualPauseRef.current) {
+          try {
+            playerRef.current.playVideo?.();
+          } catch {}
         }
       } catch (e) {
         console.warn("[Player] Single engine executePlay error:", e);
@@ -1691,6 +1831,8 @@ export const Player: React.FC<PlayerProps> = ({
                 isChangingTrackRef.current = false;
                 userManualPauseRef.current = false;
                 interruptedWhilePlayingRef.current = false;
+                unplayableAutoSkipCountRef.current = 0;
+                isRecoveringFromErrorRef.current = false;
                 startSilentAnchor();
                 try {
                   if (typeof event.target.unMute === "function" && !isMuted) {
@@ -1719,9 +1861,15 @@ export const Player: React.FC<PlayerProps> = ({
                 if ("mediaSession" in navigator) {
                   navigator.mediaSession.playbackState = "paused";
                 }
-              } else if (event.data === 5 || event.data === (window.YT?.PlayerState?.CUED ?? 5)) { // CUED (State 5)
-                // Automatically execute playVideo() when cued to guarantee immediate playback every time
-                if (!userManualPauseRef.current) {
+              } else if (
+                event.data === 5 ||
+                event.data === -1 ||
+                event.data === (window.YT?.PlayerState?.CUED ?? 5) ||
+                event.data === (window.YT?.PlayerState?.UNSTARTED ?? -1)
+              ) { // CUED (State 5) or UNSTARTED (State -1)
+                // When player transitions to CUED or UNSTARTED while isPlaying is active,
+                // IMMEDIATELY execute playVideo() to eliminate intermittent paused state
+                if (isPlayingRef.current || !userManualPauseRef.current) {
                   try {
                     event.target.playVideo();
                   } catch {
@@ -1736,7 +1884,7 @@ export const Player: React.FC<PlayerProps> = ({
               }
             },
             onError: (err: any) => {
-              console.warn("[Player] Single YouTube engine error:", err);
+              handleYouTubePlayerErrorRef.current?.(err);
             },
           },
         });
@@ -1799,6 +1947,38 @@ export const Player: React.FC<PlayerProps> = ({
       } catch {}
     }
   }, [volume, isMuted]);
+
+  // ZERO-FAIL INSTANT PLAYBACK ENGINE:
+  // Register synchronous instant playback hook on window to bypass mobile autoplay restrictions
+  useEffect(() => {
+    (window as any).__OBLIVION_YT_PLAYER = playerRef.current;
+    (window as any).__OBLIVION_PLAY_IMMEDIATE = (videoId: string) => {
+      const cleanVid = cleanVideoId(videoId);
+      if (!cleanVid) return;
+      activeVideoIdRef.current = cleanVid;
+      userManualPauseRef.current = false;
+      isPlayingRef.current = true;
+      if (playerRef.current && isPlayerReadyRef.current) {
+        try {
+          if (typeof playerRef.current.unMute === "function" && !isMuted) {
+            playerRef.current.unMute();
+          }
+          if (typeof playerRef.current.setVolume === "function") {
+            playerRef.current.setVolume(volume * 100);
+          }
+          if (typeof playerRef.current.loadVideoById === "function") {
+            playerRef.current.loadVideoById({ videoId: cleanVid, startSeconds: 0 });
+          }
+          playerRef.current.playVideo?.();
+        } catch (err) {
+          console.warn("[Player] __OBLIVION_PLAY_IMMEDIATE error:", err);
+        }
+      }
+    };
+    return () => {
+      delete (window as any).__OBLIVION_PLAY_IMMEDIATE;
+    };
+  }, [isMuted, volume]);
 
   // 1. SINGLE GLOBAL PLAYHEAD SYNC EFFECT: Continuous 100ms Polling Loop
   useEffect(() => {
@@ -3017,6 +3197,12 @@ export const Player: React.FC<PlayerProps> = ({
                   style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
                   speed={26}
                 />
+                {(currentTrack.isUnavailable || currentTrack.isInvalid) && (
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-950/70 border border-red-500/40 px-2.5 py-0.5 rounded-full mt-1.5 shadow-sm">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                    <span>Track unavailable on YouTube</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3071,6 +3257,12 @@ export const Player: React.FC<PlayerProps> = ({
                   style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
                   speed={26}
                 />
+                {(currentTrack.isUnavailable || currentTrack.isInvalid) && (
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-950/70 border border-red-500/40 px-2.5 py-0.5 rounded-full mt-1.5 shadow-sm">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                    <span>Track unavailable on YouTube</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -3538,6 +3730,12 @@ export const Player: React.FC<PlayerProps> = ({
                     style={isHardRock ? { color: "#a89379" } : undefined}
                     speed={24}
                   />
+                  {(currentTrack.isUnavailable || currentTrack.isInvalid) && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-950/70 border border-red-500/40 px-1.5 py-0.5 rounded shadow-sm mt-0.5" title="Track unavailable on YouTube">
+                      <AlertTriangle className="w-2.5 h-2.5 text-red-400 shrink-0" />
+                      <span>Unavailable</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Center Playback Controls: Back Navigation Button, Play/Pause in Center, Forward/Next Navigation Button */}
@@ -3803,6 +4001,16 @@ export const Player: React.FC<PlayerProps> = ({
         );
       })()}
         </>
+      )}
+
+      {/* Unplayable Track Auto-Skip Toast Notification */}
+      {playerToast && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[9999] animate-bounce pointer-events-none">
+          <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-black/90 border border-red-500/50 shadow-2xl backdrop-blur-xl text-xs font-bold text-red-200">
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            <span>{playerToast}</span>
+          </div>
+        </div>
       )}
     </>
   );

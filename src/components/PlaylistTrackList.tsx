@@ -11,6 +11,7 @@ import {
   Music2,
   Sparkles,
   ArrowUpDown,
+  AlertTriangle,
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -692,17 +693,34 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
 
               {/* Title & Artist */}
               <div className="flex-1 min-w-0">
-                <MarqueeText
-                  text={cleanTrackTitle(track.title, track.artist)}
-                  className={`track-title text-xs sm:text-sm font-semibold ${
-                    isCurrent ? designConfig.accentText : designConfig.textPrimary
-                  } group-hover:${designConfig.accentText} transition-colors`}
-                  containerClassName="w-full"
-                  speed={30}
-                />
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <MarqueeText
+                    text={cleanTrackTitle(track.title, track.artist)}
+                    className={`track-title text-xs sm:text-sm font-semibold ${
+                      isCurrent
+                        ? designConfig.accentText
+                        : track.isUnavailable || track.isInvalid
+                        ? "text-red-400/90 line-through"
+                        : designConfig.textPrimary
+                    } group-hover:${designConfig.accentText} transition-colors`}
+                    containerClassName="min-w-0 flex-1"
+                    speed={30}
+                  />
+                  {(track.isUnavailable || track.isInvalid) && (
+                    <span
+                      className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-950/70 border border-red-500/40 px-1.5 py-0.5 rounded shadow-sm"
+                      title="Track unavailable on YouTube"
+                    >
+                      <AlertTriangle className="w-3 h-3 text-red-400" />
+                      <span className="hidden sm:inline">Unavailable</span>
+                    </span>
+                  )}
+                </div>
                 <MarqueeText
                   text={track.artist || (isAlbum ? (item as Album).artist : "Unknown Artist")}
-                  className={`artist-name text-[11px] sm:text-xs ${designConfig.textMuted}`}
+                  className={`artist-name text-[11px] sm:text-xs ${
+                    track.isUnavailable || track.isInvalid ? "text-red-400/60" : designConfig.textMuted
+                  }`}
                   containerClassName="w-full"
                   speed={26}
                 />

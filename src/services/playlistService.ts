@@ -145,6 +145,21 @@ export function setCachedPlaylistTracks(playlistId: string, tracks: Track[]): vo
     localStorage.setItem(`OBLIVION_PLAYLIST_CACHE_${cleanId}`, serialized);
     localStorage.setItem(`oblivion_tracks_${cleanId}`, serialized);
 
+    // Concurrently update selected playlist in localStorage if active
+    try {
+      const rawSel = localStorage.getItem("oblivion_selected_playlist");
+      if (rawSel) {
+        const sel = JSON.parse(rawSel);
+        if (sel.id === playlistId || sel.id?.replace(/^VL/, "") === cleanId || (sel as any).playlistId === playlistId) {
+          sel.tracks = cleanTracks;
+          sel.trackCount = cleanTracks.length;
+          sel.tracksCount = cleanTracks.length;
+          sel.itemCount = cleanTracks.length;
+          localStorage.setItem("oblivion_selected_playlist", JSON.stringify(sel));
+        }
+      }
+    } catch {}
+
     // Concurrently update track count in OBLIVION_PLAYLIST_CACHE while preserving explicit coverUrl
     const currentPlaylists = getCachedPlaylists();
     if (currentPlaylists.length > 0) {
@@ -582,7 +597,7 @@ function getActiveAuthHeaders(tokenOverride?: string): Record<string, string> {
  */
 export async function fetchPlaylistItems(
   playlistId: string,
-  options?: { forceRefresh?: boolean; token?: string }
+  options?: { forceRefresh?: boolean; token?: string; title?: string; artist?: string; type?: string }
 ): Promise<{
   tracks: Track[];
   coverUrl?: string;
@@ -600,6 +615,9 @@ export async function fetchPlaylistItems(
     sync: "true",
     _t: String(Date.now()),
   });
+  if (options?.title) queryParams.set("title", options.title);
+  if (options?.artist) queryParams.set("artist", options.artist);
+  if (options?.type) queryParams.set("type", options.type);
 
   try {
     let res = await apiFetch(`/api/youtube/playlists/${encodeURIComponent(cleanId)}/items?${queryParams}`, {
@@ -610,19 +628,38 @@ export async function fetchPlaylistItems(
         headers,
       });
     }
+    // Fallback if cleanId differs from playlistId
+    if (!res.ok && cleanId !== playlistId) {
+      res = await apiFetch(`/api/youtube/playlists/${encodeURIComponent(playlistId)}/items?${queryParams}`, {
+        headers,
+      });
+      if (!res.ok) {
+        res = await apiFetch(`/api/playlists/${encodeURIComponent(playlistId)}/items?${queryParams}`, {
+          headers,
+        });
+      }
+    }
 
     if (res.ok) {
       const data = await res.json().catch(() => ({ tracks: [] }));
       const rawTracks: any[] = Array.isArray(data.tracks) ? data.tracks : [];
-      const tracks: Track[] = rawTracks.map((t: any) => {
-        const vId = cleanVideoId(t.youtubeId || t.youtubeVideoId || t.id);
-        return {
-          ...t,
-          id: t.id || vId,
-          youtubeVideoId: vId || t.youtubeVideoId || t.id,
-          youtubeId: vId || t.youtubeId || t.youtubeVideoId || t.id,
-        };
-      });
+      const tracks: Track[] = rawTracks
+        .filter(Boolean)
+        .filter((t: any) => {
+          const title = (t.title || "").toLowerCase();
+          return title !== "deleted video" && title !== "private video";
+        })
+        .map((t: any, idx: number) => {
+          const vId = cleanVideoId(t.youtubeId || t.youtubeVideoId || t.id);
+          const uniqueId = t.playlistItemId || (t.id && !t.id.startsWith("http") && t.id !== vId ? t.id : `${vId || "track"}_${idx}`);
+          return {
+            ...t,
+            id: uniqueId,
+            playlistItemId: t.playlistItemId,
+            youtubeVideoId: vId || t.youtubeVideoId || t.id,
+            youtubeId: vId || t.youtubeId || t.youtubeVideoId || t.id,
+          };
+        });
       return {
         tracks,
         coverUrl: data.coverUrl || data.customCoverUrl,
@@ -636,6 +673,143 @@ export async function fetchPlaylistItems(
   }
 
   return { tracks: [] };
+}
+
+/**
+ * Stale-While-Revalidate Sync Engine:
+ * Compares remote YouTube playlist tracks against local cache:
+ * - Automatically purges tracks/video IDs that no longer exist on YouTube (deleted/taken-down videos)
+ * - Inserts any new tracks added to the remote YouTube playlist
+ * - Updates local storage silently and returns { syncedTracks, hasChanges, purgedCount, addedCount }
+ */
+export function syncPlaylistWithRemote(
+  playlistId: string,
+  localTracks: Track[] = [],
+  remoteTracks: Track[] = []
+): {
+  syncedTracks: Track[];
+  hasChanges: boolean;
+  purgedCount: number;
+  addedCount: number;
+} {
+  if (!playlistId || !Array.isArray(remoteTracks)) {
+    return { syncedTracks: localTracks, hasChanges: false, purgedCount: 0, addedCount: 0 };
+  }
+
+  // Filter out invalid/deleted/private tracks from remote item list
+  const validRemoteTracks = remoteTracks
+    .filter(Boolean)
+    .filter((t) => {
+      const title = (t.title || "").toLowerCase();
+      return title !== "deleted video" && title !== "private video";
+    });
+
+  // Guard against accidental total wipeout if remote returns 0 tracks while local has tracks
+  if (validRemoteTracks.length === 0 && localTracks.length > 0) {
+    console.warn(`[playlistService] ZERO-OVERWRITE GUARD: Remote returned 0 tracks for ${playlistId} while local has ${localTracks.length}. Preserving cached tracks.`);
+    return { syncedTracks: localTracks, hasChanges: false, purgedCount: 0, addedCount: 0 };
+  }
+
+  // Clean remote video IDs
+  const remoteVideoIdSet = new Set(
+    validRemoteTracks.map((t) => cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id)).filter(Boolean)
+  );
+
+  // Map existing local tracks for metadata preservation (custom fields, lyrics, audioUrl, etc.)
+  const localTrackMap = new Map<string, Track>();
+  localTracks.forEach((t) => {
+    const vId = cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id);
+    if (vId) {
+      localTrackMap.set(vId, t);
+    }
+    if (t.id) {
+      localTrackMap.set(t.id, t);
+    }
+  });
+
+  // Calculate purged: local tracks whose video ID is no longer present on YouTube
+  let purgedCount = 0;
+  localTracks.forEach((t) => {
+    const vId = cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id);
+    if (vId && !remoteVideoIdSet.has(vId)) {
+      purgedCount++;
+    }
+  });
+
+  // Calculate added & construct synced list in remote YouTube order
+  let addedCount = 0;
+  const syncedTracks: Track[] = validRemoteTracks.map((remoteItem, idx) => {
+    const vId = cleanVideoId(remoteItem.youtubeVideoId || remoteItem.youtubeId || remoteItem.id);
+    const existingLocal = (vId ? localTrackMap.get(vId) : undefined) || (remoteItem.id ? localTrackMap.get(remoteItem.id) : undefined);
+    if (!existingLocal) {
+      addedCount++;
+    }
+
+    const uniqueId = remoteItem.playlistItemId || (remoteItem.id && !remoteItem.id.startsWith("http") && remoteItem.id !== vId ? remoteItem.id : `${vId || "track"}_${idx}`);
+
+    return {
+      ...existingLocal,
+      ...remoteItem,
+      id: uniqueId,
+      playlistItemId: remoteItem.playlistItemId || existingLocal?.playlistItemId,
+      youtubeVideoId: vId || remoteItem.youtubeVideoId || remoteItem.id,
+      youtubeId: vId || remoteItem.youtubeId || remoteItem.id,
+    };
+  });
+
+  // Determine if there are tangible differences between local cache and remote
+  const localIds = localTracks.map((t) => cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id)).filter(Boolean);
+  const syncedIds = syncedTracks.map((t) => cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id)).filter(Boolean);
+
+  const hasChanges =
+    localIds.length !== syncedIds.length ||
+    localIds.some((id, idx) => id !== syncedIds[idx]) ||
+    purgedCount > 0 ||
+    addedCount > 0;
+
+  if (hasChanges) {
+    setCachedPlaylistTracks(playlistId, syncedTracks);
+  }
+
+  return {
+    syncedTracks,
+    hasChanges,
+    purgedCount,
+    addedCount,
+  };
+}
+
+/**
+ * Non-blocking background revalidation for a YouTube playlist.
+ * Fetches remote YouTube items and executes syncPlaylistWithRemote.
+ */
+export async function revalidatePlaylist(
+  playlistId: string,
+  localTracks: Track[] = [],
+  options?: { token?: string; title?: string; artist?: string; type?: string }
+): Promise<{
+  syncedTracks: Track[];
+  hasChanges: boolean;
+  purgedCount: number;
+  addedCount: number;
+}> {
+  if (!playlistId) {
+    return { syncedTracks: localTracks, hasChanges: false, purgedCount: 0, addedCount: 0 };
+  }
+
+  const { tracks: remoteTracks } = await fetchPlaylistItems(playlistId, {
+    forceRefresh: true,
+    token: options?.token,
+    title: options?.title,
+    artist: options?.artist,
+    type: options?.type,
+  });
+
+  if (!remoteTracks || remoteTracks.length === 0) {
+    return { syncedTracks: localTracks, hasChanges: false, purgedCount: 0, addedCount: 0 };
+  }
+
+  return syncPlaylistWithRemote(playlistId, localTracks, remoteTracks);
 }
 
 /**
@@ -834,5 +1008,143 @@ export async function reorderPlaylistTracks(
   }
 
   return { success: false, tracks, syncedToYouTube: false };
+}
+
+/**
+ * 9. Permanently purge a deleted/broken track from all local caches and storage:
+ * - Removes from OBLIVION_TRACKS_CACHE_[id] for all playlists containing the track
+ * - Removes from OBLIVION_PLAYLIST_CACHE list and updates track count
+ * - Removes from legacy playlist cache keys
+ * - Removes from oblivion_selected_playlist
+ * - Removes from oblivion_saved_player_state queue
+ * - Broadcasts oblivion_track_purged event for active React views
+ */
+export function purgeTrackFromStorage(brokenIdOrVid: string): { purgedCount: number } {
+  if (!brokenIdOrVid) return { purgedCount: 0 };
+  const targetVid = cleanVideoId(brokenIdOrVid);
+  let purgedCount = 0;
+
+  try {
+    // 1. Scan and clean all track cache keys in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (
+        key.startsWith("OBLIVION_TRACKS_CACHE_") ||
+        key.startsWith("OBLIVION_PLAYLIST_CACHE_") ||
+        key.startsWith("oblivion_tracks_")
+      ) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const list = JSON.parse(raw);
+            if (Array.isArray(list)) {
+              const filtered = list.filter((t: any) => {
+                if (!t) return false;
+                const vId = cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id);
+                const matches =
+                  (targetVid && vId === targetVid) ||
+                  t.id === brokenIdOrVid ||
+                  t.playlistItemId === brokenIdOrVid;
+                return !matches;
+              });
+              if (filtered.length !== list.length) {
+                purgedCount += list.length - filtered.length;
+                localStorage.setItem(key, JSON.stringify(filtered));
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+
+    // 2. Clean main playlists cache (OBLIVION_PLAYLIST_CACHE & legacy)
+    const playlists = getCachedPlaylists();
+    if (playlists.length > 0) {
+      let playlistsChanged = false;
+      const updatedPlaylists = playlists.map((pl) => {
+        if (Array.isArray(pl.tracks) && pl.tracks.length > 0) {
+          const filtered = pl.tracks.filter((t) => {
+            const vId = cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id);
+            return !(
+              (targetVid && vId === targetVid) ||
+              t.id === brokenIdOrVid ||
+              (t as any).playlistItemId === brokenIdOrVid
+            );
+          });
+          if (filtered.length !== pl.tracks.length) {
+            playlistsChanged = true;
+            return {
+              ...pl,
+              tracks: filtered,
+              itemCount: filtered.length,
+              trackCount: filtered.length,
+              tracksCount: filtered.length,
+              contentDetails: { ...(pl.contentDetails || {}), itemCount: filtered.length },
+            };
+          }
+        }
+        return pl;
+      });
+      if (playlistsChanged) {
+        setCachedPlaylists(updatedPlaylists);
+      }
+    }
+
+    // 3. Clean currently selected playlist in localStorage
+    try {
+      const rawSel = localStorage.getItem("oblivion_selected_playlist");
+      if (rawSel) {
+        const sel = JSON.parse(rawSel);
+        if (Array.isArray(sel.tracks)) {
+          const filtered = sel.tracks.filter((t: any) => {
+            const vId = cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id);
+            return !(
+              (targetVid && vId === targetVid) ||
+              t.id === brokenIdOrVid ||
+              t.playlistItemId === brokenIdOrVid
+            );
+          });
+          if (filtered.length !== sel.tracks.length) {
+            sel.tracks = filtered;
+            sel.trackCount = filtered.length;
+            sel.tracksCount = filtered.length;
+            sel.itemCount = filtered.length;
+            localStorage.setItem("oblivion_selected_playlist", JSON.stringify(sel));
+          }
+        }
+      }
+    } catch {}
+
+    // 4. Clean saved player state queue in localStorage
+    try {
+      const rawState = localStorage.getItem("oblivion_saved_player_state");
+      if (rawState) {
+        const state = JSON.parse(rawState);
+        if (Array.isArray(state.queue)) {
+          state.queue = state.queue.filter((t: any) => {
+            const vId = cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id);
+            return !(
+              (targetVid && vId === targetVid) ||
+              t.id === brokenIdOrVid ||
+              t.playlistItemId === brokenIdOrVid
+            );
+          });
+          localStorage.setItem("oblivion_saved_player_state", JSON.stringify(state));
+        }
+      }
+    } catch {}
+
+    // 5. Broadcast global event so any active playlist React state removes the track instantly
+    window.dispatchEvent(
+      new CustomEvent("oblivion_track_purged", {
+        detail: { videoId: targetVid, trackId: brokenIdOrVid },
+      })
+    );
+  } catch (err) {
+    console.warn("[playlistService] purgeTrackFromStorage error:", err);
+  }
+
+  return { purgedCount };
 }
 

@@ -20,6 +20,8 @@ export interface Track {
   publishedText?: string;
   publishedAt?: string;
   durationText?: string;
+  isUnavailable?: boolean;
+  isInvalid?: boolean;
 }
 
 export interface YouTubeThumbnailItem {

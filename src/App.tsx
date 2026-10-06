@@ -230,6 +230,18 @@ export default function App() {
       setToastMessage((prev) => (prev === msg ? null : prev));
     }, 3500);
   };
+
+  // Global toast listener
+  useEffect(() => {
+    const handleToastEvent = (e: any) => {
+      const msg = e.detail?.message || e.detail;
+      if (typeof msg === "string") {
+        showToast(msg);
+      }
+    };
+    window.addEventListener("oblivion_toast" as any, handleToastEvent);
+    return () => window.removeEventListener("oblivion_toast" as any, handleToastEvent);
+  }, []);
   
   // Persistent user state - remains signed in perpetually until explicit sign out
   const [user, setUser] = useState<User | null>(() => {
@@ -1535,6 +1547,26 @@ export default function App() {
   const handlePlayTrack = (track: Track) => {
     const cleanTrack = cleanTrackVideoId(track);
     const trId = cleanTrack.id || cleanTrack.youtubeVideoId;
+    const vid = cleanTrack.youtubeVideoId || cleanTrack.youtubeId;
+
+    // ZERO-FAIL INSTANT PLAYBACK ENGINE:
+    // Do NOT rely solely on React state setters to trigger playback.
+    // Call player.loadVideoById(newTrack.youtubeId) followed immediately by player.playVideo()
+    // in the same event loop execution to bypass mobile browser autoplay suspension.
+    try {
+      if (typeof (window as any).__OBLIVION_PLAY_IMMEDIATE === "function" && vid) {
+        (window as any).__OBLIVION_PLAY_IMMEDIATE(vid);
+      } else if ((window as any).__OBLIVION_YT_PLAYER && vid) {
+        const player = (window as any).__OBLIVION_YT_PLAYER;
+        if (typeof player.loadVideoById === "function") {
+          player.loadVideoById({ videoId: vid, startSeconds: 0 });
+        }
+        player.playVideo?.();
+      }
+    } catch (e) {
+      console.warn("[App] handlePlayTrack instant playback error:", e);
+    }
+
     recordPlaybackHistory(cleanTrack, cleanTrack.isVideo ? "video" : "song");
     setPlayerState((prev) => {
       const existingIdx = prev.queue.findIndex((t) => (t.id || t.youtubeVideoId || (t as any).youtubeId) === trId);
@@ -1574,6 +1606,20 @@ export default function App() {
     const validIdx = Math.min(Math.max(0, startIndex), cleanTracks.length - 1);
     const startTrack = cleanTracks[validIdx];
     if (startTrack) {
+      const vid = startTrack.youtubeVideoId || startTrack.youtubeId;
+      try {
+        if (typeof (window as any).__OBLIVION_PLAY_IMMEDIATE === "function" && vid) {
+          (window as any).__OBLIVION_PLAY_IMMEDIATE(vid);
+        } else if ((window as any).__OBLIVION_YT_PLAYER && vid) {
+          const player = (window as any).__OBLIVION_YT_PLAYER;
+          if (typeof player.loadVideoById === "function") {
+            player.loadVideoById({ videoId: vid, startSeconds: 0 });
+          }
+          player.playVideo?.();
+        }
+      } catch (e) {
+        console.warn("[App] handlePlayQueue instant playback error:", e);
+      }
       recordPlaybackHistory(startTrack, startTrack.isVideo ? "video" : "song");
     }
     setPlayerState((prev) => ({
@@ -1656,6 +1702,20 @@ export default function App() {
           }
           nextIndex = 0;
         }
+      }
+
+      // Skip over known unavailable tracks if other playable songs exist in queue
+      let candidateIndex = nextIndex;
+      let checkedCount = 0;
+      while (
+        (activeQueue[candidateIndex]?.isUnavailable || activeQueue[candidateIndex]?.isInvalid) &&
+        checkedCount < activeQueue.length
+      ) {
+        checkedCount++;
+        candidateIndex = (candidateIndex + 1) % activeQueue.length;
+      }
+      if (checkedCount < activeQueue.length) {
+        nextIndex = candidateIndex;
       }
 
       const nextTrack = activeQueue[nextIndex];
