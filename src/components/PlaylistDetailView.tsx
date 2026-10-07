@@ -39,7 +39,7 @@ import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
 import { useContextualScrollRecovery } from "../utils/scrollRecovery";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
-import { getCachedPlaylistTracks, setCachedPlaylistTracks, syncPlaylistWithRemote, revalidatePlaylist, cleanVideoId } from "../services/playlistService";
+import { getCachedPlaylistTracks, setCachedPlaylistTracks, syncPlaylistWithRemote, revalidatePlaylist, cleanVideoId, getCachedPlaylist, fetchFreshYouTubePlaylist, savePlaylistToLocalStorage, purgeTrackGlobally } from "../services/playlistService";
 import { apiFetch } from "../services/apiClient";
 import {
   getPlaylistCustomArtwork,
@@ -209,30 +209,39 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
 
   // Stale-While-Revalidate Sync: Execute silent background track fetch on open
   const executeSilentFetch = async () => {
-    // Freeze background polling and auto-refetches while reorder mode is active
-    if (isReorderMode) return;
+    if (isReorderMode || !item?.id) return;
 
     try {
       // 1. Immediately read current local cache
-      const currentLocal = getCachedPlaylistTracks(item.id).length > 0
-        ? getCachedPlaylistTracks(item.id)
+      const cached = getCachedPlaylist(item.id);
+      const currentLocal = cached?.tracks && cached.tracks.length > 0
+        ? cached.tracks
         : (tracks.length > 0 ? tracks : (item.tracks || []));
 
-      // 2. Concurrently fetch remote items from YouTube proxy, purge deleted songs, and insert additions
-      const { syncedTracks, hasChanges } = await revalidatePlaylist(item.id, currentLocal, {
-        title: item.title,
-        artist: (item as any).artist || (item as any).description,
-        type: effectiveIsAlbum ? "album" : "playlist",
-      });
+      // 2. Concurrently execute a background fetch to YouTube's API for that playlist ID
+      const fresh = await fetchFreshYouTubePlaylist(item.id);
 
-      // 3. Soft UI state refresh if differences detected or initial load
-      if (hasChanges || tracks.length === 0) {
-        setTracks(syncedTracks);
-        savePlaylistTracksToDBCache(item.id, syncedTracks);
+      if (fresh && fresh.tracks) {
+        // Re-verify that if a track missing from YouTube's API is found in the local cache, call purgeTrackGlobally() immediately so it can NEVER be loaded again
+        const freshVideoIds = new Set(
+          fresh.tracks.map((t) => cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id)).filter(Boolean)
+        );
+        for (const localT of currentLocal) {
+          const lVid = cleanVideoId(localT.youtubeVideoId || localT.youtubeId || localT.id);
+          if (lVid && !freshVideoIds.has(lVid)) {
+            purgeTrackGlobally(item.id, lVid);
+          }
+        }
+
+        // 3. Compare response against local storage: purge any track IDs missing from YouTube, overwrite localStorage for ALL playlist cache keys, and update React state so dead tracks disappear immediately
+        const synced = syncPlaylistWithRemote(item.id, currentLocal, fresh.tracks);
+        setTracks(synced.syncedTracks);
+        savePlaylistToLocalStorage(item.id, { tracks: synced.syncedTracks, coverUrl: fresh.coverUrl, title: fresh.title });
+        savePlaylistTracksToDBCache(item.id, synced.syncedTracks);
         setLastSyncedTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       }
     } catch (err) {
-      console.warn("[PlaylistDetailView] ZERO-OVERWRITE GUARD: Background tracks sync notice:", err);
+      console.warn("[PlaylistDetailView] Background tracks sync notice:", err);
     } finally {
       setIsLoadingTracks(false);
     }
@@ -243,12 +252,19 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     executeSilentFetch();
   }, [item.id]);
 
-  // Listen for unplayable / purged tracks auto-skipped by Player:
+  // Listen for unplayable / purged tracks auto-skipped by Player or global hard purge:
   // IMMEDIATELY remove from active playlist array in React state and persist directly into localStorage
   useEffect(() => {
     const handleTrackPurged = (e: any) => {
-      const { videoId, trackId } = e.detail || {};
-      if (!videoId && !trackId) return;
+      const { videoId, trackId, playlistId } = e.detail || {};
+      if (playlistId && playlistId !== item.id && playlistId !== item.id.replace(/^VL/, "")) {
+        return;
+      }
+      if (!videoId && !trackId) {
+        const cleaned = getCachedPlaylistTracks(item.id);
+        setTracks(cleaned);
+        return;
+      }
       setTracks((prev) => {
         const filtered = prev.filter((t) => {
           const tVid = cleanVideoId(t.youtubeVideoId || (t as any).youtubeId || t.id);
@@ -267,9 +283,19 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       });
     };
 
+    const handlePlaylistUpdated = (e: any) => {
+      const targetPlId = e.detail?.playlistId;
+      if (!targetPlId || targetPlId === item.id || targetPlId === item.id.replace(/^VL/, "")) {
+        const cleaned = getCachedPlaylistTracks(item.id);
+        setTracks(cleaned);
+      }
+    };
+
+    window.addEventListener("oblivion:playlist_updated" as any, handlePlaylistUpdated);
     window.addEventListener("oblivion_track_purged" as any, handleTrackPurged);
     window.addEventListener("oblivion_track_unavailable" as any, handleTrackPurged);
     return () => {
+      window.removeEventListener("oblivion:playlist_updated" as any, handlePlaylistUpdated);
       window.removeEventListener("oblivion_track_purged" as any, handleTrackPurged);
       window.removeEventListener("oblivion_track_unavailable" as any, handleTrackPurged);
     };

@@ -242,6 +242,81 @@ export default function App() {
     window.addEventListener("oblivion_toast" as any, handleToastEvent);
     return () => window.removeEventListener("oblivion_toast" as any, handleToastEvent);
   }, []);
+
+  // Listen for global playlist hard purge and synchronize in-memory state across App
+  useEffect(() => {
+    const handleGlobalPlaylistUpdated = (e: any) => {
+      const plId = e.detail?.playlistId;
+
+      // 1. Update selectedPlaylist if open
+      setSelectedPlaylist((prev) => {
+        if (!prev) return prev;
+        if (plId && prev.id !== plId && prev.id?.replace(/^VL/, "") !== plId?.replace(/^VL/, "")) {
+          return prev;
+        }
+        const cleanedTracks = getCachedPlaylistTracks(prev.id);
+        if (cleanedTracks && Array.isArray(cleanedTracks)) {
+          return {
+            ...prev,
+            tracks: cleanedTracks,
+            trackCount: cleanedTracks.length,
+            tracksCount: cleanedTracks.length,
+            itemCount: cleanedTracks.length,
+          };
+        }
+        return prev;
+      });
+
+      // 2. Update playlists collection in memory
+      setPlaylists((prev) => {
+        return prev.map((pl) => {
+          if (plId && pl.id !== plId && pl.id?.replace(/^VL/, "") !== plId?.replace(/^VL/, "")) {
+            return pl;
+          }
+          const cleaned = getCachedPlaylistTracks(pl.id);
+          if (cleaned && Array.isArray(cleaned)) {
+            return {
+              ...pl,
+              tracks: cleaned,
+              trackCount: cleaned.length,
+              tracksCount: cleaned.length,
+              itemCount: cleaned.length,
+            };
+          }
+          return pl;
+        });
+      });
+
+      // 3. Update tabViewStack in memory
+      setTabViewStack((prev) => {
+        const nextStack = { ...prev };
+        let changed = false;
+        for (const [tab, pl] of Object.entries(nextStack)) {
+          if (pl && (!plId || pl.id === plId || pl.id?.replace(/^VL/, "") === plId?.replace(/^VL/, ""))) {
+            const cleaned = getCachedPlaylistTracks(pl.id);
+            if (cleaned && Array.isArray(cleaned)) {
+              nextStack[tab] = {
+                ...pl,
+                tracks: cleaned,
+                trackCount: cleaned.length,
+                tracksCount: cleaned.length,
+                itemCount: cleaned.length,
+              };
+              changed = true;
+            }
+          }
+        }
+        return changed ? nextStack : prev;
+      });
+    };
+
+    window.addEventListener("oblivion:playlist_updated" as any, handleGlobalPlaylistUpdated);
+    window.addEventListener("oblivion_track_purged" as any, handleGlobalPlaylistUpdated);
+    return () => {
+      window.removeEventListener("oblivion:playlist_updated" as any, handleGlobalPlaylistUpdated);
+      window.removeEventListener("oblivion_track_purged" as any, handleGlobalPlaylistUpdated);
+    };
+  }, []);
   
   // Persistent user state - remains signed in perpetually until explicit sign out
   const [user, setUser] = useState<User | null>(() => {
@@ -2838,6 +2913,29 @@ export default function App() {
         playlists={playlists}
         onAddTrackToPlaylist={handleAddTrackToPlaylist}
         onOpenAddToPlaylistModal={handleOpenAddToPlaylistModal}
+        onRemoveTrack={(trackId, trackObj) => {
+          if (selectedPlaylist?.id) {
+            handleRemoveTrackFromPlaylist(selectedPlaylist.id, trackId, trackObj);
+          } else {
+            const rawPl = localStorage.getItem("oblivion_selected_playlist");
+            let plId = "";
+            try {
+              if (rawPl) {
+                const parsed = JSON.parse(rawPl);
+                plId = parsed.id || parsed.playlistId || "";
+              }
+            } catch {}
+            if (plId) {
+              handleRemoveTrackFromPlaylist(plId, trackId, trackObj);
+            } else {
+              for (const pl of playlists) {
+                if (pl.tracks?.some(t => t.id === trackId || t.youtubeVideoId === trackId || (t as any).youtubeId === trackId)) {
+                  handleRemoveTrackFromPlaylist(pl.id, trackId, trackObj);
+                }
+              }
+            }
+          }
+        }}
         designConfig={activeFullDesign}
       />
 

@@ -28,7 +28,7 @@ import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { MarqueeText } from "./MarqueeText";
 import { OblivionLogo as Logo } from "./OblivionLogo";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl, extractCleanYoutubeId } from "../utils/formatters";
-import { cleanVideoId, purgeTrackFromStorage } from "../services/playlistService";
+import { cleanVideoId, purgeTrackFromStorage, purgeTrackGlobally } from "../services/playlistService";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { calculateWcagText, hexToRgba } from "../theme/colorUtils";
 import { getBespokeColors, getBespokeConfig } from "../theme/themeService";
@@ -52,6 +52,7 @@ export interface PlayerProps {
   playlists?: Playlist[];
   onAddTrackToPlaylist?: (track: Track, playlistId: string) => void;
   onOpenAddToPlaylistModal?: (track: Track) => void;
+  onRemoveTrack?: (trackId: string, track?: Track) => void;
   designConfig?: FullAppDesignConfig;
 }
 
@@ -836,6 +837,7 @@ export const Player: React.FC<PlayerProps> = ({
   playlists = [],
   onAddTrackToPlaylist,
   onOpenAddToPlaylistModal,
+  onRemoveTrack,
   designConfig = FULL_APP_DESIGNS["designer"],
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -1502,6 +1504,11 @@ export const Player: React.FC<PlayerProps> = ({
     onTogglePlayRef.current = onTogglePlay;
   }, [onTogglePlay]);
 
+  const onRemoveTrackRef = useRef(onRemoveTrack);
+  useEffect(() => {
+    onRemoveTrackRef.current = onRemoveTrack;
+  }, [onRemoveTrack]);
+
   // Synchronized Next & Previous handlers that guarantee global currentTrack state update regardless of playerMode
   const handleNextTrack = useCallback(() => {
     isChangingTrackRef.current = true;
@@ -1620,12 +1627,61 @@ export const Player: React.FC<PlayerProps> = ({
     const badTrack = currentTrackRef.current;
     const badVid = cleanVideoId(badTrack?.youtubeVideoId || (badTrack as any)?.youtubeId || badTrack?.id);
     const badTrackId = badTrack?.id;
+    const failedTrackId = badVid || badTrackId;
 
-    console.warn(`[Player] Unplayable YouTube video encountered: "${badTrack?.title || 'Unknown'}" (${badVid || badTrackId}). Auto-skipping to next track.`);
+    // 1. Get current playlist state from local storage directly
+    const storedPlaylistRaw = localStorage.getItem('oblivion_selected_playlist');
+    let currentPlaylistId = "";
+    if (storedPlaylistRaw) {
+      try {
+        const playlist = JSON.parse(storedPlaylistRaw);
+        currentPlaylistId = playlist.id || playlist.playlistId || "";
+        if (Array.isArray(playlist.tracks)) {
+          // Filter out the dead track ID
+          const updatedTracks = playlist.tracks.filter((t: any) => t.youtubeId !== failedTrackId && t.id !== failedTrackId && t.youtubeVideoId !== failedTrackId);
+          playlist.tracks = updatedTracks;
+          playlist.trackCount = updatedTracks.length;
+          playlist.tracksCount = updatedTracks.length;
+          playlist.itemCount = updatedTracks.length;
+          
+          // 2. FORCE IMMEDIATE WRITE BACK TO LOCAL STORAGE
+          localStorage.setItem('oblivion_selected_playlist', JSON.stringify(playlist));
+        }
+        
+        // Also clear specific track cache keys if used
+        if (failedTrackId) {
+          localStorage.removeItem(`OBLIVION_TRACKS_CACHE_${failedTrackId}`);
+        }
+      } catch (e) {
+        console.error('Failed to purge dead track from storage', e);
+      }
+    }
 
-    // 1. IMMEDIATELY remove the broken youtubeId / track from the active playlist / queue array in React state
+    // REUSE THE EXACT WORKING MANUAL REMOVE BUTTON HANDLER:
+    // Directly call the exact same onRemoveTrack(failedTrack.id) callback passed from the playlist context/props
+    if (typeof onRemoveTrackRef.current === "function") {
+      try {
+        onRemoveTrackRef.current(failedTrackId, badTrack);
+      } catch (err) {
+        console.warn("[Player] onRemoveTrack execution warning:", err);
+      }
+    }
+
+    // SINGLE SOURCE OF TRUTH HARD PURGE:
+    // Synchronously purge the dead track across ALL storage keys, collections, caches, and queues
+    purgeTrackGlobally(currentPlaylistId, failedTrackId || "");
+
+    // 3. Show brief toast notification: "Track unavailable on YouTube, skipping..."
+    showPlayerToast("Track unavailable on YouTube, skipping...");
+
+    // FIX INDEX POINTER MATH ON TRACK REMOVAL:
+    // Remove track N from active queue, keep queueIndex locked at N (track N+1 shifts into position N),
+    // and immediately invoke playVideo() on the item now residing at index N without calling nextTrack().
     setPlayerState((prev) => {
-      const filteredQueue = (prev.queue || []).filter((t) => {
+      const queue = prev.queue || [];
+      const currentIdx = Math.min(prev.queueIndex, Math.max(0, queue.length - 1));
+
+      const filteredQueue = queue.filter((t) => {
         const tVid = cleanVideoId(t.youtubeVideoId || (t as any).youtubeId || t.id);
         const matches =
           (badVid && tVid === badVid) ||
@@ -1633,33 +1689,42 @@ export const Player: React.FC<PlayerProps> = ({
         return !matches;
       });
 
+      if (filteredQueue.length === 0) {
+        isRecoveringFromErrorRef.current = false;
+        return {
+          ...prev,
+          queue: [],
+          isPlaying: false,
+        };
+      }
+
+      // Keep queueIndex locked at N (or clamped to valid length if N was the last track)
+      const newIdx = Math.min(currentIdx, filteredQueue.length - 1);
+      const shiftedTrack = filteredQueue[newIdx];
+
+      const shiftedVid = cleanVideoId(shiftedTrack?.youtubeVideoId || (shiftedTrack as any)?.youtubeId || shiftedTrack?.id);
+      if (shiftedVid && playerRef.current && isPlayerReadyRef.current) {
+        try {
+          if (typeof playerRef.current.loadVideoById === "function") {
+            playerRef.current.loadVideoById({ videoId: shiftedVid, startSeconds: 0 });
+          }
+          playerRef.current.playVideo?.();
+        } catch (e) {
+          console.warn("[Player] Error playing shifted track at index N:", e);
+        }
+      }
+
+      isRecoveringFromErrorRef.current = false;
       return {
         ...prev,
         queue: filteredQueue,
+        queueIndex: newIdx,
+        currentTrack: shiftedTrack,
+        currentTime: 0,
+        isPlaying: true,
       };
     });
-
-    // 2. Persist the updated playlist array directly into localStorage so the deleted track NEVER appears in the list again upon app refresh
-    purgeTrackFromStorage(badVid || badTrackId || "");
-
-    // 3. Show brief toast notification: "Track unavailable on YouTube, skipping..."
-    showPlayerToast("Track unavailable on YouTube, skipping...");
-
-    // 4. Instantly skip to the next track (nextTrack())
-    const currentQueueLength = playerStateRef.current.queue.length || 1;
-    if (unplayableAutoSkipCountRef.current < currentQueueLength) {
-      unplayableAutoSkipCountRef.current += 1;
-      setTimeout(() => {
-        isRecoveringFromErrorRef.current = false;
-        handleNextTrack();
-      }, 100);
-    } else {
-      console.warn("[Player] All songs in queue appear unplayable on YouTube. Pausing playback.");
-      setPlayerState((prev) => ({ ...prev, isPlaying: false }));
-      isRecoveringFromErrorRef.current = false;
-      unplayableAutoSkipCountRef.current = 0;
-    }
-  }, [handleNextTrack, showPlayerToast, setPlayerState]);
+  }, [showPlayerToast, setPlayerState]);
 
   const handleYouTubePlayerErrorRef = useRef(handleYouTubePlayerError);
   useEffect(() => {
