@@ -69,8 +69,12 @@
 /* 3x Thicker Upward Candy-Cane Stripes (145-degree angle, 60px/120px cycle) */
 [data-theme="candyland"],
 .theme-candyland,
+[data-theme="candyland-pastel"],
+.theme-candyland-pastel,
 [data-theme="ytmusic-red"],
 .theme-ytmusic-red {
+  --button-purple-text: #8a2be2;
+  --play-pause-glow-candyland: rgba(216, 180, 254, 0.6);
   --bg-canvas: repeating-linear-gradient(
     145deg,
     #ffd1dc 0px,
@@ -6024,17 +6028,17 @@ div[class*="category-wrapper"] {
   color: #f3e8ff !important;
 }
 
-.theme-hard-rock button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+.theme-hard-rock button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn):not(.hard-rock-active-tab):not(.active) svg,
 .theme-hard-rock [class*="action-btn"] svg,
-.theme-sugar-time-jazz button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+.theme-sugar-time-jazz button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn):not(.hard-rock-active-tab):not(.active) svg,
 .theme-sugar-time-jazz [class*="action-btn"] svg,
-[data-theme="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn):not(.hard-rock-active-tab):not(.active) svg,
 [data-theme="hard-rock"] [class*="action-btn"] svg,
-[data-theme="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn):not(.hard-rock-active-tab):not(.active) svg,
 [data-theme="sugar-time-jazz"] [class*="action-btn"] svg,
-[data-theme-alias="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme-alias="hard-rock"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn):not(.hard-rock-active-tab):not(.active) svg,
 [data-theme-alias="hard-rock"] [class*="action-btn"] svg,
-[data-theme-alias="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn) svg,
+[data-theme-alias="sugar-time-jazz"] button:not([data-settings-control]):not([class*="contrast"]):not([class*="lyrics"]):not([class*="bg-stone"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-primary"]):not(.bg-stone-200):not(.bg-stone-300):not(#top-header-search-btn):not(#top-header-signin-btn):not(#library-signin-prompt-btn):not(#auth-modal-google-btn):not(.hard-rock-active-tab):not(.active) svg,
 [data-theme-alias="sugar-time-jazz"] [class*="action-btn"] svg {
   color: #d8b4fe !important;
   stroke: #d8b4fe !important;
@@ -7832,5 +7836,363 @@ svg.playlist-search-icon,
   stroke: #e8d5b5 !important;
   opacity: 1 !important;
 }
+
+/* ================================================================================
+   1. CANDYLAND THEME FULL PLAYER COLOR ADJUSTMENTS
+   - Action/Control Icons: Deep Purple (#8A2BE2 / var(--button-purple-text))
+   - Play/Pause Button Glow: Soft light violet glow (rgba(216, 180, 254, 0.6) / #D8B4FE)
+   ================================================================================ */
+.theme-candyland .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn):not([class*="liked"]):not(.liked-btn) svg:not(.fill-rose-500),
+.theme-candyland-pastel .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn):not([class*="liked"]):not(.liked-btn) svg:not(.fill-rose-500),
+[data-theme="candyland"] .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn):not([class*="liked"]):not(.liked-btn) svg:not(.fill-rose-500),
+[data-theme="candyland-pastel"] .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn):not([class*="liked"]):not(.liked-btn) svg:not(.fill-rose-500),
+[data-theme="ytmusic-red"] .full-player-bottom-dock button:not(#player-fullscreen-main-play-btn):not(.full-player-play-btn):not([class*="liked"]):not(.liked-btn) svg:not(.fill-rose-500) {
+  color: #8a2be2 !important;
+  stroke: #8a2be2 !important;
+}
+
+.theme-candyland .candyland-play-glow,
+.theme-candyland-pastel .candyland-play-glow,
+[data-theme="candyland"] .candyland-play-glow,
+[data-theme="candyland-pastel"] .candyland-play-glow,
+[data-theme="ytmusic-red"] .candyland-play-glow {
+  background: radial-gradient(circle, rgba(216, 180, 254, 0.6) 0%, rgba(216, 180, 254, 0.2) 55%, transparent 75%) !important;
+  box-shadow: 0 0 35px rgba(216, 180, 254, 0.6), 0 0 15px #d8b4fe !important;
+  filter: blur(4px) !important;
+}
+
+/* ================================================================================
+   2. HARD ROCK THEME BUTTON SYSTEM & ACTIVE/INACTIVE CONTRAST REFACTOR
+   - INACTIVE TOP NAV TABS:
+     * Semi-transparent dark overlay (rgba(255, 255, 255, 0.05) / transparent)
+     * Text & Icon Color: Light muted purple/cream (#D1C4E9)
+   - ACTIVE TOP NAV TABS & STANDARDIZED PRIMARY/ACTIVE BUTTONS:
+     * Background: linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)
+     * Text & Icon Color: Dark espresso (#1D0E0A)
+   ================================================================================ */
+
+/* Inactive Top Nav Tabs (Audio, Video, Lyrics, Radio) */
+.theme-hard-rock .hard-rock-inactive-tab,
+.theme-hard-rock button.hard-rock-inactive-tab,
+.theme-sugar-time-jazz .hard-rock-inactive-tab,
+.theme-sugar-time-jazz button.hard-rock-inactive-tab,
+[data-theme="hard-rock"] .hard-rock-inactive-tab,
+[data-theme="hard-rock"] button.hard-rock-inactive-tab,
+[data-theme="sugar-time-jazz"] .hard-rock-inactive-tab,
+[data-theme="sugar-time-jazz"] button.hard-rock-inactive-tab,
+[data-theme-alias="hard-rock"] .hard-rock-inactive-tab,
+[data-theme-alias="hard-rock"] button.hard-rock-inactive-tab,
+[data-theme-alias="sugar-time-jazz"] .hard-rock-inactive-tab,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-inactive-tab {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #D1C4E9 !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.theme-hard-rock .hard-rock-inactive-tab span,
+.theme-hard-rock button.hard-rock-inactive-tab span,
+.theme-sugar-time-jazz .hard-rock-inactive-tab span,
+.theme-sugar-time-jazz button.hard-rock-inactive-tab span,
+[data-theme="hard-rock"] .hard-rock-inactive-tab span,
+[data-theme="hard-rock"] button.hard-rock-inactive-tab span,
+[data-theme="sugar-time-jazz"] .hard-rock-inactive-tab span,
+[data-theme="sugar-time-jazz"] button.hard-rock-inactive-tab span,
+[data-theme-alias="hard-rock"] .hard-rock-inactive-tab span,
+[data-theme-alias="hard-rock"] button.hard-rock-inactive-tab span,
+[data-theme-alias="sugar-time-jazz"] .hard-rock-inactive-tab span,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-inactive-tab span {
+  color: #D1C4E9 !important;
+  opacity: 1 !important;
+  font-weight: 500 !important;
+}
+
+.theme-hard-rock .hard-rock-inactive-tab svg,
+.theme-hard-rock button.hard-rock-inactive-tab svg,
+.theme-hard-rock .hard-rock-inactive-tab svg *,
+.theme-sugar-time-jazz .hard-rock-inactive-tab svg,
+.theme-sugar-time-jazz button.hard-rock-inactive-tab svg,
+.theme-sugar-time-jazz .hard-rock-inactive-tab svg *,
+[data-theme="hard-rock"] .hard-rock-inactive-tab svg,
+[data-theme="hard-rock"] button.hard-rock-inactive-tab svg,
+[data-theme="hard-rock"] .hard-rock-inactive-tab svg *,
+[data-theme="sugar-time-jazz"] .hard-rock-inactive-tab svg,
+[data-theme="sugar-time-jazz"] button.hard-rock-inactive-tab svg,
+[data-theme="sugar-time-jazz"] .hard-rock-inactive-tab svg *,
+[data-theme-alias="hard-rock"] .hard-rock-inactive-tab svg,
+[data-theme-alias="hard-rock"] button.hard-rock-inactive-tab svg,
+[data-theme-alias="hard-rock"] .hard-rock-inactive-tab svg *,
+[data-theme-alias="sugar-time-jazz"] .hard-rock-inactive-tab svg,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-inactive-tab svg,
+[data-theme-alias="sugar-time-jazz"] .hard-rock-inactive-tab svg * {
+  color: #D1C4E9 !important;
+  stroke: #D1C4E9 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+
+/* Active Top Nav Tabs (Audio, Video, Lyrics, Radio) */
+.theme-hard-rock button.hard-rock-active-tab,
+.theme-hard-rock button.hard-rock-active-tab.active,
+.theme-sugar-time-jazz button.hard-rock-active-tab,
+.theme-sugar-time-jazz button.hard-rock-active-tab.active,
+[data-theme="hard-rock"] button.hard-rock-active-tab,
+[data-theme="hard-rock"] button.hard-rock-active-tab.active,
+[data-theme="sugar-time-jazz"] button.hard-rock-active-tab,
+[data-theme="sugar-time-jazz"] button.hard-rock-active-tab.active,
+[data-theme-alias="hard-rock"] button.hard-rock-active-tab,
+[data-theme-alias="hard-rock"] button.hard-rock-active-tab.active,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-active-tab,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-active-tab.active {
+  background: linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%) !important;
+  color: #1D0E0A !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(192, 132, 252, 0.35) !important;
+}
+
+.theme-hard-rock button.hard-rock-active-tab span,
+.theme-sugar-time-jazz button.hard-rock-active-tab span,
+[data-theme="hard-rock"] button.hard-rock-active-tab span,
+[data-theme="sugar-time-jazz"] button.hard-rock-active-tab span,
+[data-theme-alias="hard-rock"] button.hard-rock-active-tab span,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-active-tab span {
+  color: #1D0E0A !important;
+  font-weight: 700 !important;
+}
+
+.theme-hard-rock button.hard-rock-active-tab svg,
+.theme-hard-rock button.hard-rock-active-tab svg *,
+.theme-sugar-time-jazz button.hard-rock-active-tab svg,
+.theme-sugar-time-jazz button.hard-rock-active-tab svg *,
+[data-theme="hard-rock"] button.hard-rock-active-tab svg,
+[data-theme="hard-rock"] button.hard-rock-active-tab svg *,
+[data-theme="sugar-time-jazz"] button.hard-rock-active-tab svg,
+[data-theme="sugar-time-jazz"] button.hard-rock-active-tab svg *,
+[data-theme-alias="hard-rock"] button.hard-rock-active-tab svg,
+[data-theme-alias="hard-rock"] button.hard-rock-active-tab svg *,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-active-tab svg,
+[data-theme-alias="sugar-time-jazz"] button.hard-rock-active-tab svg * {
+  color: #1D0E0A !important;
+  stroke: #1D0E0A !important;
+  opacity: 1 !important;
+}
+
+/* Specific Active Player Toggle Mode selectors */
+.theme-hard-rock #player-toggle-audio-mode.active svg,
+.theme-hard-rock #player-toggle-video-mode.active svg,
+.theme-hard-rock #player-toggle-lyrics-mode.active svg,
+.theme-hard-rock #player-toggle-radio-mode.active svg,
+[data-theme="hard-rock"] #player-toggle-audio-mode.active svg,
+[data-theme="hard-rock"] #player-toggle-video-mode.active svg,
+[data-theme="hard-rock"] #player-toggle-lyrics-mode.active svg,
+[data-theme="hard-rock"] #player-toggle-radio-mode.active svg,
+[data-theme="sugar-time-jazz"] #player-toggle-audio-mode.active svg,
+[data-theme="sugar-time-jazz"] #player-toggle-video-mode.active svg,
+[data-theme="sugar-time-jazz"] #player-toggle-lyrics-mode.active svg,
+[data-theme="sugar-time-jazz"] #player-toggle-radio-mode.active svg,
+[data-theme-alias="hard-rock"] #player-toggle-audio-mode.active svg,
+[data-theme-alias="hard-rock"] #player-toggle-video-mode.active svg,
+[data-theme-alias="hard-rock"] #player-toggle-lyrics-mode.active svg,
+[data-theme-alias="hard-rock"] #player-toggle-radio-mode.active svg,
+[data-theme-alias="sugar-time-jazz"] #player-toggle-audio-mode.active svg,
+[data-theme-alias="sugar-time-jazz"] #player-toggle-video-mode.active svg,
+[data-theme-alias="sugar-time-jazz"] #player-toggle-lyrics-mode.active svg,
+[data-theme-alias="sugar-time-jazz"] #player-toggle-radio-mode.active svg {
+  color: #1D0E0A !important;
+  stroke: #1D0E0A !important;
+  opacity: 1 !important;
+}
+
+/* ================================================================================
+   STANDARDIZED PRIMARY & ACTIVE BUTTONS IN HARD ROCK (BEIGE-TO-PURPLE GRADIENT)
+   - Background: linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)
+   - Text & Icon: Dark Espresso #1D0E0A
+   ================================================================================ */
+
+/* 1. Header Top Search Icon Button */
+.theme-hard-rock #top-header-search-btn,
+.theme-sugar-time-jazz #top-header-search-btn,
+[data-theme="hard-rock"] #top-header-search-btn,
+[data-theme="sugar-time-jazz"] #top-header-search-btn,
+[data-theme-alias="hard-rock"] #top-header-search-btn,
+[data-theme-alias="sugar-time-jazz"] #top-header-search-btn {
+  background: linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%) !important;
+  color: #1D0E0A !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 2px 10px rgba(192, 132, 252, 0.35) !important;
+}
+
+.theme-hard-rock #top-header-search-btn svg,
+.theme-hard-rock #top-header-search-btn svg *,
+.theme-sugar-time-jazz #top-header-search-btn svg,
+.theme-sugar-time-jazz #top-header-search-btn svg *,
+[data-theme="hard-rock"] #top-header-search-btn svg,
+[data-theme="hard-rock"] #top-header-search-btn svg *,
+[data-theme="sugar-time-jazz"] #top-header-search-btn svg,
+[data-theme="sugar-time-jazz"] #top-header-search-btn svg *,
+[data-theme-alias="hard-rock"] #top-header-search-btn svg,
+[data-theme-alias="hard-rock"] #top-header-search-btn svg *,
+[data-theme-alias="sugar-time-jazz"] #top-header-search-btn svg,
+[data-theme-alias="sugar-time-jazz"] #top-header-search-btn svg * {
+  color: #1D0E0A !important;
+  stroke: #1D0E0A !important;
+  opacity: 1 !important;
+}
+
+/* 2. Library & Create Playlist Buttons */
+.theme-hard-rock #library-new-playlist-btn,
+.theme-hard-rock #create-playlist-btn,
+.theme-hard-rock #library-empty-create-playlist-btn,
+.theme-sugar-time-jazz #library-new-playlist-btn,
+.theme-sugar-time-jazz #create-playlist-btn,
+.theme-sugar-time-jazz #library-empty-create-playlist-btn,
+[data-theme="hard-rock"] #library-new-playlist-btn,
+[data-theme="hard-rock"] #create-playlist-btn,
+[data-theme="hard-rock"] #library-empty-create-playlist-btn,
+[data-theme="sugar-time-jazz"] #library-new-playlist-btn,
+[data-theme="sugar-time-jazz"] #create-playlist-btn,
+[data-theme="sugar-time-jazz"] #library-empty-create-playlist-btn,
+[data-theme-alias="hard-rock"] #library-new-playlist-btn,
+[data-theme-alias="hard-rock"] #create-playlist-btn,
+[data-theme-alias="hard-rock"] #library-empty-create-playlist-btn,
+[data-theme-alias="sugar-time-jazz"] #library-new-playlist-btn,
+[data-theme-alias="sugar-time-jazz"] #create-playlist-btn,
+[data-theme-alias="sugar-time-jazz"] #library-empty-create-playlist-btn {
+  background: linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%) !important;
+  color: #1D0E0A !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(192, 132, 252, 0.35) !important;
+}
+
+.theme-hard-rock #library-new-playlist-btn span,
+.theme-hard-rock #create-playlist-btn span,
+.theme-hard-rock #library-empty-create-playlist-btn span,
+.theme-sugar-time-jazz #library-new-playlist-btn span,
+.theme-sugar-time-jazz #create-playlist-btn span,
+.theme-sugar-time-jazz #library-empty-create-playlist-btn span,
+[data-theme="hard-rock"] #library-new-playlist-btn span,
+[data-theme="hard-rock"] #create-playlist-btn span,
+[data-theme="hard-rock"] #library-empty-create-playlist-btn span,
+[data-theme="sugar-time-jazz"] #library-new-playlist-btn span,
+[data-theme="sugar-time-jazz"] #create-playlist-btn span,
+[data-theme="sugar-time-jazz"] #library-empty-create-playlist-btn span,
+[data-theme-alias="hard-rock"] #library-new-playlist-btn span,
+[data-theme-alias="hard-rock"] #create-playlist-btn span,
+[data-theme-alias="hard-rock"] #library-empty-create-playlist-btn span,
+[data-theme-alias="sugar-time-jazz"] #library-new-playlist-btn span,
+[data-theme-alias="sugar-time-jazz"] #create-playlist-btn span,
+[data-theme-alias="sugar-time-jazz"] #library-empty-create-playlist-btn span {
+  color: #1D0E0A !important;
+}
+
+.theme-hard-rock #library-new-playlist-btn svg,
+.theme-hard-rock #create-playlist-btn svg,
+.theme-hard-rock #library-empty-create-playlist-btn svg,
+.theme-sugar-time-jazz #library-new-playlist-btn svg,
+.theme-sugar-time-jazz #create-playlist-btn svg,
+.theme-sugar-time-jazz #library-empty-create-playlist-btn svg,
+[data-theme="hard-rock"] #library-new-playlist-btn svg,
+[data-theme="hard-rock"] #create-playlist-btn svg,
+[data-theme="hard-rock"] #library-empty-create-playlist-btn svg,
+[data-theme="sugar-time-jazz"] #library-new-playlist-btn svg,
+[data-theme="sugar-time-jazz"] #create-playlist-btn svg,
+[data-theme="sugar-time-jazz"] #library-empty-create-playlist-btn svg,
+[data-theme-alias="hard-rock"] #library-new-playlist-btn svg,
+[data-theme-alias="hard-rock"] #create-playlist-btn svg,
+[data-theme-alias="hard-rock"] #library-empty-create-playlist-btn svg,
+[data-theme-alias="sugar-time-jazz"] #library-new-playlist-btn svg,
+[data-theme-alias="sugar-time-jazz"] #create-playlist-btn svg,
+[data-theme-alias="sugar-time-jazz"] #library-empty-create-playlist-btn svg {
+  color: #1D0E0A !important;
+  stroke: #1D0E0A !important;
+}
+
+/* 3. Full Player & Mini Player Main Play/Pause Button in Hard Rock */
+.theme-hard-rock #player-fullscreen-main-play-btn,
+.theme-sugar-time-jazz #player-fullscreen-main-play-btn,
+[data-theme="hard-rock"] #player-fullscreen-main-play-btn,
+[data-theme="sugar-time-jazz"] #player-fullscreen-main-play-btn,
+[data-theme-alias="hard-rock"] #player-fullscreen-main-play-btn,
+[data-theme-alias="sugar-time-jazz"] #player-fullscreen-main-play-btn,
+.theme-hard-rock .mini-player .player-play-btn,
+.theme-sugar-time-jazz .mini-player .player-play-btn,
+[data-theme="hard-rock"] .mini-player .player-play-btn,
+[data-theme="sugar-time-jazz"] .mini-player .player-play-btn,
+[data-theme-alias="hard-rock"] .mini-player .player-play-btn,
+[data-theme-alias="sugar-time-jazz"] .mini-player .player-play-btn,
+.theme-hard-rock #app-mini-player-floating-dock .mini-player-play-btn,
+.theme-sugar-time-jazz #app-mini-player-floating-dock .mini-player-play-btn,
+[data-theme="hard-rock"] #app-mini-player-floating-dock .mini-player-play-btn,
+[data-theme="sugar-time-jazz"] #app-mini-player-floating-dock .mini-player-play-btn,
+[data-theme-alias="hard-rock"] #app-mini-player-floating-dock .mini-player-play-btn,
+[data-theme-alias="sugar-time-jazz"] #app-mini-player-floating-dock .mini-player-play-btn {
+  background: linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%) !important;
+  color: #1D0E0A !important;
+  border: none !important;
+  box-shadow: 0 0 20px rgba(192, 132, 252, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.theme-hard-rock #player-fullscreen-main-play-btn svg,
+.theme-sugar-time-jazz #player-fullscreen-main-play-btn svg,
+[data-theme="hard-rock"] #player-fullscreen-main-play-btn svg,
+[data-theme="sugar-time-jazz"] #player-fullscreen-main-play-btn svg,
+[data-theme-alias="hard-rock"] #player-fullscreen-main-play-btn svg,
+[data-theme-alias="sugar-time-jazz"] #player-fullscreen-main-play-btn svg,
+.theme-hard-rock .mini-player .player-play-btn svg,
+.theme-sugar-time-jazz .mini-player .player-play-btn svg,
+[data-theme="hard-rock"] .mini-player .player-play-btn svg,
+[data-theme="sugar-time-jazz"] .mini-player .player-play-btn svg,
+[data-theme-alias="hard-rock"] .mini-player .player-play-btn svg,
+[data-theme-alias="sugar-time-jazz"] .mini-player .player-play-btn svg,
+.theme-hard-rock #app-mini-player-floating-dock .mini-player-play-btn svg,
+.theme-sugar-time-jazz #app-mini-player-floating-dock .mini-player-play-btn svg,
+[data-theme="hard-rock"] #app-mini-player-floating-dock .mini-player-play-btn svg,
+[data-theme="sugar-time-jazz"] #app-mini-player-floating-dock .mini-player-play-btn svg,
+[data-theme-alias="hard-rock"] #app-mini-player-floating-dock .mini-player-play-btn svg,
+[data-theme-alias="sugar-time-jazz"] #app-mini-player-floating-dock .mini-player-play-btn svg {
+  color: #1D0E0A !important;
+  stroke: #1D0E0A !important;
+  fill: #1D0E0A !important;
+  opacity: 1 !important;
+}
+
+/* 4. Primary action button (Play All, etc.) in Hard Rock */
+.theme-hard-rock .btn-primary-action,
+.theme-sugar-time-jazz .btn-primary-action,
+[data-theme="hard-rock"] .btn-primary-action,
+[data-theme="sugar-time-jazz"] .btn-primary-action,
+[data-theme-alias="hard-rock"] .btn-primary-action,
+[data-theme-alias="sugar-time-jazz"] .btn-primary-action {
+  background: linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%) !important;
+  color: #1D0E0A !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(192, 132, 252, 0.35) !important;
+}
+
+.theme-hard-rock .btn-primary-action span,
+.theme-sugar-time-jazz .btn-primary-action span,
+[data-theme="hard-rock"] .btn-primary-action span,
+[data-theme="sugar-time-jazz"] .btn-primary-action span,
+[data-theme-alias="hard-rock"] .btn-primary-action span,
+[data-theme-alias="sugar-time-jazz"] .btn-primary-action span {
+  color: #1D0E0A !important;
+  font-weight: 700 !important;
+}
+
+.theme-hard-rock .btn-primary-action svg,
+.theme-sugar-time-jazz .btn-primary-action svg,
+[data-theme="hard-rock"] .btn-primary-action svg,
+[data-theme="sugar-time-jazz"] .btn-primary-action svg,
+[data-theme-alias="hard-rock"] .btn-primary-action svg,
+[data-theme-alias="sugar-time-jazz"] .btn-primary-action svg {
+  color: #1D0E0A !important;
+  stroke: #1D0E0A !important;
+  fill: #1D0E0A !important;
+}
+
+
 
 

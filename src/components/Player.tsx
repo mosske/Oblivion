@@ -308,10 +308,10 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         timeText: "text-[#FF1493] font-mono",
         playBtn: "full-player-play-btn bg-gradient-to-r from-[#FF69B4] to-[#FF1493] hover:brightness-105 text-white shadow-[0_4px_15px_rgba(255,20,147,0.4)] active:scale-95",
         playIconFill: "fill-white text-white",
-        ctrlBtn: "bg-[#FFF0F5] hover:bg-[#FFE4E1] text-[#FF1493] border border-[#FFB6C1] shadow-sm",
-        activeText: "text-[#FF1493] drop-shadow-[0_0_8px_rgba(255,105,180,0.5)]",
-        mutedText: "text-[#FF69B4]/80 hover:text-[#FF1493]",
-        volSlider: "bg-pink-100 accent-[#FF1493]",
+        ctrlBtn: "bg-[#FFF0F5] hover:bg-[#FFE4E1] text-[#8A2BE2] border border-[#FFB6C1] shadow-sm",
+        activeText: "text-[#8A2BE2] drop-shadow-[0_0_8px_rgba(138,43,226,0.5)]",
+        mutedText: "text-[#8A2BE2]/80 hover:text-[#8A2BE2]",
+        volSlider: "bg-pink-100 accent-[#8A2BE2]",
       };
     case "dynamic-emerald":
       return {
@@ -2857,21 +2857,23 @@ export const Player: React.FC<PlayerProps> = ({
                   <button
                     id="player-toggle-audio-mode"
                     onClick={(e) => handleTabSwitch("audio", e)}
-                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
+                      activeTab === "audio" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
+                    }`}
                     style={
                       activeTab === "audio"
                         ? {
-                            backgroundColor: "#e8d5b5",
-                            color: "#120e16",
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            color: "#1D0E0A",
                             fontWeight: "bold",
                             borderRadius: "9999px",
                             padding: "6px 14px",
                             border: "none",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
                           }
                         : {
-                            backgroundColor: "transparent",
-                            color: "#e8d5b5",
+                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            color: "#D1C4E9",
                             opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
@@ -2883,14 +2885,14 @@ export const Player: React.FC<PlayerProps> = ({
                     <Music2
                       size={15}
                       style={{
-                        color: activeTab === "audio" ? "#120e16" : "#e8d5b5",
-                        stroke: activeTab === "audio" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "audio" ? "#1D0E0A" : "#D1C4E9",
+                        stroke: activeTab === "audio" ? "#1D0E0A" : "#D1C4E9",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: activeTab === "audio" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "audio" ? "#1D0E0A" : "#D1C4E9",
                         fontWeight: activeTab === "audio" ? "bold" : "500",
                       }}
                     >
@@ -2902,21 +2904,23 @@ export const Player: React.FC<PlayerProps> = ({
                   <button
                     id="player-toggle-video-mode"
                     onClick={(e) => handleTabSwitch("video", e)}
-                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
+                      activeTab === "video" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
+                    }`}
                     style={
                       activeTab === "video"
                         ? {
-                            backgroundColor: "#e8d5b5",
-                            color: "#120e16",
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            color: "#1D0E0A",
                             fontWeight: "bold",
                             borderRadius: "9999px",
                             padding: "6px 14px",
                             border: "none",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
                           }
                         : {
-                            backgroundColor: "transparent",
-                            color: "#e8d5b5",
+                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            color: "#D1C4E9",
                             opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
@@ -2928,14 +2932,14 @@ export const Player: React.FC<PlayerProps> = ({
                     <Video
                       size={15}
                       style={{
-                        color: activeTab === "video" ? "#120e16" : "#e8d5b5",
-                        stroke: activeTab === "video" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "video" ? "#1D0E0A" : "#D1C4E9",
+                        stroke: activeTab === "video" ? "#1D0E0A" : "#D1C4E9",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: activeTab === "video" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "video" ? "#1D0E0A" : "#D1C4E9",
                         fontWeight: activeTab === "video" ? "bold" : "500",
                       }}
                     >
@@ -2947,21 +2951,23 @@ export const Player: React.FC<PlayerProps> = ({
                   <button
                     id="player-toggle-lyrics-mode"
                     onClick={(e) => handleTabSwitch("lyrics", e)}
-                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
+                      activeTab === "lyrics" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
+                    }`}
                     style={
                       activeTab === "lyrics"
                         ? {
-                            backgroundColor: "#e8d5b5",
-                            color: "#120e16",
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            color: "#1D0E0A",
                             fontWeight: "bold",
                             borderRadius: "9999px",
                             padding: "6px 14px",
                             border: "none",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
                           }
                         : {
-                            backgroundColor: "transparent",
-                            color: "#e8d5b5",
+                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            color: "#D1C4E9",
                             opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
@@ -2973,14 +2979,14 @@ export const Player: React.FC<PlayerProps> = ({
                     <Sparkles
                       size={15}
                       style={{
-                        color: activeTab === "lyrics" ? "#120e16" : "#e8d5b5",
-                        stroke: activeTab === "lyrics" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "lyrics" ? "#1D0E0A" : "#D1C4E9",
+                        stroke: activeTab === "lyrics" ? "#1D0E0A" : "#D1C4E9",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: activeTab === "lyrics" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "lyrics" ? "#1D0E0A" : "#D1C4E9",
                         fontWeight: activeTab === "lyrics" ? "bold" : "500",
                       }}
                     >
@@ -2992,21 +2998,23 @@ export const Player: React.FC<PlayerProps> = ({
                   <button
                     id="player-toggle-radio-mode"
                     onClick={(e) => handleTabSwitch("radio", e)}
-                    className="transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer"
+                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
+                      activeTab === "radio" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
+                    }`}
                     style={
                       activeTab === "radio"
                         ? {
-                            backgroundColor: "#e8d5b5",
-                            color: "#120e16",
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            color: "#1D0E0A",
                             fontWeight: "bold",
                             borderRadius: "9999px",
                             padding: "6px 14px",
                             border: "none",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
                           }
                         : {
-                            backgroundColor: "transparent",
-                            color: "#e8d5b5",
+                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            color: "#D1C4E9",
                             opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
@@ -3018,14 +3026,14 @@ export const Player: React.FC<PlayerProps> = ({
                     <Radio
                       size={15}
                       style={{
-                        color: activeTab === "radio" ? "#120e16" : "#e8d5b5",
-                        stroke: activeTab === "radio" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "radio" ? "#1D0E0A" : "#D1C4E9",
+                        stroke: activeTab === "radio" ? "#1D0E0A" : "#D1C4E9",
                         opacity: 1,
                       }}
                     />
                     <span
                       style={{
-                        color: activeTab === "radio" ? "#120e16" : "#e8d5b5",
+                        color: activeTab === "radio" ? "#1D0E0A" : "#D1C4E9",
                         fontWeight: activeTab === "radio" ? "bold" : "500",
                       }}
                     >
@@ -3359,7 +3367,7 @@ export const Player: React.FC<PlayerProps> = ({
               <div className="flex-1 flex items-center justify-start gap-1 sm:gap-2">
                 <button
                   onClick={() => onToggleLike(currentTrack.id)}
-                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn rounded-xl border ${isLiked ? "bg-rose-500/20 text-rose-500 border-rose-500/30" : fpTheme.ctrlBtn}`}`}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn rounded-xl border ${isLiked ? "bg-rose-500/20 text-rose-500 border-rose-500/30 liked-btn" : fpTheme.ctrlBtn}`}`}
                   style={isHardRock ? {
                     backgroundColor: "transparent",
                     border: "none",
@@ -3367,6 +3375,8 @@ export const Player: React.FC<PlayerProps> = ({
                     outline: "none",
                     padding: "8px",
                     opacity: 1,
+                  } : isCandyland ? {
+                    color: isLiked ? "#ff1493" : "#8a2be2",
                   } : (isLiked && isBespoke ? {
                     backgroundColor: hexToRgba(bespokeColors[1], 0.2),
                     borderColor: hexToRgba(bespokeColors[1], 0.4),
@@ -3380,6 +3390,11 @@ export const Player: React.FC<PlayerProps> = ({
                       color: "#e8d5b5",
                       stroke: "#e8d5b5",
                       fill: isLiked ? "#e8d5b5" : "none",
+                      opacity: 1,
+                    } : isCandyland ? {
+                      color: isLiked ? "#ff1493" : "#8a2be2",
+                      stroke: isLiked ? "#ff1493" : "#8a2be2",
+                      fill: isLiked ? "#ff1493" : "none",
                       opacity: 1,
                     } : (!isLiked ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
                   />
@@ -3403,6 +3418,8 @@ export const Player: React.FC<PlayerProps> = ({
                     outline: "none",
                     padding: "8px",
                     opacity: 1,
+                  } : isCandyland ? {
+                    color: "#8a2be2",
                   } : { color: "#e8d5b5" }}
                   title="Add to Playlist"
                 >
@@ -3411,6 +3428,11 @@ export const Player: React.FC<PlayerProps> = ({
                     style={isHardRock ? {
                       color: "#e8d5b5",
                       stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : isCandyland ? {
+                      color: "#8a2be2",
+                      stroke: "#8a2be2",
                       fill: "none",
                       opacity: 1,
                     } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
@@ -3430,6 +3452,8 @@ export const Player: React.FC<PlayerProps> = ({
                     outline: "none",
                     padding: "8px",
                     opacity: 1,
+                  } : isCandyland ? {
+                    color: "#8a2be2",
                   } : { color: "#e8d5b5" }}
                   title="Previous Song"
                 >
@@ -3440,6 +3464,11 @@ export const Player: React.FC<PlayerProps> = ({
                       stroke: "#e8d5b5",
                       fill: "none",
                       opacity: 1,
+                    } : isCandyland ? {
+                      color: "#8a2be2",
+                      stroke: "#8a2be2",
+                      fill: "none",
+                      opacity: 1,
                     } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
                   />
                 </button>
@@ -3447,7 +3476,9 @@ export const Player: React.FC<PlayerProps> = ({
                 {/* Central Play/Pause Button with perfectly centered radial ambient glow */}
                 <div className="relative flex items-center justify-center">
                   <div
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full w-20 h-20"
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full w-20 h-20 ${
+                      isCandyland ? "candyland-play-glow" : ""
+                    }`}
                     style={
                       isHardRock
                         ? {
@@ -3455,6 +3486,14 @@ export const Player: React.FC<PlayerProps> = ({
                               "radial-gradient(circle, rgba(168, 85, 247, 0.75) 0%, rgba(168, 85, 247, 0.2) 55%, transparent 75%)",
                             boxShadow:
                               "0 0 35px rgba(168, 85, 247, 0.8), 0 0 15px rgba(168, 85, 247, 0.6)",
+                            filter: "blur(4px)",
+                          }
+                        : isCandyland
+                        ? {
+                            background:
+                              "radial-gradient(circle, rgba(216, 180, 254, 0.6) 0%, rgba(216, 180, 254, 0.2) 55%, transparent 75%)",
+                            boxShadow:
+                              "0 0 35px rgba(216, 180, 254, 0.6), 0 0 15px #d8b4fe",
                             filter: "blur(4px)",
                           }
                         : isBespoke
@@ -3484,10 +3523,10 @@ export const Player: React.FC<PlayerProps> = ({
                             width: "56px",
                             height: "56px",
                             borderRadius: "50%",
-                            background: "linear-gradient(135deg, #f0e2ca, #c59b27)",
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
                             border: "none",
                             boxShadow:
-                              "0 0 25px rgba(168, 85, 247, 0.7), 0 4px 14px rgba(0, 0, 0, 0.6)",
+                              "0 0 25px rgba(192, 132, 252, 0.7), 0 4px 14px rgba(0, 0, 0, 0.6)",
                           }
                         : isBespoke
                         ? {
@@ -3505,9 +3544,9 @@ export const Player: React.FC<PlayerProps> = ({
                         style={
                           isHardRock
                             ? {
-                                color: "#120e16",
-                                stroke: "#120e16",
-                                fill: "#120e16",
+                                color: "#1D0E0A",
+                                stroke: "#1D0E0A",
+                                fill: "#1D0E0A",
                                 opacity: 1,
                               }
                             : undefined
@@ -3520,9 +3559,9 @@ export const Player: React.FC<PlayerProps> = ({
                         style={
                           isHardRock
                             ? {
-                                color: "#120e16",
-                                stroke: "#120e16",
-                                fill: "#120e16",
+                                color: "#1D0E0A",
+                                stroke: "#1D0E0A",
+                                fill: "#1D0E0A",
                                 opacity: 1,
                               }
                             : undefined
@@ -3543,6 +3582,8 @@ export const Player: React.FC<PlayerProps> = ({
                     outline: "none",
                     padding: "8px",
                     opacity: 1,
+                  } : isCandyland ? {
+                    color: "#8a2be2",
                   } : { color: "#e8d5b5" }}
                   title="Next Song"
                 >
@@ -3551,6 +3592,11 @@ export const Player: React.FC<PlayerProps> = ({
                     style={isHardRock ? {
                       color: "#e8d5b5",
                       stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : isCandyland ? {
+                      color: "#8a2be2",
+                      stroke: "#8a2be2",
                       fill: "none",
                       opacity: 1,
                     } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
@@ -3572,6 +3618,8 @@ export const Player: React.FC<PlayerProps> = ({
                     outline: "none",
                     padding: "8px",
                     opacity: 1,
+                  } : isCandyland ? {
+                    color: isShuffle ? "#ff1493" : "#8a2be2",
                   } : (isShuffle && isBespoke ? { color: bespokeColors[1] } : (!isShuffle ? { color: "#e8d5b5" } : undefined))}
                   title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
                 >
@@ -3582,6 +3630,11 @@ export const Player: React.FC<PlayerProps> = ({
                       stroke: "#e8d5b5",
                       fill: "none",
                       opacity: isShuffle ? 1 : 0.8,
+                    } : isCandyland ? {
+                      color: isShuffle ? "#ff1493" : "#8a2be2",
+                      stroke: isShuffle ? "#ff1493" : "#8a2be2",
+                      fill: "none",
+                      opacity: isShuffle ? 1 : 0.9,
                     } : (!isShuffle ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
                   />
                 </button>
@@ -3596,6 +3649,8 @@ export const Player: React.FC<PlayerProps> = ({
                     outline: "none",
                     padding: "8px",
                     opacity: 1,
+                  } : isCandyland ? {
+                    color: repeatMode !== "off" ? "#ff1493" : "#8a2be2",
                   } : (repeatMode !== "off" && isBespoke ? { color: bespokeColors[1] } : (repeatMode === "off" ? { color: "#e8d5b5" } : undefined))}
                   title={`Repeat: ${repeatMode}`}
                 >
@@ -3605,6 +3660,11 @@ export const Player: React.FC<PlayerProps> = ({
                       style={isHardRock ? {
                         color: "#e8d5b5",
                         stroke: "#e8d5b5",
+                        fill: "none",
+                        opacity: 1,
+                      } : isCandyland ? {
+                        color: "#8a2be2",
+                        stroke: "#8a2be2",
                         fill: "none",
                         opacity: 1,
                       } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
@@ -3617,6 +3677,11 @@ export const Player: React.FC<PlayerProps> = ({
                         stroke: "#e8d5b5",
                         fill: "none",
                         opacity: repeatMode === "off" ? 0.8 : 1,
+                      } : isCandyland ? {
+                        color: repeatMode !== "off" ? "#ff1493" : "#8a2be2",
+                        stroke: repeatMode !== "off" ? "#ff1493" : "#8a2be2",
+                        fill: "none",
+                        opacity: repeatMode === "off" ? 0.85 : 1,
                       } : (repeatMode === "off" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
                     />
                   )}
@@ -3642,7 +3707,7 @@ export const Player: React.FC<PlayerProps> = ({
                     {isMuted || volume === 0 ? (
                       <VolumeX className="control-icon w-4 h-4 text-rose-400" />
                     ) : (
-                      <Volume2 className="control-icon w-4 h-4" style={isHardRock ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined} />
+                      <Volume2 className="control-icon w-4 h-4" style={isHardRock ? { color: "#e8d5b5", stroke: "#e8d5b5" } : isCandyland ? { color: "#8a2be2", stroke: "#8a2be2" } : undefined} />
                     )}
                   </button>
                   <input
@@ -3653,7 +3718,7 @@ export const Player: React.FC<PlayerProps> = ({
                     value={isMuted ? 0 : volume}
                     onChange={(e) => onVolumeChange(Number(e.target.value))}
                     className={`w-16 md:w-20 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none ${fpTheme.volSlider}`}
-                    style={isHardRock ? { accentColor: "#e8d5b5" } : (isBespoke ? { accentColor: bespokeColors[1] } : undefined)}
+                    style={isHardRock ? { accentColor: "#e8d5b5" } : isCandyland ? { accentColor: "#8a2be2" } : (isBespoke ? { accentColor: bespokeColors[1] } : undefined)}
                   />
                 </div>
               </div>
@@ -3838,9 +3903,9 @@ export const Player: React.FC<PlayerProps> = ({
                             width: "38px",
                             height: "38px",
                             borderRadius: "50%",
-                            backgroundColor: "rgba(38, 28, 48, 0.9)",
-                            border: "1px solid rgba(232, 213, 181, 0.25)",
-                            boxShadow: "0 0 16px rgba(168, 85, 247, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5)",
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            border: "none",
+                            boxShadow: "0 0 16px rgba(192, 132, 252, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5)",
                           }
                         : isBespoke
                         ? {
@@ -3854,12 +3919,12 @@ export const Player: React.FC<PlayerProps> = ({
                     {isPlaying ? (
                       <Pause
                         className="w-4 h-4 sm:w-4.5 sm:h-4.5"
-                        style={isHardRock ? { color: "#e8d5b5", stroke: "#e8d5b5", fill: "#e8d5b5", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                        style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
                       />
                     ) : (
                       <Play
                         className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5"
-                        style={isHardRock ? { color: "#e8d5b5", stroke: "#e8d5b5", fill: "#e8d5b5", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                        style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
                       />
                     )}
                   </button>

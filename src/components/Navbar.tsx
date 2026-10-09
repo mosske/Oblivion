@@ -25,6 +25,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+  const isHardRock =
+    designConfig.id === "sugar-time-jazz" ||
+    Boolean((designConfig as any).isSugarTimeJazz) ||
+    designConfig.themePreset === "sugar-time-jazz";
+
   return (
     <header
       className={`top-navbar sticky top-0 z-40 h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-xs backdrop-blur-2xl transition-all ${
@@ -58,15 +63,33 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => {
             setActiveTab("search");
           }}
-          className={`search-button flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
-            activeTab === "search"
-              ? `${designConfig.btnPrimary} text-white shadow-md`
-              : `${designConfig.btnSecondary} ${designConfig.textPrimary} hover:scale-105 active:scale-95 border border-zinc-300/80`
+          className={`search-button flex items-center justify-center transition-all ${
+            isHardRock
+              ? "w-9 h-9 sm:w-10 sm:h-10 rounded-full shadow-md active:scale-95 border-none"
+              : `gap-2 px-3.5 py-2 rounded-xl ${
+                  activeTab === "search"
+                    ? `${designConfig.btnPrimary} text-white shadow-md`
+                    : `${designConfig.btnSecondary} ${designConfig.textPrimary} hover:scale-105 active:scale-95 border border-zinc-300/80`
+                }`
           }`}
+          style={
+            isHardRock
+              ? {
+                  background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                  color: "#1D0E0A",
+                  borderRadius: "9999px",
+                  border: "none",
+                  boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                }
+              : undefined
+          }
           title="Search music, albums, artists"
         >
-          <Search className="w-4 h-4" />
-          <span className="text-xs font-semibold hidden sm:inline">Search</span>
+          <Search
+            className={isHardRock ? "w-4 h-4 sm:w-4.5 sm:h-4.5" : "w-4 h-4"}
+            style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+          />
+          {!isHardRock && <span className="text-xs font-semibold hidden sm:inline">Search</span>}
         </button>
 
         {/* User Auth Section */}
