@@ -1757,11 +1757,20 @@ export default function App() {
 
       let nextIndex: number;
       if (prev.isShuffle && activeQueue.length > 1) {
-        let rand = Math.floor(Math.random() * activeQueue.length);
-        if (rand === currentIndex) {
-          rand = (rand + 1) % activeQueue.length;
+        // Only draw the next song sequentially from the shuffled queue array
+        nextIndex = currentIndex + 1;
+        if (nextIndex >= activeQueue.length) {
+          if (prev.repeatMode === "off") {
+            return {
+              ...prev,
+              isPlaying: false,
+              currentTime: 0,
+              queueIndex: 0,
+              currentTrack: activeQueue[0],
+            };
+          }
+          nextIndex = 0;
         }
-        nextIndex = rand;
       } else {
         nextIndex = currentIndex + 1;
         if (nextIndex >= activeQueue.length) {
@@ -1826,18 +1835,9 @@ export default function App() {
         }
       }
 
-      let prevIndex: number;
-      if (prev.isShuffle && activeQueue.length > 1) {
-        let rand = Math.floor(Math.random() * activeQueue.length);
-        if (rand === currentIndex) {
-          rand = (rand - 1 + activeQueue.length) % activeQueue.length;
-        }
-        prevIndex = rand;
-      } else {
-        prevIndex = currentIndex - 1;
-        if (prevIndex < 0) {
-          prevIndex = activeQueue.length - 1;
-        }
+      let prevIndex = currentIndex - 1;
+      if (prevIndex < 0) {
+        prevIndex = prev.repeatMode === "off" ? 0 : activeQueue.length - 1;
       }
 
       const prevTrack = activeQueue[prevIndex];
@@ -1851,6 +1851,68 @@ export default function App() {
         isPlaying: true,
       };
     });
+  }, []);
+
+  // Non-interruptive Shuffle Toggle Handler
+  const handleToggleShuffle = useCallback(() => {
+    setPlayerState((prev) => {
+      const nextShuffle = !prev.isShuffle;
+      let activeQueue = prev.queue || [];
+      if (activeQueue.length === 0 && prev.currentTrack) {
+        activeQueue = [prev.currentTrack];
+      }
+      const curId = prev.currentTrack?.id || prev.currentTrack?.youtubeVideoId;
+
+      if (nextShuffle) {
+        // Toggling Shuffle ON:
+        // 1. Keep currently playing track running uninterrupted at its current seek time
+        // 2. Shuffle remaining/upcoming track queue in memory
+        const others = activeQueue.filter((t) => (t.id || t.youtubeVideoId) !== curId);
+        const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
+        const newQueue = prev.currentTrack ? [prev.currentTrack, ...shuffledOthers] : shuffledOthers;
+        return {
+          ...prev,
+          isShuffle: true,
+          queue: newQueue,
+          queueIndex: 0,
+        };
+      } else {
+        // Toggling Shuffle OFF:
+        // 1. Keep currently playing track running uninterrupted
+        // 2. Restore original linear playlist queue order without interrupting playback
+        return {
+          ...prev,
+          isShuffle: false,
+        };
+      }
+    });
+  }, []);
+
+  // Global event listener for synchronized Shuffle, Repeat, and Favorite states across components
+  useEffect(() => {
+    const handleShuffleEvt = (e: any) => {
+      if (typeof e.detail?.isShuffled === "boolean") {
+        setPlayerState((prev) => ({ ...prev, isShuffle: e.detail.isShuffled }));
+      }
+    };
+    const handleRepeatEvt = (e: any) => {
+      if (e.detail?.repeatMode) {
+        setPlayerState((prev) => ({ ...prev, repeatMode: e.detail.repeatMode }));
+      }
+    };
+    const handleFavEvt = (e: any) => {
+      if (e.detail?.likedTrackIds && Array.isArray(e.detail.likedTrackIds)) {
+        setPlayerState((prev) => ({ ...prev, likedTrackIds: e.detail.likedTrackIds }));
+      }
+    };
+    window.addEventListener("oblivion:shuffle_toggled", handleShuffleEvt);
+    window.addEventListener("oblivion:repeat_toggled", handleRepeatEvt);
+    window.addEventListener("oblivion:favorite_toggled", handleFavEvt);
+    return () => {
+      window.removeEventListener("oblivion:shuffle_toggled", handleShuffleEvt);
+      window.removeEventListener("oblivion:repeat_toggled", handleRepeatEvt);
+      window.removeEventListener("oblivion:favorite_toggled", handleFavEvt);
+    };
   }, []);
 
   // Toggle Like
@@ -2762,7 +2824,7 @@ export default function App() {
               isPlaying={playerState.isPlaying}
               playlists={playlists}
               isShuffle={playerState.isShuffle}
-              onToggleShuffle={() => setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))}
+              onToggleShuffle={handleToggleShuffle}
               repeatMode={playerState.repeatMode}
               onToggleRepeat={() =>
                 setPlayerState((prev) => ({

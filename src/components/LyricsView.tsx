@@ -411,6 +411,13 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     designConfig.name === "Candyland Pastel"
   );
 
+  const isHardRock = Boolean(
+    (designConfig.id as string) === "hard-rock" ||
+    (designConfig.id as string) === "sugar-time-jazz" ||
+    designConfig.name === "Hard Rock" ||
+    designConfig.name === "Sugar Time Jazz"
+  );
+
   const pillBgClass = designConfig.pillBg || "bg-white/10 backdrop-blur-md";
 
   // Determine Provider Display Label
@@ -459,44 +466,87 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               {/* Romanized vs Original Toggle */}
               <div className={`p-0.5 rounded-full flex items-center border ${designConfig.borderSubtle} ${pillBgClass}`}>
                 <button
+                  id="lyrics-toggle-original-btn"
                   onClick={() => setMode("original")}
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
                     mode === "original"
-                      ? `${designConfig.pillActive} shadow-sm font-bold !text-[#2b1810]`
+                      ? `${designConfig.pillActive} shadow-sm font-bold !text-[#1D0E0A]`
                       : `${designConfig.textMuted} hover:text-white`
                   }`}
-                  style={mode === "original" ? { color: "#2b1810" } : undefined}
+                  style={
+                    mode === "original"
+                      ? isHardRock
+                        ? {
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            color: "#1D0E0A",
+                            fontWeight: 700,
+                            border: "none",
+                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                          }
+                        : { color: "#2b1810" }
+                      : undefined
+                  }
                   title="Show lyrics in original language"
                 >
-                  Original
+                  <span style={mode === "original" && isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Original</span>
                 </button>
                 <button
+                  id="lyrics-toggle-romanized-btn"
                   onClick={() => setMode("romanized")}
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
                     mode === "romanized"
-                      ? `${designConfig.pillActive} shadow-sm font-bold !text-[#2b1810]`
+                      ? `${designConfig.pillActive} shadow-sm font-bold !text-[#1D0E0A]`
                       : `${designConfig.textMuted} hover:text-white`
                   }`}
-                  style={mode === "romanized" ? { color: "#2b1810" } : undefined}
+                  style={
+                    mode === "romanized"
+                      ? isHardRock
+                        ? {
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            color: "#1D0E0A",
+                            fontWeight: 700,
+                            border: "none",
+                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                          }
+                        : { color: "#2b1810" }
+                      : undefined
+                  }
                   title="Show romanized / phonetic transliteration"
                 >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Rom</span>
+                  <Sparkles
+                    className="w-3 h-3"
+                    style={mode === "romanized" && isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+                  />
+                  <span style={mode === "romanized" && isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Rom</span>
                 </button>
               </div>
 
               {/* Dual-Line Interleaved Toggle (Visible only when Romanized is active) */}
               {mode === "romanized" && (
                 <button
+                  id="lyrics-toggle-dualline-btn"
                   onClick={() => setIsDualLine(!isDualLine)}
                   className={`p-1.5 rounded-full border transition-all ${
                     isDualLine
                       ? `${designConfig.accentBorder} ${designConfig.pillActive} shadow-sm`
                       : `${designConfig.borderSubtle} ${pillBgClass} ${designConfig.textMuted} hover:text-white`
                   }`}
+                  style={
+                    isDualLine && isHardRock
+                      ? {
+                          background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                          color: "#1D0E0A",
+                          border: "none",
+                          boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                        }
+                      : undefined
+                  }
                   title={isDualLine ? "Disable dual-line view" : "Enable dual-line view (Original + Romanized)"}
                 >
-                  <Layers className="w-3.5 h-3.5" />
+                  <Layers
+                    className="w-3.5 h-3.5"
+                    style={isDualLine && isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+                  />
                 </button>
               )}
             </div>
@@ -508,18 +558,34 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
           <div className="flex items-center justify-end gap-2 max-w-2xl w-full mx-auto pt-1">
             {isSynced && (
               <button
+                id="lyrics-sync-center-btn"
                 type="button"
                 onClick={scrollToActiveLine}
                 className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1.5 border transition-all cursor-pointer ${
                   isUserScrolling
-                    ? `${designConfig.accentBorder} ${designConfig.pillActive} shadow-sm !text-[#2b1810]`
+                    ? `${designConfig.accentBorder} ${designConfig.pillActive} shadow-sm !text-[#1D0E0A]`
                     : `${designConfig.borderSubtle} ${pillBgClass} ${designConfig.textMuted} hover:text-white`
                 }`}
-                style={isUserScrolling ? { color: "#2b1810" } : undefined}
+                style={
+                  isUserScrolling
+                    ? isHardRock
+                      ? {
+                          background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                          color: "#1D0E0A",
+                          fontWeight: 700,
+                          border: "none",
+                          boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                        }
+                      : { color: "#2b1810" }
+                    : undefined
+                }
                 title="Sync / Center on active lyric line"
               >
-                <LocateFixed className="w-3 h-3" />
-                <span>Sync / Center</span>
+                <LocateFixed
+                  className="w-3 h-3"
+                  style={isUserScrolling && isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+                />
+                <span style={isUserScrolling && isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Sync / Center</span>
               </button>
             )}
 

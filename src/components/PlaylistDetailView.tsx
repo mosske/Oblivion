@@ -28,7 +28,8 @@ import {
   Globe,
   Lock,
   Link2,
-  Search
+  Search,
+  Heart,
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -37,6 +38,7 @@ import { PlaylistTrackList } from "./PlaylistTrackList";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { DeletePlaylistModal } from "./DeletePlaylistModal";
 import { MarqueeText } from "./MarqueeText";
+import { usePlayer } from "../context/PlayerContext";
 import { useContextualScrollRecovery } from "../utils/scrollRecovery";
 import { getCachedPlaylistTracksFromDB, savePlaylistTracksToDBCache } from "../utils/playlistDb";
 import { getCachedPlaylistTracks, setCachedPlaylistTracks, syncPlaylistWithRemote, revalidatePlaylist, cleanVideoId, getCachedPlaylist, fetchFreshYouTubePlaylist, savePlaylistToLocalStorage, purgeTrackGlobally } from "../services/playlistService";
@@ -128,6 +130,23 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     (item as any)?.isUserCreated === true ||
     (item as any)?.isEditable === true ||
     !effectiveIsAlbum
+  );
+
+  const playerContext = usePlayer();
+  const effectiveIsShuffle = playerContext ? playerContext.isShuffled : isShuffle;
+  const effectiveRepeatMode = playerContext ? playerContext.repeatMode : repeatMode;
+  const effectiveIsFavorite = playerContext ? playerContext.isFavorite : false;
+
+  const isHardRock = Boolean(
+    designConfig.id === "sugar-time-jazz" ||
+    (designConfig.id as string) === "hard-rock" ||
+    designConfig.name === "Hard Rock" ||
+    designConfig.themePreset === "sugar-time-jazz" ||
+    (typeof document !== "undefined" &&
+      (document.documentElement.getAttribute("data-theme") === "hard-rock" ||
+        document.documentElement.getAttribute("data-theme") === "sugar-time-jazz" ||
+        document.body.classList.contains("theme-hard-rock") ||
+        document.body.classList.contains("theme-sugar-time-jazz")))
   );
 
   const isBespoke = Boolean(
@@ -398,14 +417,39 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     setIsReorderMode(false);
   };
 
-  // Shuffle play all tracks in this playlist
-  const handleShufflePlay = () => {
-    if (tracks.length === 0) return;
-    const shuffled = [...tracks].sort(() => Math.random() - 0.5);
-    if (!isShuffle && onToggleShuffle) {
+  // Non-interruptive Shuffle Toggle:
+  // Toggling Shuffle MUST NOT immediately switch or restart the currently playing track.
+  const handleShuffleToggle = () => {
+    if (playerContext) {
+      if (effectiveIsShuffle) {
+        // Clicking an ACTIVE Shuffle button MUST execute setIsShuffled(false)
+        // and restore the linear playlist queue order without interrupting current audio playback.
+        playerContext.setIsShuffled(false);
+      } else {
+        // Toggling Shuffle ON:
+        if (tracks.length > 0 && playerContext.queue.length === 0) {
+          playerContext.setQueue(tracks);
+        }
+        playerContext.setIsShuffled(true);
+      }
+    } else if (onToggleShuffle) {
       onToggleShuffle();
     }
-    onPlayQueue(shuffled, 0);
+  };
+
+  const handleRepeatToggle = () => {
+    if (playerContext) {
+      playerContext.cycleRepeatMode();
+    } else if (onToggleRepeat) {
+      onToggleRepeat();
+    }
+  };
+
+  const handleFavoriteToggle = () => {
+    const targetTrackId = activeTrack?.id || currentTrackId;
+    if (playerContext) {
+      playerContext.toggleFavorite(targetTrackId);
+    }
   };
 
   // Contextual scroll recovery: Active track target (A) > Saved scroll position (B) > Top scroll (C) > Unmount capture (D)
@@ -778,41 +822,170 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           }`}
           style={isBespoke ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
         >
-          {/* Left Action Buttons: Play All, Shuffle, Repeat, Reorder */}
+          {/* Left Action Buttons: Play All, Shuffle, Repeat, Favorite, Reorder */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              id="playlist-play-all-btn"
               onClick={() => onPlayQueue(tracks, 0)}
-              className={`btn-primary-action px-5 py-2.5 rounded-xl ${designConfig.btnPrimary} font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95`}
+              className={`btn-primary-action px-5 py-2.5 rounded-xl ${
+                isHardRock ? "bg-transparent" : designConfig.btnPrimary
+              } font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95`}
+              style={
+                isHardRock
+                  ? {
+                      background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                      color: "#1D0E0A",
+                      border: "none",
+                      boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                    }
+                  : undefined
+              }
             >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Play All</span>
+              <Play
+                className="w-4 h-4 fill-current"
+                style={isHardRock ? { color: "#1D0E0A", fill: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+              />
+              <span style={isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Play All</span>
             </button>
 
             <button
-              onClick={handleShufflePlay}
+              id="playlist-shuffle-btn"
+              data-active={effectiveIsShuffle ? "true" : "false"}
+              onClick={handleShuffleToggle}
               className={`p-2.5 rounded-xl border transition-all ${
-                isShuffle
+                isHardRock
+                  ? ""
+                  : effectiveIsShuffle
                   ? `${designConfig.accentBorder} ${designConfig.accentBg} text-white shadow-md`
                   : `${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary}`
               }`}
-              title={isShuffle ? "Shuffle is ON — Click to reshuffle & play" : "Turn Shuffle ON & Play Random Sequence"}
+              style={
+                isHardRock
+                  ? effectiveIsShuffle
+                    ? {
+                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                        color: "#1D0E0A",
+                        border: "none",
+                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                      }
+                    : {
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        border: "none",
+                        color: "#C084FC",
+                        boxShadow: "none",
+                      }
+                  : undefined
+              }
+              title={effectiveIsShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
             >
-              <Shuffle className="w-4 h-4" />
+              <Shuffle
+                className="w-4 h-4"
+                style={
+                  isHardRock
+                    ? effectiveIsShuffle
+                      ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
+                      : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                    : undefined
+                }
+              />
             </button>
 
-            {onToggleRepeat && (
-              <button
-                onClick={onToggleRepeat}
-                className={`p-2.5 rounded-xl border transition-all ${
-                  repeatMode !== "off"
-                    ? `${designConfig.accentBorder} ${designConfig.accentBg} text-white shadow-md`
-                    : `${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary}`
-                }`}
-                title={`Repeat Mode: ${repeatMode}`}
-              >
-                {repeatMode === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
-              </button>
-            )}
+            <button
+              id="playlist-repeat-btn"
+              data-active={effectiveRepeatMode !== "off" ? "true" : "false"}
+              onClick={handleRepeatToggle}
+              className={`p-2.5 rounded-xl border transition-all ${
+                isHardRock
+                  ? ""
+                  : effectiveRepeatMode !== "off"
+                  ? `${designConfig.accentBorder} ${designConfig.accentBg} text-white shadow-md`
+                  : `${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary}`
+              }`}
+              style={
+                isHardRock
+                  ? effectiveRepeatMode !== "off"
+                    ? {
+                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                        color: "#1D0E0A",
+                        border: "none",
+                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                      }
+                    : {
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        border: "none",
+                        color: "#C084FC",
+                        boxShadow: "none",
+                      }
+                  : undefined
+              }
+              title={`Repeat Mode: ${effectiveRepeatMode}`}
+            >
+              {effectiveRepeatMode === "one" ? (
+                <Repeat1
+                  className="w-4 h-4"
+                  style={
+                    isHardRock
+                      ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
+                      : undefined
+                  }
+                />
+              ) : (
+                <Repeat
+                  className="w-4 h-4"
+                  style={
+                    isHardRock
+                      ? effectiveRepeatMode !== "off"
+                        ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
+                        : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                      : undefined
+                  }
+                />
+              )}
+            </button>
+
+            <button
+              id="playlist-favorite-btn"
+              data-active={effectiveIsFavorite ? "true" : "false"}
+              onClick={handleFavoriteToggle}
+              className={`p-2.5 rounded-xl border transition-all ${
+                isHardRock
+                  ? ""
+                  : effectiveIsFavorite
+                  ? "bg-rose-500/20 text-rose-500 border-rose-500/30 shadow-md"
+                  : `${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary}`
+              }`}
+              style={
+                isHardRock
+                  ? effectiveIsFavorite
+                    ? {
+                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                        color: "#1D0E0A",
+                        border: "none",
+                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                      }
+                    : {
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        border: "none",
+                        color: "#C084FC",
+                        boxShadow: "none",
+                      }
+                  : undefined
+              }
+              title={effectiveIsFavorite ? "Favorite track (Liked)" : "Favorite track"}
+            >
+              <Heart
+                className="w-4 h-4"
+                style={
+                  isHardRock
+                    ? effectiveIsFavorite
+                      ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
+                      : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                    : effectiveIsFavorite
+                    ? { fill: "currentColor" }
+                    : undefined
+                }
+              />
+            </button>
           </div>
 
           {/* Right Action Buttons: Edit details and Delete Playlist */}

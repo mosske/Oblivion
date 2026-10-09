@@ -234,6 +234,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     );
   }
 
+  const isHardRock = Boolean(
+    designConfig.id === "sugar-time-jazz" ||
+    (designConfig.id as string) === "hard-rock" ||
+    designConfig.name === "Hard Rock" ||
+    designConfig.name === "Sugar Time Jazz"
+  );
+
   return (
     <div className="flex flex-col select-none">
       <div className="flex-1 space-y-8 p-6 md:p-8 pb-64 sm:pb-72 md:pb-52">
@@ -269,11 +276,26 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               <button
                 id="library-new-playlist-btn"
                 onClick={onCreatePlaylist}
-                style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}
-                className={`px-4 py-2.5 ${designConfig.btnPrimary} rounded-xl transition-all font-bold flex items-center gap-2 text-xs shadow-lg active:scale-95`}
+                style={
+                  isHardRock
+                    ? {
+                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                        color: "#1D0E0A",
+                        border: "none",
+                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                      }
+                    : { color: "#0f0d13", opacity: 1, fontWeight: 700 }
+                }
+                className={`px-4 py-2.5 ${isHardRock ? "" : designConfig.btnPrimary} rounded-xl transition-all font-bold flex items-center gap-2 text-xs shadow-lg active:scale-95`}
               >
-                <Plus className="w-4 h-4" color="#0f0d13" stroke="#0f0d13" style={{ color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }} strokeWidth={2.5} />
-                <span style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}>New Playlist</span>
+                <Plus
+                  className="w-4 h-4"
+                  color={isHardRock ? "#1D0E0A" : "#0f0d13"}
+                  stroke={isHardRock ? "#1D0E0A" : "#0f0d13"}
+                  style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", opacity: 1 } : { color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }}
+                  strokeWidth={2.5}
+                />
+                <span style={isHardRock ? { color: "#1D0E0A", opacity: 1, fontWeight: 700 } : { color: "#0f0d13", opacity: 1, fontWeight: 700 }}>New Playlist</span>
               </button>
             </div>
           </div>
@@ -347,11 +369,26 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   <button
                     id="library-empty-create-playlist-btn"
                     onClick={onCreatePlaylist}
-                    style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}
-                    className={`px-4 py-2 text-xs font-bold ${designConfig.btnPrimary} rounded-xl shadow-md flex items-center gap-2`}
+                    style={
+                      isHardRock
+                        ? {
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            color: "#1D0E0A",
+                            border: "none",
+                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                          }
+                        : { color: "#0f0d13", opacity: 1, fontWeight: 700 }
+                    }
+                    className={`px-4 py-2 text-xs font-bold ${isHardRock ? "" : designConfig.btnPrimary} rounded-xl shadow-md flex items-center gap-2`}
                   >
-                    <Plus className="w-4 h-4" color="#0f0d13" stroke="#0f0d13" style={{ color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }} strokeWidth={2.5} />
-                    <span style={{ color: "#0f0d13", opacity: 1, fontWeight: 700 }}>Create Playlist</span>
+                    <Plus
+                      className="w-4 h-4"
+                      color={isHardRock ? "#1D0E0A" : "#0f0d13"}
+                      stroke={isHardRock ? "#1D0E0A" : "#0f0d13"}
+                      style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", opacity: 1 } : { color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }}
+                      strokeWidth={2.5}
+                    />
+                    <span style={isHardRock ? { color: "#1D0E0A", opacity: 1, fontWeight: 700 } : { color: "#0f0d13", opacity: 1, fontWeight: 700 }}>Create Playlist</span>
                   </button>
                   {!user?.isLoggedIn && onOpenAuthModal && (
                     <button

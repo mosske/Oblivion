@@ -85,6 +85,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setTimeout(() => setInstallSuccessMsg(""), 7000);
   };
 
+  const isHardRock = Boolean(
+    designConfig.id === "sugar-time-jazz" ||
+    (designConfig.id as string) === "hard-rock" ||
+    designConfig.name === "Hard Rock" ||
+    designConfig.name === "Sugar Time Jazz"
+  );
+
   return (
     <div id="settings-page" data-testid="settings-page" className="settings-page settings-container flex-1 p-4 sm:p-6 md:p-8 space-y-8 pb-64 sm:pb-72 md:pb-52 max-w-5xl select-none">
       {/* Header */}
@@ -134,10 +141,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             id="install-app-android-btn"
             onClick={handleInstallClick}
-            className={`px-5 py-3 rounded-2xl ${designConfig.btnPrimary} font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shrink-0`}
+            className={`px-5 py-3 rounded-2xl ${isHardRock ? "" : designConfig.btnPrimary} font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shrink-0`}
+            style={
+              isHardRock
+                ? {
+                    background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                    color: "#1D0E0A",
+                    border: "none",
+                    boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                  }
+                : undefined
+            }
           >
-            <Smartphone className="w-4 h-4" />
-            <span>Install App</span>
+            <Smartphone
+              className="w-4 h-4"
+              style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+            />
+            <span style={isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Install App</span>
           </button>
         </div>
 

@@ -32,6 +32,7 @@ import { cleanVideoId, purgeTrackFromStorage, purgeTrackGlobally } from "../serv
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { calculateWcagText, hexToRgba } from "../theme/colorUtils";
 import { getBespokeColors, getBespokeConfig } from "../theme/themeService";
+import { usePlayer } from "../context/PlayerContext";
 
 export interface PlayerProps {
   playerState: PlayerState;
@@ -1248,6 +1249,11 @@ export const Player: React.FC<PlayerProps> = ({
     showLyrics,
     showSimilar,
   } = playerState;
+
+  const playerCtx = usePlayer();
+  const effectiveShuffle = playerCtx ? playerCtx.isShuffled : isShuffle;
+  const effectiveRepeat = playerCtx ? playerCtx.repeatMode : repeatMode;
+  const effectiveLiked = playerCtx ? playerCtx.isFavorite : isLiked;
 
   // Unified activeTab across full player: "audio" | "video" | "lyrics" | "radio"
   const activeTab: "audio" | "video" | "lyrics" | "radio" = showLyrics
@@ -2870,11 +2876,12 @@ export const Player: React.FC<PlayerProps> = ({
                             padding: "6px 14px",
                             border: "none",
                             boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.05)",
-                            color: "#D1C4E9",
-                            opacity: 1,
+                            backgroundColor: "rgba(255, 255, 255, 0.08)",
+                            color: "#C084FC !important",
+                            opacity: "1 !important",
                             borderRadius: "9999px",
                             padding: "6px 12px",
                             border: "none",
@@ -2884,17 +2891,36 @@ export const Player: React.FC<PlayerProps> = ({
                   >
                     <Music2
                       size={15}
-                      style={{
-                        color: activeTab === "audio" ? "#1D0E0A" : "#D1C4E9",
-                        stroke: activeTab === "audio" ? "#1D0E0A" : "#D1C4E9",
-                        opacity: 1,
-                      }}
+                      style={
+                        activeTab === "audio"
+                          ? {
+                              color: "#1D0E0A",
+                              stroke: "#1D0E0A",
+                              fill: "#1D0E0A",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              fill: "none !important",
+                              stroke: "#C084FC !important",
+                              opacity: "1 !important",
+                            }
+                      }
                     />
                     <span
-                      style={{
-                        color: activeTab === "audio" ? "#1D0E0A" : "#D1C4E9",
-                        fontWeight: activeTab === "audio" ? "bold" : "500",
-                      }}
+                      style={
+                        activeTab === "audio"
+                          ? {
+                              color: "#1D0E0A",
+                              fontWeight: "bold",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              opacity: "1 !important",
+                              fontWeight: 500,
+                            }
+                      }
                     >
                       Audio
                     </span>
@@ -2917,11 +2943,12 @@ export const Player: React.FC<PlayerProps> = ({
                             padding: "6px 14px",
                             border: "none",
                             boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.05)",
-                            color: "#D1C4E9",
-                            opacity: 1,
+                            backgroundColor: "rgba(255, 255, 255, 0.08)",
+                            color: "#C084FC !important",
+                            opacity: "1 !important",
                             borderRadius: "9999px",
                             padding: "6px 12px",
                             border: "none",
@@ -2931,17 +2958,36 @@ export const Player: React.FC<PlayerProps> = ({
                   >
                     <Video
                       size={15}
-                      style={{
-                        color: activeTab === "video" ? "#1D0E0A" : "#D1C4E9",
-                        stroke: activeTab === "video" ? "#1D0E0A" : "#D1C4E9",
-                        opacity: 1,
-                      }}
+                      style={
+                        activeTab === "video"
+                          ? {
+                              color: "#1D0E0A",
+                              stroke: "#1D0E0A",
+                              fill: "#1D0E0A",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              fill: "none !important",
+                              stroke: "#C084FC !important",
+                              opacity: "1 !important",
+                            }
+                      }
                     />
                     <span
-                      style={{
-                        color: activeTab === "video" ? "#1D0E0A" : "#D1C4E9",
-                        fontWeight: activeTab === "video" ? "bold" : "500",
-                      }}
+                      style={
+                        activeTab === "video"
+                          ? {
+                              color: "#1D0E0A",
+                              fontWeight: "bold",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              opacity: "1 !important",
+                              fontWeight: 500,
+                            }
+                      }
                     >
                       Video
                     </span>
@@ -2964,11 +3010,12 @@ export const Player: React.FC<PlayerProps> = ({
                             padding: "6px 14px",
                             border: "none",
                             boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.05)",
-                            color: "#D1C4E9",
-                            opacity: 1,
+                            backgroundColor: "rgba(255, 255, 255, 0.08)",
+                            color: "#C084FC !important",
+                            opacity: "1 !important",
                             borderRadius: "9999px",
                             padding: "6px 12px",
                             border: "none",
@@ -2978,17 +3025,36 @@ export const Player: React.FC<PlayerProps> = ({
                   >
                     <Sparkles
                       size={15}
-                      style={{
-                        color: activeTab === "lyrics" ? "#1D0E0A" : "#D1C4E9",
-                        stroke: activeTab === "lyrics" ? "#1D0E0A" : "#D1C4E9",
-                        opacity: 1,
-                      }}
+                      style={
+                        activeTab === "lyrics"
+                          ? {
+                              color: "#1D0E0A",
+                              stroke: "#1D0E0A",
+                              fill: "#1D0E0A",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              fill: "none !important",
+                              stroke: "#C084FC !important",
+                              opacity: "1 !important",
+                            }
+                      }
                     />
                     <span
-                      style={{
-                        color: activeTab === "lyrics" ? "#1D0E0A" : "#D1C4E9",
-                        fontWeight: activeTab === "lyrics" ? "bold" : "500",
-                      }}
+                      style={
+                        activeTab === "lyrics"
+                          ? {
+                              color: "#1D0E0A",
+                              fontWeight: "bold",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              opacity: "1 !important",
+                              fontWeight: 500,
+                            }
+                      }
                     >
                       Lyrics
                     </span>
@@ -3011,11 +3077,12 @@ export const Player: React.FC<PlayerProps> = ({
                             padding: "6px 14px",
                             border: "none",
                             boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.05)",
-                            color: "#D1C4E9",
-                            opacity: 1,
+                            backgroundColor: "rgba(255, 255, 255, 0.08)",
+                            color: "#C084FC !important",
+                            opacity: "1 !important",
                             borderRadius: "9999px",
                             padding: "6px 12px",
                             border: "none",
@@ -3025,17 +3092,36 @@ export const Player: React.FC<PlayerProps> = ({
                   >
                     <Radio
                       size={15}
-                      style={{
-                        color: activeTab === "radio" ? "#1D0E0A" : "#D1C4E9",
-                        stroke: activeTab === "radio" ? "#1D0E0A" : "#D1C4E9",
-                        opacity: 1,
-                      }}
+                      style={
+                        activeTab === "radio"
+                          ? {
+                              color: "#1D0E0A",
+                              stroke: "#1D0E0A",
+                              fill: "#1D0E0A",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              fill: "none !important",
+                              stroke: "#C084FC !important",
+                              opacity: "1 !important",
+                            }
+                      }
                     />
                     <span
-                      style={{
-                        color: activeTab === "radio" ? "#1D0E0A" : "#D1C4E9",
-                        fontWeight: activeTab === "radio" ? "bold" : "500",
-                      }}
+                      style={
+                        activeTab === "radio"
+                          ? {
+                              color: "#1D0E0A",
+                              fontWeight: "bold",
+                              opacity: 1,
+                            }
+                          : {
+                              color: "#C084FC !important",
+                              opacity: "1 !important",
+                              fontWeight: 500,
+                            }
+                      }
                     >
                       Radio
                     </span>
@@ -3363,43 +3449,8 @@ export const Player: React.FC<PlayerProps> = ({
           >
             {/* Top Row Controls: Like, Add, Prev, Play/Pause, Next, Shuffle, Repeat, Volume */}
             <div className="flex items-center justify-between gap-1 sm:gap-2 px-1">
-              {/* Left Group: Like, Add to Playlist */}
+              {/* Left Group: Add to Playlist */}
               <div className="flex-1 flex items-center justify-start gap-1 sm:gap-2">
-                <button
-                  onClick={() => onToggleLike(currentTrack.id)}
-                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn rounded-xl border ${isLiked ? "bg-rose-500/20 text-rose-500 border-rose-500/30 liked-btn" : fpTheme.ctrlBtn}`}`}
-                  style={isHardRock ? {
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                    padding: "8px",
-                    opacity: 1,
-                  } : isCandyland ? {
-                    color: isLiked ? "#ff1493" : "#8a2be2",
-                  } : (isLiked && isBespoke ? {
-                    backgroundColor: hexToRgba(bespokeColors[1], 0.2),
-                    borderColor: hexToRgba(bespokeColors[1], 0.4),
-                    color: bespokeColors[1],
-                  } : (!isLiked ? { color: "#e8d5b5" } : undefined))}
-                  title="Like track"
-                >
-                  <Heart
-                    className={`control-icon w-5 h-5 sm:w-6 sm:h-6 ${!isHardRock && isLiked ? "fill-rose-500 text-rose-500" : ""}`}
-                    style={isHardRock ? {
-                      color: "#e8d5b5",
-                      stroke: "#e8d5b5",
-                      fill: isLiked ? "#e8d5b5" : "none",
-                      opacity: 1,
-                    } : isCandyland ? {
-                      color: isLiked ? "#ff1493" : "#8a2be2",
-                      stroke: isLiked ? "#ff1493" : "#8a2be2",
-                      fill: isLiked ? "#ff1493" : "none",
-                      opacity: 1,
-                    } : (!isLiked ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
-                  />
-                </button>
-
                 {/* Add to Playlist Button */}
                 <button
                   id="player-fullscreen-add-playlist-btn"
@@ -3541,13 +3592,16 @@ export const Player: React.FC<PlayerProps> = ({
                     {isPlaying ? (
                       <Pause
                         size={24}
+                        strokeWidth={2.5}
                         style={
                           isHardRock
                             ? {
                                 color: "#1D0E0A",
                                 stroke: "#1D0E0A",
-                                fill: "#1D0E0A",
+                                fill: "none",
                                 opacity: 1,
+                                filter:
+                                  "drop-shadow(0px 1px 0px rgba(255, 255, 255, 0.4)) drop-shadow(0px -1px 1px rgba(0, 0, 0, 0.6))",
                               }
                             : undefined
                         }
@@ -3556,13 +3610,16 @@ export const Player: React.FC<PlayerProps> = ({
                     ) : (
                       <Play
                         size={24}
+                        strokeWidth={2.5}
                         style={
                           isHardRock
                             ? {
                                 color: "#1D0E0A",
                                 stroke: "#1D0E0A",
-                                fill: "#1D0E0A",
+                                fill: "none",
                                 opacity: 1,
+                                filter:
+                                  "drop-shadow(0px 1px 0px rgba(255, 255, 255, 0.4)) drop-shadow(0px -1px 1px rgba(0, 0, 0, 0.6))",
                               }
                             : undefined
                         }
@@ -3604,85 +3661,81 @@ export const Player: React.FC<PlayerProps> = ({
                 </button>
               </div>
 
-              {/* Right Group: Shuffle, Repeat, Volume */}
+              {/* Right Group: Repeat, Volume */}
               <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
                 <button
-                  onClick={() =>
-                    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
+                  onClick={() => {
+                    if (playerCtx) {
+                      playerCtx.cycleRepeatMode();
+                    }
+                    cycleRepeatMode();
+                  }}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${
+                    isHardRock
+                      ? (effectiveRepeat !== "off" ? "full-player-dock-btn-active" : "")
+                      : `player-control-btn control-btn rounded-xl ${effectiveRepeat !== "off" ? fpTheme.activeText : fpTheme.mutedText}`
+                  }`}
+                  style={
+                    isHardRock
+                      ? effectiveRepeat !== "off"
+                        ? {
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            border: "none",
+                            borderRadius: "12px",
+                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.4)",
+                            padding: "8px",
+                            opacity: 1,
+                          }
+                        : {
+                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            border: "none",
+                            borderRadius: "12px",
+                            boxShadow: "none",
+                            outline: "none",
+                            padding: "8px",
+                            opacity: 0.9,
+                          }
+                      : isCandyland
+                      ? {
+                          color: effectiveRepeat !== "off" ? "#ff1493" : "#8a2be2",
+                        }
+                      : (effectiveRepeat !== "off" && isBespoke ? { color: bespokeColors[1] } : (effectiveRepeat === "off" ? { color: "#e8d5b5" } : undefined))
                   }
-                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn control-btn rounded-xl ${isShuffle ? fpTheme.activeText : fpTheme.mutedText}`}`}
-                  style={isHardRock ? {
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                    padding: "8px",
-                    opacity: 1,
-                  } : isCandyland ? {
-                    color: isShuffle ? "#ff1493" : "#8a2be2",
-                  } : (isShuffle && isBespoke ? { color: bespokeColors[1] } : (!isShuffle ? { color: "#e8d5b5" } : undefined))}
-                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
+                  title={`Repeat: ${effectiveRepeat}`}
                 >
-                  <Shuffle
-                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
-                    style={isHardRock ? {
-                      color: "#e8d5b5",
-                      stroke: "#e8d5b5",
-                      fill: "none",
-                      opacity: isShuffle ? 1 : 0.8,
-                    } : isCandyland ? {
-                      color: isShuffle ? "#ff1493" : "#8a2be2",
-                      stroke: isShuffle ? "#ff1493" : "#8a2be2",
-                      fill: "none",
-                      opacity: isShuffle ? 1 : 0.9,
-                    } : (!isShuffle ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
-                  />
-                </button>
-
-                <button
-                  onClick={cycleRepeatMode}
-                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn control-btn rounded-xl ${repeatMode !== "off" ? fpTheme.activeText : fpTheme.mutedText}`}`}
-                  style={isHardRock ? {
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                    padding: "8px",
-                    opacity: 1,
-                  } : isCandyland ? {
-                    color: repeatMode !== "off" ? "#ff1493" : "#8a2be2",
-                  } : (repeatMode !== "off" && isBespoke ? { color: bespokeColors[1] } : (repeatMode === "off" ? { color: "#e8d5b5" } : undefined))}
-                  title={`Repeat: ${repeatMode}`}
-                >
-                  {repeatMode === "one" ? (
+                  {effectiveRepeat === "one" ? (
                     <Repeat1
                       className="control-icon w-5 h-5 sm:w-6 sm:h-6"
-                      style={isHardRock ? {
-                        color: "#e8d5b5",
-                        stroke: "#e8d5b5",
-                        fill: "none",
-                        opacity: 1,
-                      } : isCandyland ? {
-                        color: "#8a2be2",
-                        stroke: "#8a2be2",
-                        fill: "none",
-                        opacity: 1,
-                      } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
+                      style={
+                        isHardRock
+                          ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
+                          : isCandyland
+                          ? {
+                              color: "#8a2be2",
+                              stroke: "#8a2be2",
+                              fill: "none",
+                              opacity: 1,
+                            }
+                          : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }
+                      }
                     />
                   ) : (
                     <Repeat
                       className="control-icon w-5 h-5 sm:w-6 sm:h-6"
-                      style={isHardRock ? {
-                        color: "#e8d5b5",
-                        stroke: "#e8d5b5",
-                        fill: "none",
-                        opacity: repeatMode === "off" ? 0.8 : 1,
-                      } : isCandyland ? {
-                        color: repeatMode !== "off" ? "#ff1493" : "#8a2be2",
-                        stroke: repeatMode !== "off" ? "#ff1493" : "#8a2be2",
-                        fill: "none",
-                        opacity: repeatMode === "off" ? 0.85 : 1,
-                      } : (repeatMode === "off" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)}
+                      style={
+                        isHardRock
+                          ? effectiveRepeat !== "off"
+                            ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
+                            : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                          : isCandyland
+                          ? {
+                              color: effectiveRepeat !== "off" ? "#ff1493" : "#8a2be2",
+                              stroke: effectiveRepeat !== "off" ? "#ff1493" : "#8a2be2",
+                              fill: "none",
+                              opacity: effectiveRepeat === "off" ? 0.85 : 1,
+                            }
+                          : (effectiveRepeat === "off" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)
+                      }
                     />
                   )}
                 </button>
@@ -3919,12 +3972,40 @@ export const Player: React.FC<PlayerProps> = ({
                     {isPlaying ? (
                       <Pause
                         className="w-4 h-4 sm:w-4.5 sm:h-4.5"
-                        style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                        strokeWidth={2.5}
+                        style={
+                          isHardRock
+                            ? {
+                                color: "#1D0E0A",
+                                stroke: "#1D0E0A",
+                                fill: "none",
+                                opacity: 1,
+                                filter:
+                                  "drop-shadow(0px 1px 0px rgba(255, 255, 255, 0.4)) drop-shadow(0px -1px 1px rgba(0, 0, 0, 0.6))",
+                              }
+                            : isBespoke
+                            ? { fill: "none", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" }
+                            : { fill: "none", stroke: "white" }
+                        }
                       />
                     ) : (
                       <Play
                         className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5"
-                        style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 } : (isBespoke ? { fill: "var(--bespoke-mini-player-play-icon, #ffffff)", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" } : { fill: "white" })}
+                        strokeWidth={2.5}
+                        style={
+                          isHardRock
+                            ? {
+                                color: "#1D0E0A",
+                                stroke: "#1D0E0A",
+                                fill: "none",
+                                opacity: 1,
+                                filter:
+                                  "drop-shadow(0px 1px 0px rgba(255, 255, 255, 0.4)) drop-shadow(0px -1px 1px rgba(0, 0, 0, 0.6))",
+                              }
+                            : isBespoke
+                            ? { fill: "none", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" }
+                            : { fill: "none", stroke: "white" }
+                        }
                       />
                     )}
                   </button>
@@ -3955,96 +4036,65 @@ export const Player: React.FC<PlayerProps> = ({
                 </div>
               </div>
 
-              {/* Right: Remaining buttons sitting after Forward/Next button (Shuffle, Repeat, Like, Add, Expand) */}
+              {/* Right: Remaining buttons sitting after Forward/Next button (Repeat, Add, Expand) */}
               <div className="secondary-controls mini-player-secondary-controls flex items-center justify-end gap-0.5 sm:gap-1 shrink-0">
                 <button
-                  onClick={() =>
-                    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))
+                  onClick={() => {
+                    if (playerCtx) {
+                      playerCtx.cycleRepeatMode();
+                    }
+                    cycleRepeatMode();
+                  }}
+                  className={`player-control-btn action-btn p-1.5 transition-colors ${
+                    isHardRock
+                      ? (effectiveRepeat !== "off" ? "dock-btn-active" : "")
+                      : (effectiveRepeat !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`)
+                  }`}
+                  style={
+                    isHardRock
+                      ? effectiveRepeat !== "off"
+                        ? {
+                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            borderRadius: "8px",
+                            border: "none",
+                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.4)",
+                            padding: "6px",
+                            opacity: 1,
+                          }
+                        : {
+                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            borderRadius: "8px",
+                            border: "none",
+                            boxShadow: "none",
+                            outline: "none",
+                            padding: "6px",
+                            opacity: 0.9,
+                          }
+                      : undefined
                   }
-                  className={`player-control-btn action-btn p-1.5 transition-colors ${
-                    isHardRock ? "" : (isShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`)
-                  }`}
-                  style={isHardRock ? {
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                    padding: "6px",
-                    opacity: 1,
-                  } : undefined}
-                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
+                  title={`Repeat: ${effectiveRepeat}`}
                 >
-                  <Shuffle
-                    className="control-icon w-3.5 h-3.5"
-                    style={isHardRock ? {
-                      color: "#e8d5b5",
-                      stroke: "#e8d5b5",
-                      fill: "none",
-                      opacity: isShuffle ? 1 : 0.75,
-                    } : undefined}
-                  />
-                </button>
-
-                <button
-                  onClick={cycleRepeatMode}
-                  className={`player-control-btn action-btn p-1.5 transition-colors ${
-                    isHardRock ? "" : (repeatMode !== "off" ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`)
-                  }`}
-                  style={isHardRock ? {
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                    padding: "6px",
-                    opacity: 1,
-                  } : undefined}
-                  title={`Repeat: ${repeatMode}`}
-                >
-                  {repeatMode === "one" ? (
+                  {effectiveRepeat === "one" ? (
                     <Repeat1
                       className="control-icon w-3.5 h-3.5"
-                      style={isHardRock ? {
-                        color: "#e8d5b5",
-                        stroke: "#e8d5b5",
-                        fill: "none",
-                        opacity: 1,
-                      } : undefined}
+                      style={
+                        isHardRock
+                          ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
+                          : undefined
+                      }
                     />
                   ) : (
                     <Repeat
                       className="control-icon w-3.5 h-3.5"
-                      style={isHardRock ? {
-                        color: "#e8d5b5",
-                        stroke: "#e8d5b5",
-                        fill: "none",
-                        opacity: repeatMode === "off" ? 0.75 : 1,
-                      } : undefined}
+                      style={
+                        isHardRock
+                          ? effectiveRepeat !== "off"
+                            ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
+                            : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                          : undefined
+                      }
                     />
                   )}
-                </button>
-
-                <button
-                  onClick={() => onToggleLike(currentTrack.id)}
-                  className={`player-control-btn action-btn p-1.5 transition-colors ${isHardRock ? "" : "text-slate-400 hover:text-rose-500"}`}
-                  style={isHardRock ? {
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                    padding: "6px",
-                    opacity: 1,
-                  } : undefined}
-                  title="Favorite"
-                >
-                  <Heart
-                    className={`control-icon w-3.5 h-3.5 sm:w-4 sm:h-4 ${!isHardRock && isLiked ? "fill-rose-500 text-rose-500" : ""}`}
-                    style={isHardRock ? {
-                      color: "#e8d5b5",
-                      stroke: "#e8d5b5",
-                      fill: isLiked ? "#e8d5b5" : "none",
-                      opacity: 1,
-                    } : undefined}
-                  />
                 </button>
 
                 {/* Add to Playlist button on Mini Player */}
