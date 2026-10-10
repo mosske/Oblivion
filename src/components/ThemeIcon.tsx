@@ -290,11 +290,11 @@ export const ThemeIcon: React.FC<ThemeIconProps> = ({
 }) => {
   // Check if active theme is Sugar Time Jazz (from prop, document attribute, or class)
   const isSugarTimeJazz =
-    themeId === "sugar-time-jazz" ||
+    themeId === "hard-rock" || themeId === "sugar-time-jazz" ||
     (typeof document !== "undefined" &&
-      (document.documentElement.getAttribute("data-theme") === "sugar-time-jazz" ||
-        document.body.classList.contains("theme-sugar-time-jazz") ||
-        document.documentElement.classList.contains("theme-sugar-time-jazz")));
+      (document.documentElement.getAttribute("data-theme") === "hard-rock" || document.documentElement.getAttribute("data-theme") === "sugar-time-jazz" ||
+        document.body.classList.contains("theme-hard-rock") || document.body.classList.contains("theme-sugar-time-jazz") ||
+        document.documentElement.classList.contains("theme-hard-rock") || document.documentElement.classList.contains("theme-sugar-time-jazz")));
 
   if (isSugarTimeJazz) {
     const emoji = getSugarTimeJazzEmoji(name, genreTitle);

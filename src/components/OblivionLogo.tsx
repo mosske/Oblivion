@@ -168,7 +168,18 @@ const PALETTES: Record<string, GradientPalette> = {
     textGold: "#ff2a85",
   },
 
-  // 10. Sugar Time Jazz (Warm Beige/Cream `#f5eae1`, Amber/Chocolate & Ambient Purple Glow)
+  // 10. Hard Rock (formerly Sugar Time Jazz)
+  "hard-rock": {
+    ringGrad: { c1: "#f5eae1", c2: "#d4b496", c3: "#9333ea", c4: "#f5eae1" },
+    tri1Grad: { c1: "#d4b496", c2: "#c4b5a5", c3: "#1a1410" },
+    tri2Grad: { c1: "#f5eae1", c2: "#d4b496", c3: "#a855f7" },
+    highlight: "#ffffff",
+    shadow: "#120e0b",
+    playCore: "#120e0b",
+    playHighlight: "#f5eae1",
+    auraColor: "rgba(168, 85, 247, 0.75)",
+    textGold: "#f5eae1",
+  },
   "sugar-time-jazz": {
     ringGrad: { c1: "#f5eae1", c2: "#d4b496", c3: "#9333ea", c4: "#f5eae1" },
     tri1Grad: { c1: "#d4b496", c2: "#c4b5a5", c3: "#1a1410" },

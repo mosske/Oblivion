@@ -22,6 +22,7 @@ export interface FullAppDesignConfig {
   isHommeMosaic?: boolean;
   isCyberpunkCity?: boolean;
   isSugarTimeJazz?: boolean;
+  isHardRock?: boolean;
   isBespoke?: boolean;
   themeColorMeta?: string;
 
@@ -708,6 +709,7 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     themePreset: "sugar-time-jazz",
     playerLayout: "floating-dock",
     isSugarTimeJazz: true,
+    isHardRock: true,
     description:
       "A soulful, high-energy Hard Rock aesthetic featuring rich dark chocolate and warm tan gradients, frosted glass panels, high-contrast cream typography, and subtle ambient purple back-glow.",
     features: [
@@ -909,6 +911,7 @@ export const THEME_CANVAS_COLORS: Record<string, string> = {
   "neue-editorial": "#F2E8D8",
   "obsidian-depth": "#2a2e38",
   "nebula-liquid-glass": "#0d0b1a",
+  "hard-rock": "#120e0b",
   "sugar-time-jazz": "#120e0b",
   bespoke: "#0a0d1a",
 };
@@ -924,6 +927,7 @@ export const FULL_APP_DESIGNS_LIST: FullAppDesignConfig[] = Object.values(FULL_A
 export function getFullAppDesign(id?: string | null): FullAppDesignConfig {
   if (!id) return FULL_APP_DESIGNS_BASE.designer;
   if (id === "ytmusic-red") return FULL_APP_DESIGNS_BASE.candyland;
+  if (id === "hard-rock") return FULL_APP_DESIGNS_BASE["sugar-time-jazz"];
   if (id === "bespoke") return createBespokeConfig();
   return FULL_APP_DESIGNS_BASE[id] || FULL_APP_DESIGNS_BASE.designer;
 }

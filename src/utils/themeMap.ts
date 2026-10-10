@@ -255,6 +255,24 @@ export class ThemeRegistry {
       subtextColor: "text-pink-100/85",
       swatchColors: ["#0c071e", "#ff007f", "#ff7b00", "#00f0ff"]
     },
+    "hard-rock": {
+      id: "hard-rock",
+      name: "Hard Rock",
+      description: "Warm beige/tan to dark chocolate gradients, purple back-glow accents, frosted glass panels, and crisp cream typography.",
+      category: "Dark",
+      previewGradient: "from-[#120e0b] via-[#1a1410] to-[#0d0a08]",
+      accentClass: "text-[#d4b496]",
+      accentText: "text-[#d4b496]",
+      accentBg: "bg-[#e6d5c3]",
+      borderAccent: "border-[rgba(212,180,150,0.25)]",
+      bgCanvas: "from-[#120e0b] via-[#1a1410] to-[#0d0a08]",
+      cardBg: "bg-[rgba(36,28,22,0.45)] backdrop-blur-xl border border-[rgba(212,180,150,0.15)] shadow-xl",
+      sidebarBg: "bg-[rgba(28,22,17,0.75)] backdrop-blur-2xl border-r border-[rgba(212,180,150,0.15)]",
+      playerBg: "bg-[rgba(28,22,17,0.85)] backdrop-blur-3xl border-t border-[rgba(212,180,150,0.18)]",
+      textColor: "text-[#f5eae1]",
+      subtextColor: "text-[#c4b5a5]",
+      swatchColors: ["#120e0b", "#1a1410", "#d4b496", "#9333ea"]
+    },
     "sugar-time-jazz": {
       id: "sugar-time-jazz",
       name: "Hard Rock",

@@ -809,6 +809,14 @@ export default function App() {
           sliderTrack: "rgba(255, 255, 255, 0.14)",
           sliderFill: "#ff007f",
         },
+        "hard-rock": {
+          accent: "#d4b496",
+          secondary: "#c4b5a5",
+          tertiary: "#9333ea",
+          contrastText: "#120e0b",
+          sliderTrack: "rgba(212, 180, 150, 0.2)",
+          sliderFill: "#d4b496",
+        },
         "sugar-time-jazz": {
           accent: "#d4b496",
           secondary: "#c4b5a5",
@@ -2688,7 +2696,7 @@ export default function App() {
   }, [activeTab, selectedPlaylist?.id]);
 
   return (
-    <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : (activeFullDesign.isSugarTimeJazz || activeFullDesign.id === "sugar-time-jazz") ? "sugar-time-jazz-canvas-bg bg-[#120e0b]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
+    <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : (activeFullDesign.isHardRock || activeFullDesign.isSugarTimeJazz || activeFullDesign.id === "hard-rock" || activeFullDesign.id === "sugar-time-jazz") ? "hard-rock-canvas-bg bg-[#120e0b]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
 

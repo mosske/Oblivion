@@ -29,7 +29,6 @@ import {
   Lock,
   Link2,
   Search,
-  Heart,
 } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -135,7 +134,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const playerContext = usePlayer();
   const effectiveIsShuffle = playerContext ? playerContext.isShuffled : isShuffle;
   const effectiveRepeatMode = playerContext ? playerContext.repeatMode : repeatMode;
-  const effectiveIsFavorite = playerContext ? playerContext.isFavorite : false;
 
   const isHardRock = Boolean(
     designConfig.id === "sugar-time-jazz" ||
@@ -442,13 +440,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       playerContext.cycleRepeatMode();
     } else if (onToggleRepeat) {
       onToggleRepeat();
-    }
-  };
-
-  const handleFavoriteToggle = () => {
-    const targetTrackId = activeTrack?.id || currentTrackId;
-    if (playerContext) {
-      playerContext.toggleFavorite(targetTrackId);
     }
   };
 
@@ -943,49 +934,6 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               )}
             </button>
 
-            <button
-              id="playlist-favorite-btn"
-              data-active={effectiveIsFavorite ? "true" : "false"}
-              onClick={handleFavoriteToggle}
-              className={`p-2.5 rounded-xl border transition-all ${
-                isHardRock
-                  ? ""
-                  : effectiveIsFavorite
-                  ? "bg-rose-500/20 text-rose-500 border-rose-500/30 shadow-md"
-                  : `${designConfig.btnSecondary} ${designConfig.textMuted} hover:${designConfig.textPrimary}`
-              }`}
-              style={
-                isHardRock
-                  ? effectiveIsFavorite
-                    ? {
-                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                        color: "#1D0E0A",
-                        border: "none",
-                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
-                      }
-                    : {
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                        border: "none",
-                        color: "#C084FC",
-                        boxShadow: "none",
-                      }
-                  : undefined
-              }
-              title={effectiveIsFavorite ? "Favorite track (Liked)" : "Favorite track"}
-            >
-              <Heart
-                className="w-4 h-4"
-                style={
-                  isHardRock
-                    ? effectiveIsFavorite
-                      ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
-                      : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
-                    : effectiveIsFavorite
-                    ? { fill: "currentColor" }
-                    : undefined
-                }
-              />
-            </button>
           </div>
 
           {/* Right Action Buttons: Edit details and Delete Playlist */}

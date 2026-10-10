@@ -356,7 +356,14 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         } while (nextIdx === queueIndex && activeQueue.length > 1);
       }
     } else {
-      nextIdx = isShuffled ? Math.floor(Math.random() * queue.length) : isShuffled ? Math.floor(Math.random() * queue.length) : queueIndex + 1;
+      // Shuffling is off: strictly advance to the next linear track index
+      const curId = currentTrack?.id || (currentTrack as any)?.youtubeVideoId || (currentTrack as any)?.youtubeId;
+      const currentPos = curId
+        ? activeQueue.findIndex((t) => (t.id || (t as any).youtubeVideoId || (t as any).youtubeId) === curId)
+        : queueIndex;
+      const effectiveIndex = currentPos >= 0 ? currentPos : queueIndex;
+      nextIdx = effectiveIndex + 1;
+
       if (nextIdx >= activeQueue.length) {
         if (repeatMode === "off") {
           setIsPlaying(false);
@@ -376,7 +383,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setCurrentTime(0);
       setIsPlaying(true);
     }
-  }, [isShuffled, shuffledQueue, originalQueue, queue, queueIndex, repeatMode]);
+  }, [isShuffled, shuffledQueue, originalQueue, queue, queueIndex, currentTrack, repeatMode]);
 
   const playPrevTrack = useCallback(() => {
     const activeQueue = isShuffled

@@ -130,7 +130,7 @@ export type ThemePreset =
   | 'neue-editorial'
   | 'obsidian-depth'
   | 'nebula-liquid-glass'
-  | 'sugar-time-jazz'
+  | 'hard-rock' | 'sugar-time-jazz'
   | 'bespoke';
 export type AudioQuality = 'normal' | 'high' | 'lossless';
 export type LyricsFontSize = 'sm' | 'md' | 'lg';
@@ -161,7 +161,7 @@ export type FullAppDesignId =
   | 'neue-editorial'    // 7. Neue Editorial (Swiss High-Contrast, Pale Beige & Charcoal Pills)
   | 'obsidian-depth'    // 8. Obsidian Depth (Matte Slate, Soft 3D Extrusion & Neon Cyan)
   | 'nebula-liquid-glass' // 9. Nebula Liquid Glass (Deep Cosmic Void, Translucent Liquid Glass & Violet/Cyan Glow)
-  | 'sugar-time-jazz'    // 10. Sugar Time Jazz (Warm Tan to Dark Chocolate, Purple Back-Glow & Frosted Glass)
+  | 'hard-rock' | 'sugar-time-jazz'    // 10. Hard Rock (formerly Sugar Time Jazz) (Warm Tan to Dark Chocolate, Purple Back-Glow & Frosted Glass)
   | 'bespoke';           // 11. Bespoke (Customizable Liquid Glass Canvas with 4 User-Selected Theme Colors)
 
 export interface UserSettings {

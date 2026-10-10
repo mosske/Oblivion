@@ -17,5 +17,6 @@ export type {
 };
 
 export const THEMES_LIST = FULL_APP_DESIGNS_LIST;
+export const HARD_ROCK_THEME_ID: FullAppDesignId = 'hard-rock';
 export const SUGAR_TIME_JAZZ_THEME_ID: FullAppDesignId = 'sugar-time-jazz';
 export const BESPOKE_THEME_ID: FullAppDesignId = 'bespoke';
