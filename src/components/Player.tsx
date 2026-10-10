@@ -36,7 +36,7 @@ import { usePlayer } from "../context/PlayerContext";
 
 export interface PlayerProps {
   playerState: PlayerState;
-  setPlayerState: React.Dispatch<React.SetStateAction<PlayerState>>;
+  setPlayerState: React.Dispatch<React.SetStateAction<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D0E0A" strokeWidth="2.5" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>erState>>;
   onNextTrack: () => void;
   onPrevTrack: () => void;
   onTogglePlay: () => void;
@@ -136,13 +136,13 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
       minimizeBtn: "bg-white/[0.05] hover:bg-white/[0.14] text-white border border-white/[0.18] border-t-white/35 border-b-black/40 backdrop-blur-2xl shadow-md active:translate-y-0.5 rounded-xl transition-all",
       nowPlayingDot: `bg-[var(--bespoke-c2,${c2})] shadow-[0_0_12px_var(--bespoke-c2,${c2})]`,
       nowPlayingLabel: `text-[var(--bespoke-c2,${c2})] font-bold tracking-wider`,
-      nowPlayingTitle: "text-white drop-shadow-sm font-sans",
+      nowPlayingTitle: "text-white  font-sans",
       tabActive: `bg-gradient-to-r from-[var(--bespoke-c1,${c1})] to-[var(--bespoke-c2,${c2})] text-white shadow-[0_0_20px_var(--bespoke-c2,${c2})]/60 border-t border-white/50 border-b border-black/35 font-black rounded-xl`,
       tabInactive: "bg-white/[0.04] hover:bg-white/[0.10] text-white/80 border border-white/[0.16] border-t-white/30 border-b-black/30 backdrop-blur-2xl rounded-xl",
       artGlowRing: `from-[var(--bespoke-c1,${c1})]/60 to-[var(--bespoke-c2,${c2})]/60`,
       artBorder: "border border-white/[0.22] border-t-white/45 border-b-black/50 shadow-[0_24px_60px_rgba(0,0,0,0.8)] rounded-3xl",
       stageTitle: "text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-black",
-      stageArtist: `text-[var(--bespoke-c2,${c2})] font-bold drop-shadow-sm`,
+      stageArtist: `text-[var(--bespoke-c2,${c2})] font-bold `,
       stageTagAccent: "border border-white/30 text-white font-bold shadow-sm",
       stageTagNeutral: "bg-white/[0.04] border border-white/[0.16] border-t-white/30 border-b-black/30 text-white/90 backdrop-blur-2xl",
       bottomDeck: "bg-white/[0.04] backdrop-blur-3xl border border-white/[0.18] border-t-white/35 border-b-black/40 text-white shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.5),inset_0_-1.5px_2px_rgba(0,0,0,0.35),0_16px_48px_rgba(0,0,0,0.7)] rounded-3xl",
@@ -182,7 +182,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "bg-gradient-to-b from-[#2a242c]/70 to-[#161318]/80 hover:bg-white/[0.10] text-[#e6decb] border-white/[0.12] border-t-[#f7e2ab]/25 backdrop-blur-xl",
         artGlowRing: "from-[#f7e2ab]/40 via-[#dfb86c]/30 to-[#a07422]/40",
         artBorder: "border-white/[0.18] border-t-[#f7e2ab]/50 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_30px_rgba(223,184,108,0.15)]",
-        stageTitle: "text-[#fdfcf9] drop-shadow-md font-display",
+        stageTitle: "text-[#fdfcf9]  font-display",
         stageArtist: "text-[#dfb86c]",
         stageTagAccent: "bg-gradient-to-r from-[#f7e2ab]/15 to-[#dfb86c]/20 border-[#dfb86c]/40 text-[#f7e2ab]",
         stageTagNeutral: "bg-white/[0.08] border-white/[0.15] text-[#e6decb]",
@@ -220,7 +220,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "bg-slate-900/35 hover:bg-slate-800/50 backdrop-blur-md text-slate-300 border-slate-700/60",
         artGlowRing: "from-cyan-500/50 via-fuchsia-500/40 to-cyan-500/50",
         artBorder: "border-cyan-500/40 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
-        stageTitle: "text-white drop-shadow-md",
+        stageTitle: "text-white ",
         stageArtist: "text-[#00f3ff]",
         stageTagAccent: "bg-[#00f3ff]/15 border-[#00f3ff]/35 text-[#00f3ff] backdrop-blur-md",
         stageTagNeutral: "bg-slate-800/35 border-slate-700/60 text-slate-300 backdrop-blur-md",
@@ -258,7 +258,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "bg-red-950/60 hover:bg-red-900/70 text-red-200 border-red-900/40",
         artGlowRing: "from-red-600/50 via-rose-900/40 to-amber-600/30",
         artBorder: "border-red-900/60 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
-        stageTitle: "text-white drop-shadow-md",
+        stageTitle: "text-white ",
         stageArtist: "text-[#ff1e42]",
         stageTagAccent: "bg-[#ff1e42]/20 border-[#ff1e42]/40 text-red-300",
         stageTagNeutral: "bg-neutral-800/80 border-neutral-700 text-neutral-300",
@@ -296,7 +296,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "full-player-nav-btn bg-[#FFF0F5] text-[#FF1493] border-[#FFB6C1]",
         artGlowRing: "from-pink-300/40 via-purple-200/30 to-sky-200/40",
         artBorder: "border-pink-300 shadow-[0_16px_36px_rgba(255,182,193,0.4)]",
-        stageTitle: "text-[#2D2D2D] drop-shadow-sm font-extrabold",
+        stageTitle: "text-[#2D2D2D]  font-extrabold",
         stageArtist: "text-[#FF1493] font-bold",
         stageTagAccent: "bg-pink-100 border border-pink-300 text-[#FF1493]",
         stageTagNeutral: "bg-white border border-pink-200 text-[#2D2D2D]",
@@ -372,7 +372,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "bg-gradient-to-b from-white/[0.08] to-[#101724]/80 hover:from-white/[0.14] text-[#cbd5e1] border border-[#8fa7c2]/25 backdrop-blur-xl",
         artGlowRing: "from-[#b8cadc]/50 via-[#8fa7c2]/40 to-[#4a5f78]/50",
         artBorder: "border-[#8fa7c2]/35 border-t-white/25 shadow-[0_25px_60px_rgba(0,0,0,0.95)]",
-        stageTitle: "text-[#f8fafc] drop-shadow-md",
+        stageTitle: "text-[#f8fafc] ",
         stageArtist: "text-[#9bb0c6]",
         stageTagAccent: "bg-gradient-to-r from-[#8fa7c2]/25 to-[#4a5f78]/15 border border-[#8fa7c2]/40 text-[#d8e5f2] shadow-sm",
         stageTagNeutral: "bg-gradient-to-b from-white/[0.06] to-[#0e1522]/80 border border-[#8fa7c2]/20 text-[#cbd5e1]",
@@ -411,7 +411,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "bg-[#331359] hover:bg-[#40196f] text-purple-200 border-purple-700/40",
         artGlowRing: "from-purple-500/50 via-pink-500/40 to-[#ff2a8d]/50",
         artBorder: "border-purple-800/50 shadow-[0_25px_60px_rgba(0,0,0,0.9)]",
-        stageTitle: "text-purple-50 drop-shadow-md",
+        stageTitle: "text-purple-50 ",
         stageArtist: "text-[#ff2a8d]",
         stageTagAccent: "bg-[#ff2a8d]/20 border-[#ff2a8d]/40 text-pink-300",
         stageTagNeutral: "bg-[#331359] border-purple-700 text-purple-200",
@@ -449,7 +449,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "bg-[#F2E8D8] hover:bg-[#EFE5D4] text-[#8b6508] border-[#d4af37]/25 rounded-full",
         artGlowRing: "from-[#d4af37]/35 via-[#f3e5ab]/25 to-[#e6c667]/35",
         artBorder: "border-[#d4af37]/30 shadow-[0_25px_60px_rgba(184,134,11,0.2)] rounded-3xl",
-        stageTitle: "text-[#1F1F1F] drop-shadow-sm font-bold",
+        stageTitle: "text-[#1F1F1F]  font-bold",
         stageArtist: "text-[#b8860b] font-semibold",
         stageTagAccent: "bg-[#d4af37]/15 border-[#d4af37]/35 text-[#8b6508] rounded-full",
         stageTagNeutral: "bg-[#FAF5ED] border-[#d4af37]/20 text-[#8b6508] rounded-full",
@@ -487,7 +487,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         tabInactive: "bg-[#242831] hover:bg-[#20242c] text-slate-300 border-black/25 shadow-[inset_3px_3px_6px_rgba(13,15,21,0.85),inset_-2px_-2px_5px_rgba(255,255,255,0.06)] rounded-xl",
         artGlowRing: "from-[#a5f3fc]/50 via-[#38bdf8]/40 to-[#0284c7]/50",
         artBorder: "border-white/[0.08] shadow-[12px_12px_28px_rgba(12,14,20,0.85),-10px_-10px_24px_rgba(255,255,255,0.07)] rounded-3xl",
-        stageTitle: "text-slate-100 drop-shadow-md font-bold",
+        stageTitle: "text-slate-100  font-bold",
         stageArtist: "text-[#38bdf8] font-semibold",
         stageTagAccent: "bg-[#38bdf8]/20 border-[#38bdf8]/40 text-[#a5f3fc]",
         stageTagNeutral: "bg-[#242831] border-black/20 text-slate-300 shadow-[inset_3px_3px_6px_rgba(13,15,21,0.8)]",
@@ -520,13 +520,13 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         minimizeBtn: "bg-white/[0.04] hover:bg-white/[0.12] hover:text-white text-pink-100 border border-white/[0.18] border-t-white/35 border-b-black/40 backdrop-blur-2xl shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.45),inset_0_-1.5px_2px_rgba(0,0,0,0.35),0_4px_14px_rgba(0,0,0,0.5)] active:translate-y-0.5 rounded-xl transition-all",
         nowPlayingDot: "bg-[#ff007f] shadow-[0_0_10px_#ff007f]",
         nowPlayingLabel: "text-[#ff2a85]",
-        nowPlayingTitle: "text-white drop-shadow-sm",
+        nowPlayingTitle: "text-white ",
         tabActive: "bg-gradient-to-r from-[#ff007f] via-[#d946ef] to-[#ff7b00] text-white shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.65),inset_0_-1.5px_2px_rgba(0,0,0,0.35),0_0_22px_rgba(255,0,127,0.55),0_4px_12px_rgba(0,0,0,0.4)] border-t border-white/50 border-b border-black/35 font-black rounded-xl",
         tabInactive: "bg-white/[0.035] hover:bg-white/[0.09] text-pink-200 border border-white/[0.16] border-t-white/30 border-b-black/30 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_4px_12px_rgba(0,0,0,0.4)] rounded-xl",
         artGlowRing: "from-[#ff007f]/60 via-[#ff7b00]/50 to-[#00f0ff]/60",
         artBorder: "border border-white/[0.22] border-t-white/45 border-b-black/50 shadow-[0_24px_60px_rgba(0,0,0,0.8),inset_0_2px_2px_rgba(255,255,255,0.6),inset_0_-2px_3px_rgba(0,0,0,0.5),0_0_36px_rgba(255,0,127,0.35)] rounded-3xl",
         stageTitle: "text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-black",
-        stageArtist: "text-[#ff2a85] font-bold drop-shadow-sm",
+        stageArtist: "text-[#ff2a85] font-bold ",
         stageTagAccent: "bg-[#ff007f]/20 border border-pink-400/50 border-t-white/35 text-pink-100 font-bold shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_4px_14px_rgba(0,0,0,0.4),0_0_12px_rgba(255,0,127,0.3)]",
         stageTagNeutral: "bg-white/[0.04] border border-white/[0.16] border-t-white/30 border-b-black/30 text-pink-100 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_4px_12px_rgba(0,0,0,0.4)]",
         bottomDeck: "bg-white/[0.035] backdrop-blur-3xl border border-white/[0.18] border-t-white/35 border-b-black/40 text-white shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.5),inset_0_-1.5px_2px_rgba(0,0,0,0.35),0_16px_48px_rgba(0,0,0,0.7),0_0_32px_rgba(255,0,127,0.22)] rounded-3xl",
@@ -558,7 +558,7 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         minimizeBtn: "bg-transparent hover:bg-white/[0.08] text-[#e8d5b5] border-none shadow-none rounded-xl transition-all",
         nowPlayingDot: "bg-[#d4af37] shadow-[0_0_12px_#d4af37]",
         nowPlayingLabel: "text-[#d4af37] font-bold tracking-widest drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]",
-        nowPlayingTitle: "text-[#e8d5b5] drop-shadow-sm font-sans font-semibold",
+        nowPlayingTitle: "text-[#e8d5b5]  font-sans font-semibold",
         tabActive: "bg-[#e8d5b5] text-[#120e16] shadow-[0_0_24px_rgba(168,85,247,0.5)] font-bold border border-[rgba(212,175,55,0.4)] rounded-xl",
         tabInactive: "bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.12)] text-[#e8d5b5] border border-[rgba(212,175,55,0.2)] backdrop-blur-2xl rounded-xl",
         artGlowRing: "from-[#9333ea]/60 via-[#d4af37]/40 to-[#a855f7]/60",
@@ -819,7 +819,7 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   );
 };
 
-export const Player: React.FC<PlayerProps> = ({
+export const Player: React.FC<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D0E0A" strokeWidth="2.5" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>erProps> = ({
   playerState,
   setPlayerState,
   onNextTrack,
@@ -1581,7 +1581,7 @@ export const Player: React.FC<PlayerProps> = ({
     currentTrackRef.current = playerState.currentTrack;
   }, [playerState.currentTrack]);
 
-  const playerStateRef = useRef<PlayerState>(playerState);
+  const playerStateRef = useRef<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D0E0A" strokeWidth="2.5" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>erState>(playerState);
   useEffect(() => {
     playerStateRef.current = playerState;
   }, [playerState]);
@@ -2549,946 +2549,7 @@ export const Player: React.FC<PlayerProps> = ({
                   <h3 className={`text-base font-bold ${designConfig.textPrimary}`}>
                     Add to Playlist
                   </h3>
-              <button
-                onClick={() => setShowAddToPlaylistModal(false)}
-                className={`p-1.5 ${designConfig.textMuted} hover:${designConfig.textPrimary} rounded-lg`}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-              {playlists.length === 0 ? (
-                <p className={`text-xs ${designConfig.textMuted} text-center py-4`}>
-                  No playlists created yet. Create one in the Library.
-                </p>
-              ) : (
-                playlists.map((pl) => (
-                  <button
-                    key={pl.id}
-                    onClick={() => {
-                      if (onAddTrackToPlaylist) {
-                        onAddTrackToPlaylist(currentTrack, pl.id);
-                      }
-                      setShowAddToPlaylistModal(false);
-                    }}
-                    className={`w-full text-left p-3 rounded-2xl ${designConfig.cardBg} ${designConfig.cardHover} border ${designConfig.borderSubtle} flex items-center gap-3 transition-colors`}
-                  >
-                    <img
-                      src={pl.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=150&q=80"}
-                      alt=""
-                      className="w-10 h-10 rounded-xl object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-bold ${designConfig.textPrimary} truncate`}>{pl.title}</p>
-                      <p className={`text-[10px] ${designConfig.textMuted}`}>{pl.tracks?.length || pl.tracksCount || 0} tracks</p>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-          )}
-      {/* Full Player View - Permanently mounted in DOM without display:none so YouTube iframe context remains active */}
-      <div
-        ref={fullPlayerContainerRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={() => {
-          setTouchStartY(null);
-          setTouchStartX(null);
-          setDragOffsetY(0);
-          setIsDraggingDown(false);
-        }}
-        id="player-fullscreen-dock"
-        data-theme={designConfig.id}
-        className={`full-player-overlay full-player-container fixed inset-0 w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in ${designConfig.id === 'sugar-time-jazz' ? 'theme-sugar-time-jazz' : ''}`}
-        style={{
-          zIndex: isFullscreen ? 100 : -1,
-          opacity: isFullscreen ? (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1) : 0,
-          pointerEvents: isFullscreen ? "auto" : "none",
-          transform: !isFullscreen
-            ? "translate3d(0, 110%, 0)"
-            : dragOffsetY > 0
-            ? `translate3d(0, ${dragOffsetY}px, 0)`
-            : "none",
-          transition: isDraggingDown
-            ? "none"
-            : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease",
-          ...(isBespoke
-            ? {
-                background: `radial-gradient(circle at 10% 10%, ${bespokeColors[0]} 0%, ${bespokeColors[2]} 40%, #050508 80%)`,
-              }
-            : designConfig.id === "sugar-time-jazz"
-            ? {
-                background: "var(--bg-main, linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%))",
-                color: "var(--text-primary, #f5eae1)",
-              }
-            : {}),
-        }}
-      >
-          {/* Animated Dynamic Ambient Background based on the HD Cover Art / Video Thumbnail & Active Theme */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-            {settings.playerBackgroundAnimation === "ambient-drift" ? (
-              <>
-                {/* 1. Ambient Zoom & Drift - Dual Offset Parallax Motion with Theme Color Sets */}
-                <div
-                  className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift"
-                  style={{ animationDuration: `${settings.animationDriftSpeed || 6}s` }}
-                >
-                  <img
-                    src={getHdCoverUrl(currentTrack.coverUrl)}
-                    alt=""
-                    className="w-full h-full object-cover blur-[55px] sm:blur-[75px] opacity-75"
-                    onError={(e) => {
-                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                        e.currentTarget.src = currentTrack.coverUrl;
-                      }
-                    }}
-                  />
-                </div>
-                <div
-                  className="absolute -inset-[20%] flex items-center justify-center pointer-events-none animate-bg-drift-sec"
-                  style={{ animationDuration: `${(settings.animationDriftSpeed || 6) * 1.25}s` }}
-                >
-                  <img
-                    src={getHdCoverUrl(currentTrack.coverUrl)}
-                    alt=""
-                    className="w-full h-full object-cover blur-[85px] opacity-45 mix-blend-screen"
-                    onError={(e) => {
-                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                        e.currentTarget.src = currentTrack.coverUrl;
-                      }
-                    }}
-                  />
-                </div>
-                {/* Dynamic App Design Drift Aura Mesh */}
-                <div
-                  className={`absolute inset-0 ${fpTheme.driftAuraGlow} blur-[90px] pointer-events-none`}
-                  style={isBespoke ? { background: `radial-gradient(circle at 50% 50%, ${hexToRgba(bespokeColors[1], 0.25)}, transparent 70%)` } : undefined}
-                />
-                {/* Ambient Drifting Theme Orbs */}
-                <div
-                  className={`absolute -top-24 left-10 w-[550px] h-[550px] rounded-full ${fpTheme.orb1} blur-[120px] animate-ambient-orb`}
-                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[1], 0.55) } : undefined}
-                />
-                <div
-                  className={`absolute -bottom-24 right-10 w-[500px] h-[500px] rounded-full ${fpTheme.orb2} blur-[130px] animate-ambient-orb`}
-                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[3], 0.45) } : undefined}
-                />
-              </>
-            ) : settings.playerBackgroundAnimation === "aurora-pulse" ? (
-              <>
-                {/* 2. Aurora Pulse - Fluid Breathing & Sweeping Luminous Beams matching App Design */}
-                <div
-                  className="absolute -inset-[15%] flex items-center justify-center pointer-events-none animate-aurora-pulse"
-                  style={{ animationDuration: `${settings.animationAuroraSpeed || 6}s` }}
-                >
-                  <img
-                    src={getHdCoverUrl(currentTrack.coverUrl)}
-                    alt=""
-                    className="w-full h-full object-cover blur-[50px] sm:blur-[70px] opacity-80 saturate-[1.6]"
-                    onError={(e) => {
-                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                        e.currentTarget.src = currentTrack.coverUrl;
-                      }
-                    }}
-                  />
-                </div>
-                {/* Sweeping Aurora Light Beams dynamically styled with App Design Color Sets */}
-                <div
-                  className={`absolute -top-16 left-1/4 w-[600px] h-[500px] rounded-full ${fpTheme.auroraBeam1} blur-[100px] animate-aurora-surge`}
-                  style={{
-                    animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s`,
-                    ...(isBespoke ? { background: `linear-gradient(90deg, ${hexToRgba(bespokeColors[1], 0.5)}, ${hexToRgba(bespokeColors[2], 0.45)}, ${hexToRgba(bespokeColors[3], 0.5)})` } : {}),
-                  }}
-                />
-                <div
-                  className={`absolute -bottom-16 right-1/4 w-[550px] h-[480px] rounded-full ${fpTheme.auroraBeam2} blur-[110px] animate-aurora-surge`}
-                  style={{
-                    animationDuration: `${(settings.animationAuroraSpeed || 6) * 1.2}s`,
-                    ...(isBespoke ? { background: `linear-gradient(90deg, ${hexToRgba(bespokeColors[3], 0.45)}, ${hexToRgba(bespokeColors[2], 0.5)}, ${hexToRgba(bespokeColors[1], 0.5)})` } : {}),
-                  }}
-                />
-                <div
-                  className={`absolute top-1/4 left-1/4 w-[520px] h-[520px] rounded-full ${fpTheme.orb1} blur-[120px] animate-aurora-pulse`}
-                  style={{
-                    animationDuration: `${settings.animationAuroraSpeed || 6}s`,
-                    ...(isBespoke ? { backgroundColor: hexToRgba(bespokeColors[1], 0.5) } : {}),
-                  }}
-                />
-                <div
-                  className={`absolute bottom-1/4 right-1/4 w-[480px] h-[480px] rounded-full ${fpTheme.orb2} blur-[130px] animate-aurora-pulse`}
-                  style={{
-                    animationDuration: `${settings.animationAuroraSpeed || 6}s`,
-                    ...(isBespoke ? { backgroundColor: hexToRgba(bespokeColors[3], 0.45) } : {}),
-                  }}
-                />
-              </>
-            ) : settings.playerBackgroundAnimation === "orbital-flow" ? (
-              <>
-                {/* 3. Orbital Flow - Cosmic 360° Rotating Liquid Flow matching App Design */}
-                <div
-                  className="absolute -inset-[25%] flex items-center justify-center pointer-events-none animate-orbital-flow"
-                  style={{ animationDuration: `${settings.animationOrbitalSpeed || 6}s` }}
-                >
-                  <img
-                    src={getHdCoverUrl(currentTrack.coverUrl)}
-                    alt=""
-                    className="w-full h-full object-cover blur-[60px] sm:blur-[80px] opacity-75"
-                    onError={(e) => {
-                      if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                        e.currentTarget.src = currentTrack.coverUrl;
-                      }
-                    }}
-                  />
-                </div>
-                {/* Counter-rotating Orbital Planetary System with App Design Aura Rings */}
-                <div
-                  className="absolute inset-0 flex items-center justify-center animate-orbital-counter"
-                  style={{ animationDuration: `${(settings.animationOrbitalSpeed || 6) * 1.35}s` }}
-                >
-                  <div
-                    className={`absolute -top-24 left-16 w-[520px] h-[520px] rounded-full ${fpTheme.orbitalGlow1} blur-[105px] opacity-85`}
-                    style={isBespoke ? { background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[1], 0.6)}, ${hexToRgba(bespokeColors[2], 0.5)}, ${hexToRgba(bespokeColors[3], 0.6)})` } : undefined}
-                  />
-                  <div
-                    className={`absolute -bottom-24 right-16 w-[500px] h-[500px] rounded-full ${fpTheme.orbitalGlow2} blur-[115px] opacity-85`}
-                    style={isBespoke ? { background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[3], 0.5)}, ${hexToRgba(bespokeColors[0], 0.55)}, ${hexToRgba(bespokeColors[1], 0.6)})` } : undefined}
-                  />
-                </div>
-              </>
-            ) : (
-              /* Static Backdrop when Animation is Switched Off */
-              <div className="absolute inset-0">
-                <img
-                  src={getHdCoverUrl(currentTrack.coverUrl)}
-                  alt=""
-                  className="w-full h-full object-cover blur-[75px] opacity-35"
-                  onError={(e) => {
-                    if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                      e.currentTarget.src = currentTrack.coverUrl;
-                    }
-                  }}
-                />
-                <div
-                  className={`absolute -top-20 left-10 w-[400px] h-[400px] rounded-full ${fpTheme.orb1} blur-[140px] opacity-40`}
-                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[1], 0.4) } : undefined}
-                />
-                <div
-                  className={`absolute -bottom-20 right-10 w-[380px] h-[380px] rounded-full ${fpTheme.orb2} blur-[140px] opacity-40`}
-                  style={isBespoke ? { backgroundColor: hexToRgba(bespokeColors[3], 0.4) } : undefined}
-                />
-              </div>
-            )}
-
-            {/* Bespoke Dynamic Nebula Aurora Layer */}
-            {isBespoke && (
-              <div
-                className="absolute inset-0 opacity-40 mix-blend-screen filter blur-[90px] animate-nebula-aurora pointer-events-none transition-all duration-700"
-                style={{
-                  background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[0], 0.5)} 0%, ${hexToRgba(bespokeColors[1], 0.45)} 35%, ${hexToRgba(bespokeColors[2], 0.4)} 70%, ${hexToRgba(bespokeColors[3], 0.4)} 100%)`,
-                }}
-              />
-            )}
-
-            {/* Layer 3: High-Legibility Contrast Readability Veil */}
-            <div className={`absolute inset-0 ${fpTheme.veil}`} />
-          </div>
-
-          {/* Top Bar Navigation with Swipe Handle */}
-          <div
-            className={`full-player-header relative z-20 shrink-0 flex flex-col px-3.5 pt-2 pb-2.5 sm:px-6 sm:py-3.5 backdrop-blur-2xl ${isHardRock ? "" : `border-b ${fpTheme.topBar}`}`}
-            style={isBespoke ? {
-              background: `linear-gradient(180deg, ${hexToRgba(bespokeColors[0], 0.4)} 0%, rgba(10, 10, 16, 0.75) 100%)`,
-              borderBottomColor: hexToRgba(bespokeColors[2], 0.3),
-            } : isHardRock ? {
-              backgroundColor: "rgba(22, 18, 26, 0.85)",
-              borderBottom: "none",
-              boxShadow: "0 12px 28px -4px rgba(168, 85, 247, 0.4)",
-            } : undefined}
-          >
-            {/* Gesture Pull-Down Pill Indicator (Mobile / Touch Friendly) */}
-            <div className="flex justify-center pb-1 -mt-0.5 sm:hidden">
-              <div className="w-10 h-1 rounded-full bg-white/40 active:bg-white/70" />
-            </div>
-
-            {/* Brand Header */}
-            <div className="full-player-top-brand flex items-center justify-center gap-2 mb-1.5 sm:mb-2">
-              <Logo size={24} designId={designConfig.id} className="w-6 h-6" withAura animated />
-              <span
-                className={`font-bold tracking-widest uppercase text-sm ${designConfig.textPrimary || "text-white"}`}
-                style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.22em", textShadow: "0 0 16px rgba(168, 85, 247, 0.45)" } : undefined}
-              >
-                OBLIVION
-              </span>
-            </div>
-
-            {isHardRock ? (
-              /* Hard Rock Top Tab Bar matching reference image EXACTLY */
-              <div className="flex items-center justify-between w-full max-w-xl mx-auto px-1 sm:px-2">
-                {/* Chevron Minimize: Clean transparent button without bounding box */}
-                <button
-                  onClick={handleMinimizeFullPlayer}
-                  className="transition-all hover:scale-105 active:scale-95 flex items-center justify-center shrink-0 cursor-pointer p-2"
-                  style={{
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                  }}
-                  title="Minimize Full Player (or swipe down)"
-                >
-                  <ChevronDown
-                    size={24}
-                    style={{ color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
-                  />
-                </button>
-
-                {/* 4 Tabs Capsule: Audio, Video, Lyrics, Radio */}
-                <div
-                  className="flex items-center backdrop-blur-xl"
-                  style={{
-                    backgroundColor: "rgba(26, 20, 32, 0.9)",
-                    border: "1px solid rgba(232, 213, 181, 0.2)",
-                    borderRadius: "9999px",
-                    padding: "4px 5px",
-                    gap: "3px",
-                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(168, 85, 247, 0.2)",
-                  }}
-                >
-                  {/* Audio Tab */}
-                  <button
-                    id="player-toggle-audio-mode"
-                    onClick={(e) => handleTabSwitch("audio", e)}
-                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
-                      activeTab === "audio" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
-                    }`}
-                    style={
-                      activeTab === "audio"
-                        ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
-                            borderRadius: "9999px",
-                            padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
-                            opacity: 1,
-                          }
-                        : {
-                            backgroundColor: "rgba(255, 255, 255, 0.08)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
-                            borderRadius: "9999px",
-                            padding: "6px 12px",
-                            border: "none",
-                          }
-                    }
-                    title="Switch to Audio Mode"
-                  >
-                    <Music2
-                      size={15}
-                      style={
-                        activeTab === "audio"
-                          ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
-                            }
-                      }
-                    />
-                    <span
-                      style={
-                        activeTab === "audio"
-                          ? {
-                              color: "#1D0E0A",
-                              fontWeight: "bold",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
-                              fontWeight: 500,
-                            }
-                      }
-                    >
-                      Audio
-                    </span>
-                  </button>
-
-                  {/* Video Tab */}
-                  <button
-                    id="player-toggle-video-mode"
-                    onClick={(e) => handleTabSwitch("video", e)}
-                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
-                      activeTab === "video" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
-                    }`}
-                    style={
-                      activeTab === "video"
-                        ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
-                            borderRadius: "9999px",
-                            padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
-                            opacity: 1,
-                          }
-                        : {
-                            backgroundColor: "rgba(255, 255, 255, 0.08)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
-                            borderRadius: "9999px",
-                            padding: "6px 12px",
-                            border: "none",
-                          }
-                    }
-                    title="Switch to Video Mode"
-                  >
-                    <Video
-                      size={15}
-                      style={
-                        activeTab === "video"
-                          ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
-                            }
-                      }
-                    />
-                    <span
-                      style={
-                        activeTab === "video"
-                          ? {
-                              color: "#1D0E0A",
-                              fontWeight: "bold",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
-                              fontWeight: 500,
-                            }
-                      }
-                    >
-                      Video
-                    </span>
-                  </button>
-
-                  {/* Lyrics Tab */}
-                  <button
-                    id="player-toggle-lyrics-mode"
-                    onClick={(e) => handleTabSwitch("lyrics", e)}
-                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
-                      activeTab === "lyrics" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
-                    }`}
-                    style={
-                      activeTab === "lyrics"
-                        ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
-                            borderRadius: "9999px",
-                            padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
-                            opacity: 1,
-                          }
-                        : {
-                            backgroundColor: "rgba(255, 255, 255, 0.08)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
-                            borderRadius: "9999px",
-                            padding: "6px 12px",
-                            border: "none",
-                          }
-                    }
-                    title="Toggle Lyrics"
-                  >
-                    <Sparkles
-                      size={15}
-                      style={
-                        activeTab === "lyrics"
-                          ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
-                            }
-                      }
-                    />
-                    <span
-                      style={
-                        activeTab === "lyrics"
-                          ? {
-                              color: "#1D0E0A",
-                              fontWeight: "bold",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
-                              fontWeight: 500,
-                            }
-                      }
-                    >
-                      Lyrics
-                    </span>
-                  </button>
-
-                  {/* Radio Tab */}
-                  <button
-                    id="player-toggle-radio-mode"
-                    onClick={(e) => handleTabSwitch("radio", e)}
-                    className={`transition-all flex items-center gap-1.5 text-xs select-none cursor-pointer ${
-                      activeTab === "radio" ? "hard-rock-active-tab active" : "hard-rock-inactive-tab"
-                    }`}
-                    style={
-                      activeTab === "radio"
-                        ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
-                            borderRadius: "9999px",
-                            padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
-                            opacity: 1,
-                          }
-                        : {
-                            backgroundColor: "rgba(255, 255, 255, 0.08)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
-                            borderRadius: "9999px",
-                            padding: "6px 12px",
-                            border: "none",
-                          }
-                    }
-                    title="Toggle Radio"
-                  >
-                    <Radio
-                      size={15}
-                      style={
-                        activeTab === "radio"
-                          ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
-                            }
-                      }
-                    />
-                    <span
-                      style={
-                        activeTab === "radio"
-                          ? {
-                              color: "#1D0E0A",
-                              fontWeight: "bold",
-                              opacity: 1,
-                            }
-                          : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
-                              fontWeight: 500,
-                            }
-                      }
-                    >
-                      Radio
-                    </span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* Other Themes Default Top Row */
-              <div className="flex items-center justify-between w-full">
-                {/* Left: Minimize Button */}
-                <button
-                  onClick={handleMinimizeFullPlayer}
-                  className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
-                  style={isCandyland ? { color: "#2563eb" } : { color: "#e8d5b5" }}
-                  title="Minimize Full Player (or swipe down)"
-                >
-                  <ChevronDown
-                    className="w-5 h-5 sm:w-6 sm:h-6"
-                    style={isCandyland ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
-                    size={20}
-                  />
-                  <span
-                    className="text-xs font-semibold hidden sm:inline"
-                    style={isCandyland ? { color: "#2563eb", opacity: 1 } : { color: "#e8d5b5", opacity: 1 }}
-                  >
-                    Minimize
-                  </span>
-                </button>
-
-                {/* Center: YouTube Music Audio / Video Switcher */}
-                <div className="flex items-center p-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg">
-                  <button
-                    id="player-toggle-audio-mode"
-                    onClick={(e) => handleTabSwitch("audio", e)}
-                    className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      activeTab === "audio"
-                        ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
-                        : "text-white/70 hover:text-white"
-                    }`}
-                    style={isBespoke && activeTab === "audio" ? {
-                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                      color: calculateWcagText(bespokeColors[1]),
-                    } : undefined}
-                    title="Switch to Audio Mode"
-                  >
-                    <Music2 className="w-3.5 h-3.5" />
-                    <span>Audio</span>
-                  </button>
-                  <button
-                    id="player-toggle-video-mode"
-                    onClick={(e) => handleTabSwitch("video", e)}
-                    className={`full-player-nav-btn px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      activeTab === "video"
-                        ? (isBespoke ? "active shadow-md" : "active bg-white text-black shadow-md")
-                        : "text-white/70 hover:text-white"
-                    }`}
-                    style={isBespoke && activeTab === "video" ? {
-                      background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                      color: calculateWcagText(bespokeColors[1]),
-                    } : undefined}
-                    title="Switch to Video Mode"
-                  >
-                    <Video className="w-3.5 h-3.5" />
-                    <span>Video</span>
-                  </button>
-                </div>
-
-                {/* Right: Quick Toggles (Lyrics, Radio) */}
-                <div className="flex items-center gap-1.5 sm:gap-3">
-                  <button
-                    onClick={(e) => handleTabSwitch("lyrics", e)}
-                    className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
-                      activeTab === "lyrics" ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
-                    }`}
-                    style={
-                      isBespoke && activeTab === "lyrics"
-                        ? {
-                            background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                            color: calculateWcagText(bespokeColors[1]),
-                            borderColor: "transparent",
-                            boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                          }
-                        : isCandyland && activeTab !== "lyrics"
-                        ? { color: "#2563eb" }
-                        : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
-                    }
-                  >
-                    <Sparkles
-                      className="w-3.5 h-3.5"
-                      style={
-                        isCandyland && activeTab !== "lyrics"
-                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
-                          : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
-                      }
-                    />
-                    <span
-                      style={
-                        isCandyland && activeTab !== "lyrics"
-                          ? { color: "#2563eb", opacity: 1 }
-                          : (activeTab !== "lyrics" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
-                      }
-                    >
-                      Lyrics
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={(e) => handleTabSwitch("radio", e)}
-                    className={`full-player-nav-btn px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 sm:gap-1.5 border transition-all ${
-                      activeTab === "radio" ? `active ${fpTheme.tabActive}` : fpTheme.tabInactive
-                    }`}
-                    style={
-                      isBespoke && activeTab === "radio"
-                        ? {
-                            background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
-                            color: calculateWcagText(bespokeColors[1]),
-                            borderColor: "transparent",
-                            boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                          }
-                        : isCandyland && activeTab !== "radio"
-                        ? { color: "#2563eb" }
-                        : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
-                    }
-                  >
-                    <Radio
-                      className="w-3.5 h-3.5"
-                      style={
-                        isCandyland && activeTab !== "radio"
-                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
-                          : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
-                      }
-                    />
-                    <span
-                      style={
-                        isCandyland && activeTab !== "radio"
-                          ? { color: "#2563eb", opacity: 1 }
-                          : (activeTab !== "radio" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
-                      }
-                    >
-                      Radio
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Main Fullscreen Center Body */}
-          <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center px-3 py-1 sm:px-6 sm:py-3 overflow-hidden">
-            {/* 1. Lyrics View - Always mounted, toggled via CSS */}
-            <div
-              className="w-full max-w-2xl h-full flex items-center justify-center"
-              style={{ display: activeTab === "lyrics" ? "flex" : "none" }}
-            >
-              <LyricsView
-                track={currentTrack}
-                currentTime={currentTime}
-                onSeek={(t) => {
-                  if (audioRef.current) audioRef.current.currentTime = t;
-                  onSeek(t);
-                }}
-                settings={settings}
-                designConfig={designConfig}
-              />
-            </div>
-
-            {/* 2. Radio Pop-Up Window - Always mounted, toggled via CSS */}
-            <div
-              className="w-full max-w-md h-full flex flex-col items-center justify-center py-1 sm:py-2"
-              style={{ display: activeTab === "radio" ? "flex" : "none" }}
-            >
-              <div className="w-full flex-1 min-h-0 flex items-center justify-center">
-                <SimilarTracksDrawer
-                  currentTrack={currentTrack}
-                  seedTrack={radioSeedTrack || currentTrack}
-                  isPlaying={isPlaying}
-                  onPlayTrack={onPlayTrack}
-                  onPlayQueue={onPlayQueue}
-                  onRegisterRadioQueue={onRegisterRadioQueue}
-                  onAddToQueue={onAddToQueue}
-                  onClose={() => setPlayerState((prev) => ({ ...prev, showSimilar: false }))}
-                  designConfig={designConfig}
-                />
-              </div>
-            </div>
-
-            {/* 3. Music Video Mode on Center Stage - Always mounted in DOM, toggled via off-screen positioning ONLY */}
-            <div
-              className="full-player-modal-content flex flex-col items-center justify-center max-w-2xl w-full animate-fade-in my-auto py-0.5"
-              style={{
-                position: activeTab === 'video' ? 'relative' : 'absolute',
-                left: activeTab === 'video' ? '0' : '-9999px',
-                top: activeTab === 'video' ? '0' : '-9999px',
-                width: '100%',
-                height: activeTab === 'video' ? 'auto' : '1px',
-                opacity: activeTab === 'video' ? 1 : 0.001,
-                pointerEvents: activeTab === 'video' ? 'auto' : 'none'
-              }}
-            >
-              <div
-                className="full-player-video-card"
-                style={
-                  isBespoke && bespokeColors[0]
-                    ? {
-                        borderColor: bespokeColors[0],
-                        boxShadow: `0 0 25px ${hexToRgba(bespokeColors[0], 0.35)}`,
-                      }
-                    : undefined
-                }
-              >
-                <div
-                  id="oblivion-unified-yt-player"
-                  className="w-full h-full rounded-2xl overflow-hidden"
-                />
-              </div>
-
-              {/* Song Title & Artist - lowered with clean gap below the video screen and clear of shadows */}
-              <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
-                <MarqueeText
-                  as="h2"
-                  text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                  className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-semibold tracking-normal ${fpTheme.stageTitle} text-center leading-tight`}
-                  containerClassName="w-full mx-auto text-center"
-                  style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
-                  speed={30}
-                />
-                <MarqueeText
-                  as="p"
-                  text={currentTrack.artist || "Unknown Artist"}
-                  className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-normal tracking-wide ${fpTheme.stageArtist} text-center`}
-                  containerClassName="w-full mx-auto text-center"
-                  style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
-                  speed={26}
-                />
-                {(currentTrack.isUnavailable || currentTrack.isInvalid) && (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-950/70 border border-red-500/40 px-2.5 py-0.5 rounded-full mt-1.5 shadow-sm">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                    <span>Track unavailable on YouTube</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 4. Audio / Song Mode: Central HD Album Artwork & Dynamic Stage - Always mounted, toggled via CSS */}
-            <div
-              className="full-player-modal-content flex flex-col items-center justify-center max-w-md w-full animate-fade-in my-auto py-0.5"
-              style={{ display: activeTab === "audio" ? "flex" : "none" }}
-            >
-              {/* Audio Artwork Card (Slim Line + Soft Ambient Glow) */}
-              <div
-                className="full-player-artwork-card art-container glass-card relative group"
-                style={isHardRock ? {
-                  borderRadius: "28px",
-                  overflow: "hidden",
-                  border: "1px solid rgba(232, 213, 181, 0.18)",
-                  boxShadow: "0 0 50px rgba(168, 85, 247, 0.45), 0 20px 40px rgba(0, 0, 0, 0.75)",
-                  maxWidth: "min(84vw, 360px)",
-                  aspectRatio: "1/1",
-                } : isBespoke ? {
-                  borderColor: hexToRgba(bespokeColors[0], 0.6),
-                  boxShadow: `0 0 30px ${hexToRgba(bespokeColors[0], 0.35)}`,
-                } : undefined}
-              >
-                <img
-                  src={getHdCoverUrl(currentTrack.coverUrl)}
-                  alt={currentTrack.title}
-                  onError={(e) => {
-                    if (currentTrack.coverUrl && e.currentTarget.src !== currentTrack.coverUrl) {
-                      e.currentTarget.src = currentTrack.coverUrl;
-                    } else {
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=95";
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Song Title & Artist - lowered with clean gap below album artwork and clear of shadows */}
-              <div className="relative z-30 text-center space-y-1 max-w-[min(90vw,480px)] w-full px-2 mt-3 sm:mt-4 pt-0.5">
-                <MarqueeText
-                  as="h2"
-                  text={cleanTrackTitle(currentTrack.title, currentTrack.artist)}
-                  className={isHardRock ? "text-base sm:text-xl font-bold tracking-wider text-center leading-tight uppercase font-serif" : `text-sm sm:text-xl md:text-2xl font-bold tracking-tight ${fpTheme.stageTitle} text-center leading-tight`}
-                  containerClassName="w-full mx-auto text-center"
-                  style={isHardRock ? { color: "#e8d5b5", letterSpacing: "0.05em" } : undefined}
-                  speed={30}
-                />
-                <MarqueeText
-                  as="p"
-                  text={currentTrack.artist || "Unknown Artist"}
-                  className={isHardRock ? "text-xs sm:text-sm font-medium text-center" : `text-xs sm:text-sm font-semibold ${fpTheme.stageArtist} text-center`}
-                  containerClassName="w-full mx-auto text-center"
-                  style={isHardRock ? { color: "#a89379" } : (isBespoke ? { color: bespokeColors[1] } : undefined)}
-                  speed={26}
-                />
-                {(currentTrack.isUnavailable || currentTrack.isInvalid) && (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-950/70 border border-red-500/40 px-2.5 py-0.5 rounded-full mt-1.5 shadow-sm">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                    <span>Track unavailable on YouTube</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Fullscreen Player Controls Bar - Unified Designer Deck matching Mini Player */}
-          <div
-            className={`full-player-bottom-bar full-player-controls-container full-player-bottom-dock relative z-20 shrink-0 p-3 sm:p-5 pb-5 sm:pb-7 max-w-2xl mx-auto w-full select-none ${isHardRock ? "" : `border-t backdrop-blur-2xl space-y-2 sm:space-y-3 rounded-t-3xl ${fpTheme.bottomDeck}`}`}
-            style={isHardRock ? {
-              backgroundColor: "rgba(26, 20, 32, 0.95)",
-              borderRadius: "24px",
-              border: "1px solid rgba(168, 85, 247, 0.35)",
-              boxShadow: "0 0 35px rgba(168, 85, 247, 0.35), 0 -12px 35px rgba(0, 0, 0, 0.75)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-            } : isBespoke ? {
-              background: `linear-gradient(180deg, ${hexToRgba(bespokeColors[0], 0.45)} 0%, rgba(10, 10, 16, 0.9) 100%)`,
-              borderTopColor: hexToRgba(bespokeColors[2], 0.35),
-            } : designConfig.id === "sugar-time-jazz" ? {
-              backgroundColor: "rgba(26, 20, 32, 0.95)",
-              borderRadius: "28px",
-              border: "1px solid rgba(212, 175, 55, 0.3)",
-              boxShadow: "0 16px 48px rgba(0,0,0,0.8), 0 0 35px rgba(168, 85, 247, 0.35)",
-              padding: "18px 24px",
-            } : undefined}
-          >
-            {/* Top Row Controls: Like, Add, Prev, Play/Pause, Next, Shuffle, Repeat, Volume */}
-            <div className="flex items-center justify-between gap-1 sm:gap-2 px-1">
-              {/* Left Group: Add to Playlist */}
-              <div className="flex-1 flex items-center justify-start gap-1 sm:gap-2">
-                {/* Add to Playlist Button */}
-                <button
-                  id="player-fullscreen-add-playlist-btn"
-                  onClick={() => {
-                    if (onOpenAddToPlaylistModal && currentTrack) {
-                      onOpenAddToPlaylistModal(currentTrack);
-                    } else {
-                      setShowAddToPlaylistModal(true);
-                    }
-                  }}
-                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn rounded-xl border text-xs font-semibold ${fpTheme.ctrlBtn}`}`}
-                  style={isHardRock ? {
-                    backgroundColor: "transparent",
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                    padding: "8px",
-                    opacity: 1,
-                  } : isCandyland ? {
-                    color: "#8a2be2",
-                  } : { color: "#e8d5b5" }}
-                  title="Add to Playlist"
-                >
-                  <Plus
-                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
-                    style={isHardRock ? {
-                      color: "#e8d5b5",
-                      stroke: "#e8d5b5",
-                      fill: "none",
-                      opacity: 1,
-                    } : isCandyland ? {
-                      color: "#8a2be2",
-                      stroke: "#8a2be2",
-                      fill: "none",
-                      opacity: 1,
-                    } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
-                  />
-                </button>
+              
               </div>
 
               {/* Center Group: Previous (Back), Play/Pause in Center, Next (Forward) */}
@@ -3608,7 +2669,7 @@ export const Player: React.FC<PlayerProps> = ({
                         className={isHardRock ? "" : fpTheme.playIconFill}
                       />
                     ) : (
-                      <Play
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D0E0A" strokeWidth="2.5" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                         size={24}
                         strokeWidth={2.5}
                         style={
@@ -3989,7 +3050,7 @@ export const Player: React.FC<PlayerProps> = ({
                         }
                       />
                     ) : (
-                      <Play
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D0E0A" strokeWidth="2.5" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                         className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5"
                         strokeWidth={2.5}
                         style={
