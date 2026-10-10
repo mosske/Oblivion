@@ -356,7 +356,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         } while (nextIdx === queueIndex && activeQueue.length > 1);
       }
     } else {
-      nextIdx = queueIndex + 1;
+      nextIdx = isShuffled ? Math.floor(Math.random() * queue.length) : isShuffled ? Math.floor(Math.random() * queue.length) : queueIndex + 1;
       if (nextIdx >= activeQueue.length) {
         if (repeatMode === "off") {
           setIsPlaying(false);
