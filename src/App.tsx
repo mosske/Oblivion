@@ -3011,6 +3011,7 @@ export default function App() {
         setPlayerState={setPlayerState}
         onNextTrack={handleNextTrack}
         onPrevTrack={handlePrevTrack}
+        onToggleShuffle={handleToggleShuffle}
         onTogglePlay={handleTogglePlay}
         onSeek={handleSeek}
         onVolumeChange={handleVolumeChange}

@@ -4425,21 +4425,21 @@ svg.playlist-search-icon,
 
 /* Repeat ON (all / one): hot-pink glowing icon, no chip */
 :is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
-:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"]) {
+:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"], [data-shuffle-btn][data-shuffle-state="on"]) {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   color: #FF4DD2 !important;
 }
 :is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
-:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"]) :is(svg, path, circle, line, polyline, rect) {
+:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"], [data-shuffle-btn][data-shuffle-state="on"]) :is(svg, path, circle, line, polyline, rect) {
   color: #FF4DD2 !important;
   stroke: #FF4DD2 !important;
   fill: none !important;
   opacity: 1 !important;
 }
 :is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
-:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"]) svg {
+:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"], [data-shuffle-btn][data-shuffle-state="on"]) svg {
   filter: drop-shadow(0 0 5px rgba(255, 77, 210, 0.85)) !important;
 }
 

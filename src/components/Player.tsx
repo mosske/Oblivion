@@ -55,6 +55,7 @@ export interface PlayerProps {
   onOpenAddToPlaylistModal?: (track: Track) => void;
   onRemoveTrack?: (trackId: string, track?: Track) => void;
   designConfig?: FullAppDesignConfig;
+  onToggleShuffle?: () => void;
 }
 
 declare global {
@@ -842,6 +843,7 @@ export const Player: React.FC<PlayerProps> = ({
   onOpenAddToPlaylistModal,
   onRemoveTrack,
   designConfig = FULL_APP_DESIGNS["designer"],
+  onToggleShuffle,
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -2513,6 +2515,14 @@ export const Player: React.FC<PlayerProps> = ({
   };
 
   // Cycle Repeat Mode
+  const handleToggleShuffleClick = () => {
+    if (onToggleShuffle) {
+      onToggleShuffle();
+      return;
+    }
+    setPlayerState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }));
+  };
+
   const cycleRepeatMode = () => {
     setPlayerState((prev) => ({
       ...prev,
@@ -3671,6 +3681,66 @@ export const Player: React.FC<PlayerProps> = ({
               {/* Right Group: Repeat, Volume */}
               <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
                 <button
+                  onClick={handleToggleShuffleClick}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${
+                    isHardRock
+                      ? (effectiveShuffle ? "full-player-dock-btn-active" : "")
+                      : `player-control-btn control-btn rounded-xl ${effectiveShuffle ? fpTheme.activeText : fpTheme.mutedText}`
+                  }`}
+                  style={
+                    isHardRock
+                      ? effectiveShuffle
+                        ? {
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
+                            borderRadius: "12px",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            padding: "8px",
+                            opacity: 1,
+                          }
+                        : {
+                            background: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
+                            color: "#E5E7EB",
+                            borderRadius: "12px",
+                            boxShadow: "none",
+                            outline: "none",
+                            padding: "8px",
+                            opacity: 1,
+                          }
+                      : isCandyland
+                      ? {
+                          color: effectiveShuffle ? "#ff1493" : "#8a2be2",
+                        }
+                      : (effectiveShuffle && isBespoke ? { color: bespokeColors[1] } : (!effectiveShuffle ? { color: "#e8d5b5" } : undefined))
+                  }
+                  data-shuffle-btn="true"
+                  data-shuffle-state={effectiveShuffle ? "on" : "off"}
+                  aria-pressed={effectiveShuffle}
+                  title={`Shuffle: ${effectiveShuffle ? "On" : "Off"}`}
+                >
+                  <Shuffle
+                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                    style={
+                      isHardRock
+                        ? effectiveShuffle
+                          ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
+                          : { color: "#E5E7EB", stroke: "#E5E7EB", fill: "none", opacity: 1 }
+                        : isCandyland
+                        ? {
+                            color: effectiveShuffle ? "#ff1493" : "#8a2be2",
+                            stroke: effectiveShuffle ? "#ff1493" : "#8a2be2",
+                            fill: "none",
+                            opacity: effectiveShuffle ? 1 : 0.85,
+                          }
+                        : (!effectiveShuffle ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 } : undefined)
+                    }
+                  />
+                </button>
+
+                <button
                   onClick={() => {
                     if (playerCtx) {
                       playerCtx.cycleRepeatMode();
@@ -4045,6 +4115,55 @@ export const Player: React.FC<PlayerProps> = ({
 
               {/* Right: Remaining buttons sitting after Forward/Next button (Repeat, Add, Expand) */}
               <div className="secondary-controls mini-player-secondary-controls flex items-center justify-end gap-0.5 sm:gap-1 shrink-0">
+                <button
+                  onClick={handleToggleShuffleClick}
+                  className={`player-control-btn action-btn p-1.5 transition-colors ${
+                    isHardRock
+                      ? (effectiveShuffle ? "dock-btn-active" : "")
+                      : (effectiveShuffle ? designConfig.accentText : `${designConfig.textMuted} hover:${designConfig.textPrimary}`)
+                  }`}
+                  style={
+                    isHardRock
+                      ? effectiveShuffle
+                        ? {
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            borderRadius: "8px",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
+                            padding: "6px",
+                            opacity: 1,
+                          }
+                        : {
+                            background: "rgba(255, 255, 255, 0.08)",
+                            borderRadius: "8px",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
+                            boxShadow: "none",
+                            color: "#E5E7EB",
+                            outline: "none",
+                            padding: "6px",
+                            opacity: 1,
+                          }
+                      : undefined
+                  }
+                  data-shuffle-btn="true"
+                  data-shuffle-state={effectiveShuffle ? "on" : "off"}
+                  aria-pressed={effectiveShuffle}
+                  title={`Shuffle: ${effectiveShuffle ? "On" : "Off"}`}
+                >
+                  <Shuffle
+                    className="control-icon w-3.5 h-3.5"
+                    style={
+                      isHardRock
+                        ? effectiveShuffle
+                          ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
+                          : { color: "#E5E7EB", stroke: "#E5E7EB", fill: "none", opacity: 1 }
+                        : undefined
+                    }
+                  />
+                </button>
+
                 <button
                   onClick={() => {
                     if (playerCtx) {
