@@ -67,6 +67,14 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [isIdentifyModalOpen, setIsIdentifyModalOpen] = useState<boolean>(false);
 
+  const isHardRock = Boolean(
+    designConfig.id === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
+    designConfig.themePreset === "hard-rock" ||
+    (designConfig.id as string) === "sugar-time-jazz" ||
+    designConfig.name === "Hard Rock"
+  );
+
   // Search history state
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try {
@@ -466,6 +474,17 @@ export const SearchView: React.FC<SearchViewProps> = ({
             id="identify-music-btn"
             onClick={() => setIsIdentifyModalOpen(true)}
             className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 ${designConfig.btnPrimary}`}
+            style={
+              isHardRock
+                ? {
+                    background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                    border: "1px solid rgba(255, 105, 180, 0.4)",
+                    color: "#FFFFFF",
+                    fontWeight: 600,
+                    boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                  }
+                : undefined
+            }
             title="Identify music from audio"
           >
             <Mic className="w-4 h-4" />
@@ -579,6 +598,24 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   ? `active ${designConfig.pillActive} shadow-md`
                   : `${designConfig.pillBg} hover:opacity-90 border-transparent`
               }`}
+              style={
+                isHardRock
+                  ? filter === f
+                    ? {
+                        background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                        border: "1px solid rgba(255, 105, 180, 0.4)",
+                        color: "#FFFFFF",
+                        fontWeight: 600,
+                        boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                      }
+                    : {
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        color: "#E5E7EB",
+                        opacity: 1,
+                      }
+                  : undefined
+              }
             >
               {f === "all" ? "All Results" : f + "s"}
             </button>

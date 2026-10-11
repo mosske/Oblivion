@@ -54,6 +54,7 @@ export interface PlayerContextType {
   toggleFavorite: (trackId?: string) => void;
 
   // Track switching handlers
+  loadTrack: (track: Track, newIndex?: number) => void;
   playNextTrack: () => void;
   playPrevTrack: () => void;
 
@@ -336,75 +337,62 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   // ================================================================================
-  // NEXT TRACK SELECTION
-  // Draw next song from shuffled queue array if isShuffled is true, or linear queue
+  // NEXT TRACK SELECTION (100% DETERMINISTIC STEPPING)
+  // In playNextTrack():
+  // Always simply steps to (currentIndex + 1) % queue.length
   // ================================================================================
-  const playNextTrack = useCallback(() => {
-    const activeQueue = isShuffled
-      ? (shuffledQueue.length > 0 ? shuffledQueue : queue)
-      : (originalQueue.length > 0 ? originalQueue : queue);
-
-    if (!activeQueue || activeQueue.length === 0) return;
-
-    let nextIdx: number;
-    if (isShuffled) {
-      if (activeQueue.length <= 1) {
-        nextIdx = 0;
-      } else {
-        do {
-          nextIdx = Math.floor(Math.random() * activeQueue.length);
-        } while (nextIdx === queueIndex && activeQueue.length > 1);
-      }
-    } else {
-      // Shuffling is off: strictly advance to the next linear track index
-      const curId = currentTrack?.id || (currentTrack as any)?.youtubeVideoId || (currentTrack as any)?.youtubeId;
-      const currentPos = curId
-        ? activeQueue.findIndex((t) => (t.id || (t as any).youtubeVideoId || (t as any).youtubeId) === curId)
-        : queueIndex;
-      const effectiveIndex = currentPos >= 0 ? currentPos : queueIndex;
-      nextIdx = effectiveIndex + 1;
-
-      if (nextIdx >= activeQueue.length) {
-        if (repeatMode === "off") {
-          setIsPlaying(false);
-          setCurrentTime(0);
-          setQueueIndex(0);
-          if (activeQueue[0]) setCurrentTrack(activeQueue[0]);
-          return;
-        }
-        nextIdx = 0;
-      }
+  const loadTrack = useCallback((track: Track, newIndex?: number) => {
+    if (!track) return;
+    let idx = newIndex;
+    if (idx === undefined) {
+      const tid = track.id || (track as any)?.youtubeVideoId || (track as any)?.youtubeId;
+      const found = queue.findIndex((t) => (t.id || (t as any)?.youtubeVideoId || (t as any)?.youtubeId) === tid);
+      idx = found >= 0 ? found : queueIndex;
     }
 
-    const nextTrack = activeQueue[nextIdx];
+    setQueueIndex(idx);
+    setCurrentTrack(track);
+    setCurrentTime(0);
+    setIsPlaying(true);
+  }, [queue, queueIndex]);
+
+  const playNextTrack = useCallback(() => {
+    if (!queue || queue.length === 0) return;
+
+    if (repeatMode === "off" && queueIndex + 1 >= queue.length) {
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setQueueIndex(0);
+      if (queue[0]) setCurrentTrack(queue[0]);
+      return;
+    }
+
+    const nextIndex = (queueIndex + 1) % queue.length;
+    setQueueIndex(nextIndex);
+    const nextTrack = queue[nextIndex];
     if (nextTrack) {
-      setQueueIndex(nextIdx);
       setCurrentTrack(nextTrack);
       setCurrentTime(0);
       setIsPlaying(true);
     }
-  }, [isShuffled, shuffledQueue, originalQueue, queue, queueIndex, currentTrack, repeatMode]);
+  }, [queue, queueIndex, repeatMode]);
 
   const playPrevTrack = useCallback(() => {
-    const activeQueue = isShuffled
-      ? (shuffledQueue.length > 0 ? shuffledQueue : queue)
-      : (originalQueue.length > 0 ? originalQueue : queue);
-
-    if (!activeQueue || activeQueue.length === 0) return;
+    if (!queue || queue.length === 0) return;
 
     let prevIdx = queueIndex - 1;
     if (prevIdx < 0) {
-      prevIdx = repeatMode === "off" ? 0 : activeQueue.length - 1;
+      prevIdx = repeatMode === "off" ? 0 : queue.length - 1;
     }
 
-    const prevTrack = activeQueue[prevIdx];
+    setQueueIndex(prevIdx);
+    const prevTrack = queue[prevIdx];
     if (prevTrack) {
-      setQueueIndex(prevIdx);
       setCurrentTrack(prevTrack);
       setCurrentTime(0);
       setIsPlaying(true);
     }
-  }, [isShuffled, shuffledQueue, originalQueue, queue, queueIndex, repeatMode]);
+  }, [queue, queueIndex, repeatMode]);
 
   // Video switching handlers
   const handleSwitchToVideo = useCallback(() => {
@@ -639,6 +627,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         likedTrackIds,
         setLikedTrackIds: setLikedTrackIdsState,
         toggleFavorite,
+        loadTrack,
         playNextTrack,
         playPrevTrack,
         audioRef,

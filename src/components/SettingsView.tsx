@@ -86,10 +86,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const isHardRock = Boolean(
-    designConfig.id === "sugar-time-jazz" ||
-    (designConfig.id as string) === "hard-rock" ||
-    designConfig.name === "Hard Rock" ||
-    designConfig.name === "Sugar Time Jazz"
+    designConfig.id === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
+    (designConfig.id as string) === "sugar-time-jazz" ||
+    designConfig.name === "Hard Rock"
   );
 
   return (
@@ -145,19 +145,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             style={
               isHardRock
                 ? {
-                    background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                    color: "#1D0E0A",
-                    border: "none",
-                    boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                    background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                    color: "#FFFFFF",
+                    border: "1px solid rgba(255, 105, 180, 0.4)",
+                    boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                    fontWeight: 600,
                   }
                 : undefined
             }
           >
             <Smartphone
               className="w-4 h-4"
-              style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+              style={isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
             />
-            <span style={isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Install App</span>
+            <span style={isHardRock ? { color: "#FFFFFF", fontWeight: 600 } : undefined}>Install App</span>
           </button>
         </div>
 
@@ -192,7 +193,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               Select your preferred overall design. This transforms the entire application: background canvas, headers, navigation, cards, typography, and bottom player dock.
             </p>
           </div>
-          <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} ${designConfig.accentContrastText} self-start sm:self-auto shadow-md`}>
+          <span
+            className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} ${designConfig.accentContrastText} self-start sm:self-auto shadow-md`}
+            style={
+              isHardRock
+                ? {
+                    background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                    border: "1px solid rgba(255, 105, 180, 0.4)",
+                    color: "#FFFFFF",
+                    fontWeight: 600,
+                    boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                  }
+                : undefined
+            }
+          >
             Active: {FULL_APP_DESIGNS[settings.fullAppDesign || "designer"]?.name || "Designer"}
           </span>
         </div>
@@ -370,7 +384,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <RotateCcw className={`w-3.5 h-3.5 ${designConfig.accentText}`} />
               <span>Reset Defaults (6s)</span>
             </button>
-            <span className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} ${designConfig.accentContrastText} shadow-md`}>
+            <span
+              className={`text-xs px-3 py-1.5 rounded-full font-mono font-bold ${designConfig.accentBg} ${designConfig.accentContrastText} shadow-md`}
+              style={
+                isHardRock
+                  ? {
+                      background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                      border: "1px solid rgba(255, 105, 180, 0.4)",
+                      color: "#FFFFFF",
+                      fontWeight: 600,
+                      boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                    }
+                  : undefined
+              }
+            >
               Active: {
                 settings.playerBackgroundAnimation === "off"
                   ? "Off (Static)"
@@ -743,14 +770,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     data-settings-control="lyrics-font-size"
                     data-selected={isSelected ? "true" : "false"}
                     onClick={() => onUpdateSettings({ lyricsFontSize: size })}
-                    style={isSelected ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}
+                    style={
+                      isHardRock
+                        ? isSelected
+                          ? {
+                              background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                              border: "1px solid rgba(255, 105, 180, 0.4)",
+                              color: "#FFFFFF",
+                              fontWeight: 600,
+                              boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            }
+                          : {
+                              background: "rgba(255, 255, 255, 0.08)",
+                              border: "1px solid rgba(255, 255, 255, 0.15)",
+                              color: "#E5E7EB",
+                              opacity: 1,
+                            }
+                        : (isSelected ? { color: "#FFFFFF", opacity: 1, fontWeight: 700 } : undefined)
+                    }
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${isSelected ? "active-lyrics-size-btn " : ""}${
                       isSelected
                         ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                         : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
                     }`}
                   >
-                    <span style={isSelected ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}>{label}</span>
+                    <span style={isSelected ? { color: "#FFFFFF", opacity: 1, fontWeight: 600 } : undefined}>{label}</span>
                   </button>
                 );
               })}
@@ -768,30 +812,64 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 data-settings-control="lyrics-alignment"
                 data-selected={(settings.lyricsAlignment || "left") === "left" ? "true" : "false"}
                 onClick={() => onUpdateSettings({ lyricsAlignment: "left" })}
-                style={(settings.lyricsAlignment || "left") === "left" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}
+                style={
+                  isHardRock
+                    ? (settings.lyricsAlignment || "left") === "left"
+                      ? {
+                          background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                          border: "1px solid rgba(255, 105, 180, 0.4)",
+                          color: "#FFFFFF",
+                          fontWeight: 600,
+                          boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                        }
+                      : {
+                          background: "rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          color: "#E5E7EB",
+                          opacity: 1,
+                        }
+                    : ((settings.lyricsAlignment || "left") === "left" ? { color: "#FFFFFF", opacity: 1, fontWeight: 700 } : undefined)
+                }
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${(settings.lyricsAlignment || "left") === "left" ? "active-lyrics-alignment-btn " : ""}${
                   (settings.lyricsAlignment || "left") === "left"
                     ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                     : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
                 }`}
               >
-                <AlignLeft className="w-3.5 h-3.5" style={(settings.lyricsAlignment || "left") === "left" ? { color: "#0f0d13", fill: "#0f0d13", stroke: "#0f0d13", opacity: 1 } : undefined} />
-                <span style={(settings.lyricsAlignment || "left") === "left" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}>Left Aligned</span>
+                <AlignLeft className="w-3.5 h-3.5" style={(settings.lyricsAlignment || "left") === "left" ? { color: "#FFFFFF", fill: "#FFFFFF", stroke: "#FFFFFF", opacity: 1 } : undefined} />
+                <span style={(settings.lyricsAlignment || "left") === "left" ? { color: "#FFFFFF", opacity: 1, fontWeight: 600 } : undefined}>Left Aligned</span>
               </button>
               <button
                 type="button"
                 data-settings-control="lyrics-alignment"
                 data-selected={settings.lyricsAlignment === "center" ? "true" : "false"}
                 onClick={() => onUpdateSettings({ lyricsAlignment: "center" })}
-                style={settings.lyricsAlignment === "center" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}
+                style={
+                  isHardRock
+                    ? settings.lyricsAlignment === "center"
+                      ? {
+                          background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                          border: "1px solid rgba(255, 105, 180, 0.4)",
+                          color: "#FFFFFF",
+                          fontWeight: 600,
+                          boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                        }
+                      : {
+                          background: "rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          color: "#E5E7EB",
+                          opacity: 1,
+                        }
+                    : (settings.lyricsAlignment === "center" ? { color: "#FFFFFF", opacity: 1, fontWeight: 700 } : undefined)
+                }
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${settings.lyricsAlignment === "center" ? "active-lyrics-alignment-btn " : ""}${
                   settings.lyricsAlignment === "center"
                     ? `${designConfig.btnPrimary} shadow-sm border-transparent`
                     : `${designConfig.pillBg} ${designConfig.textSecondary} hover:${designConfig.textPrimary}`
                 }`}
               >
-                <AlignCenter className="w-3.5 h-3.5" style={settings.lyricsAlignment === "center" ? { color: "#0f0d13", fill: "#0f0d13", stroke: "#0f0d13", opacity: 1 } : undefined} />
-                <span style={settings.lyricsAlignment === "center" ? { color: "#0f0d13", opacity: 1, fontWeight: 700 } : undefined}>Centered</span>
+                <AlignCenter className="w-3.5 h-3.5" style={settings.lyricsAlignment === "center" ? { color: "#FFFFFF", fill: "#FFFFFF", stroke: "#FFFFFF", opacity: 1 } : undefined} />
+                <span style={settings.lyricsAlignment === "center" ? { color: "#FFFFFF", opacity: 1, fontWeight: 600 } : undefined}>Centered</span>
               </button>
             </div>
           </div>

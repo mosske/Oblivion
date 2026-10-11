@@ -71,10 +71,10 @@ const getEmojiSizeStyle = (className: string = ""): string => {
 };
 
 /**
- * Returns the contextual musical instrument / jazz emoji for Sugar Time Jazz.
+ * Returns the contextual musical instrument / rock emoji for Hard Rock.
  * Example emojis: 🎸 🎤 🎹 🎺 🎷 🎙️ 🎧 🎼 🎻 🥁 📻
  */
-const getSugarTimeJazzEmoji = (name?: IconType, genreTitle?: string): string => {
+const getHardRockEmoji = (name?: IconType, genreTitle?: string): string => {
   const lowerTitle = (genreTitle || "").toLowerCase();
 
   // 1. Contextual matching by genre / category / mood title
@@ -278,7 +278,7 @@ const getSugarTimeJazzEmoji = (name?: IconType, genreTitle?: string): string => 
 
 /**
  * Maps standard music & category icons to rich musical instrument Emojis (🎸, 🎤, 🎹, 🎺, 🎷, 🎙️, 🎧, 🎼, 🎻, 🥁, 📻)
- * with purple glow styling when the Sugar Time Jazz theme is active.
+ * with purple glow styling when the Hard Rock theme is active.
  */
 export const ThemeIcon: React.FC<ThemeIconProps> = ({
   name = "music",
@@ -288,16 +288,16 @@ export const ThemeIcon: React.FC<ThemeIconProps> = ({
   className = "w-4 h-4",
   ...props
 }) => {
-  // Check if active theme is Sugar Time Jazz (from prop, document attribute, or class)
-  const isSugarTimeJazz =
+  // Check if active theme is Hard Rock (from prop, document attribute, or class)
+  const isHardRock =
     themeId === "hard-rock" || themeId === "sugar-time-jazz" ||
     (typeof document !== "undefined" &&
       (document.documentElement.getAttribute("data-theme") === "hard-rock" || document.documentElement.getAttribute("data-theme") === "sugar-time-jazz" ||
         document.body.classList.contains("theme-hard-rock") || document.body.classList.contains("theme-sugar-time-jazz") ||
         document.documentElement.classList.contains("theme-hard-rock") || document.documentElement.classList.contains("theme-sugar-time-jazz")));
 
-  if (isSugarTimeJazz) {
-    const emoji = getSugarTimeJazzEmoji(name, genreTitle);
+  if (isHardRock) {
+    const emoji = getHardRockEmoji(name, genreTitle);
     const fontSize = getEmojiSizeStyle(className);
 
     return (

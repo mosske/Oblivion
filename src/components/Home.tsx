@@ -52,6 +52,14 @@ export const Home: React.FC<HomeProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string>("All");
 
+  const isHardRock = Boolean(
+    designConfig?.id === "hard-rock" ||
+    Boolean(designConfig?.isHardRock) ||
+    designConfig?.themePreset === "hard-rock" ||
+    (designConfig?.id as string) === "sugar-time-jazz" ||
+    designConfig?.name === "Hard Rock"
+  );
+
   const [timeGreeting, setTimeGreeting] = useState<string>("Welcome");
   const containerRef = useRef<HTMLDivElement>(null);
   const loadingMoreRef = useRef<boolean>(false);
@@ -274,6 +282,24 @@ export const Home: React.FC<HomeProps> = ({
                     ? "active home-chip-active"
                     : "opacity-75 hover:opacity-100"
                 }`}
+                style={
+                  isHardRock
+                    ? isActive
+                      ? {
+                          background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                          border: "1px solid rgba(255, 105, 180, 0.4)",
+                          color: "#FFFFFF",
+                          fontWeight: 600,
+                          boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                        }
+                      : {
+                          background: "rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          color: "#E5E7EB",
+                          opacity: 1,
+                        }
+                    : undefined
+                }
               >
                 {tab}
               </button>

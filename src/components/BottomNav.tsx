@@ -3,7 +3,7 @@ import { Home, Compass, Library, Settings } from "lucide-react";
 import { NavTab } from "../types";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 
-interface BottomNavProps {
+export interface BottomNavProps {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
   designConfig?: FullAppDesignConfig;
@@ -18,7 +18,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     id: string;
     tab: NavTab;
     label: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   }> = [
     { id: "bottom-nav-home-btn", tab: "home", label: "Home", icon: Home },
     { id: "bottom-nav-explore-btn", tab: "explore", label: "Explore", icon: Compass },
@@ -44,15 +44,29 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             aria-selected={isActive}
             aria-label={label}
             onClick={() => setActiveTab(tab)}
-            className={`bottom-nav-item nav-item nav-link relative flex flex-col items-center justify-center gap-0.5 w-16 py-1 cursor-pointer transition-all duration-200 select-none bg-transparent border-0 outline-none shadow-none ${
-              isActive ? "nav-item-active tab-item-active tab-active active" : "nav-item-inactive"
+            className={`bottom-nav-item nav-item nav-link relative flex flex-col items-center justify-center gap-0.5 w-16 py-1 cursor-pointer transition-all duration-200 select-none border-0 outline-none shadow-none rounded-xl ${
+              isActive ? "nav-item-active tab-item-active tab-active active" : "nav-item-inactive bg-transparent"
             }`}
+            style={
+              isActive
+                ? {
+                    background: "radial-gradient(circle, rgba(224, 36, 179, 0.65) 0%, rgba(128, 15, 94, 0.25) 50%, transparent 75%)",
+                    color: "#FFFFFF",
+                  }
+                : undefined
+            }
           >
             <div className="nav-icon nav-icon-container relative z-10 flex items-center justify-center w-7 h-7 bg-transparent border-0 outline-none shadow-none transition-transform duration-200">
               <span className="nav-icon-aura z-0" aria-hidden="true" />
-              <Icon className="relative z-10 w-5 h-5 transition-transform duration-200 shrink-0 overflow-visible" />
+              <Icon
+                className="relative z-10 w-5 h-5 transition-transform duration-200 shrink-0 overflow-visible"
+                style={isActive ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
+              />
             </div>
-            <span className="nav-label relative z-10 text-[11px] font-medium leading-none tracking-tight transition-colors duration-200">
+            <span
+              className="nav-label relative z-10 text-[11px] font-medium leading-none tracking-tight transition-colors duration-200"
+              style={isActive ? { color: "#FFFFFF", fontWeight: 700 } : undefined}
+            >
               {label}
             </span>
           </button>

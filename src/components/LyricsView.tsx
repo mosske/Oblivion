@@ -413,9 +413,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
 
   const isHardRock = Boolean(
     (designConfig.id as string) === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
     (designConfig.id as string) === "sugar-time-jazz" ||
-    designConfig.name === "Hard Rock" ||
-    designConfig.name === "Sugar Time Jazz"
+    designConfig.name === "Hard Rock"
   );
 
   const pillBgClass = designConfig.pillBg || "bg-white/10 backdrop-blur-md";

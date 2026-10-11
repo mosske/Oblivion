@@ -26,9 +26,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const isHardRock =
-    designConfig.id === "sugar-time-jazz" ||
-    Boolean((designConfig as any).isSugarTimeJazz) ||
-    designConfig.themePreset === "sugar-time-jazz";
+    designConfig.id === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
+    designConfig.themePreset === "hard-rock" ||
+    designConfig.id === "sugar-time-jazz";
 
   return (
     <header

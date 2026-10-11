@@ -235,10 +235,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   }
 
   const isHardRock = Boolean(
-    designConfig.id === "sugar-time-jazz" ||
-    (designConfig.id as string) === "hard-rock" ||
-    designConfig.name === "Hard Rock" ||
-    designConfig.name === "Sugar Time Jazz"
+    designConfig.id === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
+    (designConfig.id as string) === "sugar-time-jazz" ||
+    designConfig.name === "Hard Rock"
   );
 
   return (

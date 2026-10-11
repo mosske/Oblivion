@@ -136,10 +136,11 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const effectiveRepeatMode = playerContext ? playerContext.repeatMode : repeatMode;
 
   const isHardRock = Boolean(
-    designConfig.id === "sugar-time-jazz" ||
-    (designConfig.id as string) === "hard-rock" ||
+    designConfig.id === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
+    designConfig.themePreset === "hard-rock" ||
+    (designConfig.id as string) === "sugar-time-jazz" ||
     designConfig.name === "Hard Rock" ||
-    designConfig.themePreset === "sugar-time-jazz" ||
     (typeof document !== "undefined" &&
       (document.documentElement.getAttribute("data-theme") === "hard-rock" ||
         document.documentElement.getAttribute("data-theme") === "sugar-time-jazz" ||
@@ -818,32 +819,33 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             <button
               id="playlist-play-all-btn"
               onClick={() => onPlayQueue(tracks, 0)}
-              className={`btn-primary-action px-5 py-2.5 rounded-xl ${
+              className={`btn-primary-action px-5 py-2.5 rounded-full ${
                 isHardRock ? "bg-transparent" : designConfig.btnPrimary
               } font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95`}
               style={
                 isHardRock
                   ? {
-                      background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                      color: "#1D0E0A",
-                      border: "none",
-                      boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                      background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                      border: "1px solid rgba(255, 105, 180, 0.4)",
+                      color: "#FFFFFF",
+                      boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                      fontWeight: 600,
                     }
                   : undefined
               }
             >
               <Play
                 className="w-4 h-4 fill-current"
-                style={isHardRock ? { color: "#1D0E0A", fill: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+                style={isHardRock ? { color: "#FFFFFF", fill: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
               />
-              <span style={isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Play All</span>
+              <span style={isHardRock ? { color: "#FFFFFF", fontWeight: 600 } : undefined}>Play All</span>
             </button>
 
             <button
               id="playlist-shuffle-btn"
               data-active={effectiveIsShuffle ? "true" : "false"}
               onClick={handleShuffleToggle}
-              className={`p-2.5 rounded-xl border transition-all ${
+              className={`p-2.5 rounded-full border transition-all ${
                 isHardRock
                   ? ""
                   : effectiveIsShuffle
@@ -854,16 +856,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 isHardRock
                   ? effectiveIsShuffle
                     ? {
-                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                        color: "#1D0E0A",
-                        border: "none",
-                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                        background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                        border: "1px solid rgba(255, 105, 180, 0.4)",
+                        color: "#FFFFFF",
+                        boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                       }
                     : {
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                        border: "none",
-                        color: "#C084FC",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        color: "#E5E7EB",
                         boxShadow: "none",
+                        opacity: 1,
                       }
                   : undefined
               }
@@ -874,8 +877,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 style={
                   isHardRock
                     ? effectiveIsShuffle
-                      ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
-                      : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                      ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
+                      : { color: "#E5E7EB", stroke: "#E5E7EB", fill: "none", opacity: 1 }
                     : undefined
                 }
               />
@@ -885,7 +888,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
               id="playlist-repeat-btn"
               data-active={effectiveRepeatMode !== "off" ? "true" : "false"}
               onClick={handleRepeatToggle}
-              className={`p-2.5 rounded-xl border transition-all ${
+              className={`p-2.5 rounded-full border transition-all ${
                 isHardRock
                   ? ""
                   : effectiveRepeatMode !== "off"
@@ -896,16 +899,17 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 isHardRock
                   ? effectiveRepeatMode !== "off"
                     ? {
-                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                        color: "#1D0E0A",
-                        border: "none",
-                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                        background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                        border: "1px solid rgba(255, 105, 180, 0.4)",
+                        color: "#FFFFFF",
+                        boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                       }
                     : {
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                        border: "none",
-                        color: "#C084FC",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        color: "#E5E7EB",
                         boxShadow: "none",
+                        opacity: 1,
                       }
                   : undefined
               }
@@ -916,7 +920,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                   className="w-4 h-4"
                   style={
                     isHardRock
-                      ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
+                      ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
                       : undefined
                   }
                 />
@@ -926,8 +930,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                   style={
                     isHardRock
                       ? effectiveRepeatMode !== "off"
-                        ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "#1D0E0A", opacity: 1 }
-                        : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                        ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
+                        : { color: "#E5E7EB", stroke: "#E5E7EB", fill: "none", opacity: 1 }
                       : undefined
                   }
                 />

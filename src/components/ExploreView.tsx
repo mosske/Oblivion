@@ -72,6 +72,14 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [selectedGenre, setSelectedGenre] = useState<GenreItem | null>(null);
 
+  const isHardRock = Boolean(
+    designConfig?.id === "hard-rock" ||
+    Boolean(designConfig?.isHardRock) ||
+    designConfig?.themePreset === "hard-rock" ||
+    (designConfig?.id as string) === "sugar-time-jazz" ||
+    designConfig?.name === "Hard Rock"
+  );
+
   // Restore active genre modal if stashed in sessionStorage
   useEffect(() => {
     try {
@@ -326,6 +334,24 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                   ? `active explore-chip-active ${designConfig.accentBg} ${designConfig.accentContrastText}`
                   : `${designConfig.btnSecondary} ${designConfig.textSecondary} hover:${designConfig.textPrimary} border ${designConfig.borderSubtle}`
               }`}
+              style={
+                isHardRock
+                  ? isActive
+                    ? {
+                        background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                        border: "1px solid rgba(255, 105, 180, 0.4)",
+                        color: "#FFFFFF",
+                        fontWeight: 600,
+                        boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                      }
+                    : {
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        color: "#E5E7EB",
+                        opacity: 1,
+                      }
+                  : undefined
+              }
             >
               {cat}
             </button>

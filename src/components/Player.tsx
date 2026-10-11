@@ -543,43 +543,44 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         mutedText: "text-pink-300/70 hover:text-white",
         volSlider: "bg-white/[0.06] accent-[#ff007f]",
       };
+    case "hard-rock":
     case "sugar-time-jazz":
       return {
         bgCanvas: "bg-[var(--bg-main,#120e16)]",
-        orb1: "bg-[#9333ea]/35",
-        orb2: "bg-[#a855f7]/30",
-        auroraBeam1: "bg-gradient-to-r from-[#9333ea]/40 via-[#d4af37]/25 to-[#a855f7]/35",
-        auroraBeam2: "bg-gradient-to-r from-[#a855f7]/35 via-[#16121a]/50 to-[#9333ea]/40",
-        orbitalGlow1: "bg-gradient-to-tr from-[#9333ea]/50 via-[#d4af37]/30 to-[#a855f7]/45",
-        orbitalGlow2: "bg-gradient-to-bl from-[#a855f7]/40 via-[#16121a]/60 to-[#9333ea]/45",
-        driftAuraGlow: "bg-gradient-to-br from-[#9333ea]/20 via-[#d4af37]/15 to-transparent",
+        orb1: "bg-[#E024B3]/35",
+        orb2: "bg-[#800F5E]/30",
+        auroraBeam1: "bg-gradient-to-r from-[#E024B3]/40 via-[#800F5E]/25 to-[#9333ea]/35",
+        auroraBeam2: "bg-gradient-to-r from-[#800F5E]/35 via-[#16121a]/50 to-[#E024B3]/40",
+        orbitalGlow1: "bg-gradient-to-tr from-[#E024B3]/50 via-[#800F5E]/30 to-[#9333ea]/45",
+        orbitalGlow2: "bg-gradient-to-bl from-[#800F5E]/40 via-[#16121a]/60 to-[#E024B3]/45",
+        driftAuraGlow: "bg-gradient-to-br from-[#E024B3]/20 via-[#800F5E]/15 to-transparent",
         veil: "bg-gradient-to-b from-[#120e16]/65 via-[#16121a]/25 to-[#0d0a08]/90",
-        topBar: "bg-[rgba(22,18,26,0.85)] backdrop-blur-3xl border border-[rgba(212,175,55,0.2)] text-[#e8d5b5] shadow-[0_12px_36px_rgba(0,0,0,0.6),0_0_25px_rgba(168,85,247,0.35)] rounded-2xl",
-        minimizeBtn: "bg-transparent hover:bg-white/[0.08] text-[#e8d5b5] border-none shadow-none rounded-xl transition-all",
-        nowPlayingDot: "bg-[#d4af37] shadow-[0_0_12px_#d4af37]",
-        nowPlayingLabel: "text-[#d4af37] font-bold tracking-widest drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]",
-        nowPlayingTitle: "text-[#e8d5b5] drop-shadow-sm font-sans font-semibold",
-        tabActive: "bg-[#e8d5b5] text-[#120e16] shadow-[0_0_24px_rgba(168,85,247,0.5)] font-bold border border-[rgba(212,175,55,0.4)] rounded-xl",
-        tabInactive: "bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.12)] text-[#e8d5b5] border border-[rgba(212,175,55,0.2)] backdrop-blur-2xl rounded-xl",
-        artGlowRing: "from-[#9333ea]/60 via-[#d4af37]/40 to-[#a855f7]/60",
-        artBorder: "border border-[rgba(168,85,247,0.45)] shadow-[0_24px_60px_rgba(0,0,0,0.8),0_0_35px_rgba(168,85,247,0.45)] rounded-3xl",
-        stageTitle: "text-[#e8d5b5] drop-shadow-[0_0_14px_rgba(168,85,247,0.6)] font-semibold text-xl",
-        stageArtist: "text-[#a89379] font-medium drop-shadow-[0_0_8px_rgba(147,51,234,0.4)]",
-        stageTagAccent: "bg-[#9333ea]/25 border border-[rgba(212,175,55,0.35)] text-[#e8d5b5] font-bold shadow-[0_0_14px_rgba(147,51,234,0.35)]",
-        stageTagNeutral: "bg-white/[0.04] border border-[rgba(212,175,55,0.18)] text-[#e8d5b5] backdrop-blur-2xl",
-        bottomDeck: "bg-[rgba(26,20,32,0.95)] backdrop-blur-3xl border border-[rgba(168,85,247,0.35)] text-[#e8d5b5] shadow-[0_16px_48px_rgba(0,0,0,0.8),0_0_35px_rgba(168,85,247,0.35)] rounded-3xl",
+        topBar: "bg-[rgba(22,18,26,0.85)] backdrop-blur-3xl border border-[rgba(212,175,55,0.35)] text-white shadow-[0_12px_36px_rgba(0,0,0,0.6),0_0_16px_rgba(192,132,252,0.22)] rounded-2xl",
+        minimizeBtn: "bg-transparent hover:bg-white/[0.08] text-[#E5E7EB] border-none shadow-none rounded-xl transition-all",
+        nowPlayingDot: "bg-[#E024B3] shadow-[0_0_12px_#E024B3]",
+        nowPlayingLabel: "text-[#E024B3] font-bold tracking-widest drop-shadow-[0_0_8px_rgba(224,36,179,0.5)]",
+        nowPlayingTitle: "text-white drop-shadow-sm font-sans font-semibold",
+        tabActive: "bg-gradient-to-br from-[#E024B3] via-[#800F5E] to-[#2A0520] text-white shadow-[0_0_12px_rgba(224,36,179,0.4),inset_0_1px_1px_rgba(255,255,255,0.3)] font-semibold border border-[rgba(255,105,180,0.4)] rounded-full",
+        tabInactive: "bg-white/[0.08] hover:bg-white/[0.14] text-[#E5E7EB] border border-white/[0.15] backdrop-blur-2xl rounded-full",
+        artGlowRing: "from-[#E024B3]/60 via-[#800F5E]/40 to-[#9333ea]/60",
+        artBorder: "border border-[rgba(212,175,55,0.35)] shadow-[0_24px_60px_rgba(0,0,0,0.8),0_0_16px_rgba(192,132,252,0.22)] rounded-3xl",
+        stageTitle: "text-white drop-shadow-[0_0_14px_rgba(224,36,179,0.6)] font-semibold text-xl",
+        stageArtist: "text-[#E5E7EB] font-medium drop-shadow-[0_0_8px_rgba(128,15,94,0.4)]",
+        stageTagAccent: "bg-[#E024B3]/25 border border-[rgba(255,105,180,0.4)] text-white font-bold shadow-[0_0_12px_rgba(224,36,179,0.35)]",
+        stageTagNeutral: "bg-white/[0.04] border border-[rgba(212,175,55,0.18)] text-[#E5E7EB] backdrop-blur-2xl",
+        bottomDeck: "bg-[rgba(26,20,32,0.95)] backdrop-blur-3xl border border-[rgba(212,175,55,0.35)] text-white shadow-[0_16px_48px_rgba(0,0,0,0.8),0_0_16px_rgba(192,132,252,0.22)] rounded-3xl",
         seekbarTrack: "bg-white/[0.08] border border-[rgba(212,175,55,0.18)] shadow-inner backdrop-blur-md",
-        seekbarFill: "bg-gradient-to-r from-[#a855f7] via-[#c4b5a5] to-[#d4af37] shadow-[0_0_18px_rgba(168,85,247,0.7)]",
-        seekbarThumb: "bg-[#e8d5b5] border-2 border-[#d4af37] shadow-[0_0_18px_rgba(212,175,55,0.85)]",
-        seekbarGlow: "shadow-purple-500/50",
-        seekbarAccent: "accent-[#d4af37]",
-        timeText: "text-[#e8d5b5] font-mono font-semibold",
-        playBtn: "full-player-play-btn play-pause-btn bg-gradient-to-r from-[#f0e2ca] via-[#d4af37] to-[#c59b27] hover:brightness-110 text-[#120e16] shadow-[0_0_25px_rgba(168,85,247,0.6)] border border-[rgba(212,175,55,0.5)] rounded-full transition-all active:scale-95",
-        playIconFill: "fill-[#120e16]",
-        ctrlBtn: "control-btn bg-transparent hover:bg-white/[0.08] text-[#e8d5b5] border-none shadow-none rounded-2xl transition-all",
-        activeText: "text-[#d4af37] drop-shadow-[0_0_10px_rgba(212,175,55,0.7)]",
-        mutedText: "text-[#e8d5b5] hover:text-[#f5eae1]",
-        volSlider: "bg-white/[0.08] accent-[#d4af37]",
+        seekbarFill: "bg-gradient-to-r from-[#E024B3] via-[#800F5E] to-[#9333ea] shadow-[0_0_18px_rgba(224,36,179,0.7)]",
+        seekbarThumb: "bg-white border-2 border-[#E024B3] shadow-[0_0_18px_rgba(224,36,179,0.85)]",
+        seekbarGlow: "shadow-pink-500/50",
+        seekbarAccent: "accent-[#E024B3]",
+        timeText: "text-[#E5E7EB] font-mono font-semibold",
+        playBtn: "full-player-play-btn play-pause-btn bg-gradient-to-br from-[#E024B3] via-[#800F5E] to-[#2A0520] hover:brightness-110 text-white shadow-[0_0_12px_rgba(224,36,179,0.4),inset_0_1px_1px_rgba(255,255,255,0.3)] border border-[rgba(255,105,180,0.4)] rounded-full transition-all active:scale-95",
+        playIconFill: "fill-white",
+        ctrlBtn: "control-btn bg-white/[0.08] hover:bg-white/[0.14] text-[#E5E7EB] border border-white/[0.15] shadow-none rounded-xl transition-all",
+        activeText: "text-[#FF69B4] drop-shadow-[0_0_10px_rgba(224,36,179,0.7)]",
+        mutedText: "text-[#E5E7EB] hover:text-white",
+        volSlider: "bg-white/[0.08] accent-[#E024B3]",
       };
   }
 }
@@ -719,10 +720,11 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   const hasBespokeColors = Boolean(bespokeColors && bespokeColors.length >= 2);
 
   const isHardRock = Boolean(
+    designConfig.id === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
+    designConfig.themePreset === "hard-rock" ||
     designConfig.id === "sugar-time-jazz" ||
-    (designConfig.id as string) === "hard-rock" ||
-    designConfig.name === "Hard Rock" ||
-    designConfig.themePreset === "sugar-time-jazz"
+    designConfig.name === "Hard Rock"
   );
 
   return (
@@ -1266,10 +1268,11 @@ export const Player: React.FC<PlayerProps> = ({
 
   const isBespoke = Boolean(designConfig.id === "bespoke" || designConfig.isBespoke);
   const isHardRock = Boolean(
+    designConfig.id === "hard-rock" ||
+    Boolean(designConfig.isHardRock) ||
+    designConfig.themePreset === "hard-rock" ||
     designConfig.id === "sugar-time-jazz" ||
-    (designConfig.id as string) === "hard-rock" ||
-    designConfig.name === "Hard Rock" ||
-    designConfig.themePreset === "sugar-time-jazz"
+    designConfig.name === "Hard Rock"
   );
   const isCandyland = Boolean(
     (designConfig.id as string) === "candyland" ||
@@ -1526,8 +1529,14 @@ export const Player: React.FC<PlayerProps> = ({
     isChangingTrackTimeoutRef.current = setTimeout(() => {
       isChangingTrackRef.current = false;
     }, 2500);
-    onNextTrackRef.current();
-  }, []);
+
+    if (playerCtx?.playNextTrack) {
+      playerCtx.playNextTrack();
+    }
+    if (onNextTrackRef.current) {
+      onNextTrackRef.current();
+    }
+  }, [playerCtx]);
 
   const handlePrevTrack = useCallback(() => {
     isChangingTrackRef.current = true;
@@ -1539,8 +1548,14 @@ export const Player: React.FC<PlayerProps> = ({
     isChangingTrackTimeoutRef.current = setTimeout(() => {
       isChangingTrackRef.current = false;
     }, 2500);
-    onPrevTrackRef.current();
-  }, []);
+
+    if (playerCtx?.playPrevTrack) {
+      playerCtx.playPrevTrack();
+    }
+    if (onPrevTrackRef.current) {
+      onPrevTrackRef.current();
+    }
+  }, [playerCtx]);
 
   const handleEndedRef = useRef<() => void>(() => {});
 
@@ -1567,9 +1582,12 @@ export const Player: React.FC<PlayerProps> = ({
       return;
     }
 
-    // Advance to next song in the Playlist, Album, or Search results
+    // Advance to next song via PlayerContext shuffle/queue engine
+    if (playerCtx?.playNextTrack) {
+      playerCtx.playNextTrack();
+    }
     handleNextTrack();
-  }, [handleNextTrack, setPlayerState]);
+  }, [handleNextTrack, setPlayerState, playerCtx]);
 
   useEffect(() => {
     handleEndedRef.current = handleEnded;
@@ -2604,7 +2622,7 @@ export const Player: React.FC<PlayerProps> = ({
         }}
         id="player-fullscreen-dock"
         data-theme={designConfig.id}
-        className={`full-player-overlay full-player-container fixed inset-0 w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in ${designConfig.id === 'sugar-time-jazz' ? 'theme-sugar-time-jazz' : ''}`}
+        className={`full-player-overlay full-player-container fixed inset-0 w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in ${isHardRock ? 'theme-hard-rock' : ''}`}
         style={{
           zIndex: isFullscreen ? 100 : -1,
           opacity: isFullscreen ? (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1) : 0,
@@ -2621,10 +2639,10 @@ export const Player: React.FC<PlayerProps> = ({
             ? {
                 background: `radial-gradient(circle at 10% 10%, ${bespokeColors[0]} 0%, ${bespokeColors[2]} 40%, #050508 80%)`,
               }
-            : designConfig.id === "sugar-time-jazz"
+            : isHardRock
             ? {
                 background: "var(--bg-main, linear-gradient(145deg, #120e0b 0%, #1a1410 40%, #0d0a08 100%))",
-                color: "var(--text-primary, #f5eae1)",
+                color: "var(--text-primary, #FFFFFF)",
               }
             : {}),
         }}
@@ -2869,22 +2887,22 @@ export const Player: React.FC<PlayerProps> = ({
                     style={
                       activeTab === "audio"
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                             opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.12)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
+                            background: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
+                            color: "#E5E7EB",
+                            opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
-                            border: "none",
                           }
                     }
                     title="Switch to Audio Mode"
@@ -2894,16 +2912,16 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "audio"
                           ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
+                              color: "#FFFFFF",
+                              stroke: "#FFFFFF",
+                              fill: "none",
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              fill: "none",
+                              stroke: "#E5E7EB",
+                              opacity: 1,
                             }
                       }
                     />
@@ -2911,13 +2929,13 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "audio"
                           ? {
-                              color: "#1D0E0A",
-                              fontWeight: "bold",
+                              color: "#FFFFFF",
+                              fontWeight: 600,
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              opacity: 1,
                               fontWeight: 500,
                             }
                       }
@@ -2936,22 +2954,22 @@ export const Player: React.FC<PlayerProps> = ({
                     style={
                       activeTab === "video"
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                             opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.12)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
+                            background: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
+                            color: "#E5E7EB",
+                            opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
-                            border: "none",
                           }
                     }
                     title="Switch to Video Mode"
@@ -2961,16 +2979,16 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "video"
                           ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
+                              color: "#FFFFFF",
+                              stroke: "#FFFFFF",
+                              fill: "none",
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              fill: "none",
+                              stroke: "#E5E7EB",
+                              opacity: 1,
                             }
                       }
                     />
@@ -2978,13 +2996,13 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "video"
                           ? {
-                              color: "#1D0E0A",
-                              fontWeight: "bold",
+                              color: "#FFFFFF",
+                              fontWeight: 600,
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              opacity: 1,
                               fontWeight: 500,
                             }
                       }
@@ -3003,22 +3021,22 @@ export const Player: React.FC<PlayerProps> = ({
                     style={
                       activeTab === "lyrics"
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                             opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.12)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
+                            background: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
+                            color: "#E5E7EB",
+                            opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
-                            border: "none",
                           }
                     }
                     title="Toggle Lyrics"
@@ -3028,16 +3046,16 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "lyrics"
                           ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
+                              color: "#FFFFFF",
+                              stroke: "#FFFFFF",
+                              fill: "none",
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              fill: "none",
+                              stroke: "#E5E7EB",
+                              opacity: 1,
                             }
                       }
                     />
@@ -3045,13 +3063,13 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "lyrics"
                           ? {
-                              color: "#1D0E0A",
-                              fontWeight: "bold",
+                              color: "#FFFFFF",
+                              fontWeight: 600,
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              opacity: 1,
                               fontWeight: 500,
                             }
                       }
@@ -3070,22 +3088,22 @@ export const Player: React.FC<PlayerProps> = ({
                     style={
                       activeTab === "radio"
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
-                            fontWeight: "bold",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                             opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.12)",
-                            color: "#C084FC !important",
-                            opacity: "1 !important",
+                            background: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
+                            color: "#E5E7EB",
+                            opacity: 1,
                             borderRadius: "9999px",
                             padding: "6px 12px",
-                            border: "none",
                           }
                     }
                     title="Toggle Radio"
@@ -3095,16 +3113,16 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "radio"
                           ? {
-                              color: "#1D0E0A",
-                              stroke: "#1D0E0A",
-                              fill: "#1D0E0A",
+                              color: "#FFFFFF",
+                              stroke: "#FFFFFF",
+                              fill: "none",
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              fill: "none !important",
-                              stroke: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              fill: "none",
+                              stroke: "#E5E7EB",
+                              opacity: 1,
                             }
                       }
                     />
@@ -3112,13 +3130,13 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         activeTab === "radio"
                           ? {
-                              color: "#1D0E0A",
+                              color: "#FFFFFF",
                               fontWeight: "bold",
                               opacity: 1,
                             }
                           : {
-                              color: "#C084FC !important",
-                              opacity: "1 !important",
+                              color: "#E5E7EB",
+                              opacity: 1,
                               fontWeight: 500,
                             }
                       }
@@ -3534,9 +3552,9 @@ export const Player: React.FC<PlayerProps> = ({
                       isHardRock
                         ? {
                             background:
-                              "radial-gradient(circle, rgba(168, 85, 247, 0.75) 0%, rgba(168, 85, 247, 0.2) 55%, transparent 75%)",
+                              "radial-gradient(circle, rgba(224, 36, 179, 0.75) 0%, rgba(128, 15, 94, 0.25) 55%, transparent 75%)",
                             boxShadow:
-                              "0 0 35px rgba(168, 85, 247, 0.8), 0 0 15px rgba(168, 85, 247, 0.6)",
+                              "0 0 35px rgba(224, 36, 179, 0.8), 0 0 15px rgba(128, 15, 94, 0.6)",
                             filter: "blur(4px)",
                           }
                         : isCandyland
@@ -3574,10 +3592,11 @@ export const Player: React.FC<PlayerProps> = ({
                             width: "56px",
                             height: "56px",
                             borderRadius: "50%",
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            border: "none",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
                             boxShadow:
-                              "0 0 25px rgba(192, 132, 252, 0.7), 0 4px 14px rgba(0, 0, 0, 0.6)",
+                              "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            color: "#FFFFFF",
                           }
                         : isBespoke
                         ? {
@@ -3590,37 +3609,29 @@ export const Player: React.FC<PlayerProps> = ({
                     title={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
-                      <Pause
-                        size={24}
-                        strokeWidth={2.5}
-                        style={
-                          isHardRock
-                            ? {
-                                color: "#1D0E0A",
-                                stroke: "#1D0E0A",
-                                fill: "none",
-                                opacity: 1,
-                              }
-                            : undefined
-                        }
-                        className={isHardRock ? "" : fpTheme.playIconFill}
-                      />
+                      isHardRock ? (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ opacity: 1 }}>
+                          <path d="M6 4h4v16H6z M14 4h4v16h-4z" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="1" />
+                        </svg>
+                      ) : (
+                        <Pause
+                          size={24}
+                          strokeWidth={2.5}
+                          className={fpTheme.playIconFill}
+                        />
+                      )
                     ) : (
-                      <Play
-                        size={24}
-                        strokeWidth={2.5}
-                        style={
-                          isHardRock
-                            ? {
-                                color: "#1D0E0A",
-                                stroke: "#1D0E0A",
-                                fill: "none",
-                                opacity: 1,
-                              }
-                            : undefined
-                        }
-                        className={isHardRock ? "" : fpTheme.playIconFill}
-                      />
+                      isHardRock ? (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ opacity: 1, marginLeft: "2px" }}>
+                          <polygon points="5 3 19 12 5 21 5 3" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="1" strokeLinejoin="round" />
+                        </svg>
+                      ) : (
+                        <Play
+                          size={24}
+                          strokeWidth={2.5}
+                          className={fpTheme.playIconFill}
+                        />
+                      )
                     )}
                   </button>
                 </div>
@@ -3675,21 +3686,24 @@ export const Player: React.FC<PlayerProps> = ({
                     isHardRock
                       ? effectiveRepeat !== "off"
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            border: "none",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
                             borderRadius: "12px",
-                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.4)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                             padding: "8px",
                             opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.05)",
-                            border: "none",
+                            background: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
+                            color: "#E5E7EB",
                             borderRadius: "12px",
                             boxShadow: "none",
                             outline: "none",
                             padding: "8px",
-                            opacity: 0.9,
+                            opacity: 1,
                           }
                       : isCandyland
                       ? {
@@ -3704,7 +3718,7 @@ export const Player: React.FC<PlayerProps> = ({
                       className="control-icon w-5 h-5 sm:w-6 sm:h-6"
                       style={
                         isHardRock
-                          ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
+                          ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
                           : isCandyland
                           ? {
                               color: "#8a2be2",
@@ -3721,8 +3735,8 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         isHardRock
                           ? effectiveRepeat !== "off"
-                            ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
-                            : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                            ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
+                            : { color: "#E5E7EB", stroke: "#E5E7EB", fill: "none", opacity: 1 }
                           : isCandyland
                           ? {
                               color: effectiveRepeat !== "off" ? "#ff1493" : "#8a2be2",
@@ -3952,9 +3966,10 @@ export const Player: React.FC<PlayerProps> = ({
                             width: "38px",
                             height: "38px",
                             borderRadius: "50%",
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            border: "none",
-                            boxShadow: "0 0 16px rgba(192, 132, 252, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5)",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            color: "#FFFFFF",
                           }
                         : isBespoke
                         ? {
@@ -3966,39 +3981,37 @@ export const Player: React.FC<PlayerProps> = ({
                     title={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
-                      <Pause
-                        className="w-4 h-4 sm:w-4.5 sm:h-4.5"
-                        strokeWidth={2.5}
-                        style={
-                          isHardRock
-                            ? {
-                                color: "#1D0E0A",
-                                stroke: "#1D0E0A",
-                                fill: "none",
-                                opacity: 1,
-                              }
-                            : isBespoke
-                            ? { fill: "none", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" }
-                            : { fill: "none", stroke: "white" }
-                        }
-                      />
+                      isHardRock ? (
+                        <svg className="w-4 h-4 sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" style={{ opacity: 1 }}>
+                          <path d="M6 4h4v16H6z M14 4h4v16h-4z" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="1" />
+                        </svg>
+                      ) : (
+                        <Pause
+                          className="w-4 h-4 sm:w-4.5 sm:h-4.5"
+                          strokeWidth={2.5}
+                          style={
+                            isBespoke
+                              ? { fill: "none", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" }
+                              : { fill: "none", stroke: "white" }
+                          }
+                        />
+                      )
                     ) : (
-                      <Play
-                        className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5"
-                        strokeWidth={2.5}
-                        style={
-                          isHardRock
-                            ? {
-                                color: "#1D0E0A",
-                                stroke: "#1D0E0A",
-                                fill: "none",
-                                opacity: 1,
-                              }
-                            : isBespoke
-                            ? { fill: "none", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" }
-                            : { fill: "none", stroke: "white" }
-                        }
-                      />
+                      isHardRock ? (
+                        <svg className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5" viewBox="0 0 24 24" fill="none" style={{ opacity: 1 }}>
+                          <polygon points="5 3 19 12 5 21 5 3" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="1" strokeLinejoin="round" />
+                        </svg>
+                      ) : (
+                        <Play
+                          className="w-4 h-4 sm:w-4.5 sm:h-4.5 ml-0.5"
+                          strokeWidth={2.5}
+                          style={
+                            isBespoke
+                              ? { fill: "none", stroke: "var(--bespoke-mini-player-play-icon, #ffffff)" }
+                              : { fill: "none", stroke: "white" }
+                          }
+                        />
+                      )
                     )}
                   </button>
 
@@ -4046,21 +4059,24 @@ export const Player: React.FC<PlayerProps> = ({
                     isHardRock
                       ? effectiveRepeat !== "off"
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
                             borderRadius: "8px",
-                            border: "none",
-                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.4)",
+                            border: "1px solid rgba(255, 105, 180, 0.4)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            color: "#FFFFFF",
+                            fontWeight: 600,
                             padding: "6px",
                             opacity: 1,
                           }
                         : {
-                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            background: "rgba(255, 255, 255, 0.08)",
                             borderRadius: "8px",
-                            border: "none",
+                            border: "1px solid rgba(255, 255, 255, 0.15)",
                             boxShadow: "none",
+                            color: "#E5E7EB",
                             outline: "none",
                             padding: "6px",
-                            opacity: 0.9,
+                            opacity: 1,
                           }
                       : undefined
                   }
@@ -4071,7 +4087,7 @@ export const Player: React.FC<PlayerProps> = ({
                       className="control-icon w-3.5 h-3.5"
                       style={
                         isHardRock
-                          ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
+                          ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
                           : undefined
                       }
                     />
@@ -4081,8 +4097,8 @@ export const Player: React.FC<PlayerProps> = ({
                       style={
                         isHardRock
                           ? effectiveRepeat !== "off"
-                            ? { color: "#1D0E0A", stroke: "#1D0E0A", fill: "none", opacity: 1 }
-                            : { color: "#C084FC", stroke: "#C084FC", fill: "none", opacity: 0.9 }
+                            ? { color: "#FFFFFF", stroke: "#FFFFFF", fill: "none", opacity: 1 }
+                            : { color: "#E5E7EB", stroke: "#E5E7EB", fill: "none", opacity: 1 }
                           : undefined
                       }
                     />

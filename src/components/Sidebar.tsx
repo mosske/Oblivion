@@ -111,17 +111,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
               aria-selected={isActive}
               aria-label={label}
               onClick={() => setActiveTab(tab)}
-              className={`sidebar-nav-item sidebar-item nav-item nav-link w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 select-none cursor-pointer border-0 outline-none bg-transparent ${
+              className={`sidebar-nav-item sidebar-item nav-item nav-link relative w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 select-none cursor-pointer border-0 outline-none ${
                 isActive
                   ? "nav-item-active tab-item-active tab-active active"
-                  : "nav-item-inactive"
+                  : "nav-item-inactive bg-transparent"
               }`}
+              style={
+                isActive
+                  ? {
+                      background: "radial-gradient(circle, rgba(224, 36, 179, 0.65) 0%, rgba(128, 15, 94, 0.25) 50%, transparent 75%)",
+                      color: "#FFFFFF",
+                    }
+                  : undefined
+              }
             >
               <div className="nav-icon nav-icon-container relative flex items-center justify-center w-7 h-7 shrink-0 transition-transform duration-200 bg-transparent border-0 outline-none shadow-none">
                 <span className="nav-icon-aura z-0" aria-hidden="true" />
-                <Icon className="relative z-10 w-5 h-5 transition-transform duration-200 overflow-visible shrink-0" />
+                <Icon
+                  className="relative z-10 w-5 h-5 transition-transform duration-200 overflow-visible shrink-0"
+                  style={isActive ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
+                />
               </div>
-              <span className="nav-label tracking-tight transition-colors duration-200">
+              <span
+                className="nav-label tracking-tight transition-colors duration-200"
+                style={isActive ? { color: "#FFFFFF", fontWeight: 700 } : undefined}
+              >
                 {label}
               </span>
             </button>
