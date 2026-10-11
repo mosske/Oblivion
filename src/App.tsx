@@ -203,6 +203,9 @@ async function safeClientFetch(
   return null;
 }
 
+// Stable identity for a track across the different id fields used in the app
+const getTrackKey = (t: any): string => (t && (t.id || t.youtubeVideoId || t.youtubeId)) || "";
+
 export default function App() {
   // Purge any stale legacy local cover cache on mount
   useEffect(() => {
@@ -1668,6 +1671,7 @@ export default function App() {
         queue: newQueue,
         queueIndex: newIdx >= 0 ? newIdx : 0,
         isPlaying: true,
+        shuffleHistory: [trId],
       };
     });
   };
@@ -1712,6 +1716,7 @@ export default function App() {
       currentTrack: cleanTracks[validIdx],
       currentTime: 0,
       isPlaying: true,
+      shuffleHistory: [getTrackKey(cleanTracks[validIdx])],
     }));
   };
 
@@ -1743,7 +1748,14 @@ export default function App() {
     });
   };
 
-  // Next Track with immediate auto-play, deterministic queue synchronization, and full Shuffle support
+  // ================================================================================
+  // PLAYBACK ORDER ENGINE
+  // `playerState.queue` is ALWAYS the collection (Playlist / Album / Genre) in its
+  // original order. It is never reordered by Shuffle.
+  //   Shuffle OFF -> next track = the track after the current one in `queue`.
+  //   Shuffle ON  -> next track = a random track from `queue` that has not been played
+  //                  yet in this shuffle cycle (`shuffleHistory`), so no immediate repeats.
+  // ================================================================================
   const handleNextTrack = useCallback(() => {
     setPlayerState((prev) => {
       let activeQueue = prev.queue || [];
@@ -1752,22 +1764,32 @@ export default function App() {
       }
       if (activeQueue.length === 0) return prev;
 
-      let currentIndex = prev.queueIndex;
-      if (currentIndex < 0 || currentIndex >= activeQueue.length) {
-        if (prev.currentTrack) {
-          const cId = prev.currentTrack.id || prev.currentTrack.youtubeVideoId;
-          const foundIdx = activeQueue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
-          currentIndex = foundIdx >= 0 ? foundIdx : 0;
-        } else {
-          currentIndex = 0;
-        }
+      const isPlayable = (t: any) => !(t?.isUnavailable || t?.isInvalid);
+      const curKey = getTrackKey(prev.currentTrack);
+
+      // Locate the current track inside the (original-order) queue
+      let currentIndex = curKey ? activeQueue.findIndex((t) => getTrackKey(t) === curKey) : -1;
+      if (currentIndex < 0) {
+        currentIndex = prev.queueIndex >= 0 && prev.queueIndex < activeQueue.length ? prev.queueIndex : 0;
       }
 
-      let nextIndex: number;
+      // ---------------- SHUFFLE ON: random track from the same collection ----------------
       if (prev.isShuffle && activeQueue.length > 1) {
-        // Only draw the next song sequentially from the shuffled queue array
-        nextIndex = currentIndex + 1;
-        if (nextIndex >= activeQueue.length) {
+        let history = (prev.shuffleHistory || []).slice();
+        if (curKey && history[history.length - 1] !== curKey) history.push(curKey);
+
+        const pickCandidates = (played: Set<string>) => {
+          const out: number[] = [];
+          activeQueue.forEach((t, i) => {
+            const k = getTrackKey(t);
+            if (k && !played.has(k) && isPlayable(t)) out.push(i);
+          });
+          return out;
+        };
+
+        let candidates = pickCandidates(new Set(history));
+        if (candidates.length === 0) {
+          // Every track in the collection has been played in this cycle
           if (prev.repeatMode === "off") {
             return {
               ...prev,
@@ -1775,34 +1797,51 @@ export default function App() {
               currentTime: 0,
               queueIndex: 0,
               currentTrack: activeQueue[0],
+              shuffleHistory: [getTrackKey(activeQueue[0])],
             };
           }
-          nextIndex = 0;
+          // Repeat is on: start a fresh shuffle cycle (never immediately repeat the current track)
+          history = curKey ? [curKey] : [];
+          candidates = pickCandidates(new Set(history));
         }
-      } else {
-        nextIndex = currentIndex + 1;
-        if (nextIndex >= activeQueue.length) {
-          if (prev.repeatMode === "off") {
-            // End of explicit playlist reached with repeat off: stop playback, reset to start of playlist
-            return {
-              ...prev,
-              isPlaying: false,
-              currentTime: 0,
-              queueIndex: 0,
-              currentTrack: activeQueue[0],
-            };
-          }
-          nextIndex = 0;
+
+        const nextIndex =
+          candidates.length > 0
+            ? candidates[Math.floor(Math.random() * candidates.length)]
+            : currentIndex;
+        const nextTrack = activeQueue[nextIndex];
+        if (!nextTrack) return prev;
+        return {
+          ...prev,
+          queue: activeQueue,
+          queueIndex: nextIndex,
+          currentTrack: nextTrack,
+          currentTime: 0,
+          isPlaying: true,
+          shuffleHistory: [...history, getTrackKey(nextTrack)],
+        };
+      }
+
+      // ---------------- SHUFFLE OFF: next song in collection order ----------------
+      let nextIndex = currentIndex + 1;
+      if (nextIndex >= activeQueue.length) {
+        if (prev.repeatMode === "off") {
+          // End of the collection with repeat off: stop playback, reset to start
+          return {
+            ...prev,
+            isPlaying: false,
+            currentTime: 0,
+            queueIndex: 0,
+            currentTrack: activeQueue[0],
+          };
         }
+        nextIndex = 0;
       }
 
       // Skip over known unavailable tracks if other playable songs exist in queue
       let candidateIndex = nextIndex;
       let checkedCount = 0;
-      while (
-        (activeQueue[candidateIndex]?.isUnavailable || activeQueue[candidateIndex]?.isInvalid) &&
-        checkedCount < activeQueue.length
-      ) {
+      while (!isPlayable(activeQueue[candidateIndex]) && checkedCount < activeQueue.length) {
         checkedCount++;
         candidateIndex = (candidateIndex + 1) % activeQueue.length;
       }
@@ -1823,7 +1862,7 @@ export default function App() {
     });
   }, []);
 
-  // Previous Track with immediate auto-play, deterministic queue synchronization, and full Shuffle support
+  // Previous Track: with Shuffle ON it steps back through the tracks actually played
   const handlePrevTrack = useCallback(() => {
     setPlayerState((prev) => {
       let activeQueue = prev.queue || [];
@@ -1832,15 +1871,33 @@ export default function App() {
       }
       if (activeQueue.length === 0) return prev;
 
-      let currentIndex = prev.queueIndex;
-      if (currentIndex < 0 || currentIndex >= activeQueue.length) {
-        if (prev.currentTrack) {
-          const cId = prev.currentTrack.id || prev.currentTrack.youtubeVideoId;
-          const foundIdx = activeQueue.findIndex((t) => (t.id || t.youtubeVideoId) === cId);
-          currentIndex = foundIdx >= 0 ? foundIdx : 0;
-        } else {
-          currentIndex = 0;
+      const curKey = getTrackKey(prev.currentTrack);
+      let currentIndex = curKey ? activeQueue.findIndex((t) => getTrackKey(t) === curKey) : -1;
+      if (currentIndex < 0) {
+        currentIndex = prev.queueIndex >= 0 && prev.queueIndex < activeQueue.length ? prev.queueIndex : 0;
+      }
+
+      if (prev.isShuffle && activeQueue.length > 1) {
+        const history = (prev.shuffleHistory || []).slice();
+        if (curKey && history[history.length - 1] !== curKey) history.push(curKey);
+        if (history.length >= 2) {
+          history.pop(); // drop the current track
+          const prevKey = history[history.length - 1];
+          const prevIdx = activeQueue.findIndex((t) => getTrackKey(t) === prevKey);
+          if (prevIdx >= 0) {
+            return {
+              ...prev,
+              queue: activeQueue,
+              queueIndex: prevIdx,
+              currentTrack: activeQueue[prevIdx],
+              currentTime: 0,
+              isPlaying: true,
+              shuffleHistory: history,
+            };
+          }
         }
+        // Nothing earlier in this shuffle session: restart the current track
+        return { ...prev, currentTime: 0, isPlaying: true };
       }
 
       let prevIndex = currentIndex - 1;
@@ -1861,38 +1918,20 @@ export default function App() {
     });
   }, []);
 
-  // Non-interruptive Shuffle Toggle Handler
+  // Shuffle Toggle (non-interruptive): only flips the mode. The queue keeps its original
+  // collection order, so turning Shuffle OFF instantly resumes normal order from the
+  // current song, and turning it ON starts a fresh random cycle that excludes the current song.
   const handleToggleShuffle = useCallback(() => {
     setPlayerState((prev) => {
       const nextShuffle = !prev.isShuffle;
-      let activeQueue = prev.queue || [];
-      if (activeQueue.length === 0 && prev.currentTrack) {
-        activeQueue = [prev.currentTrack];
-      }
-      const curId = prev.currentTrack?.id || prev.currentTrack?.youtubeVideoId;
-
-      if (nextShuffle) {
-        // Toggling Shuffle ON:
-        // 1. Keep currently playing track running uninterrupted at its current seek time
-        // 2. Shuffle remaining/upcoming track queue in memory
-        const others = activeQueue.filter((t) => (t.id || t.youtubeVideoId) !== curId);
-        const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
-        const newQueue = prev.currentTrack ? [prev.currentTrack, ...shuffledOthers] : shuffledOthers;
-        return {
-          ...prev,
-          isShuffle: true,
-          queue: newQueue,
-          queueIndex: 0,
-        };
-      } else {
-        // Toggling Shuffle OFF:
-        // 1. Keep currently playing track running uninterrupted
-        // 2. Restore original linear playlist queue order without interrupting playback
-        return {
-          ...prev,
-          isShuffle: false,
-        };
-      }
+      const curKey = getTrackKey(prev.currentTrack);
+      const idx = curKey ? (prev.queue || []).findIndex((t) => getTrackKey(t) === curKey) : -1;
+      return {
+        ...prev,
+        isShuffle: nextShuffle,
+        shuffleHistory: nextShuffle && curKey ? [curKey] : [],
+        queueIndex: idx >= 0 ? idx : prev.queueIndex,
+      };
     });
   }, []);
 
@@ -2895,6 +2934,8 @@ export default function App() {
                 activeTrack={playerState.currentTrack}
                 isPlaying={playerState.isPlaying}
                 designConfig={activeFullDesign}
+                isShuffle={playerState.isShuffle}
+                onToggleShuffle={handleToggleShuffle}
               />
             )}
 

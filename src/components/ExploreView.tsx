@@ -45,6 +45,8 @@ interface ExploreViewProps {
   activeTrack?: Track | null;
   isPlaying?: boolean;
   designConfig?: FullAppDesignConfig;
+  isShuffle?: boolean;
+  onToggleShuffle?: () => void;
 }
 
 type ExploreCategory =
@@ -66,6 +68,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   activeTrack,
   isPlaying = false,
   designConfig = FULL_APP_DESIGNS["designer"],
+  isShuffle = false,
+  onToggleShuffle,
 }) => {
   const [activeCategory, setActiveCategory] = useState<ExploreCategory>("All");
   const [loading, setLoading] = useState<boolean>(true);
@@ -237,6 +241,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         currentTrackId={currentTrackId}
         isPlaying={isPlaying}
         designConfig={designConfig}
+        isShuffle={isShuffle}
+        onToggleShuffle={onToggleShuffle}
       />
     );
   }

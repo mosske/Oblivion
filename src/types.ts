@@ -197,6 +197,7 @@ export interface PlayerState {
   duration: number;
   repeatMode: 'off' | 'one' | 'all';
   isShuffle: boolean;
+  shuffleHistory?: string[]; // ids already played in the current shuffle cycle (last = current track)
   isFullscreen: boolean;
   showLyrics: boolean;
   showQueue: boolean;

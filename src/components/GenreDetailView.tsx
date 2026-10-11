@@ -32,6 +32,8 @@ interface GenreDetailViewProps {
   activeTrack?: Track | null;
   isPlaying?: boolean;
   designConfig?: FullAppDesignConfig;
+  isShuffle?: boolean;
+  onToggleShuffle?: () => void;
 }
 
 export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
@@ -44,6 +46,8 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
   activeTrack,
   isPlaying = false,
   designConfig = FULL_APP_DESIGNS["designer"],
+  isShuffle = false,
+  onToggleShuffle,
 }) => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -417,21 +421,20 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
 
                 <button
                   id="genre-shuffle-btn"
-                  onClick={() => {
-                    if (tracks.length > 0) {
-                      const shuffled = [...tracks].sort(() => Math.random() - 0.5);
-                      onPlayQueue(shuffled, 0);
-                    }
-                  }}
-                  disabled={tracks.length <= 1}
-                  className={`px-5 sm:px-6 py-3.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-all border ${designConfig.btnSecondary} disabled:opacity-50`}
+                  data-active={isShuffle ? "true" : "false"}
+                  onClick={() => onToggleShuffle?.()}
+                  disabled={tracks.length <= 1 || !onToggleShuffle}
+                  title={isShuffle ? "Shuffle is ON" : "Shuffle is OFF"}
+                  className={`px-5 sm:px-6 py-3.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-all border ${
+                    isShuffle ? `${designConfig.accentBorder} ${designConfig.accentBg} text-white` : designConfig.btnSecondary
+                  } disabled:opacity-50`}
                   style={{
-                    color: "var(--text-primary, #ffffff)",
-                    borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.1))",
+                    color: isShuffle ? "#ffffff" : "var(--text-primary, #ffffff)",
+                    borderColor: isShuffle ? undefined : "var(--border-subtle, rgba(255, 255, 255, 0.1))",
                   }}
                 >
                   <Shuffle className="w-4 h-4" />
-                  <span>Shuffle</span>
+                  <span>{isShuffle ? "Shuffle: On" : "Shuffle: Off"}</span>
                 </button>
               </div>
             </div>
