@@ -3711,6 +3711,8 @@ export const Player: React.FC<PlayerProps> = ({
                         }
                       : (effectiveRepeat !== "off" && isBespoke ? { color: bespokeColors[1] } : (effectiveRepeat === "off" ? { color: "#e8d5b5" } : undefined))
                   }
+                  data-repeat-btn="true"
+                  data-repeat-state={effectiveRepeat}
                   title={`Repeat: ${effectiveRepeat}`}
                 >
                   {effectiveRepeat === "one" ? (
@@ -4080,6 +4082,8 @@ export const Player: React.FC<PlayerProps> = ({
                           }
                       : undefined
                   }
+                  data-repeat-btn="true"
+                  data-repeat-state={effectiveRepeat}
                   title={`Repeat: ${effectiveRepeat}`}
                 >
                   {effectiveRepeat === "one" ? (

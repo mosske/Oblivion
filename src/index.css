@@ -4390,3 +4390,55 @@ svg.playlist-search-icon,
 :is(#hr-boost, #playlist-shuffle-btn, #playlist-repeat-btn, #playlist-favorite-btn, #genre-shuffle-btn)[data-active="false"] {
   opacity: 0.6 !important;
 }
+
+/* ==========================================================================
+   HARD ROCK - INACTIVE TABS + REPEAT STATE (final override)
+   - Inactive tabs (Video / Lyrics / Radio ...) match the model inactive chip
+     used by the Explore/Home filters (All, Charts, Music Videos).
+   - Active tab icons are a plain white outline (no black infill).
+   - Mini + full player Repeat: ON = hot-pink glowing icon, OFF = unchanged.
+   ========================================================================== */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, button.hard-rock-inactive-tab) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #E5E7EB !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, button.hard-rock-inactive-tab) :is(span, svg, path, circle, line, polyline, rect, p) {
+  color: #E5E7EB !important;
+  stroke: #E5E7EB !important;
+  fill: none !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+/* Active tab icon: white outline only */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, button.hard-rock-active-tab) :is(svg, path, circle, line, polyline, rect) {
+  fill: none !important;
+  stroke: #FFFFFF !important;
+  color: #FFFFFF !important;
+}
+
+/* Repeat ON (all / one): hot-pink glowing icon, no chip */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"]) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #FF4DD2 !important;
+}
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"]) :is(svg, path, circle, line, polyline, rect) {
+  color: #FF4DD2 !important;
+  stroke: #FF4DD2 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"]) svg {
+  filter: drop-shadow(0 0 5px rgba(255, 77, 210, 0.85)) !important;
+}
