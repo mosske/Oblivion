@@ -477,18 +477,18 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                     mode === "original"
                       ? isHardRock
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            color: "#FFFFFF",
                             fontWeight: 700,
                             border: "none",
-                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                           }
                         : { color: "#2b1810" }
                       : undefined
                   }
                   title="Show lyrics in original language"
                 >
-                  <span style={mode === "original" && isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Original</span>
+                  <span style={mode === "original" && isHardRock ? { color: "#FFFFFF", fontWeight: 700 } : undefined}>Original</span>
                 </button>
                 <button
                   id="lyrics-toggle-romanized-btn"
@@ -502,11 +502,11 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                     mode === "romanized"
                       ? isHardRock
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            color: "#FFFFFF",
                             fontWeight: 700,
                             border: "none",
-                            boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                           }
                         : { color: "#2b1810" }
                       : undefined
@@ -515,9 +515,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                 >
                   <Sparkles
                     className="w-3 h-3"
-                    style={mode === "romanized" && isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+                    style={mode === "romanized" && isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
                   />
-                  <span style={mode === "romanized" && isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Rom</span>
+                  <span style={mode === "romanized" && isHardRock ? { color: "#FFFFFF", fontWeight: 700 } : undefined}>Rom</span>
                 </button>
               </div>
 
@@ -534,10 +534,10 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   style={
                     isDualLine && isHardRock
                       ? {
-                          background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                          color: "#1D0E0A",
+                          background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                          color: "#FFFFFF",
                           border: "none",
-                          boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                          boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                         }
                       : undefined
                   }
@@ -545,7 +545,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                 >
                   <Layers
                     className="w-3.5 h-3.5"
-                    style={isDualLine && isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+                    style={isDualLine && isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
                   />
                 </button>
               )}
@@ -570,11 +570,11 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
                   isUserScrolling
                     ? isHardRock
                       ? {
-                          background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                          color: "#1D0E0A",
+                          background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                          color: "#FFFFFF",
                           fontWeight: 700,
                           border: "none",
-                          boxShadow: "0 2px 8px rgba(192, 132, 252, 0.35)",
+                          boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                         }
                       : { color: "#2b1810" }
                     : undefined
@@ -583,9 +583,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
               >
                 <LocateFixed
                   className="w-3 h-3"
-                  style={isUserScrolling && isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+                  style={isUserScrolling && isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
                 />
-                <span style={isUserScrolling && isHardRock ? { color: "#1D0E0A", fontWeight: 700 } : undefined}>Sync / Center</span>
+                <span style={isUserScrolling && isHardRock ? { color: "#FFFFFF", fontWeight: 700 } : undefined}>Sync / Center</span>
               </button>
             )}
 

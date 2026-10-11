@@ -279,10 +279,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 style={
                   isHardRock
                     ? {
-                        background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                        color: "#1D0E0A",
+                        background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                        color: "#FFFFFF",
                         border: "none",
-                        boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                        boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                       }
                     : { color: "#0f0d13", opacity: 1, fontWeight: 700 }
                 }
@@ -290,12 +290,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               >
                 <Plus
                   className="w-4 h-4"
-                  color={isHardRock ? "#1D0E0A" : "#0f0d13"}
-                  stroke={isHardRock ? "#1D0E0A" : "#0f0d13"}
-                  style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", opacity: 1 } : { color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }}
+                  color={isHardRock ? "#FFFFFF" : "#0f0d13"}
+                  stroke={isHardRock ? "#FFFFFF" : "#0f0d13"}
+                  style={isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF", opacity: 1 } : { color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }}
                   strokeWidth={2.5}
                 />
-                <span style={isHardRock ? { color: "#1D0E0A", opacity: 1, fontWeight: 700 } : { color: "#0f0d13", opacity: 1, fontWeight: 700 }}>New Playlist</span>
+                <span style={isHardRock ? { color: "#FFFFFF", opacity: 1, fontWeight: 700 } : { color: "#0f0d13", opacity: 1, fontWeight: 700 }}>New Playlist</span>
               </button>
             </div>
           </div>
@@ -372,10 +372,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                     style={
                       isHardRock
                         ? {
-                            background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                            color: "#1D0E0A",
+                            background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                            color: "#FFFFFF",
                             border: "none",
-                            boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                           }
                         : { color: "#0f0d13", opacity: 1, fontWeight: 700 }
                     }
@@ -383,12 +383,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   >
                     <Plus
                       className="w-4 h-4"
-                      color={isHardRock ? "#1D0E0A" : "#0f0d13"}
-                      stroke={isHardRock ? "#1D0E0A" : "#0f0d13"}
-                      style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A", opacity: 1 } : { color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }}
+                      color={isHardRock ? "#FFFFFF" : "#0f0d13"}
+                      stroke={isHardRock ? "#FFFFFF" : "#0f0d13"}
+                      style={isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF", opacity: 1 } : { color: "#0f0d13", stroke: "#0f0d13", opacity: 1 }}
                       strokeWidth={2.5}
                     />
-                    <span style={isHardRock ? { color: "#1D0E0A", opacity: 1, fontWeight: 700 } : { color: "#0f0d13", opacity: 1, fontWeight: 700 }}>Create Playlist</span>
+                    <span style={isHardRock ? { color: "#FFFFFF", opacity: 1, fontWeight: 700 } : { color: "#0f0d13", opacity: 1, fontWeight: 700 }}>Create Playlist</span>
                   </button>
                   {!user?.isLoggedIn && onOpenAuthModal && (
                     <button

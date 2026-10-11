@@ -76,11 +76,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           style={
             isHardRock
               ? {
-                  background: "linear-gradient(135deg, #F3E0C8 0%, #C084FC 100%)",
-                  color: "#1D0E0A",
+                  background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                  color: "#FFFFFF",
                   borderRadius: "9999px",
                   border: "none",
-                  boxShadow: "0 2px 10px rgba(192, 132, 252, 0.35)",
+                  boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                 }
               : undefined
           }
@@ -88,7 +88,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Search
             className={isHardRock ? "w-4 h-4 sm:w-4.5 sm:h-4.5" : "w-4 h-4"}
-            style={isHardRock ? { color: "#1D0E0A", stroke: "#1D0E0A" } : undefined}
+            style={isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined}
           />
           {!isHardRock && <span className="text-xs font-semibold hidden sm:inline">Search</span>}
         </button>

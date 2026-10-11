@@ -4309,4 +4309,84 @@ svg.playlist-search-icon,
   opacity: 1 !important;
 }
 
+/* ==========================================================================
+   HARD ROCK - STANDARD BUTTON (final override; single source of truth)
+   Model: dark pink -> near-black diagonal gradient, white text and icons.
+   Wins over the legacy Hard Rock rules above by specificity (the #hr-boost
+   id inside :is() gives every selector in the list id-level specificity).
+   - Primary / action buttons ........ always model
+   - Selected segment / pill ......... model
+   - Standalone toggles (shuffle...) . model; ON = white ring + glow,
+                                       OFF = same gradient, dimmed
+   ========================================================================== */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"]) {
+  --hr-btn-bg: linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%);
+  --hr-btn-border: 1px solid rgba(255, 105, 180, 0.4);
+  --hr-btn-shadow: 0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  --hr-btn-shadow-on: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 0 16px rgba(224, 36, 179, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
 
+/* 1. Model look */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(
+  #hr-boost,
+  /* primary / action buttons */
+  #top-header-search-btn, #top-header-signin-btn, #install-app-android-btn,
+  #library-new-playlist-btn, #library-empty-create-playlist-btn, #create-playlist-btn,
+  #identify-music-btn, #playlist-play-all-btn, #genre-play-all-btn, #lyrics-sync-center-btn,
+  .btn-primary-action,
+  /* play / pause (mini + full player) */
+  .play-pause-btn, .full-player-play-btn, .mini-player-play-btn, #player-fullscreen-main-play-btn,
+  /* standalone toggles */
+  #playlist-shuffle-btn, #playlist-repeat-btn, #playlist-favorite-btn, #genre-shuffle-btn,
+  /* selected segments / pills */
+  .hard-rock-active-tab, [data-settings-control][data-selected="true"],
+  #lyrics-toggle-original-btn[style*="linear-gradient"],
+  #lyrics-toggle-romanized-btn[style*="linear-gradient"],
+  #lyrics-toggle-dualline-btn[style*="linear-gradient"]
+) {
+  background: var(--hr-btn-bg) !important;
+  border: var(--hr-btn-border) !important;
+  box-shadow: var(--hr-btn-shadow) !important;
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* 2. White text + icons inside every standard button */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(
+  #hr-boost,
+  #top-header-search-btn, #top-header-signin-btn, #install-app-android-btn,
+  #library-new-playlist-btn, #library-empty-create-playlist-btn, #create-playlist-btn,
+  #identify-music-btn, #playlist-play-all-btn, #genre-play-all-btn, #lyrics-sync-center-btn,
+  .btn-primary-action,
+  .play-pause-btn, .full-player-play-btn, .mini-player-play-btn, #player-fullscreen-main-play-btn,
+  #playlist-shuffle-btn, #playlist-repeat-btn, #playlist-favorite-btn, #genre-shuffle-btn,
+  .hard-rock-active-tab, [data-settings-control][data-selected="true"],
+  #lyrics-toggle-original-btn[style*="linear-gradient"],
+  #lyrics-toggle-romanized-btn[style*="linear-gradient"],
+  #lyrics-toggle-dualline-btn[style*="linear-gradient"]
+) :is(span, svg, path, circle, line, polyline, rect, p, b, strong, i) {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* 3. Solid play / pause glyphs */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, .play-pause-btn, .full-player-play-btn, .mini-player-play-btn, #player-fullscreen-main-play-btn)
+:is(svg, path, polygon, rect) {
+  fill: #FFFFFF !important;
+}
+
+/* 4. Standalone toggles: ON = ring + glow, OFF = same gradient, dimmed */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, #playlist-shuffle-btn, #playlist-repeat-btn, #playlist-favorite-btn, #genre-shuffle-btn)[data-active="true"] {
+  box-shadow: var(--hr-btn-shadow-on) !important;
+}
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, #playlist-shuffle-btn, #playlist-repeat-btn, #playlist-favorite-btn, #genre-shuffle-btn)[data-active="false"] {
+  opacity: 0.6 !important;
+}
