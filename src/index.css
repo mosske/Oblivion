@@ -4374,11 +4374,11 @@ svg.playlist-search-icon,
   text-shadow: none !important;
 }
 
-/* 3. Solid play / pause glyphs */
+/* 3. Play / pause glyphs: plain white outline (superseded by the stronger rule at the end of this file) */
 :is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
 :is(#hr-boost, .play-pause-btn, .full-player-play-btn, .mini-player-play-btn, #player-fullscreen-main-play-btn)
 :is(svg, path, polygon, rect) {
-  fill: #FFFFFF !important;
+  fill: none !important;
 }
 
 /* 4. Standalone toggles: ON = ring + glow, OFF = same gradient, dimmed */
@@ -4441,4 +4441,20 @@ svg.playlist-search-icon,
 :is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
 :is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"]) svg {
   filter: drop-shadow(0 0 5px rgba(255, 77, 210, 0.85)) !important;
+}
+
+/* ==========================================================================
+   HARD ROCK - PLAY / PAUSE GLYPH = WHITE (mini player + full player)
+   Doubled #hr-boost list gives this rule higher specificity than the legacy
+   "#app-mini-player-floating-dock ... svg path" and
+   "#player-fullscreen-main-play-btn svg path" rules, which painted it dark.
+   ========================================================================== */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, .play-pause-btn, .full-player-play-btn, .mini-player-play-btn, #player-fullscreen-main-play-btn, .player-play-btn):is(#hr-boost, .play-pause-btn, .full-player-play-btn, .mini-player-play-btn, #player-fullscreen-main-play-btn, .player-play-btn)
+:is(svg, path, polygon, rect, line, circle) {
+  fill: none !important;
+  stroke: #FFFFFF !important;
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+  filter: none !important;
 }
