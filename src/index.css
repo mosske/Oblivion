@@ -4801,3 +4801,18 @@ svg.playlist-search-icon,
   color: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.7)) !important;
   stroke: var(--bespoke-mini-player-icon-muted, rgba(255, 255, 255, 0.7)) !important;
 }
+
+/* ==========================================================================
+   BESPOKE - GPU-SAFE RENDERING
+   113 backdrop-filter rules + blended / blurred layers exhaust GPU tile memory
+   on phones: flicker while scrolling and rectangles that fail to paint (header,
+   cards, nav). The Bespoke background is a smooth gradient, so backdrop blur is
+   barely visible anyway. Turn the expensive effects off for Bespoke only.
+   ========================================================================== */
+:is([data-theme="bespoke"], .theme-bespoke) :is(#hr-boost, *),
+:is([data-theme="bespoke"], .theme-bespoke) :is(#hr-boost, *)::before,
+:is([data-theme="bespoke"], .theme-bespoke) :is(#hr-boost, *)::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  mix-blend-mode: normal !important;
+}

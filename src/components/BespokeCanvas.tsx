@@ -8,6 +8,15 @@ export interface BespokeCanvasProps {
   className?: string;
 }
 
+/**
+ * Bespoke background.
+ *
+ * Deliberately a SINGLE, STATIC layer made of stacked CSS gradients:
+ *  - no blur() filters, no mix-blend-mode, no will-change, no animation, no mouse parallax.
+ * The previous version used five huge blurred / blended / animated layers behind dozens of
+ * backdrop-filter cards. On phones that exhausts GPU tile memory, which showed up as flicker
+ * while scrolling and rectangular patches (header, cards, nav) failing to paint.
+ */
 export const BespokeCanvas: React.FC<BespokeCanvasProps> = ({
   isActive,
   customColors,
@@ -19,8 +28,6 @@ export const BespokeCanvas: React.FC<BespokeCanvasProps> = ({
     }
     return getBespokeConfig().colors;
   });
-
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // Update when prop changes
   useEffect(() => {
@@ -50,93 +57,27 @@ export const BespokeCanvas: React.FC<BespokeCanvasProps> = ({
     };
   }, [isActive]);
 
-  // Gentle interactive mouse parallax for glowing orb uniforms
-  useEffect(() => {
-    if (!isActive) return;
-
-    let frame = 0;
-    let nextX = 0;
-    let nextY = 0;
-    const handleMouseMove = (e: MouseEvent) => {
-      const { innerWidth, innerHeight } = window;
-      nextX = (e.clientX / innerWidth - 0.5) * 50;
-      nextY = (e.clientY / innerHeight - 0.5) * 50;
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        setMousePos((prev) =>
-          Math.abs(prev.x - nextX) < 0.5 && Math.abs(prev.y - nextY) < 0.5 ? prev : { x: nextX, y: nextY }
-        );
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, [isActive]);
-
   if (!isActive) return null;
 
   const [c1, c2, c3, c4] = colors;
 
+  const background = [
+    // soft colour pools (replace the four blurred orbs)
+    `radial-gradient(65% 55% at 12% 6%, ${hexToRgba(c2, 0.55)} 0%, transparent 70%)`,
+    `radial-gradient(55% 50% at 94% 30%, ${hexToRgba(c3, 0.5)} 0%, transparent 72%)`,
+    `radial-gradient(60% 55% at 28% 100%, ${hexToRgba(c3, 0.5)} 0%, transparent 72%)`,
+    `radial-gradient(50% 45% at 96% 94%, ${hexToRgba(c4, 0.5)} 0%, transparent 72%)`,
+    // 4-colour wash (replaces the aurora layer)
+    `linear-gradient(135deg, ${hexToRgba(c1, 0.3)} 0%, ${hexToRgba(c2, 0.22)} 35%, ${hexToRgba(c3, 0.2)} 70%, ${hexToRgba(c4, 0.22)} 100%)`,
+    // base
+    `radial-gradient(circle at 10% 10%, ${c1} 0%, ${c3} 40%, #050508 80%)`,
+  ].join(", ");
+
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 pointer-events-none z-0 overflow-hidden select-none ${className}`}
-      style={{
-        isolation: "isolate",
-        background: `radial-gradient(circle at 10% 10%, ${c1} 0%, ${c3} 40%, #050508 80%)`,
-      }}
-    >
-      {/* 4-Color Full Gradient Overlay */}
-      <div
-        className="absolute inset-0 opacity-40 mix-blend-screen filter blur-[90px] animate-bespoke-aurora"
-        style={{
-          background: `linear-gradient(135deg, ${hexToRgba(c1, 0.45)} 0%, ${hexToRgba(c2, 0.4)} 35%, ${hexToRgba(c3, 0.35)} 70%, ${hexToRgba(c4, 0.35)} 100%)`,
-        }}
-      />
-
-      {/* Glowing Orb Uniform 1: Primary Accent c1 / c2 (Top-Left) */}
-      <div
-        className="absolute w-[600px] h-[600px] sm:w-[750px] sm:h-[750px] -top-28 -left-24 rounded-full opacity-70 mix-blend-screen blur-[120px] will-change-transform transition-all duration-500"
-        style={{
-          background: `radial-gradient(circle, ${hexToRgba(c2, 0.85)} 0%, ${hexToRgba(c1, 0.6)} 45%, transparent 75%)`,
-          transform: `translate3d(${mousePos.x * 0.8}px, ${mousePos.y * 0.8}px, 0)`,
-          transition: "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
-        }}
-      />
-
-      {/* Glowing Orb Uniform 2: Secondary Accent c2 / c3 (Top-Right) */}
-      <div
-        className="absolute w-[520px] h-[520px] sm:w-[680px] sm:h-[680px] top-1/4 -right-20 rounded-full opacity-65 mix-blend-screen blur-[115px] will-change-transform transition-all duration-500"
-        style={{
-          background: `radial-gradient(circle, ${hexToRgba(c3, 0.8)} 0%, ${hexToRgba(c2, 0.5)} 40%, transparent 75%)`,
-          transform: `translate3d(${-mousePos.x * 0.6}px, ${-mousePos.y * 0.6}px, 0)`,
-          transition: "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
-        }}
-      />
-
-      {/* Glowing Orb Uniform 3: Midtone Accent c3 (Bottom-Left) */}
-      <div
-        className="absolute w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] -bottom-36 left-1/5 rounded-full opacity-60 mix-blend-screen blur-[130px] will-change-transform transition-all duration-500"
-        style={{
-          background: `radial-gradient(circle, ${hexToRgba(c3, 0.85)} 0%, ${hexToRgba(c1, 0.55)} 45%, transparent 75%)`,
-          transform: `translate3d(${mousePos.x * 0.5}px, ${mousePos.y * 0.5}px, 0)`,
-          transition: "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
-        }}
-      />
-
-      {/* Glowing Orb Uniform 4: Highlight / Specular Rim c4 (Bottom-Right) */}
-      <div
-        className="absolute w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] bottom-8 -right-12 rounded-full opacity-55 mix-blend-screen blur-[105px] will-change-transform transition-all duration-500"
-        style={{
-          background: `radial-gradient(circle, ${hexToRgba(c4, 0.8)} 0%, ${hexToRgba(c2, 0.45)} 45%, transparent 75%)`,
-          transform: `translate3d(${-mousePos.x * 0.7}px, ${mousePos.y * 0.7}px, 0)`,
-          transition: "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
-        }}
-      />
-    </div>
+      className={`fixed inset-0 pointer-events-none z-0 select-none ${className}`}
+      style={{ background, transform: "translateZ(0)" }}
+    />
   );
 };

@@ -2815,7 +2815,7 @@ export const Player: React.FC<PlayerProps> = ({
             {/* Bespoke Dynamic Nebula Aurora Layer */}
             {isBespoke && (
               <div
-                className="absolute inset-0 opacity-40 mix-blend-screen filter blur-[90px] animate-bespoke-aurora pointer-events-none"
+                className="absolute inset-0 opacity-40 animate-bespoke-aurora pointer-events-none"
                 style={{
                   background: `linear-gradient(135deg, ${hexToRgba(bespokeColors[0], 0.5)} 0%, ${hexToRgba(bespokeColors[1], 0.45)} 35%, ${hexToRgba(bespokeColors[2], 0.4)} 70%, ${hexToRgba(bespokeColors[3], 0.4)} 100%)`,
                 }}
