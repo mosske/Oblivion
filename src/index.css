@@ -4816,3 +4816,36 @@ svg.playlist-search-icon,
   backdrop-filter: none !important;
   mix-blend-mode: normal !important;
 }
+
+/* ==========================================================================
+   STUDIO HOMME MOSAIQUE (audiophile-gold): vertical scrollbar thumb = theme steel-blue
+   Chrome uses the standard scrollbar-color (cherry accent) over ::-webkit-scrollbar rules.
+   ========================================================================== */
+:is([data-theme="audiophile-gold"], [data-theme-alias="studio-homme-mosaique"], .theme-audiophile-gold),
+:is([data-theme="audiophile-gold"], [data-theme-alias="studio-homme-mosaique"], .theme-audiophile-gold) * {
+  scrollbar-color: #8fa7c2 transparent !important;
+}
+
+/* ==========================================================================
+   HARD ROCK - Identify Music buttons use the standard model button
+   (Search Song, Stop, Listen, and the round Search Again / idle button)
+   ========================================================================== */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, #identify-search-song-btn, #identify-stop-btn, #identify-listen-btn,
+    #identify-main-btn[data-identify-state="idle"], #identify-main-btn[data-identify-state="matched"]) {
+  background: var(--hr-btn-bg) !important;
+  border: var(--hr-btn-border) !important;
+  box-shadow: var(--hr-btn-shadow) !important;
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"])
+:is(#hr-boost, #identify-search-song-btn, #identify-stop-btn, #identify-listen-btn,
+    #identify-main-btn[data-identify-state="idle"], #identify-main-btn[data-identify-state="matched"])
+:is(span, svg, path, circle, line, polyline, rect) {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  fill: none !important;
+  opacity: 1 !important;
+}

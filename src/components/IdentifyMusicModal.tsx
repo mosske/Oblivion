@@ -42,7 +42,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
   const RECORDING_DURATION_MS = 5000;
 
   // Derive theme-specific colors and visual states
-  const themeStyles = (() => {
+  const baseThemeStyles = (() => {
     switch (designConfig.id) {
       case "candyland":
         return {
@@ -277,6 +277,17 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
         };
     }
   })();
+
+  // Hard Rock and Bespoke are not in the switch above (they used the gold default). Use each theme's own
+  // standard button so Search Song / Search Again match the player's Play/Pause button.
+  const themeStyles =
+    designConfig.id === "hard-rock" || designConfig.id === "bespoke"
+      ? {
+          ...baseThemeStyles,
+          btnPrimary: `${designConfig.btnPrimary} active:scale-95`,
+          btnActive: `${designConfig.btnPrimary} ring-4 ring-white/20`,
+        }
+      : baseThemeStyles;
 
   // Cleanup on unmount or modal close
   useEffect(() => {
@@ -584,6 +595,8 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
             )}
 
             <button
+              id="identify-main-btn"
+              data-identify-state={status}
               onClick={status === "listening" ? cleanupAudio : startListening}
               disabled={status === "analyzing"}
               className={`relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl transition-all duration-300 transform active:scale-95 ${
@@ -592,7 +605,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
                   : status === "analyzing"
                   ? "bg-slate-700 text-slate-300 animate-pulse cursor-wait"
                   : status === "matched"
-                  ? "bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105"
+                  ? `${themeStyles.btnPrimary} hover:scale-105`
                   : `${themeStyles.btnPrimary} hover:scale-105`
               }`}
               title={status === "listening" ? "Stop Listening" : "Tap to listen"}
@@ -607,7 +620,7 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
               ) : status === "analyzing" ? (
                 <Sparkles className="w-9 h-9 animate-spin" stroke="currentColor" />
               ) : status === "matched" ? (
-                <RotateCcw className="w-8 h-8 text-white" />
+                <RotateCcw className="w-8 h-8" strokeWidth={2} />
               ) : (
                 <Mic className="w-9 h-9 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
               )}
@@ -677,30 +690,32 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
 
           {matchedSong ? (
             <button
+              id="identify-search-song-btn"
               onClick={handleSearchSong}
               className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold ${themeStyles.btnPrimary} transition-all shadow-md flex items-center justify-center gap-2 active:scale-95`}
             >
-              <Search className="w-4 h-4 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
+              <Search className="w-4 h-4" strokeWidth={2} />
               <span>Search Song</span>
             </button>
           ) : (
             <button
+              id={status === "listening" ? "identify-stop-btn" : "identify-listen-btn"}
               onClick={status === "listening" ? cleanupAudio : startListening}
               disabled={status === "analyzing"}
-              className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 ${
+              className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 active:scale-95 ${
                 status === "listening"
-                  ? "bg-rose-500 text-white hover:bg-rose-600"
+                  ? designConfig.btnPrimary
                   : themeStyles.btnPrimary
               }`}
             >
               {status === "listening" ? (
                 <>
-                  <MicOff className="w-4 h-4 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
+                  <MicOff className="w-4 h-4" strokeWidth={2} />
                   <span>Stop</span>
                 </>
               ) : (
                 <>
-                  <Mic className="w-4 h-4 text-[#120f14] stroke-[#120f14]" style={{ fill: "none", stroke: "#120f14", color: "#120f14" }} strokeWidth={2} />
+                  <Mic className="w-4 h-4" strokeWidth={2} />
                   <span>{status === "idle" ? "Listen" : "Listen Again"}</span>
                 </>
               )}
