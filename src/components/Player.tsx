@@ -1331,6 +1331,30 @@ export const Player: React.FC<PlayerProps> = ({
   const fpTheme = getFullPlayerThemeStyles(designConfig, isBespoke ? bespokeColors : undefined);
   const currentThemeLogo = (designConfig as any)?.logoUrl || "/logo.svg";
 
+  // Full player is a fixed, non-scrolling screen. Lock the page behind it so swipes never scroll
+  // the document (which showed a scrollbar thumb on the right edge). Restored on close/unmount.
+  useEffect(() => {
+    if (!isFullscreen || typeof document === "undefined") return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      htmlOverscroll: html.style.overscrollBehavior,
+      bodyOverscroll: body.style.overscrollBehavior,
+    };
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    html.style.overscrollBehavior = "none";
+    body.style.overscrollBehavior = "none";
+    return () => {
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      html.style.overscrollBehavior = prev.htmlOverscroll;
+      body.style.overscrollBehavior = prev.bodyOverscroll;
+    };
+  }, [isFullscreen]);
+
   const isPlayingRef = useRef<boolean>(isPlaying);
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -2632,7 +2656,7 @@ export const Player: React.FC<PlayerProps> = ({
         }}
         id="player-fullscreen-dock"
         data-theme={designConfig.id}
-        className={`full-player-overlay full-player-container fixed inset-0 w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in ${isHardRock ? 'theme-hard-rock' : ''}`}
+        className={`full-player-overlay full-player-container fixed inset-0 overscroll-none w-full h-[100dvh] max-h-[100dvh] ${fpTheme.bgCanvas} flex flex-col justify-between overflow-hidden select-none animate-fade-in ${isHardRock ? 'theme-hard-rock' : ''}`}
         style={{
           zIndex: isFullscreen ? 100 : -1,
           opacity: isFullscreen ? (dragOffsetY > 0 ? Math.max(0.65, 1 - dragOffsetY / 500) : 1) : 0,
