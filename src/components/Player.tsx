@@ -26,6 +26,8 @@ import {
 import { LyricsView } from "./LyricsView";
 import { SimilarTracksDrawer } from "./SimilarTracksDrawer";
 import { MarqueeText } from "./MarqueeText";
+import { ShareIcon } from "./ShareIcon";
+import { shareTrack } from "../utils/shareTrack";
 import { OblivionLogo as Logo } from "./OblivionLogo";
 import { cleanTrackTitle, getPlayableAudioUrl, getHdCoverUrl, extractCleanYoutubeId } from "../utils/formatters";
 import { cleanVideoId, purgeTrackFromStorage, purgeTrackGlobally } from "../services/playlistService";
@@ -3541,6 +3543,40 @@ export const Player: React.FC<PlayerProps> = ({
                     } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
                   />
                 </button>
+
+                <button
+                  id="player-fullscreen-share-btn"
+                  onClick={() => {
+                    void shareTrack(currentTrack);
+                  }}
+                  className={`transition-all active:scale-95 flex items-center justify-center cursor-pointer p-2 ${isHardRock ? "" : `player-control-btn rounded-xl border text-xs font-semibold ${fpTheme.ctrlBtn}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "8px",
+                    opacity: 1,
+                  } : isCandyland ? {
+                    color: "#8a2be2",
+                  } : { color: "#e8d5b5" }}
+                  title="Share song"
+                >
+                  <ShareIcon
+                    className="control-icon w-5 h-5 sm:w-6 sm:h-6"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : isCandyland ? {
+                      color: "#8a2be2",
+                      stroke: "#8a2be2",
+                      fill: "none",
+                      opacity: 1,
+                    } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.9 }}
+                  />
+                </button>
               </div>
 
               {/* Center Group: Previous (Back), Play/Pause in Center, Next (Forward) */}
@@ -4272,6 +4308,33 @@ export const Player: React.FC<PlayerProps> = ({
                   title="Add to Playlist"
                 >
                   <Plus
+                    className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4"
+                    style={isHardRock ? {
+                      color: "#e8d5b5",
+                      stroke: "#e8d5b5",
+                      fill: "none",
+                      opacity: 1,
+                    } : undefined}
+                  />
+                </button>
+
+                <button
+                  id="player-mini-share-btn"
+                  onClick={() => {
+                    void shareTrack(currentTrack);
+                  }}
+                  className={`player-control-btn action-btn p-1.5 transition-colors ${isHardRock ? "" : `${designConfig.textMuted} hover:${designConfig.accentText}`}`}
+                  style={isHardRock ? {
+                    backgroundColor: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    padding: "6px",
+                    opacity: 1,
+                  } : undefined}
+                  title="Share song"
+                >
+                  <ShareIcon
                     className="control-icon w-3.5 h-3.5 sm:w-4 sm:h-4"
                     style={isHardRock ? {
                       color: "#e8d5b5",

@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Track, Playlist } from "../types";
+import { ShareIcon } from "./ShareIcon";
+import { shareTrack } from "../utils/shareTrack";
 import { Search, Play, Pause, Plus, Music2, Radio, Sparkles, TrendingUp, Volume2, Mic, X, Clock, Trash2, Disc3, User } from "lucide-react";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
@@ -451,6 +453,18 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 title="Add to playlist"
               >
                 <Plus className="w-4 h-4" />
+              </button>
+
+              <button
+                id={`search-share-btn-${item.id}`}
+                onClick={() => {
+                  void shareTrack(item);
+                }}
+                className={`p-2 ${designConfig.textMuted} hover:${designConfig.accentText} rounded-xl hover:bg-black/10 transition-colors`}
+                title="Share song"
+                aria-label={`Share ${item.title}`}
+              >
+                <ShareIcon className="w-4 h-4" />
               </button>
             </>
           )}

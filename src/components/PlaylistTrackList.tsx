@@ -13,6 +13,8 @@ import {
   ArrowUpDown,
   AlertTriangle,
 } from "lucide-react";
+import { ShareIcon } from "./ShareIcon";
+import { shareTrack } from "../utils/shareTrack";
 import { cleanTrackTitle } from "../utils/formatters";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { MarqueeText } from "./MarqueeText";
@@ -811,6 +813,22 @@ export const PlaylistTrackList: React.FC<PlaylistTrackListProps> = ({
                   title="Add to another playlist"
                 >
                   <Plus className="w-4 h-4" />
+                </button>
+              )}
+
+              {/* Share song link (native share sheet) */}
+              {!isReorderMode && (
+                <button
+                  id={`playlist-track-share-btn-${trId}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void shareTrack(track);
+                  }}
+                  className={`p-1.5 track-action-btn ${designConfig.textMuted} hover:${designConfig.textPrimary} hover:${designConfig.accentText} rounded-lg hover:bg-black/10 transition-colors`}
+                  title="Share song"
+                  aria-label={`Share ${track.title}`}
+                >
+                  <ShareIcon className="w-4 h-4" />
                 </button>
               )}
 

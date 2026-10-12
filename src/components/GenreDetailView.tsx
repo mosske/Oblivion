@@ -21,6 +21,8 @@ import { MarqueeText } from "./MarqueeText";
 import { fetchGenreTracks, GenreItem } from "../services/genreService";
 import { useContextualScrollRecovery } from "../utils/scrollRecovery";
 import { ThemeIcon } from "./ThemeIcon";
+import { ShareIcon } from "./ShareIcon";
+import { shareTrack } from "../utils/shareTrack";
 
 interface GenreDetailViewProps {
   genre: GenreItem;
@@ -594,6 +596,21 @@ export const GenreDetailView: React.FC<GenreDetailViewProps> = ({
                     >
                       {formatDuration(track.duration)}
                     </span>
+
+                    {/* Share song link (native share sheet) */}
+                    <button
+                      id={`genre-track-share-btn-${trId}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void shareTrack(track);
+                      }}
+                      className="track-action-btn p-1.5 ml-1 shrink-0 rounded-lg hover:bg-black/10 transition-colors"
+                      style={{ color: isBespoke ? "var(--bespoke-text-muted, #334155)" : "var(--text-muted, #94a3b8)" }}
+                      title="Share song"
+                      aria-label={`Share ${track.title}`}
+                    >
+                      <ShareIcon className="w-4 h-4" />
+                    </button>
                   </div>
                 );
               })}
