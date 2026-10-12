@@ -935,17 +935,17 @@ input[type="checkbox"] {
 }
 
 @keyframes nebula-aurora-sweep {
+  /* NOTE: no `filter` here. Animating `filter` replaces the element's own
+     blur() (e.g. Tailwind blur-[90px]) every cycle, which made the aurora
+     snap between blurred and sharp = visible flashing. */
   0% {
     background-position: 0% 50%;
-    filter: hue-rotate(0deg);
   }
   50% {
     background-position: 100% 50%;
-    filter: hue-rotate(25deg);
   }
   100% {
     background-position: 0% 50%;
-    filter: hue-rotate(0deg);
   }
 }
 

@@ -54,15 +54,27 @@ export const BespokeCanvas: React.FC<BespokeCanvasProps> = ({
   useEffect(() => {
     if (!isActive) return;
 
+    let frame = 0;
+    let nextX = 0;
+    let nextY = 0;
     const handleMouseMove = (e: MouseEvent) => {
       const { innerWidth, innerHeight } = window;
-      const x = (e.clientX / innerWidth - 0.5) * 50;
-      const y = (e.clientY / innerHeight - 0.5) * 50;
-      setMousePos({ x, y });
+      nextX = (e.clientX / innerWidth - 0.5) * 50;
+      nextY = (e.clientY / innerHeight - 0.5) * 50;
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        setMousePos((prev) =>
+          Math.abs(prev.x - nextX) < 0.5 && Math.abs(prev.y - nextY) < 0.5 ? prev : { x: nextX, y: nextY }
+        );
+      });
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, [isActive]);
 
   if (!isActive) return null;
@@ -72,14 +84,15 @@ export const BespokeCanvas: React.FC<BespokeCanvasProps> = ({
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 pointer-events-none z-0 overflow-hidden select-none transition-colors duration-500 ${className}`}
+      className={`fixed inset-0 pointer-events-none z-0 overflow-hidden select-none ${className}`}
       style={{
+        isolation: "isolate",
         background: `radial-gradient(circle at 10% 10%, ${c1} 0%, ${c3} 40%, #050508 80%)`,
       }}
     >
       {/* 4-Color Full Gradient Overlay */}
       <div
-        className="absolute inset-0 opacity-40 mix-blend-screen filter blur-[90px] animate-nebula-aurora transition-all duration-700"
+        className="absolute inset-0 opacity-40 mix-blend-screen filter blur-[90px] animate-bespoke-aurora"
         style={{
           background: `linear-gradient(135deg, ${hexToRgba(c1, 0.45)} 0%, ${hexToRgba(c2, 0.4)} 35%, ${hexToRgba(c3, 0.35)} 70%, ${hexToRgba(c4, 0.35)} 100%)`,
         }}
