@@ -2235,9 +2235,22 @@ app.get("/api/auth/google/url", (req, res) => {
     response_type: "code",
     scope: scopes.join(" "),
     access_type: "offline",
-    prompt: "consent",
     state: encodeURIComponent(themeColor),
   });
+
+  // Google only issues a refresh token on the first consent. Force the consent screen only
+  // when this browser has no stored refresh token; otherwise skip it so returning logins are faster.
+  if (req.query.has_refresh !== "1") {
+    params.set("prompt", "consent");
+  }
+
+  // Pre-select the account (skips the account picker): last-used email from the browser,
+  // falling back to the optional GOOGLE_LOGIN_HINT environment variable.
+  const queryHint = typeof req.query.login_hint === "string" ? req.query.login_hint : "";
+  const loginHint = (queryHint || process.env.GOOGLE_LOGIN_HINT || "").trim();
+  if (loginHint.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginHint)) {
+    params.set("login_hint", loginHint);
+  }
 
   res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`, themeColor });
 });

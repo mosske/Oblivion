@@ -8,7 +8,7 @@ import {
   getThemeCanvasColor,
 } from "../utils/appDesignThemes";
 import { OblivionLogo } from "./OblivionLogo";
-import { setInMemoryAuth, setIsAuthenticatingGlobal } from "../services/authService";
+import { setInMemoryAuth, setIsAuthenticatingGlobal, getStoredRefreshToken } from "../services/authService";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -44,7 +44,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const activeThemeColor = syncDocumentThemeColor(designConfig);
 
     try {
-      const res = await fetch(`/api/auth/google/url?theme_color=${encodeURIComponent(activeThemeColor)}`);
+      // Speed up returning logins: pre-select the last-used account and skip the consent
+      // screen when a refresh token is already stored in this browser.
+      let lastEmail = "";
+      try {
+        lastEmail = localStorage.getItem("oblivion_last_email") || "";
+      } catch {}
+      const urlQuery = new URLSearchParams({ theme_color: activeThemeColor });
+      if (lastEmail) urlQuery.set("login_hint", lastEmail);
+      if (getStoredRefreshToken()) urlQuery.set("has_refresh", "1");
+      const res = await fetch(`/api/auth/google/url?${urlQuery.toString()}`);
       const data = await res.json().catch(() => ({}));
 
       let targetUrl = data.url;
@@ -116,6 +125,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           if (pollTimer) clearInterval(pollTimer);
 
           const incomingUser = event.data.user;
+          try {
+            if (incomingUser?.email) localStorage.setItem("oblivion_last_email", incomingUser.email);
+          } catch {}
           const fullUser: User = { ...incomingUser, isLoggedIn: true };
 
           // 1. Immediately persist token & user to in-memory store and localStorage
