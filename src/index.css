@@ -4223,6 +4223,28 @@ svg.playlist-search-icon,
   font-weight: 600 !important;
 }
 
+/* Candyland: Edit Details button text matches icon color */
+.theme-candyland #playlist-edit-details-btn,
+.theme-candyland .playlist-edit-details-btn,
+[data-theme="candyland"] #playlist-edit-details-btn,
+[data-theme="candyland"] .playlist-edit-details-btn,
+[data-theme="candyland-pastel"] #playlist-edit-details-btn,
+[data-theme="candyland-pastel"] .playlist-edit-details-btn {
+  color: #b8860b !important;
+  opacity: 1 !important;
+}
+
+.theme-candyland #playlist-edit-details-btn span,
+.theme-candyland .playlist-edit-details-btn span,
+[data-theme="candyland"] #playlist-edit-details-btn span,
+[data-theme="candyland"] .playlist-edit-details-btn span,
+[data-theme="candyland-pastel"] #playlist-edit-details-btn span,
+[data-theme="candyland-pastel"] .playlist-edit-details-btn span {
+  color: #b8860b !important;
+  opacity: 1 !important;
+  font-weight: 600 !important;
+}
+
 #playlist-edit-details-btn svg,
 #playlist-edit-details-btn svg *,
 .playlist-edit-details-btn svg,
