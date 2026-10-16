@@ -2929,7 +2929,7 @@ export const Player: React.FC<PlayerProps> = ({
                             fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             opacity: 1,
                           }
                         : {
@@ -2996,7 +2996,7 @@ export const Player: React.FC<PlayerProps> = ({
                             fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             opacity: 1,
                           }
                         : {
@@ -3063,7 +3063,7 @@ export const Player: React.FC<PlayerProps> = ({
                             fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             opacity: 1,
                           }
                         : {
@@ -3130,7 +3130,7 @@ export const Player: React.FC<PlayerProps> = ({
                             fontWeight: 600,
                             borderRadius: "9999px",
                             padding: "6px 14px",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             opacity: 1,
                           }
                         : {
@@ -3189,17 +3189,17 @@ export const Player: React.FC<PlayerProps> = ({
                 <button
                   onClick={handleMinimizeFullPlayer}
                   className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
-                  style={isCandyland ? { color: "#2563eb" } : { color: "#e8d5b5" }}
+                  style={isCandyland ? { color: "#8A2BE2" } : { color: "#e8d5b5" }}
                   title="Minimize Full Player (or swipe down)"
                 >
                   <ChevronDown
                     className="w-5 h-5 sm:w-6 sm:h-6"
-                    style={isCandyland ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
+                    style={isCandyland ? { color: "#8A2BE2", stroke: "#8A2BE2", opacity: 1 } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
                     size={20}
                   />
                   <span
                     className="text-xs font-semibold hidden sm:inline"
-                    style={isCandyland ? { color: "#2563eb", opacity: 1 } : { color: "#e8d5b5", opacity: 1 }}
+                    style={isCandyland ? { color: "#8A2BE2", opacity: 1 } : { color: "#e8d5b5", opacity: 1 }}
                   >
                     Minimize
                   </span>
@@ -3259,7 +3259,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
                           }
                         : isCandyland && activeTab !== "lyrics"
-                        ? { color: "#2563eb" }
+                        ? { color: "#8A2BE2" }
                         : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
                     }
                   >
@@ -3267,14 +3267,14 @@ export const Player: React.FC<PlayerProps> = ({
                       className="w-3.5 h-3.5"
                       style={
                         isCandyland && activeTab !== "lyrics"
-                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", stroke: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     />
                     <span
                       style={
                         isCandyland && activeTab !== "lyrics"
-                          ? { color: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "lyrics" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     >
@@ -3296,7 +3296,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
                           }
                         : isCandyland && activeTab !== "radio"
-                        ? { color: "#2563eb" }
+                        ? { color: "#8A2BE2" }
                         : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
                     }
                   >
@@ -3304,14 +3304,14 @@ export const Player: React.FC<PlayerProps> = ({
                       className="w-3.5 h-3.5"
                       style={
                         isCandyland && activeTab !== "radio"
-                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", stroke: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     />
                     <span
                       style={
                         isCandyland && activeTab !== "radio"
-                          ? { color: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "radio" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     >
@@ -3756,7 +3756,7 @@ export const Player: React.FC<PlayerProps> = ({
                             color: "#FFFFFF",
                             fontWeight: 600,
                             borderRadius: "12px",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             padding: "8px",
                             opacity: 1,
                           }
@@ -3820,7 +3820,7 @@ export const Player: React.FC<PlayerProps> = ({
                             color: "#FFFFFF",
                             fontWeight: 600,
                             borderRadius: "12px",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             padding: "8px",
                             opacity: 1,
                           }
@@ -4099,7 +4099,7 @@ export const Player: React.FC<PlayerProps> = ({
                             borderRadius: "50%",
                             background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
                             border: "1px solid rgba(255, 105, 180, 0.4)",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             color: "#FFFFFF",
                           }
                         : isBespoke
@@ -4188,7 +4188,7 @@ export const Player: React.FC<PlayerProps> = ({
                             background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
                             borderRadius: "8px",
                             border: "1px solid rgba(255, 105, 180, 0.4)",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             color: "#FFFFFF",
                             fontWeight: 600,
                             padding: "6px",
@@ -4241,7 +4241,7 @@ export const Player: React.FC<PlayerProps> = ({
                             background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
                             borderRadius: "8px",
                             border: "1px solid rgba(255, 105, 180, 0.4)",
-                            boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             color: "#FFFFFF",
                             fontWeight: 600,
                             padding: "6px",

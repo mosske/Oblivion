@@ -148,6 +148,14 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         document.body.classList.contains("theme-sugar-time-jazz")))
   );
 
+  const isCandyland = Boolean(
+    (designConfig.id as string) === "candyland" ||
+    (designConfig.id as string) === "candyland-pastel" ||
+    (designConfig as any).isCandy ||
+    (designConfig as any).themePreset === "candyland" ||
+    designConfig.name === "Candyland Pastel"
+  );
+
   const isBespoke = Boolean(
     designConfig.id === "bespoke" ||
     designConfig.isBespoke ||
@@ -948,18 +956,18 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
                 id="playlist-edit-details-btn"
                 onClick={() => onEditPlaylist(item as Playlist)}
                 className={`playlist-edit-details-btn flex items-center gap-1.5 px-3 py-2 ${isBespoke ? "" : designConfig.btnSecondary} rounded-xl border border-[rgba(212,180,150,0.25)] hover:border-[rgba(212,180,150,0.5)] transition-all text-xs font-semibold shadow-sm active:scale-95`}
-                style={{ color: "#f5eae1", stroke: "#f5eae1" }}
+                style={isCandyland ? { color: "#b8860b", stroke: "#b8860b" } : { color: "#d4b496", stroke: "#d4b496" }}
                 title="Edit Playlist Details"
               >
-                <Edit 
+                <Edit
                   size={14}
                   className="w-3.5 h-3.5"
-                  color="#d4b496"
-                  stroke="#d4b496"
+                  color={isCandyland ? "#b8860b" : "#d4b496"}
+                  stroke={isCandyland ? "#b8860b" : "#d4b496"}
                   strokeWidth={2}
-                  style={{ color: "#d4b496", stroke: "#d4b496", fill: "none", opacity: 1 }}
+                  style={{ color: isCandyland ? "#b8860b" : "#d4b496", stroke: isCandyland ? "#b8860b" : "#d4b496", fill: "none", opacity: 1 }}
                 />
-                <span style={{ color: "#f5eae1", opacity: 1, fontWeight: 600 }}>Edit Details</span>
+                <span style={{ color: isCandyland ? "#b8860b" : "#d4b496", opacity: 1, fontWeight: 600 }}>Edit Details</span>
               </button>
             )}
             {!effectiveIsAlbum && (

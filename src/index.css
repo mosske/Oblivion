@@ -4541,7 +4541,7 @@ svg.playlist-search-icon,
 }
 /* --- candyland --- */
 :is([data-theme="candyland"], .theme-candyland) :is(#hr-boost, [data-repeat-btn][data-repeat-state="all"], [data-repeat-btn][data-repeat-state="one"], [data-shuffle-btn][data-shuffle-state="on"]) {
-  background: radial-gradient(circle, rgba(255,20,147, 0.30) 0%, rgba(255,20,147, 0) 70%) !important;
+  background: radial-gradient(circle, rgba(255,20,147, 0.18) 0%, rgba(255,20,147, 0) 70%) !important;
   border: none !important;
   box-shadow: none !important;
   color: #E6007A !important;
@@ -4553,7 +4553,7 @@ svg.playlist-search-icon,
   fill: none !important;
   stroke-width: 2.5px !important;
   opacity: 1 !important;
-  filter: drop-shadow(0 0 3px rgba(255,20,147, 0.95)) drop-shadow(0 0 9px rgba(255,20,147, 0.65)) !important;
+  filter: drop-shadow(0 0 3px rgba(255,20,147, 0.6)) drop-shadow(0 0 9px rgba(255,20,147, 0.4)) !important;
 }
 :is([data-theme="candyland"], .theme-candyland) :is(#hr-boost, [data-repeat-btn][data-repeat-state="off"], [data-shuffle-btn][data-shuffle-state="off"]) {
   background: transparent !important;
