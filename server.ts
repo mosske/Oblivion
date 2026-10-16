@@ -2244,10 +2244,10 @@ app.get("/api/auth/google/url", (req, res) => {
     params.set("prompt", "consent");
   }
 
-  // Pre-select the account (skips the account picker): last-used email from the browser,
-  // falling back to the optional GOOGLE_LOGIN_HINT environment variable.
+  // Pre-select the account (skips the account picker) using the last-used email that the
+  // user's own browser remembers. No email is ever stored on the server.
   const queryHint = typeof req.query.login_hint === "string" ? req.query.login_hint : "";
-  const loginHint = (queryHint || process.env.GOOGLE_LOGIN_HINT || "").trim();
+  const loginHint = queryHint.trim();
   if (loginHint.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginHint)) {
     params.set("login_hint", loginHint);
   }
