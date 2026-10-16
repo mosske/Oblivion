@@ -120,6 +120,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       let pollTimer: any = null;
 
       const handleMessage = async (event: MessageEvent) => {
+        // Only accept login results sent by our own site (the OAuth callback page).
+        if (event.origin !== window.location.origin) return;
         if (event.data && event.data.type === "OAUTH_SUCCESS") {
           window.removeEventListener("message", handleMessage);
           if (pollTimer) clearInterval(pollTimer);

@@ -2208,11 +2208,32 @@ app.post("/api/auth/google/config", (req, res) => {
   });
 });
 
+// --- Safe handling of values that end up inside the OAuth callback page -------------------
+// The theme colour travels through the URL ("state"), so treat it as untrusted input.
+// Only plain CSS colours (hex, rgb/rgba, hsl/hsla) are accepted; anything else falls back.
+function sanitizeThemeColor(input: unknown, fallback = "#051911"): string {
+  const value = typeof input === "string" ? input.trim() : "";
+  if (value.length <= 64 && /^(#[0-9a-fA-F]{3,8}|(rgb|hsl)a?\([0-9\s.,%\/]+\))$/i.test(value)) {
+    return value;
+  }
+  return fallback;
+}
+
+// JSON that is safe to place inside an inline <script> block (no </script> or HTML breakout).
+function toSafeScriptJson(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 app.get("/api/auth/google/url", (req, res) => {
   const clientId = getOAuthClientId();
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
-  const themeColor = (req.query.theme_color as string) || (req.query.themeColor as string) || "#051911";
+  const themeColor = sanitizeThemeColor((req.query.theme_color as string) || (req.query.themeColor as string));
 
   if (req.session) {
     (req.session as any).authThemeColor = themeColor;
@@ -7547,6 +7568,7 @@ app.get("/api/auth/google/callback", async (req, res) => {
       themeColor = (req.session as any).authThemeColor;
     }
   } catch (e) {}
+  themeColor = sanitizeThemeColor(themeColor);
 
   const renderCallbackHtml = (scriptContent: string) => `<!doctype html>
 <html lang="en">
@@ -7580,10 +7602,10 @@ app.get("/api/auth/google/callback", async (req, res) => {
     return res.send(
       renderCallbackHtml(`
         if (window.opener) {
-          window.opener.postMessage({ type: 'OAUTH_ERROR', error: '${error || "No auth code provided"}' }, '*');
+          window.opener.postMessage({ type: 'OAUTH_ERROR', error: ${toSafeScriptJson(String(error || "No auth code provided").slice(0, 300))} }, window.location.origin);
           window.close();
         } else {
-          window.location.href = '/?oauth_error=${encodeURIComponent(error || "Failed")}';
+          window.location.href = ${toSafeScriptJson("/?oauth_error=" + encodeURIComponent(String(error || "Failed").slice(0, 300)))};
         }
       `)
     );
@@ -7650,11 +7672,11 @@ app.get("/api/auth/google/callback", async (req, res) => {
             if (window.opener) {
               window.opener.postMessage({
                 type: 'OAUTH_SUCCESS',
-                user: ${JSON.stringify(userPayload)}
-              }, '*');
+                user: ${toSafeScriptJson(userPayload)}
+              }, window.location.origin);
               window.close();
             } else {
-              window.location.href = '/?oauth_success=true&user=' + encodeURIComponent(JSON.stringify(${JSON.stringify(userPayload)}));
+              window.location.href = '/?oauth_success=true&user=' + encodeURIComponent(JSON.stringify(${toSafeScriptJson(userPayload)}));
             }
           `)
         );
@@ -7683,10 +7705,10 @@ app.get("/api/auth/google/callback", async (req, res) => {
     return res.send(
       renderCallbackHtml(`
         if (window.opener) {
-          window.opener.postMessage({ type: 'OAUTH_ERROR', error: ${JSON.stringify(errorMsg)} }, '*');
+          window.opener.postMessage({ type: 'OAUTH_ERROR', error: ${toSafeScriptJson(errorMsg)} }, window.location.origin);
           window.close();
         } else {
-          window.location.href = '/?oauth_error=${encodeURIComponent(errorMsg)}';
+          window.location.href = ${toSafeScriptJson("/?oauth_error=" + encodeURIComponent(errorMsg))};
         }
       `)
     );
