@@ -860,6 +860,7 @@ export const Player: React.FC<PlayerProps> = ({
   // see state 1) before it reports PAUSED. Until this timestamp passes, those echoes must not resume playback.
   const pauseGuardUntilRef = useRef<number>(0);
   const lastToggleAtRef = useRef<number>(0);
+  const lastPlayheadStateAtRef = useRef<number>(0);
   const initYTRef = useRef<((vid: string) => void) | null>(null);
   const volumeRef = useRef<number>(1);
   const isMutedRef = useRef<boolean>(false);
@@ -1490,10 +1491,18 @@ export const Player: React.FC<PlayerProps> = ({
 
     let isSubscribed = true;
 
+    let lastBeatPaint = 0;
     const renderBeatFrame = () => {
       if (!isSubscribed) return;
 
       const now = performance.now();
+      // Cap the beat visual at ~30fps and idle while the page is hidden: writing CSS variables on the document
+      // root at 60fps forces a full style recalculation every frame and competes with taps for the main thread.
+      if (document.hidden || now - lastBeatPaint < 33) {
+        rafBeatIdRef.current = requestAnimationFrame(renderBeatFrame);
+        return;
+      }
+      lastBeatPaint = now;
       const cycle = (now % 468) / 468;
       // Sharp rhythmic attack with smooth exponential decay
       const pulse = Math.pow(Math.max(0, 1 - cycle * 1.8), 2.2);
@@ -1573,6 +1582,20 @@ export const Player: React.FC<PlayerProps> = ({
       isChangingTrackRef.current = false;
     }, 2500);
 
+    // Instant feedback: silence the outgoing track now instead of letting it play on until the next one loads.
+    const outgoingTrackId = currentTrackRef.current?.id;
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch {}
+    // Safety net: if the track did not actually change (e.g. one-song queue), resume the song we just paused.
+    setTimeout(() => {
+      if (currentTrackRef.current?.id === outgoingTrackId && isPlayingRef.current && !userManualPauseRef.current) {
+        try {
+          playerRef.current?.playVideo?.();
+        } catch {}
+      }
+    }, 1200);
+
     if (playerCtx?.playNextTrack) {
       playerCtx.playNextTrack();
     }
@@ -1591,6 +1614,20 @@ export const Player: React.FC<PlayerProps> = ({
     isChangingTrackTimeoutRef.current = setTimeout(() => {
       isChangingTrackRef.current = false;
     }, 2500);
+
+    // Instant feedback: silence the outgoing track now instead of letting it play on until the next one loads.
+    const outgoingTrackId = currentTrackRef.current?.id;
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch {}
+    // Safety net: if the track did not actually change (e.g. one-song queue), resume the song we just paused.
+    setTimeout(() => {
+      if (currentTrackRef.current?.id === outgoingTrackId && isPlayingRef.current && !userManualPauseRef.current) {
+        try {
+          playerRef.current?.playVideo?.();
+        } catch {}
+      }
+    }, 1200);
 
     if (playerCtx?.playPrevTrack) {
       playerCtx.playPrevTrack();
@@ -2159,21 +2196,29 @@ export const Player: React.FC<PlayerProps> = ({
           const validDur = (ytDur && ytDur > 0) ? ytDur : (currentTrack?.duration || 0);
 
           if (typeof curTime === "number" && !isNaN(curTime) && curTime >= 0) {
-            setPlayerState((prev) => {
-              if (
-                Math.abs(prev.currentTime - curTime) < 0.05 &&
-                (validDur > 0 ? Math.abs((prev.duration || 0) - validDur) < 0.5 : true) &&
-                prev.isPlaying === (state === 1 || isPlayingRef.current)
-              ) {
-                return prev;
-              }
-              return {
-                ...prev,
-                isPlaying: state === 1 ? true : prev.isPlaying,
-                currentTime: curTime,
-                duration: validDur > 0 ? validDur : prev.duration,
-              };
-            });
+            // Throttle React state updates: re-rendering the whole player tree 10x per second makes taps feel
+            // laggy. 4x per second is visually identical for the progress bar; synced lyrics keep the faster rate.
+            const publishNow = performance.now();
+            const publishEvery = playerStateRef.current?.showLyrics ? 100 : 250;
+            const mustFlipToPlaying = state === 1 && !playerStateRef.current?.isPlaying;
+            if (mustFlipToPlaying || publishNow - lastPlayheadStateAtRef.current >= publishEvery) {
+              lastPlayheadStateAtRef.current = publishNow;
+              setPlayerState((prev) => {
+                if (
+                  Math.abs(prev.currentTime - curTime) < 0.05 &&
+                  (validDur > 0 ? Math.abs((prev.duration || 0) - validDur) < 0.5 : true) &&
+                  prev.isPlaying === (state === 1 || isPlayingRef.current)
+                ) {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  isPlaying: state === 1 ? true : prev.isPlaying,
+                  currentTime: curTime,
+                  duration: validDur > 0 ? validDur : prev.duration,
+                };
+              });
+            }
 
             if (Math.abs(curTime - lastMediaSessionPositionRef.current) >= 0.8) {
               lastMediaSessionPositionRef.current = curTime;
@@ -2357,13 +2402,14 @@ export const Player: React.FC<PlayerProps> = ({
     userManualPauseRef.current = true;
     pauseGuardUntilRef.current = Date.now() + 700;
     isPlayingRef.current = false;
-    stopSilentAnchor();
 
+    // Send the pause to the YouTube player first so the audio stops as early as possible.
     if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
       try {
         playerRef.current.pauseVideo();
       } catch {}
     }
+    stopSilentAnchor();
 
     setPlayerState((prev) => ({ ...prev, isPlaying: false }));
     if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
