@@ -854,6 +854,21 @@ export const Player: React.FC<PlayerProps> = ({
   const isChangingTrackRef = useRef<boolean>(false);
   const isChangingTrackTimeoutRef = useRef<any>(null);
   const userManualPauseRef = useRef<boolean>(false);
+
+  // --- Playback hardening: pause-stutter guard, toggle debounce, stuck-start watchdog ---
+  // After the user pauses, YouTube can still emit a late PLAYING event (or the 100ms poll can still
+  // see state 1) before it reports PAUSED. Until this timestamp passes, those echoes must not resume playback.
+  const pauseGuardUntilRef = useRef<number>(0);
+  const lastToggleAtRef = useRef<number>(0);
+  const initYTRef = useRef<((vid: string) => void) | null>(null);
+  const volumeRef = useRef<number>(1);
+  const isMutedRef = useRef<boolean>(false);
+  const stuckWatchdogRef = useRef<{ videoId: string; lastTime: number; lastProgressAt: number; attempts: number }>({
+    videoId: "",
+    lastTime: 0,
+    lastProgressAt: 0,
+    attempts: 0,
+  });
   const fullPlayerContainerRef = useRef<HTMLDivElement | null>(null);
   const miniPlayerContainerRef = useRef<HTMLDivElement | null>(null);
   const currentBeatRef = useRef<number>(0);
@@ -1865,6 +1880,7 @@ export const Player: React.FC<PlayerProps> = ({
 
     activeVideoIdRef.current = finalVid;
     userManualPauseRef.current = false;
+    stuckWatchdogRef.current = { videoId: finalVid, lastTime: 0, lastProgressAt: Date.now(), attempts: 0 };
     setPlayerState((prev) => (prev.currentTime === 0 ? prev : { ...prev, currentTime: 0 }));
 
     const executePlay = (targetVid: string) => {
@@ -1945,6 +1961,13 @@ export const Player: React.FC<PlayerProps> = ({
             },
             onStateChange: (event: any) => {
               if (event.data === 1) { // PLAYING
+                if (userManualPauseRef.current && Date.now() < pauseGuardUntilRef.current) {
+                  // Late PLAYING echo right after the user pressed Pause: keep it paused instead of resuming.
+                  try {
+                    event.target.pauseVideo();
+                  } catch {}
+                  return;
+                }
                 isChangingTrackRef.current = false;
                 userManualPauseRef.current = false;
                 interruptedWhilePlayingRef.current = false;
@@ -1986,7 +2009,10 @@ export const Player: React.FC<PlayerProps> = ({
               ) { // CUED (State 5) or UNSTARTED (State -1)
                 // When player transitions to CUED or UNSTARTED while isPlaying is active,
                 // IMMEDIATELY execute playVideo() to eliminate intermittent paused state
-                if (isPlayingRef.current || !userManualPauseRef.current) {
+                if (
+                  !(userManualPauseRef.current && Date.now() < pauseGuardUntilRef.current) &&
+                  (isPlayingRef.current || !userManualPauseRef.current)
+                ) {
                   try {
                     event.target.playVideo();
                   } catch {
@@ -2010,6 +2036,8 @@ export const Player: React.FC<PlayerProps> = ({
       }
     };
 
+    initYTRef.current = initYT;
+
     if (!window.YT || !window.YT.Player) {
       window.onYouTubeIframeAPIReady = () => {
         initYT(finalVid);
@@ -2029,6 +2057,7 @@ export const Player: React.FC<PlayerProps> = ({
     if (isPlayerReadyRef.current && playerRef.current) {
       try {
         if (isPlaying) {
+          pauseGuardUntilRef.current = 0;
           startSilentAnchor();
           if (!isMuted) {
             playerRef.current.unMute?.();
@@ -2075,6 +2104,7 @@ export const Player: React.FC<PlayerProps> = ({
       activeVideoIdRef.current = cleanVid;
       userManualPauseRef.current = false;
       isPlayingRef.current = true;
+      stuckWatchdogRef.current = { videoId: cleanVid, lastTime: 0, lastProgressAt: Date.now(), attempts: 0 };
       if (playerRef.current && isPlayerReadyRef.current) {
         try {
           if (typeof playerRef.current.unMute === "function" && !isMuted) {
@@ -2107,6 +2137,15 @@ export const Player: React.FC<PlayerProps> = ({
 
       try {
         const state = typeof player.getPlayerState === "function" ? player.getPlayerState() : -1;
+        if (userManualPauseRef.current && Date.now() < pauseGuardUntilRef.current) {
+          // User just pressed Pause: don't let a stale PLAYING/BUFFERING reading flip the UI back (pause stutter).
+          if (state === 1 || state === 3) {
+            try {
+              player.pauseVideo?.();
+            } catch {}
+          }
+          return;
+        }
         if (state === 1 || state === 3 || isPlayingRef.current) {
           if (state === 1) {
             interruptedWhilePlayingRef.current = false;
@@ -2160,9 +2199,137 @@ export const Player: React.FC<PlayerProps> = ({
     return () => clearInterval(interval);
   }, [currentTrack?.id, currentTrack?.youtubeVideoId, currentTrack?.duration, updatePositionState, stopSilentAnchor, isMuted]);
 
+  // STUCK-START WATCHDOG
+  // If playback should be running but the playhead has not advanced for 3s (8s while the player reports
+  // buffering), recover: first reload the video in place, then rebuild the YouTube iframe player from scratch
+  // (clears a dead or deadlocked iframe, e.g. after very long sessions or background throttling).
+  useEffect(() => {
+    volumeRef.current = volume;
+    isMutedRef.current = isMuted;
+  }, [volume, isMuted]);
+
+  useEffect(() => {
+    const restoreAfterRebuild = (resumeAt: number) => {
+      let tries = 0;
+      const timer = setInterval(() => {
+        tries += 1;
+        const p = playerRef.current;
+        if (p && isPlayerReadyRef.current) {
+          clearInterval(timer);
+          try {
+            (window as any).__OBLIVION_YT_PLAYER = p;
+            if (resumeAt > 3) p.seekTo?.(resumeAt, true);
+            if (isMutedRef.current) {
+              p.mute?.();
+            } else {
+              p.unMute?.();
+              p.setVolume?.(volumeRef.current * 100);
+            }
+            if (isPlayingRef.current && !userManualPauseRef.current) p.playVideo?.();
+          } catch {}
+        } else if (tries > 40) {
+          clearInterval(timer);
+        }
+      }, 250);
+    };
+
+    const tick = () => {
+      const wd = stuckWatchdogRef.current;
+      const now = Date.now();
+      const player = playerRef.current;
+      const shouldBePlaying = !!currentTrackRef.current && isPlayingRef.current && !userManualPauseRef.current;
+
+      if (
+        !player ||
+        !wd.videoId ||
+        !shouldBePlaying ||
+        isScrubbingRef.current ||
+        interruptedWhilePlayingRef.current ||
+        isRecoveringFromErrorRef.current
+      ) {
+        wd.lastProgressAt = now;
+        return;
+      }
+
+      let state = -1;
+      let t = 0;
+      try {
+        state = typeof player.getPlayerState === "function" ? player.getPlayerState() : -1;
+        t = typeof player.getCurrentTime === "function" ? Number(player.getCurrentTime()) : 0;
+      } catch {}
+      if (!isFinite(t)) t = 0;
+
+      if (state === 0) {
+        // Track ended: normal end-of-track handling takes over.
+        wd.lastProgressAt = now;
+        return;
+      }
+      if (Math.abs(t - wd.lastTime) > 0.2) {
+        wd.lastTime = t;
+        wd.lastProgressAt = now;
+        wd.attempts = 0;
+        return;
+      }
+
+      const limit = state === 3 ? 8000 : 3000;
+      if (now - wd.lastProgressAt < limit) return;
+
+      // Stalled. Restart the window so each recovery stage gets a fair chance.
+      wd.lastProgressAt = now;
+      const vid = activeVideoIdRef.current || wd.videoId;
+
+      if (wd.attempts === 0 && typeof player.loadVideoById === "function") {
+        wd.attempts = 1;
+        console.warn("[Player] Watchdog: playback stalled, reloading video in place");
+        try {
+          player.loadVideoById({ videoId: vid, startSeconds: Math.floor(wd.lastTime) });
+          player.playVideo?.();
+        } catch {}
+        return;
+      }
+
+      if (wd.attempts <= 1) {
+        wd.attempts = 2;
+        console.warn("[Player] Watchdog: still stalled, rebuilding the YouTube player");
+        let host: Element | null = null;
+        try {
+          host = player.getIframe?.()?.parentElement ?? null;
+        } catch {}
+        const resumeAt = wd.lastTime;
+        try {
+          player.destroy?.();
+        } catch {}
+        playerRef.current = null;
+        isPlayerReadyRef.current = false;
+        if (!document.getElementById("oblivion-unified-yt-player")) {
+          const mount = host || document.querySelector(".full-player-video-card");
+          if (mount) {
+            const div = document.createElement("div");
+            div.id = "oblivion-unified-yt-player";
+            div.className = "w-full h-full rounded-2xl overflow-hidden";
+            mount.appendChild(div);
+          }
+        }
+        initYTRef.current?.(vid);
+        restoreAfterRebuild(resumeAt);
+        return;
+      }
+
+      if (wd.attempts === 2) {
+        wd.attempts = 3;
+        console.warn("[Player] Watchdog: recovery attempts exhausted for this track");
+      }
+    };
+
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, []);
+
   // UNIFIED PLAY/PAUSE CONTROLLERS
   const playMedia = useCallback(async () => {
     userManualPauseRef.current = false;
+    pauseGuardUntilRef.current = 0;
+    isPlayingRef.current = true;
     interruptedWhilePlayingRef.current = false;
     startSilentAnchor();
 
@@ -2188,6 +2355,8 @@ export const Player: React.FC<PlayerProps> = ({
 
   const pauseMedia = useCallback(() => {
     userManualPauseRef.current = true;
+    pauseGuardUntilRef.current = Date.now() + 700;
+    isPlayingRef.current = false;
     stopSilentAnchor();
 
     if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
@@ -2204,7 +2373,11 @@ export const Player: React.FC<PlayerProps> = ({
 
   const handleUserTogglePlay = useCallback(
     (explicitPlay?: boolean) => {
-      const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlaying;
+      // Debounce rapid taps so overlapping play/pause commands never reach the player or the Media Session.
+      const nowTs = Date.now();
+      if (nowTs - lastToggleAtRef.current < 250) return;
+      lastToggleAtRef.current = nowTs;
+      const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlayingRef.current;
       if (nextPlay) {
         playMedia();
       } else {
