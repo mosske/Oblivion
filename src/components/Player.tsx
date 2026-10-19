@@ -3840,9 +3840,13 @@ export const Player: React.FC<PlayerProps> = ({
                     style={
                       isHardRock
                         ? {
-                            // No blurred halo behind the button in Hard Rock (same as the mini player): it sat inside the
-                            // frosted dock and flickered whenever the beat-reactive waveform repainted.
-                            display: "none",
+                            background:
+                              "radial-gradient(circle, rgba(224, 36, 179, 0.75) 0%, rgba(128, 15, 94, 0.25) 55%, transparent 75%)",
+                            boxShadow:
+                              "0 0 35px rgba(224, 36, 179, 0.8), 0 0 15px rgba(128, 15, 94, 0.6)",
+                            filter: "blur(4px)",
+                            // Own compositor layer so waveform repaints never re-rasterize the halo.
+                            willChange: "transform",
                           }
                         : isCandyland
                         ? {
@@ -3882,7 +3886,7 @@ export const Player: React.FC<PlayerProps> = ({
                             background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
                             border: "1px solid rgba(255, 105, 180, 0.4)",
                             boxShadow:
-                              "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
+                              "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                             color: "#FFFFFF",
                             // Own compositor layer so waveform repaints never re-rasterize the button.
                             willChange: "transform",
