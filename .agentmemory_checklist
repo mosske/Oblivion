@@ -1,0 +1,27 @@
+# Oblivion Login Improvement Checklist (Reference)
+
+## Goal
+Improve the login experience in Oblivion to be "smoother", mirroring the behavior observed in the Glossy client.
+
+## Strategy
+### 1. Optimistic Auth UI
+- Render the "App Shell" (Navbar, Sidebar, etc.) immediately upon mount.
+- Use a high-level `AuthGate` to manage the content area's visibility.
+- Show a subtle, localized loading indicator in the content area during `initAuth`.
+
+### 2. Parallelized Checks
+- Trigger `initAuth` processes (refresh, `/me` check, etc.) in a way that the UI can react as soon as valid data arrives, rather than sequentially blocking.
+
+### 3. Simplified Callback Handling
+- Reduce the number of `window.location.href` redirects in `authService` and `apiClient`.
+- Handle success/error states via `oblivion_auth_changed` events where possible.
+
+### 4. Unified State Machine
+- Consolidate auth states into a single, robust machine: `UNAUTHENTICATED`, `AUTHENTICATING`, `AUTHORIZED`.
+
+## Current Status
+- [ ] Create `AuthGate` component.
+- [ ] Refactor `App.tsx` for Optimistic UI and Auth Gate.
+- [ ] Decouple App Initialization.
+- [ ] Implement Parallelized Checks.
+- [ ] Update state management to a Unified State Machine.

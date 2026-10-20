@@ -2823,8 +2823,12 @@ export default function App() {
           </div>
         )}
 
-        {/* Fresh Screen: When a Playlist or Album is clicked, open PlaylistDetailView as a dedicated screen */}
-        {selectedPlaylist ? (
+        <AuthGate
+          isAuthInitializing={isAuthInitializing}
+          user={user}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          designConfig={activeFullDesign}
+        >
           <PlaylistDetailView
               item={selectedPlaylist}
               isAlbum={
