@@ -2829,7 +2829,8 @@ export default function App() {
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
           designConfig={activeFullDesign}
         >
-          <PlaylistDetailView
+          {selectedPlaylist ? (
+            <PlaylistDetailView
               item={selectedPlaylist}
               isAlbum={
                 !Boolean(
@@ -3007,6 +3008,7 @@ export default function App() {
             )}
           </>
         )}
+      </AuthGate>
       </main>
 
       {/* Permanent Root Audio Player Fixture - Uneffected by Page & View Navigation */}
