@@ -768,7 +768,7 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
             <span
               className={`progress-waveform-bar ${
                 isPassed
-                  ? "is-played progress-waveform-active progress-gradient-animated shadow-[0_0_8px_var(--accent-primary)]"
+                  ? "is-played progress-waveform-active progress-gradient-static shadow-[0_0_8px_var(--accent-primary)]"
                   : "progress-bar-track-unplayed waveform-inactive-bar"
               } w-full rounded-full transition-[height,background-color] duration-150`}
               style={{
@@ -854,6 +854,22 @@ export const Player: React.FC<PlayerProps> = ({
   const isChangingTrackRef = useRef<boolean>(false);
   const isChangingTrackTimeoutRef = useRef<any>(null);
   const userManualPauseRef = useRef<boolean>(false);
+
+  // --- Playback hardening: pause-stutter guard, toggle debounce, stuck-start watchdog ---
+  // After the user pauses, YouTube can still emit a late PLAYING event (or the 100ms poll can still
+  // see state 1) before it reports PAUSED. Until this timestamp passes, those echoes must not resume playback.
+  const pauseGuardUntilRef = useRef<number>(0);
+  const lastToggleAtRef = useRef<number>(0);
+  const lastPlayheadStateAtRef = useRef<number>(0);
+  const initYTRef = useRef<((vid: string) => void) | null>(null);
+  const volumeRef = useRef<number>(1);
+  const isMutedRef = useRef<boolean>(false);
+  const stuckWatchdogRef = useRef<{ videoId: string; lastTime: number; lastProgressAt: number; attempts: number }>({
+    videoId: "",
+    lastTime: 0,
+    lastProgressAt: 0,
+    attempts: 0,
+  });
   const fullPlayerContainerRef = useRef<HTMLDivElement | null>(null);
   const miniPlayerContainerRef = useRef<HTMLDivElement | null>(null);
   const currentBeatRef = useRef<number>(0);
@@ -1475,10 +1491,18 @@ export const Player: React.FC<PlayerProps> = ({
 
     let isSubscribed = true;
 
+    let lastBeatPaint = 0;
     const renderBeatFrame = () => {
       if (!isSubscribed) return;
 
       const now = performance.now();
+      // Cap the beat visual at ~30fps and idle while the page is hidden: writing CSS variables on the document
+      // root at 60fps forces a full style recalculation every frame and competes with taps for the main thread.
+      if (document.hidden || now - lastBeatPaint < 33) {
+        rafBeatIdRef.current = requestAnimationFrame(renderBeatFrame);
+        return;
+      }
+      lastBeatPaint = now;
       const cycle = (now % 468) / 468;
       // Sharp rhythmic attack with smooth exponential decay
       const pulse = Math.pow(Math.max(0, 1 - cycle * 1.8), 2.2);
@@ -1558,6 +1582,20 @@ export const Player: React.FC<PlayerProps> = ({
       isChangingTrackRef.current = false;
     }, 2500);
 
+    // Instant feedback: silence the outgoing track now instead of letting it play on until the next one loads.
+    const outgoingTrackId = currentTrackRef.current?.id;
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch {}
+    // Safety net: if the track did not actually change (e.g. one-song queue), resume the song we just paused.
+    setTimeout(() => {
+      if (currentTrackRef.current?.id === outgoingTrackId && isPlayingRef.current && !userManualPauseRef.current) {
+        try {
+          playerRef.current?.playVideo?.();
+        } catch {}
+      }
+    }, 1200);
+
     if (playerCtx?.playNextTrack) {
       playerCtx.playNextTrack();
     }
@@ -1576,6 +1614,20 @@ export const Player: React.FC<PlayerProps> = ({
     isChangingTrackTimeoutRef.current = setTimeout(() => {
       isChangingTrackRef.current = false;
     }, 2500);
+
+    // Instant feedback: silence the outgoing track now instead of letting it play on until the next one loads.
+    const outgoingTrackId = currentTrackRef.current?.id;
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch {}
+    // Safety net: if the track did not actually change (e.g. one-song queue), resume the song we just paused.
+    setTimeout(() => {
+      if (currentTrackRef.current?.id === outgoingTrackId && isPlayingRef.current && !userManualPauseRef.current) {
+        try {
+          playerRef.current?.playVideo?.();
+        } catch {}
+      }
+    }, 1200);
 
     if (playerCtx?.playPrevTrack) {
       playerCtx.playPrevTrack();
@@ -1865,6 +1917,7 @@ export const Player: React.FC<PlayerProps> = ({
 
     activeVideoIdRef.current = finalVid;
     userManualPauseRef.current = false;
+    stuckWatchdogRef.current = { videoId: finalVid, lastTime: 0, lastProgressAt: Date.now(), attempts: 0 };
     setPlayerState((prev) => (prev.currentTime === 0 ? prev : { ...prev, currentTime: 0 }));
 
     const executePlay = (targetVid: string) => {
@@ -1945,6 +1998,13 @@ export const Player: React.FC<PlayerProps> = ({
             },
             onStateChange: (event: any) => {
               if (event.data === 1) { // PLAYING
+                if (userManualPauseRef.current && Date.now() < pauseGuardUntilRef.current) {
+                  // Late PLAYING echo right after the user pressed Pause: keep it paused instead of resuming.
+                  try {
+                    event.target.pauseVideo();
+                  } catch {}
+                  return;
+                }
                 isChangingTrackRef.current = false;
                 userManualPauseRef.current = false;
                 interruptedWhilePlayingRef.current = false;
@@ -1986,7 +2046,10 @@ export const Player: React.FC<PlayerProps> = ({
               ) { // CUED (State 5) or UNSTARTED (State -1)
                 // When player transitions to CUED or UNSTARTED while isPlaying is active,
                 // IMMEDIATELY execute playVideo() to eliminate intermittent paused state
-                if (isPlayingRef.current || !userManualPauseRef.current) {
+                if (
+                  !(userManualPauseRef.current && Date.now() < pauseGuardUntilRef.current) &&
+                  (isPlayingRef.current || !userManualPauseRef.current)
+                ) {
                   try {
                     event.target.playVideo();
                   } catch {
@@ -2010,6 +2073,8 @@ export const Player: React.FC<PlayerProps> = ({
       }
     };
 
+    initYTRef.current = initYT;
+
     if (!window.YT || !window.YT.Player) {
       window.onYouTubeIframeAPIReady = () => {
         initYT(finalVid);
@@ -2029,6 +2094,7 @@ export const Player: React.FC<PlayerProps> = ({
     if (isPlayerReadyRef.current && playerRef.current) {
       try {
         if (isPlaying) {
+          pauseGuardUntilRef.current = 0;
           startSilentAnchor();
           if (!isMuted) {
             playerRef.current.unMute?.();
@@ -2075,6 +2141,7 @@ export const Player: React.FC<PlayerProps> = ({
       activeVideoIdRef.current = cleanVid;
       userManualPauseRef.current = false;
       isPlayingRef.current = true;
+      stuckWatchdogRef.current = { videoId: cleanVid, lastTime: 0, lastProgressAt: Date.now(), attempts: 0 };
       if (playerRef.current && isPlayerReadyRef.current) {
         try {
           if (typeof playerRef.current.unMute === "function" && !isMuted) {
@@ -2107,6 +2174,15 @@ export const Player: React.FC<PlayerProps> = ({
 
       try {
         const state = typeof player.getPlayerState === "function" ? player.getPlayerState() : -1;
+        if (userManualPauseRef.current && Date.now() < pauseGuardUntilRef.current) {
+          // User just pressed Pause: don't let a stale PLAYING/BUFFERING reading flip the UI back (pause stutter).
+          if (state === 1 || state === 3) {
+            try {
+              player.pauseVideo?.();
+            } catch {}
+          }
+          return;
+        }
         if (state === 1 || state === 3 || isPlayingRef.current) {
           if (state === 1) {
             interruptedWhilePlayingRef.current = false;
@@ -2120,21 +2196,29 @@ export const Player: React.FC<PlayerProps> = ({
           const validDur = (ytDur && ytDur > 0) ? ytDur : (currentTrack?.duration || 0);
 
           if (typeof curTime === "number" && !isNaN(curTime) && curTime >= 0) {
-            setPlayerState((prev) => {
-              if (
-                Math.abs(prev.currentTime - curTime) < 0.05 &&
-                (validDur > 0 ? Math.abs((prev.duration || 0) - validDur) < 0.5 : true) &&
-                prev.isPlaying === (state === 1 || isPlayingRef.current)
-              ) {
-                return prev;
-              }
-              return {
-                ...prev,
-                isPlaying: state === 1 ? true : prev.isPlaying,
-                currentTime: curTime,
-                duration: validDur > 0 ? validDur : prev.duration,
-              };
-            });
+            // Throttle React state updates: re-rendering the whole player tree 10x per second makes taps feel
+            // laggy. 4x per second is visually identical for the progress bar; synced lyrics keep the faster rate.
+            const publishNow = performance.now();
+            const publishEvery = playerStateRef.current?.showLyrics ? 100 : 250;
+            const mustFlipToPlaying = state === 1 && !playerStateRef.current?.isPlaying;
+            if (mustFlipToPlaying || publishNow - lastPlayheadStateAtRef.current >= publishEvery) {
+              lastPlayheadStateAtRef.current = publishNow;
+              setPlayerState((prev) => {
+                if (
+                  Math.abs(prev.currentTime - curTime) < 0.05 &&
+                  (validDur > 0 ? Math.abs((prev.duration || 0) - validDur) < 0.5 : true) &&
+                  prev.isPlaying === (state === 1 || isPlayingRef.current)
+                ) {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  isPlaying: state === 1 ? true : prev.isPlaying,
+                  currentTime: curTime,
+                  duration: validDur > 0 ? validDur : prev.duration,
+                };
+              });
+            }
 
             if (Math.abs(curTime - lastMediaSessionPositionRef.current) >= 0.8) {
               lastMediaSessionPositionRef.current = curTime;
@@ -2160,9 +2244,137 @@ export const Player: React.FC<PlayerProps> = ({
     return () => clearInterval(interval);
   }, [currentTrack?.id, currentTrack?.youtubeVideoId, currentTrack?.duration, updatePositionState, stopSilentAnchor, isMuted]);
 
+  // STUCK-START WATCHDOG
+  // If playback should be running but the playhead has not advanced for 3s (8s while the player reports
+  // buffering), recover: first reload the video in place, then rebuild the YouTube iframe player from scratch
+  // (clears a dead or deadlocked iframe, e.g. after very long sessions or background throttling).
+  useEffect(() => {
+    volumeRef.current = volume;
+    isMutedRef.current = isMuted;
+  }, [volume, isMuted]);
+
+  useEffect(() => {
+    const restoreAfterRebuild = (resumeAt: number) => {
+      let tries = 0;
+      const timer = setInterval(() => {
+        tries += 1;
+        const p = playerRef.current;
+        if (p && isPlayerReadyRef.current) {
+          clearInterval(timer);
+          try {
+            (window as any).__OBLIVION_YT_PLAYER = p;
+            if (resumeAt > 3) p.seekTo?.(resumeAt, true);
+            if (isMutedRef.current) {
+              p.mute?.();
+            } else {
+              p.unMute?.();
+              p.setVolume?.(volumeRef.current * 100);
+            }
+            if (isPlayingRef.current && !userManualPauseRef.current) p.playVideo?.();
+          } catch {}
+        } else if (tries > 40) {
+          clearInterval(timer);
+        }
+      }, 250);
+    };
+
+    const tick = () => {
+      const wd = stuckWatchdogRef.current;
+      const now = Date.now();
+      const player = playerRef.current;
+      const shouldBePlaying = !!currentTrackRef.current && isPlayingRef.current && !userManualPauseRef.current;
+
+      if (
+        !player ||
+        !wd.videoId ||
+        !shouldBePlaying ||
+        isScrubbingRef.current ||
+        interruptedWhilePlayingRef.current ||
+        isRecoveringFromErrorRef.current
+      ) {
+        wd.lastProgressAt = now;
+        return;
+      }
+
+      let state = -1;
+      let t = 0;
+      try {
+        state = typeof player.getPlayerState === "function" ? player.getPlayerState() : -1;
+        t = typeof player.getCurrentTime === "function" ? Number(player.getCurrentTime()) : 0;
+      } catch {}
+      if (!isFinite(t)) t = 0;
+
+      if (state === 0) {
+        // Track ended: normal end-of-track handling takes over.
+        wd.lastProgressAt = now;
+        return;
+      }
+      if (Math.abs(t - wd.lastTime) > 0.2) {
+        wd.lastTime = t;
+        wd.lastProgressAt = now;
+        wd.attempts = 0;
+        return;
+      }
+
+      const limit = state === 3 ? 8000 : 3000;
+      if (now - wd.lastProgressAt < limit) return;
+
+      // Stalled. Restart the window so each recovery stage gets a fair chance.
+      wd.lastProgressAt = now;
+      const vid = activeVideoIdRef.current || wd.videoId;
+
+      if (wd.attempts === 0 && typeof player.loadVideoById === "function") {
+        wd.attempts = 1;
+        console.warn("[Player] Watchdog: playback stalled, reloading video in place");
+        try {
+          player.loadVideoById({ videoId: vid, startSeconds: Math.floor(wd.lastTime) });
+          player.playVideo?.();
+        } catch {}
+        return;
+      }
+
+      if (wd.attempts <= 1) {
+        wd.attempts = 2;
+        console.warn("[Player] Watchdog: still stalled, rebuilding the YouTube player");
+        let host: Element | null = null;
+        try {
+          host = player.getIframe?.()?.parentElement ?? null;
+        } catch {}
+        const resumeAt = wd.lastTime;
+        try {
+          player.destroy?.();
+        } catch {}
+        playerRef.current = null;
+        isPlayerReadyRef.current = false;
+        if (!document.getElementById("oblivion-unified-yt-player")) {
+          const mount = host || document.querySelector(".full-player-video-card");
+          if (mount) {
+            const div = document.createElement("div");
+            div.id = "oblivion-unified-yt-player";
+            div.className = "w-full h-full rounded-2xl overflow-hidden";
+            mount.appendChild(div);
+          }
+        }
+        initYTRef.current?.(vid);
+        restoreAfterRebuild(resumeAt);
+        return;
+      }
+
+      if (wd.attempts === 2) {
+        wd.attempts = 3;
+        console.warn("[Player] Watchdog: recovery attempts exhausted for this track");
+      }
+    };
+
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, []);
+
   // UNIFIED PLAY/PAUSE CONTROLLERS
   const playMedia = useCallback(async () => {
     userManualPauseRef.current = false;
+    pauseGuardUntilRef.current = 0;
+    isPlayingRef.current = true;
     interruptedWhilePlayingRef.current = false;
     startSilentAnchor();
 
@@ -2188,13 +2400,16 @@ export const Player: React.FC<PlayerProps> = ({
 
   const pauseMedia = useCallback(() => {
     userManualPauseRef.current = true;
-    stopSilentAnchor();
+    pauseGuardUntilRef.current = Date.now() + 700;
+    isPlayingRef.current = false;
 
+    // Send the pause to the YouTube player first so the audio stops as early as possible.
     if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
       try {
         playerRef.current.pauseVideo();
       } catch {}
     }
+    stopSilentAnchor();
 
     setPlayerState((prev) => ({ ...prev, isPlaying: false }));
     if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
@@ -2204,7 +2419,11 @@ export const Player: React.FC<PlayerProps> = ({
 
   const handleUserTogglePlay = useCallback(
     (explicitPlay?: boolean) => {
-      const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlaying;
+      // Debounce rapid taps so overlapping play/pause commands never reach the player or the Media Session.
+      const nowTs = Date.now();
+      if (nowTs - lastToggleAtRef.current < 250) return;
+      lastToggleAtRef.current = nowTs;
+      const nextPlay = explicitPlay !== undefined ? explicitPlay : !isPlayingRef.current;
       if (nextPlay) {
         playMedia();
       } else {
@@ -3189,17 +3408,17 @@ export const Player: React.FC<PlayerProps> = ({
                 <button
                   onClick={handleMinimizeFullPlayer}
                   className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 ${fpTheme.minimizeBtn}`}
-                  style={isCandyland ? { color: "#2563eb" } : { color: "#e8d5b5" }}
+                  style={isCandyland ? { color: "#8A2BE2" } : { color: "#e8d5b5" }}
                   title="Minimize Full Player (or swipe down)"
                 >
                   <ChevronDown
                     className="w-5 h-5 sm:w-6 sm:h-6"
-                    style={isCandyland ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
+                    style={isCandyland ? { color: "#8A2BE2", stroke: "#8A2BE2", opacity: 1 } : { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 1 }}
                     size={20}
                   />
                   <span
                     className="text-xs font-semibold hidden sm:inline"
-                    style={isCandyland ? { color: "#2563eb", opacity: 1 } : { color: "#e8d5b5", opacity: 1 }}
+                    style={isCandyland ? { color: "#8A2BE2", opacity: 1 } : { color: "#e8d5b5", opacity: 1 }}
                   >
                     Minimize
                   </span>
@@ -3259,7 +3478,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
                           }
                         : isCandyland && activeTab !== "lyrics"
-                        ? { color: "#2563eb" }
+                        ? { color: "#8A2BE2" }
                         : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
                     }
                   >
@@ -3267,14 +3486,14 @@ export const Player: React.FC<PlayerProps> = ({
                       className="w-3.5 h-3.5"
                       style={
                         isCandyland && activeTab !== "lyrics"
-                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", stroke: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "lyrics" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     />
                     <span
                       style={
                         isCandyland && activeTab !== "lyrics"
-                          ? { color: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "lyrics" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     >
@@ -3296,7 +3515,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: `0 0 16px ${hexToRgba(bespokeColors[1], 0.6)}`,
                           }
                         : isCandyland && activeTab !== "radio"
-                        ? { color: "#2563eb" }
+                        ? { color: "#8A2BE2" }
                         : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5" } : undefined)
                     }
                   >
@@ -3304,14 +3523,14 @@ export const Player: React.FC<PlayerProps> = ({
                       className="w-3.5 h-3.5"
                       style={
                         isCandyland && activeTab !== "radio"
-                          ? { color: "#2563eb", stroke: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", stroke: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "radio" ? { color: "#e8d5b5", stroke: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     />
                     <span
                       style={
                         isCandyland && activeTab !== "radio"
-                          ? { color: "#2563eb", opacity: 1 }
+                          ? { color: "#8A2BE2", opacity: 1 }
                           : (activeTab !== "radio" ? { color: "#e8d5b5", opacity: 0.85 } : undefined)
                       }
                     >
@@ -3626,13 +3845,15 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow:
                               "0 0 35px rgba(224, 36, 179, 0.8), 0 0 15px rgba(128, 15, 94, 0.6)",
                             filter: "blur(4px)",
+                            // Own compositor layer so waveform repaints never re-rasterize the halo.
+                            willChange: "transform",
                           }
                         : isCandyland
                         ? {
                             background:
-                              "radial-gradient(circle, rgba(216, 180, 254, 0.6) 0%, rgba(216, 180, 254, 0.2) 55%, transparent 75%)",
+                              "radial-gradient(circle, rgba(230, 0, 122, 0.6) 0%, rgba(230, 0, 122, 0.2) 55%, transparent 75%)",
                             boxShadow:
-                              "0 0 35px rgba(216, 180, 254, 0.6), 0 0 15px #d8b4fe",
+                              "0 0 35px rgba(230, 0, 122, 0.6), 0 0 15px #E6007A",
                             filter: "blur(4px)",
                           }
                         : isBespoke
@@ -3667,6 +3888,8 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow:
                               "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
                             color: "#FFFFFF",
+                            // Own compositor layer so waveform repaints never re-rasterize the button.
+                            willChange: "transform",
                           }
                         : isBespoke
                         ? {
@@ -4072,7 +4295,7 @@ export const Player: React.FC<PlayerProps> = ({
                       border: "none",
                       boxShadow: "none",
                       outline: "none",
-                      padding: "5px",
+                      padding: "6px",
                       opacity: 1,
                     } : undefined}
                     title="Previous"
@@ -4154,7 +4377,7 @@ export const Player: React.FC<PlayerProps> = ({
                       border: "none",
                       boxShadow: "none",
                       outline: "none",
-                      padding: "5px",
+                      padding: "6px",
                       opacity: 1,
                     } : undefined}
                     title="Next"
@@ -4191,7 +4414,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             color: "#FFFFFF",
                             fontWeight: 600,
-                            padding: "5px",
+                            padding: "6px",
                             opacity: 1,
                           }
                         : {
@@ -4201,7 +4424,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: "none",
                             color: "#E5E7EB",
                             outline: "none",
-                            padding: "5px",
+                            padding: "6px",
                             opacity: 1,
                           }
                       : undefined
@@ -4244,7 +4467,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: "0 0 8px rgba(224, 36, 179, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
                             color: "#FFFFFF",
                             fontWeight: 600,
-                            padding: "5px",
+                            padding: "6px",
                             opacity: 1,
                           }
                         : {
@@ -4254,7 +4477,7 @@ export const Player: React.FC<PlayerProps> = ({
                             boxShadow: "none",
                             color: "#E5E7EB",
                             outline: "none",
-                            padding: "5px",
+                            padding: "6px",
                             opacity: 1,
                           }
                       : undefined
@@ -4302,7 +4525,7 @@ export const Player: React.FC<PlayerProps> = ({
                     border: "none",
                     boxShadow: "none",
                     outline: "none",
-                    padding: "5px",
+                    padding: "6px",
                     opacity: 1,
                   } : undefined}
                   title="Add to Playlist"
@@ -4329,7 +4552,7 @@ export const Player: React.FC<PlayerProps> = ({
                     border: "none",
                     boxShadow: "none",
                     outline: "none",
-                    padding: "5px",
+                    padding: "6px",
                     opacity: 1,
                   } : undefined}
                   title="Share song"
@@ -4353,7 +4576,7 @@ export const Player: React.FC<PlayerProps> = ({
                     border: "none",
                     boxShadow: "none",
                     outline: "none",
-                    padding: "5px",
+                    padding: "6px",
                     opacity: 1,
                   } : undefined}
                   title="Full View"
