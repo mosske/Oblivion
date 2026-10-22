@@ -47,7 +47,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
           }}
           designConfig={designConfig}
         />
-      </div
+      </div>
     );
   }
 

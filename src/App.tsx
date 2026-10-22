@@ -14,6 +14,7 @@ import { FullPlayer } from "./components/FullPlayer";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
+import { AuthGate } from "./components/AuthGate";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";

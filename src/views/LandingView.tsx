@@ -1,6 +1,5 @@
 
 import React from "react";
-import { useAuthModal } from "../hooks/useAuthModal";
 import { AuthModal } from "../components/AuthModal";
 
 export const LandingView = ({ designConfig, onOpenAuthModal }) => {

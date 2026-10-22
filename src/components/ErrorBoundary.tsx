@@ -68,7 +68,12 @@ export class ErrorBoundary extends React.Component<Props, State> {
   private scheduleCounterReset() {
     if (this.resetCounterTimeout) clearTimeout(this.resetCounterTimeout);
     this.resetCounterTimeout = setTimeout(() => {
-      this.setState({ retryCount: 0 });
+      // Only reset retryCount when the error has been fully resolved (hasError is false).
+      // If hasError is still true, the error persists and retryCount must remain so the
+      // "Restoring music view" state cannot get stuck in an infinite loop.
+      if (!this.state.hasError) {
+        this.setState({ retryCount: 0 });
+      }
     }, 10000);
   }
 
