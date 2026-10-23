@@ -768,7 +768,7 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
             <span
               className={`progress-waveform-bar ${
                 isPassed
-                  ? "is-played progress-waveform-active progress-gradient-static shadow-[0_0_8px_var(--accent-primary)]"
+                  ? "is-played progress-waveform-active progress-gradient-animated shadow-[0_0_8px_var(--accent-primary)]"
                   : "progress-bar-track-unplayed waveform-inactive-bar"
               } w-full rounded-full transition-[height,background-color] duration-150`}
               style={{
@@ -3851,9 +3851,9 @@ export const Player: React.FC<PlayerProps> = ({
                         : isCandyland
                         ? {
                             background:
-                              "radial-gradient(circle, rgba(230, 0, 122, 0.6) 0%, rgba(230, 0, 122, 0.2) 55%, transparent 75%)",
+                              "radial-gradient(circle, rgba(216, 180, 254, 0.6) 0%, rgba(216, 180, 254, 0.2) 55%, transparent 75%)",
                             boxShadow:
-                              "0 0 35px rgba(230, 0, 122, 0.6), 0 0 15px #E6007A",
+                              "0 0 35px rgba(216, 180, 254, 0.6), 0 0 15px #d8b4fe",
                             filter: "blur(4px)",
                           }
                         : isBespoke

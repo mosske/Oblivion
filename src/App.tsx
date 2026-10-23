@@ -14,7 +14,6 @@ import { FullPlayer } from "./components/FullPlayer";
 import { PlaylistModal } from "./components/PlaylistModal";
 import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
-import { AuthGate } from "./components/AuthGate";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";
@@ -2824,14 +2823,9 @@ export default function App() {
           </div>
         )}
 
-        <AuthGate
-          isAuthInitializing={isAuthInitializing}
-          user={user}
-          onOpenAuthModal={() => setIsAuthModalOpen(true)}
-          designConfig={activeFullDesign}
-        >
-          {selectedPlaylist ? (
-            <PlaylistDetailView
+        {/* Fresh Screen: When a Playlist or Album is clicked, open PlaylistDetailView as a dedicated screen */}
+        {selectedPlaylist ? (
+          <PlaylistDetailView
               item={selectedPlaylist}
               isAlbum={
                 !Boolean(
@@ -3009,7 +3003,6 @@ export default function App() {
             )}
           </>
         )}
-      </AuthGate>
       </main>
 
       {/* Permanent Root Audio Player Fixture - Uneffected by Page & View Navigation */}
