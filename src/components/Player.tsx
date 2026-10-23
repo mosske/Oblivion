@@ -3849,24 +3849,37 @@ export const Player: React.FC<PlayerProps> = ({
                             willChange: "transform",
                           }
                         : isCandyland
-                        ? {
-                            background:
-                              "radial-gradient(circle, rgba(216, 180, 254, 0.6) 0%, rgba(216, 180, 254, 0.2) 55%, transparent 75%)",
-                            boxShadow:
-                              "0 0 35px rgba(216, 180, 254, 0.6), 0 0 15px #d8b4fe",
-                            filter: "blur(4px)",
-                          }
+                        ? (designConfig.id as string) === "candyland"
+                          ? {
+                              // Pink halo matching the pink Candyland play button.
+                              background:
+                                "radial-gradient(circle, rgba(255, 105, 180, 0.6) 0%, rgba(255, 20, 147, 0.2) 55%, transparent 75%)",
+                              boxShadow:
+                                "0 0 35px rgba(255, 20, 147, 0.6), 0 0 15px #FF69B4",
+                              filter: "blur(4px)",
+                              willChange: "transform",
+                            }
+                          : {
+                              background:
+                                "radial-gradient(circle, rgba(216, 180, 254, 0.6) 0%, rgba(216, 180, 254, 0.2) 55%, transparent 75%)",
+                              boxShadow:
+                                "0 0 35px rgba(216, 180, 254, 0.6), 0 0 15px #d8b4fe",
+                              filter: "blur(4px)",
+                              willChange: "transform",
+                            }
                         : isBespoke
                         ? {
                             background: `radial-gradient(circle, ${hexToRgba(bespokeColors[1], 0.6)} 0%, ${hexToRgba(bespokeColors[1], 0.15)} 55%, transparent 75%)`,
                             boxShadow: `0 0 30px ${hexToRgba(bespokeColors[1], 0.45)}`,
                             filter: "blur(4px)",
-                          }
+                            willChange: "transform",
+                           }
                         : {
                             background:
                               "radial-gradient(circle, var(--accent-glow, rgba(197, 155, 39, 0.5)) 0%, transparent 70%)",
                             filter: "blur(4px)",
-                          }
+                            willChange: "transform",
+                           }
                     }
                   />
                   <button
@@ -3896,8 +3909,9 @@ export const Player: React.FC<PlayerProps> = ({
                             background: `linear-gradient(135deg, ${bespokeColors[0]}, ${bespokeColors[1]})`,
                             color: calculateWcagText(bespokeColors[1]),
                             boxShadow: `0 0 26px ${hexToRgba(bespokeColors[1], 0.6)}`,
-                          }
-                        : undefined
+                            willChange: "transform",
+                           }
+                        : { willChange: "transform" }
                     }
                     title={isPlaying ? "Pause" : "Play"}
                   >

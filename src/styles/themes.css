@@ -7851,14 +7851,22 @@ svg.playlist-search-icon,
   stroke: #8a2be2 !important;
 }
 
-.theme-candyland .candyland-play-glow,
 .theme-candyland-pastel .candyland-play-glow,
-[data-theme="candyland"] .candyland-play-glow,
 [data-theme="candyland-pastel"] .candyland-play-glow,
 [data-theme="ytmusic-red"] .candyland-play-glow {
   background: radial-gradient(circle, rgba(216, 180, 254, 0.6) 0%, rgba(216, 180, 254, 0.2) 55%, transparent 75%) !important;
   box-shadow: 0 0 35px rgba(216, 180, 254, 0.6), 0 0 15px #d8b4fe !important;
   filter: blur(4px) !important;
+  will-change: transform;
+}
+
+/* Candyland: pink halo matching the pink play button (#FF69B4 -> #FF1493) */
+.theme-candyland .candyland-play-glow,
+[data-theme="candyland"] .candyland-play-glow {
+  background: radial-gradient(circle, rgba(255, 105, 180, 0.6) 0%, rgba(255, 20, 147, 0.2) 55%, transparent 75%) !important;
+  box-shadow: 0 0 35px rgba(255, 20, 147, 0.6), 0 0 15px #FF69B4 !important;
+  filter: blur(4px) !important;
+  will-change: transform;
 }
 
 /* ================================================================================
