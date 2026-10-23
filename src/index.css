@@ -1076,6 +1076,23 @@ canvas.animated-theme-bg:not(.full-player-canvas),
   --theme-accent: #ff70a6;
 }
 
+/* Candyland Home cards: the artist/sub-title under each card title was translucent white on the light card
+   (no theme defines --theme-text-secondary) and unreadable. Match the Explore page sub-title colour (#8d4780).
+   Scoped to the cards so section sub-titles are unchanged. */
+[data-theme="candyland"] .home-card,
+[data-theme="candyland-pastel"] .home-card,
+[data-theme="ytmusic-red"] .home-card,
+.theme-candyland .home-card {
+  --theme-text-secondary: #8d4780;
+}
+
+[data-theme="candyland"] .home-card p,
+[data-theme="candyland-pastel"] .home-card p,
+[data-theme="ytmusic-red"] .home-card p,
+.theme-candyland .home-card p {
+  opacity: 1 !important;
+}
+
 [data-theme="dynamic-emerald"],
 [data-theme="emerald-wilderness"],
 [data-theme-alias="emerald-wilderness"],
