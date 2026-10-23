@@ -8467,6 +8467,16 @@ svg.playlist-search-icon,
   opacity: 1 !important;
 }
 
+/* Candyland Pastel: Transparent progress bar visualizer bounding box so Play/Pause halo is not cut off */
+:is([data-theme="candyland"], [data-theme="candyland-pastel"], .theme-candyland, .theme-candyland-pastel, [data-theme="ytmusic-red"], .theme-ytmusic-red)
+:is(.progress-waveform-container, .progress-bar-track-housing) {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 
 
 

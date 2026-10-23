@@ -4888,3 +4888,17 @@ svg.playlist-search-icon,
   fill: none !important;
   opacity: 1 !important;
 }
+
+/* ==========================================================================
+   CANDYLAND PASTEL - Progress Bar Visualizer Housing Transparency
+   Makes the progress bar visualizer bounding box transparent so it doesn't
+   horizontally cut off the Play/Pause button ambient halo.
+   ========================================================================== */
+:is([data-theme="candyland"], [data-theme="candyland-pastel"], .theme-candyland, .theme-candyland-pastel, [data-theme="ytmusic-red"], .theme-ytmusic-red)
+:is(.progress-waveform-container, .progress-bar-track-housing) {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}

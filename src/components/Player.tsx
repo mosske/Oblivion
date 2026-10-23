@@ -730,6 +730,17 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     designConfig.name === "Hard Rock"
   );
 
+  const isCandyland = Boolean(
+    (designConfig.id as string) === "candyland" ||
+    (designConfig.id as string) === "candyland-pastel" ||
+    Boolean((designConfig as any).isCandy) ||
+    (designConfig as any).themePreset === "candyland" ||
+    (designConfig as any).themePreset === "candyland-pastel" ||
+    designConfig.name === "Candyland Pastel"
+  );
+
+  const isTransparentHousing = isHardRock || isCandyland;
+
   return (
     <div
       ref={containerRef}
@@ -750,9 +761,9 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
       style={{
         touchAction: "none",
         ...(hasBespokeColors ? ({ "--accent-primary": bespokeColors![1] } as React.CSSProperties) : {}),
-        ...(isHardRock ? { background: "transparent", border: "none", boxShadow: "none" } : {}),
+        ...(isTransparentHousing ? { background: "transparent", backgroundColor: "transparent", border: "none", boxShadow: "none" } : {}),
       }}
-      className={`progress-waveform-container progress-bar-track-housing group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-1 transition-all ${isHardRock ? "" : `${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"}`} ${className}`}
+      className={`progress-waveform-container progress-bar-track-housing group relative flex-1 ${isMini ? "h-8" : "h-8 sm:h-9"} flex items-center justify-between gap-[2px] sm:gap-[3px] cursor-pointer select-none touch-none py-1 px-1 transition-all ${isTransparentHousing ? "bg-transparent border-transparent shadow-none" : `${designConfig.inputBg || "bg-black/30"} border ${designConfig.borderSubtle || "border-white/10"} hover:${designConfig.accentBorder || "border-white/30"}`} ${className}`}
       title="Click or drag anywhere on waveform to seek"
     >
       {/* Waveform Bars */}
