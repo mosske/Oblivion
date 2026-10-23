@@ -216,6 +216,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {FULL_APP_DESIGNS_LIST.map((design) => {
             const isSelected = (settings.fullAppDesign || "designer") === design.id;
             const isBespoke = design.isBespoke || design.id === "bespoke";
+            const isHardRockCard = design.id === "hard-rock" || design.id === "sugar-time-jazz" || Boolean((design as any).isHardRock);
+            const isHardRockActive = isSelected && isHardRockCard;
 
             if (isBespoke) {
               return (
@@ -245,74 +247,138 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             }
 
             return (
-              <div
-                key={design.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  onUpdateSettings({
-                    fullAppDesign: design.id,
-                    themePreset: design.themePreset,
-                    miniPlayerLayout: design.playerLayout,
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+              <div key={design.id} className="relative group/card flex flex-col h-full">
+                {/* Distinctive ambient glow aura around Hard Rock card when active */}
+                {isHardRockActive && (
+                  <div
+                    className="absolute -inset-1.5 sm:-inset-2 rounded-[22px] pointer-events-none z-0 animate-pulse duration-1000"
+                    style={{
+                      background: "linear-gradient(135deg, #e024b3 0%, #a855f7 40%, #ff2a85 70%, #d4af37 100%)",
+                      filter: "blur(10px)",
+                      opacity: 0.9,
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
+
+                <div
+                  role="button"
+                  tabIndex={0}
+                  data-theme-card={design.id}
+                  data-selected={isSelected ? "true" : "false"}
+                  data-is-active-hard-rock={isHardRockActive ? "true" : "false"}
+                  onClick={() => {
                     onUpdateSettings({
                       fullAppDesign: design.id,
                       themePreset: design.themePreset,
                       miniPlayerLayout: design.playerLayout,
                     });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onUpdateSettings({
+                        fullAppDesign: design.id,
+                        themePreset: design.themePreset,
+                        miniPlayerLayout: design.playerLayout,
+                      });
+                    }
+                  }}
+                  className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer flex-1 z-10 ${
+                    isHardRockActive
+                      ? `active-hard-rock-theme-card bg-white/95 scale-[1.015]`
+                      : isSelected
+                      ? `bg-white/95 shadow-lg scale-[1.01]`
+                      : `bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-sm`
+                  }`}
+                  style={
+                    isHardRockActive
+                      ? {
+                          border: "2px solid #e024b3",
+                          boxShadow:
+                            "0 0 0 2px #e024b3, 0 0 24px rgba(224, 36, 179, 0.95), 0 0 48px rgba(168, 85, 247, 0.75), 0 0 75px rgba(212, 175, 55, 0.5), inset 0 0 12px rgba(224, 36, 179, 0.18)",
+                        }
+                      : isSelected
+                      ? {
+                          border: "2px solid var(--accent-primary)",
+                          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-primary)",
+                        }
+                      : undefined
                   }
-                }}
-                className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
-                  isSelected
-                    ? `bg-white/95 shadow-lg scale-[1.01]`
-                    : `bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-sm`
-                }`}
-                style={
-                  isSelected
-                    ? {
-                        border: "2px solid var(--accent-primary)",
-                        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-primary)",
-                      }
-                    : undefined
-                }
-              >
-                {/* Active Checkmark Badge */}
-                {isSelected && (
-                  <div
-                    className="absolute top-3 right-3 px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-md z-10"
-                    style={{
-                      background: "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
-                      color: "var(--accent-contrast-text)",
-                    }}
-                  >
-                    <Check className="w-3 h-3 stroke-[3]" style={{ color: "var(--accent-contrast-text)" }} />
-                    <span>ACTIVE</span>
-                  </div>
-                )}
+                >
+                  {/* Active Checkmark Badge */}
+                  {isSelected && (
+                    <div
+                      className="absolute top-3 right-3 px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-md z-10"
+                      style={{
+                        background: isHardRockActive
+                          ? "linear-gradient(135deg, #ff2a85, #e024b3)"
+                          : "linear-gradient(135deg, var(--accent-secondary, var(--accent-primary)), var(--accent-primary))",
+                        color: "#ffffff",
+                        boxShadow: isHardRockActive ? "0 0 12px rgba(224, 36, 179, 0.85)" : undefined,
+                      }}
+                    >
+                      <Check className="w-3 h-3 stroke-[3]" style={{ color: "#ffffff" }} />
+                      <span style={{ color: "#ffffff" }}>ACTIVE</span>
+                    </div>
+                  )}
 
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-200/90 text-zinc-900 font-bold border border-zinc-300">
+                    <span
+                      data-card-badge
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border transition-colors ${
+                        isHardRockActive
+                          ? "bg-white/15 text-white border-white/25 shadow-sm"
+                          : "bg-zinc-200/90 text-zinc-900 border-zinc-300"
+                      }`}
+                    >
                       {design.badge}
                     </span>
-                    <span className="text-[10px] font-mono text-zinc-600 font-semibold">{design.num} / {String(FULL_APP_DESIGNS_LIST.length).padStart(2, "0")}</span>
+                    <span
+                      data-card-num
+                      className={`text-[10px] font-mono font-semibold transition-colors ${
+                        isHardRockActive ? "text-zinc-300" : "text-zinc-600"
+                      }`}
+                    >
+                      {design.num} / {String(FULL_APP_DESIGNS_LIST.length).padStart(2, "0")}
+                    </span>
                   </div>
 
-                  <h4 className="text-sm font-bold text-zinc-900 mb-1">{design.name}</h4>
-                  <p className="text-xs text-zinc-800 font-medium mb-2 leading-snug">{design.subtitle}</p>
+                  <h4
+                    data-card-title
+                    className={`text-sm font-bold mb-1 transition-colors ${
+                      isHardRockActive ? "text-white text-base tracking-tight" : "text-zinc-900"
+                    }`}
+                  >
+                    {design.name}
+                  </h4>
+                  <p
+                    data-card-subtitle
+                    className={`text-xs font-medium mb-2 leading-snug transition-colors ${
+                      isHardRockActive ? "text-zinc-200" : "text-zinc-800"
+                    }`}
+                  >
+                    {design.subtitle}
+                  </p>
 
-                  <p className="text-[11px] text-zinc-600 line-clamp-2 leading-relaxed mb-3 font-normal">
+                  <p
+                    data-card-desc
+                    className={`text-[11px] line-clamp-2 leading-relaxed mb-3 font-normal transition-colors ${
+                      isHardRockActive ? "text-zinc-300" : "text-zinc-600"
+                    }`}
+                  >
                     {design.description}
                   </p>
 
                   {/* Highlights */}
-                  <div className="space-y-1 text-[11px] text-zinc-700 mb-3 font-medium">
+                  <div
+                    className={`space-y-1 text-[11px] mb-3 font-medium transition-colors ${
+                      isHardRockActive ? "text-zinc-200" : "text-zinc-700"
+                    }`}
+                  >
                     {design.features.slice(0, 2).map((feat, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5">
+                      <div key={idx} className="flex items-center gap-1.5" data-card-feature>
                         <span className={`w-1.5 h-1.5 rounded-full ${design.accentBg}`} />
                         <span className="truncate">{feat}</span>
                       </div>
@@ -321,27 +387,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
 
                 {/* Swatches & Selection Status Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-zinc-200 mt-auto gap-2 flex-wrap">
+                <div
+                  data-card-footer
+                  className={`flex items-center justify-between pt-3 border-t mt-auto gap-2 flex-wrap transition-colors ${
+                    isHardRockActive ? "border-white/15" : "border-zinc-200"
+                  }`}
+                >
                   <div className="flex items-center gap-1.5">
                     {design.swatchColors.map((color, idx) => (
                       <span
                         key={idx}
-                        className="w-3.5 h-3.5 rounded-full border border-black/15 shadow-inner"
+                        className={`w-3.5 h-3.5 rounded-full border shadow-inner ${
+                          isHardRockActive ? "border-white/30" : "border-black/15"
+                        }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
 
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? "font-mono font-black" : "text-zinc-600 group-hover:text-zinc-900"}`}
-                    style={isSelected ? { color: "var(--accent-primary)" } : undefined}
+                    data-card-live
+                    className={`text-[10px] font-bold uppercase tracking-wider ${
+                      isSelected ? "font-mono font-black" : "text-zinc-600 group-hover:text-zinc-900"
+                    }`}
+                    style={
+                      isHardRockActive
+                        ? { color: "#ff59db", textShadow: "0 0 10px rgba(255, 89, 219, 0.6)" }
+                        : isSelected
+                        ? { color: "var(--accent-primary)" }
+                        : undefined
+                    }
                   >
                     {isSelected ? "● Live On App" : "Apply Design →"}
                   </span>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
         </div>
       </section>
 

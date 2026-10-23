@@ -1259,11 +1259,20 @@ export function getCachedPlaylist(playlistId: string): { tracks: Track[]; title?
   };
 }
 
-export async function fetchFreshYouTubePlaylist(playlistId: string): Promise<{ tracks: Track[]; title?: string; coverUrl?: string } | null> {
-  const result = await fetchPlaylistItems(playlistId, { forceRefresh: true });
+export async function fetchFreshYouTubePlaylist(
+  playlistId: string,
+  options?: { title?: string; artist?: string; type?: string }
+): Promise<{ tracks: Track[]; title?: string; coverUrl?: string } | null> {
+  const result = await fetchPlaylistItems(playlistId, {
+    forceRefresh: true,
+    title: options?.title,
+    artist: options?.artist,
+    type: options?.type,
+  });
   return {
     tracks: result.tracks,
     coverUrl: result.coverUrl,
+    title: options?.title,
   };
 }
 

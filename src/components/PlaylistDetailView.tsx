@@ -244,10 +244,42 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         ? cached.tracks
         : (tracks.length > 0 ? tracks : (item.tracks || []));
 
-      // 2. Concurrently execute a background fetch to YouTube's API for that playlist ID
-      const fresh = await fetchFreshYouTubePlaylist(item.id);
+      // 2. Concurrently execute a background fetch to YouTube's API for that playlist or album ID
+      let fresh = await fetchFreshYouTubePlaylist(item.id, {
+        title: item.title,
+        artist: (item as any).artist || (item as any).description,
+        type: effectiveIsAlbum ? "album" : (item as any).type || "playlist",
+      });
 
-      if (fresh && fresh.tracks) {
+      // Resilience Fallback: If an official album returned 0 tracks, query track search by album & artist
+      if ((!fresh || !fresh.tracks || fresh.tracks.length === 0) && (effectiveIsAlbum || Boolean((item as any).isAlbum))) {
+        try {
+          const albumQ = `${item.title || ""} ${(item as any).artist || (item as any).description || ""}`.trim();
+          if (albumQ) {
+            const searchRes = await apiFetch(`/api/youtube/search?q=${encodeURIComponent(albumQ)}&type=track`);
+            if (searchRes.ok) {
+              const sData = await searchRes.json().catch(() => ({ results: [] }));
+              const foundTracks: Track[] = (sData.results || []).slice(0, 25).map((t: any, idx: number) => ({
+                ...t,
+                id: t.id || `${t.youtubeVideoId}_${idx}`,
+                album: item.title,
+                trackNumber: idx + 1,
+              }));
+              if (foundTracks.length > 0) {
+                fresh = {
+                  tracks: foundTracks,
+                  title: item.title,
+                  coverUrl: item.coverUrl || foundTracks[0]?.coverUrl,
+                };
+              }
+            }
+          }
+        } catch (searchFallbackErr) {
+          console.warn("[PlaylistDetailView] Album track search fallback error:", searchFallbackErr);
+        }
+      }
+
+      if (fresh && fresh.tracks && fresh.tracks.length > 0) {
         // Re-verify that if a track missing from YouTube's API is found in the local cache, call purgeTrackGlobally() immediately so it can NEVER be loaded again
         const freshVideoIds = new Set(
           fresh.tracks.map((t) => cleanVideoId(t.youtubeVideoId || t.youtubeId || t.id)).filter(Boolean)

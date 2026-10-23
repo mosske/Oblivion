@@ -3535,6 +3535,71 @@ div[class*="category-wrapper"] {
 }
 
 /* ================================================================================
+   ACTIVE HARD ROCK THEME CARD GLOW (Settings Page)
+   ================================================================================ */
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"]) .settings-page .active-hard-rock-theme-card,
+:is([data-theme="hard-rock"], .theme-hard-rock, [data-theme-alias="hard-rock"]) .settings-page [data-theme-card="hard-rock"][data-selected="true"],
+.settings-page .active-hard-rock-theme-card,
+.settings-page [data-theme-card="hard-rock"][data-selected="true"] {
+  border: 2px solid #e024b3 !important;
+  box-shadow: 
+    0 0 0 2px #e024b3,
+    0 0 24px rgba(224, 36, 179, 0.95),
+    0 0 48px rgba(168, 85, 247, 0.75),
+    0 0 75px rgba(212, 175, 55, 0.5),
+    inset 0 0 14px rgba(224, 36, 179, 0.22) !important;
+  position: relative !important;
+  z-index: 20 !important;
+  animation: hardRockCardGlowPulse 2.6s ease-in-out infinite alternate !important;
+}
+
+.active-hard-rock-theme-card h4,
+.active-hard-rock-theme-card [data-card-title],
+[data-theme-card="hard-rock"][data-selected="true"] h4,
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-title] {
+  color: #ffffff !important;
+}
+
+.active-hard-rock-theme-card [data-card-subtitle],
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-subtitle] {
+  color: #f1f5f9 !important;
+}
+
+.active-hard-rock-theme-card [data-card-desc],
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-desc] {
+  color: #d1d5db !important;
+}
+
+.active-hard-rock-theme-card [data-card-feature],
+.active-hard-rock-theme-card [data-card-feature] span,
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-feature],
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-feature] span {
+  color: #e2e8f0 !important;
+}
+
+.active-hard-rock-theme-card [data-card-num],
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-num] {
+  color: #cbd5e1 !important;
+}
+
+.active-hard-rock-theme-card [data-card-badge],
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-badge] {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.active-hard-rock-theme-card [data-card-live],
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-live] {
+  color: #ff59db !important;
+}
+
+.active-hard-rock-theme-card [data-card-footer],
+[data-theme-card="hard-rock"][data-selected="true"] [data-card-footer] {
+  border-top-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ================================================================================
    STRIP CONTAINER GLOW & BORDER FROM TOP SETTINGS HEADER
    ================================================================================ */
 .theme-hard-rock .settings-page header,

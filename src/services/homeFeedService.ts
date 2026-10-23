@@ -262,6 +262,14 @@ export function normalizeInnerTubeItem(rawInput: any): HomeFeedCardItem | null {
       item.song_count?.text ||
       undefined;
 
+    // Filter out any albums or playlists explicitly declaring 0 tracks / 0 songs
+    if (itemCount && /^0\s*(songs?|tracks?|items?|videos?)?$/i.test(itemCount.trim())) {
+      return null;
+    }
+    if (rawSubtitle && /\b0\s*(songs?|tracks?)\b/i.test(rawSubtitle)) {
+      return null;
+    }
+
     // 6. Extract highest resolution thumbnail
     const thumbUrl = extractHighestResThumbnail(
       item.thumbnail?.contents || item.thumbnail?.thumbnails || item.thumbnail || item.thumbnails,

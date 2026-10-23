@@ -206,8 +206,21 @@ export const Home: React.FC<HomeProps> = ({
   }, [sections]);
 
   const displayedSections = useMemo(() => {
-    if (selectedFilter === "All") return sections;
-    return sections.filter((s) => s.title === selectedFilter);
+    const raw = selectedFilter === "All" ? sections : sections.filter((s) => s.title === selectedFilter);
+    return raw
+      .map((sec) => ({
+        ...sec,
+        items: sec.items.filter((item) => {
+          if (item.itemCount && /^0\s*(songs?|tracks?|items?|videos?)?$/i.test(item.itemCount.trim())) {
+            return false;
+          }
+          if (item.subtitle && /\b0\s*(songs?|tracks?)\b/i.test(item.subtitle)) {
+            return false;
+          }
+          return true;
+        }),
+      }))
+      .filter((sec) => sec.items && sec.items.length > 0);
   }, [sections, selectedFilter]);
 
   return (

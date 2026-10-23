@@ -2662,9 +2662,81 @@ app.get(["/api/youtube/playlists/:id/items", "/api/playlists/:id/items"], async 
     if (id && !id.startsWith("pl_custom_")) {
       customCover = await fetchYouTubePlaylistCustomImage(id, accessToken);
     }
+
+    // 0. Official Album Resolution via Innertube (for MPREb_... browseIds or album types)
+    if (cleanPlId && !cleanPlId.startsWith("pl_custom_") && (cleanPlId.startsWith("MPREb_") || type === "album" || id.startsWith("album_") || Boolean((found as any)?.isAlbum))) {
+      try {
+        const yt = await getServerInnertube(accessToken);
+        const album = await yt.music.getAlbum(cleanPlId);
+        if (album && album.contents && album.contents.length > 0) {
+          const header = album.header as any;
+          const rawCover =
+            header?.thumbnail?.contents?.slice(-1)?.[0]?.url ||
+            header?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url ||
+            header?.thumbnails?.slice(-1)?.[0]?.url;
+          const albumCover = formatHighResCover(rawCover) || rawCover;
+          const albumArtist =
+            header?.strapline_text_one?.text ||
+            header?.strapline_text_one?.toString?.() ||
+            header?.author?.name ||
+            artist ||
+            found?.artist ||
+            found?.description ||
+            "Various Artists";
+          const albumTitle =
+            header?.title?.text ||
+            header?.title?.toString?.() ||
+            title ||
+            found?.title ||
+            "Official Album";
+
+          const albumTracks = album.contents
+            .map((t: any, idx: number) => {
+              const vId = t.id || t.videoId;
+              const tTitle = t.title?.text || t.title?.toString?.() || t.title || "Track";
+              const durSec = t.duration?.seconds || (typeof t.duration === "number" ? t.duration : 0);
+              const tArtists =
+                (Array.isArray(t.artists) ? t.artists.map((a: any) => a.name || a.text).join(", ") : "") ||
+                albumArtist;
+              return {
+                id: `${vId}_${idx}`,
+                youtubeVideoId: vId,
+                youtubeId: vId,
+                title: tTitle,
+                artist: tArtists,
+                album: albumTitle,
+                duration: durSec,
+                coverUrl: albumCover || (vId ? `https://i.ytimg.com/vi/${vId}/hqdefault.jpg` : ""),
+                audioUrl: vId ? `/api/youtube/stream/${vId}` : undefined,
+                genre: "Music",
+                playsCount: 0,
+              };
+            })
+            .filter((t: any) => Boolean(t.youtubeVideoId));
+
+          if (albumTracks.length > 0) {
+            if (found) {
+              found.tracks = albumTracks;
+              found.tracksCount = albumTracks.length;
+            }
+            return res.json({
+              tracks: albumTracks,
+              coverUrl: albumCover || customCover || found?.coverUrl,
+              customCoverUrl: customCover || found?.customCoverUrl,
+              isCustomCover: Boolean(customCover),
+              title: albumTitle,
+              thumbnails: found?.thumbnails,
+            });
+          }
+        }
+      } catch (albumErr) {
+        console.warn(`[server] Innertube getAlbum lookup notice for ${cleanPlId}:`, albumErr);
+      }
+    }
+
     if (cleanPlId && !cleanPlId.startsWith("pl_custom_")) {
       const ytTracks = await getPlaylistItemsFromYouTube(accessToken, cleanPlId, forceRefresh);
-      if (Array.isArray(ytTracks)) {
+      if (Array.isArray(ytTracks) && ytTracks.length > 0) {
         const finalTracks = ytTracks;
         if (found) {
           found.tracks = finalTracks;
@@ -4676,6 +4748,14 @@ app.get("/api/innertube/home", async (req, res) => {
           }
           if (!thumbUrl && videoId && videoId.length === 11) {
             thumbUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+          }
+
+          const rawItemCount = item.item_count?.toString?.() || item.item_count?.text || item.song_count?.toString?.() || item.song_count?.text;
+          if (rawItemCount && /^0\s*(songs?|tracks?|items?|videos?)?$/i.test(String(rawItemCount).trim())) {
+            continue;
+          }
+          if (rawSub && /\b0\s*(songs?|tracks?)\b/i.test(rawSub)) {
+            continue;
           }
 
           parsedItems.push({

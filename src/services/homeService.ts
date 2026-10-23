@@ -405,7 +405,7 @@ export async function fetchPersonalizedHomeFeed(
   }
 
   const newReleasesForYou: Album[] = (newReleasesRes?.results || [])
-    .filter((a: any) => a && (a.id || a.playlistId))
+    .filter((a: any) => a && (a.id || a.playlistId) && a.tracksCount !== 0)
     .slice(0, 10);
 
   const livePerformances: Track[] = (liveRes?.results || [])
@@ -414,7 +414,7 @@ export async function fetchPersonalizedHomeFeed(
     .slice(0, 10);
 
   const albumsForYou: Album[] = (albumsRes?.results || [])
-    .filter((a: any) => a && (a.id || a.playlistId))
+    .filter((a: any) => a && (a.id || a.playlistId) && a.tracksCount !== 0)
     .slice(0, 10);
 
   const communityPlaylists: Playlist[] = (communityRes?.results || [])
