@@ -1,6 +1,4 @@
-import { defineConfig } from 'capacitor-cli';
-
-export default defineConfig({
+export default {
   appId: 'com.oblivion.music',
   appName: 'Oblivion Music',
   webDir: 'dist',
@@ -8,4 +6,4 @@ export default defineConfig({
     url: 'https://oblivion-rho.vercel.app',
     cleartext: true,
   },
-});
+};

@@ -43,7 +43,7 @@ jobs:
           cd android
           ./gradlew assembleRelease --stacktrace
 
-      - name: Rename APK to app-release.apk
+      - name: Rename APK to Oblivion-Music.apk
         run: |
           set -euo pipefail
           cd android/app/release
@@ -54,13 +54,13 @@ jobs:
             echo "Expected exactly one APK in app/release, found: $(ls *.apk)" >&2
             exit 1
           fi
-          mv *.apk app-release.apk
+          mv *.apk Oblivion-Music.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
-          path: android/app/release/*.apk
+          name: Oblivion-Music.apk
+          path: android/app/release/Oblivion-Music.apk
           include-hidden-files: true
 
       - name: Create GitHub Release
@@ -68,24 +68,24 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ github.sha }}"
-          NAME="app-release.apk"
+          NAME="Oblivion-Music.apk"
           BODY="Automated APK build for commit \`${VERSION}\`."
           RESPONSE=$(curl -sS https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest)
           RELEASE_ID=$(echo "$RESPONSE" | grep -m1 '"id"' | sed 's/.*: "//; s/",//')
           curl -sS -X POST https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/releases/${RELEASE_ID}/assets \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -F "name=${NAME}" \
-            -F "label"=@android/app/release/*.apk
+            -F "label"=@android/app/release/Oblivion-Music.apk
 
       - name: Upload APK to Release (non-main)
         if: ${{ github.ref != 'refs/heads/main' }}
         run: |
           set -euo pipefail
           VERSION="${{ github.sha }}"
-          NAME="app-release.apk"
+          NAME="Oblivion-Music.apk"
           RESPONSE=$(curl -sS https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest)
           RELEASE_ID=$(echo "$RESPONSE" | grep -m1 '"id"' | sed 's/.*: "//; s/",//')
           curl -sS -X POST https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/releases/${RELEASE_ID}/assets \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -F "name=${NAME}" \
-            -F "label"=@android/app/release/*.apk
+            -F "label"=@android/app/release/Oblivion-Music.apk
