@@ -5,6 +5,7 @@ import {
   Settings,
   Sparkles,
   Check,
+  Download,
   Smartphone,
   Layout,
   Info,
@@ -33,6 +34,11 @@ interface SettingsViewProps {
   onInstallPwa?: () => void;
   onOpenResetModal?: () => void;
 }
+
+// Android APK download target. The native build is compiled by GitHub Actions CI/CD and published as a
+// release asset on the Oblivion Music Releases page, so we link to that page rather than hard-coding an
+// artifact filename (which changes per commit). Swap for `.../releases/latest/download/<name>.apk` once known.
+const APK_DOWNLOAD_URL = "https://github.com/mosske/oblivion/releases/latest";
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
@@ -168,6 +174,61 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span className="leading-relaxed">{installSuccessMsg}</span>
           </div>
         )}
+      </section>
+
+      {/* ANDROID APK DOWNLOAD SECTION */}
+      <section className={`apk-card install-card section-box p-6 ${designConfig.cardBg} border ${designConfig.borderSubtle} rounded-3xl space-y-4 shadow-md`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <OblivionLogo size={46} designId={designConfig.id} withAura className="shrink-0" />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border uppercase"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--accent-primary) 15%, transparent)",
+                    borderColor: "color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                    color: "var(--accent-primary)",
+                  }}
+                >
+                  Native App
+                </span>
+              </div>
+              <h3 className={`text-base font-bold ${designConfig.textPrimary}`}>
+                Download Android APK
+              </h3>
+              <p className={`text-xs ${designConfig.textSecondary} font-medium leading-relaxed max-w-xl mt-0.5`}>
+                Native Android build compiled by GitHub Actions CI/CD and published to the Oblivion Music Releases page — no local compilation, ever.
+              </p>
+            </div>
+          </div>
+
+          <a
+            id="download-android-apk-btn"
+            href={APK_DOWNLOAD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`px-5 py-3 rounded-2xl ${isHardRock ? "" : designConfig.btnPrimary} font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shrink-0`}
+            style={
+              isHardRock
+                ? {
+                    background: "linear-gradient(135deg, #E024B3 0%, #800F5E 50%, #2A0520 100%)",
+                    color: "#FFFFFF",
+                    border: "1px solid rgba(255, 105, 180, 0.4)",
+                    boxShadow: "0 0 12px rgba(224, 36, 179, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+                    fontWeight: 600,
+                  }
+                : undefined
+            }
+          >
+            <Download className="w-4 h-4" style={isHardRock ? { color: "#FFFFFF", stroke: "#FFFFFF" } : undefined} />
+            <span style={isHardRock ? { color: "#FFFFFF", fontWeight: 600 } : undefined}>Download APK</span>
+          </a>
+        </div>
+
+        <p className={`text-[11px] ${designConfig.textSecondary} font-medium leading-relaxed`}>
+          Opens the latest Oblivion Music release on GitHub. Tap “Assets” to grab the newest <code>.apk</code>, then install it from your browser or file manager.
+        </p>
       </section>
 
       {/* 9 FULL APP DESIGNS & THEMES SUITE */}
