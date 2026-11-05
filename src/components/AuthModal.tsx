@@ -188,7 +188,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setIsAuthenticatingGlobal(false);
             }, 500);
           }
-        } catch (e) {}
+        } catch (e) {
+          // Fallback: never leave a stale/blank screen if polling fails — surface an error and return home.
+          console.error("OAuth poll failure:", e);
+          setErrorMessage("Authentication failed. Please try again.");
+          setLoading(false);
+          setIsAuthenticatingGlobal(false);
+        }
       }, 1000);
     } catch (err: any) {
       console.error("Auth error:", err);

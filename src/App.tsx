@@ -1019,6 +1019,8 @@ export default function App() {
           }
         }
         window.history.replaceState({}, document.title, window.location.pathname);
+        // Force a full-page SPA remount so the WebView re-reads the fresh session and never shows stale/blank state after OAuth redirect-back.
+        window.location.replace("/");
         setTimeout(() => {
           setIsAuthenticating(false);
           setIsAuthenticatingGlobal(false);
