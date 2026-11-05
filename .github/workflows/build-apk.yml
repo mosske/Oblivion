@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.x'
 
       - name: Cache node modules
         uses: actions/cache@v4
@@ -42,6 +42,19 @@ jobs:
         run: |
           cd android
           ./gradlew assembleRelease --stacktrace
+
+      - name: Rename APK to app-release.apk
+        run: |
+          set -euo pipefail
+          cd android/app/release
+          # Gradle names the release APK after the applicationId; normalize it to a
+          # single fixed filename so the upload glob matches exactly one file and the
+          # on-disk name equals the release asset / Settings download link.
+          if [ "$(ls *.apk 2>/dev/null | wc -l)" -ne 1 ]; then
+            echo "Expected exactly one APK in app/release, found: $(ls *.apk)" >&2
+            exit 1
+          fi
+          mv *.apk app-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
