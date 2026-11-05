@@ -5,7 +5,13 @@ export default {
   server: {
     url: 'https://oblivion-rho.vercel.app',
     cleartext: true,
-    androidScheme: 'https'
+    androidScheme: 'https',
+    allowNavigation: [
+      'oblivion-rho.vercel.app',
+      '*.google.com',
+      '*.googleapis.com',
+      'accounts.google.com'
+    ]
   },
   android: {
     allowMixedContent: true,
