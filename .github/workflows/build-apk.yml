@@ -46,7 +46,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: oblivion-release-apk
+          name: app-release.apk
           path: android/app/release/*.apk
           include-hidden-files: true
 
@@ -55,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ github.sha }}"
-          NAME="Oblivion-${VERSION:0:7}.apk"
+          NAME="app-release.apk"
           BODY="Automated APK build for commit \`${VERSION}\`."
           RESPONSE=$(curl -sS https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest)
           RELEASE_ID=$(echo "$RESPONSE" | grep -m1 '"id"' | sed 's/.*: "//; s/",//')
@@ -69,7 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ github.sha }}"
-          NAME="Oblivion-${VERSION:0:7}.apk"
+          NAME="app-release.apk"
           RESPONSE=$(curl -sS https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest)
           RELEASE_ID=$(echo "$RESPONSE" | grep -m1 '"id"' | sed 's/.*: "//; s/",//')
           curl -sS -X POST https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/releases/${RELEASE_ID}/assets \

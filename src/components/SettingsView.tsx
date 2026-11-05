@@ -35,10 +35,10 @@ interface SettingsViewProps {
   onOpenResetModal?: () => void;
 }
 
-// Android APK download target. The native build is compiled by GitHub Actions CI/CD and published as a
-// release asset on the Oblivion Music Releases page, so we link to that page rather than hard-coding an
-// artifact filename (which changes per commit). Swap for `.../releases/latest/download/<name>.apk` once known.
-const APK_DOWNLOAD_URL = "https://github.com/mosske/oblivion/releases/latest";
+// Android APK download target. The native build is compiled by GitHub Actions CI/CD and published as a release
+// asset named `app-release.apk`, so we link to that fixed-name asset via the /releases/latest/download/ path (which
+// requires a static filename) rather than hard-coding an artifact name that changes per commit.
+const APK_DOWNLOAD_URL = "https://github.com/mosske/oblivion/releases/latest/download/app-release.apk";
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
