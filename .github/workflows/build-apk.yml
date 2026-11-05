@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -65,17 +68,18 @@ jobs:
 
       - name: Create GitHub Release
         if: ${{ github.ref == 'refs/heads/main' }}
-        run: |
-          set -euo pipefail
-          VERSION="${{ github.sha }}"
-          NAME="Oblivion-Music.apk"
-          BODY="Automated APK build for commit \`${VERSION}\`."
-          RESPONSE=$(curl -sS https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest)
-          RELEASE_ID=$(echo "$RESPONSE" | grep -m1 '"id"' | sed 's/.*: "//; s/",//')
-          curl -sS -X POST https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/releases/${RELEASE_ID}/assets \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -F "name=${NAME}" \
-            -F "label"=@android/app/build/outputs/apk/release/Oblivion-Music.apk
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Oblivion Music Latest Release
+          body: |
+            Automated APK build for commit `${{ github.sha }}`.
+          files: android/app/build/outputs/apk/release/Oblivion-Music.apk
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK to Release (non-main)
         if: ${{ github.ref != 'refs/heads/main' }}
