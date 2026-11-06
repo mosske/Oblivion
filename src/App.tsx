@@ -69,6 +69,9 @@ import {
 import { recordPlaybackHistory } from "./services/homeService";
 import { Navbar } from "./components/Navbar";
 import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, User as UserIcon } from "lucide-react";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
+import { LoadingScreen } from "./components/LoadingScreen";
+import { AuthRetryCard } from "./components/AuthRetryCard";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
   if (!id || typeof id !== "string") return false;
@@ -206,7 +209,7 @@ async function safeClientFetch(
 // Stable identity for a track across the different id fields used in the app
 const getTrackKey = (t: any): string => (t && (t.id || t.youtubeVideoId || t.youtubeId)) || "";
 
-export default function App() {
+function AppShell() {
   // Purge any stale legacy local cover cache on mount
   useEffect(() => {
     try {
@@ -450,6 +453,15 @@ export default function App() {
   const [trackForAddToPlaylist, setTrackForAddToPlaylist] = useState<Track | null>(null);
   const [isAuthInitializing, setIsAuthInitializing] = useState<boolean>(true);
   const [oauthBannerError, setOauthBannerError] = useState<string | null>(null);
+  // Set when the OAuth redirect-back could not establish a valid session (missing/invalid token).
+  // Drives the full-screen retry card so hydration never renders a blank black screen.
+  const [authFailure, setAuthFailure] = useState<boolean>(false);
+
+  // Open the Google sign-in modal and clear any pending auth-failure state.
+  const handleRetrySignIn = () => {
+    setAuthFailure(false);
+    setIsAuthModalOpen(true);
+  };
 
   // Persistent search state (query, results, and active filter)
   const [searchQuery, setSearchQuery] = useState<string>(() => {
@@ -1004,6 +1016,7 @@ export default function App() {
       } else if (successParam || userParam) {
         setIsAuthenticating(true);
         setIsAuthenticatingGlobal(true);
+        let validated = false;
         if (userParam) {
           try {
             const parsedUser = JSON.parse(decodeURIComponent(userParam));
@@ -1013,13 +1026,52 @@ export default function App() {
               setStoredAuth(fullUser.accessToken || null, fullUser);
               setUser(fullUser);
               showToast(`Signed in as ${fullUser.name || fullUser.email || "Google User"}`);
+              validated = true;
+            } else {
+              // OAuth reported success but returned no usable user payload.
+              console.warn("OAuth redirect-back had no usable user payload:", parsedUser);
+              setAuthFailure(true);
             }
           } catch (e) {
             console.error("Failed to parse user param:", e);
+            setAuthFailure(true);
           }
         }
+
+        if (!validated) {
+          // No valid OAuth payload: surface the retry card instead of a blank black screen.
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
+
+        // Server-side validation of the freshly stored access token before remounting.
+        try {
+          const headers: Record<string, string> = {};
+          const token = getStoredAuthToken();
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+            headers["X-Access-Token"] = token;
+            const res = await safeClientFetch("/api/auth/me", { headers, credentials: "include" }, 1, 500);
+            if (!res || !res.ok) throw new Error("Token validation rejected by server");
+            const data = await res.json().catch(() => null);
+            if (!(data && data.isLoggedIn && data.user)) throw new Error("Server did not confirm the session");
+          } else {
+            throw new Error("No access token after OAuth redirect-back");
+          }
+        } catch (e) {
+          console.warn("OAuth token validation failed:", e);
+          // Wipe the rejected session and surface the retry card instead of a blank screen.
+          clearStoredAuth();
+          setInMemoryAuth(null, null);
+          setUser(null);
+          setActiveTab("settings");
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setAuthFailure(true);
+          return;
+        }
+
+        // Token validated: force a full-page SPA remount so the WebView re-reads the fresh session and never shows stale/blank state after OAuth redirect-back.
         window.history.replaceState({}, document.title, window.location.pathname);
-        // Force a full-page SPA remount so the WebView re-reads the fresh session and never shows stale/blank state after OAuth redirect-back.
         window.location.replace("/");
         setTimeout(() => {
           setIsAuthenticating(false);
@@ -2737,7 +2789,16 @@ export default function App() {
   }, [activeTab, selectedPlaylist?.id]);
 
   return (
-    <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : (activeFullDesign.isHardRock || activeFullDesign.isSugarTimeJazz || activeFullDesign.id === "hard-rock" || activeFullDesign.id === "sugar-time-jazz") ? "hard-rock-canvas-bg bg-[#120e0b]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
+    <>
+      {/* Branded loading guard during hydration / session check — never a blank black screen */}
+      {isAuthInitializing && <LoadingScreen label="Loading Oblivion Music…" />}
+
+      {/* Full-screen retry card when the OAuth redirect-back could not establish a valid session */}
+      {authFailure && (
+        <AuthRetryCard onSignIn={handleRetrySignIn} onOpenSettings={() => setActiveTab("settings")} />
+      )}
+
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : (activeFullDesign.isHardRock || activeFullDesign.isSugarTimeJazz || activeFullDesign.id === "hard-rock" || activeFullDesign.id === "sugar-time-jazz") ? "hard-rock-canvas-bg bg-[#120e0b]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
 
@@ -3093,5 +3154,15 @@ export default function App() {
         designConfig={activeFullDesign}
       />
       </div>
+    </>
+  );
+}
+
+// Branded root wrapper: error boundary + auth-loading guard around the main render tree.
+export default function App() {
+  return (
+    <AppErrorBoundary>
+      <AppShell />
+    </AppErrorBoundary>
   );
 }

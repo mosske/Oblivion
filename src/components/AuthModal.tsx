@@ -7,6 +7,7 @@ import {
   syncDocumentThemeColor,
   getThemeCanvasColor,
 } from "../utils/appDesignThemes";
+import { Browser } from "@capacitor/browser";
 import { OblivionLogo } from "./OblivionLogo";
 import { setInMemoryAuth, setIsAuthenticatingGlobal, getStoredRefreshToken } from "../services/authService";
 
