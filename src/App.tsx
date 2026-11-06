@@ -72,7 +72,8 @@ import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, Us
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { AuthRetryCard } from "./components/AuthRetryCard";
-import { App } from "@capacitor/app";
+import { App as CapApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
   if (!id || typeof id !== "string") return false;
@@ -1266,7 +1267,7 @@ function AppShell() {
       }
     };
 
-    const handle = App.addListener("appUrlOpen", handleAppUrlOpen);
+    const handle = Capacitor.isNativePlatform() ? CapApp.addListener("appUrlOpen", handleAppUrlOpen) : undefined;
     return () => {
       mounted = false;
       try {
