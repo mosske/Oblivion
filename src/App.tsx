@@ -72,6 +72,7 @@ import { AlertTriangle, X, Disc3, Search, CheckCircle2, LogIn, LogOut, Check, Us
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { AuthRetryCard } from "./components/AuthRetryCard";
+import { App } from "@capacitor/app";
 
 export function isValidPlaylistId(id: string | undefined | null): boolean {
   if (!id || typeof id !== "string") return false;
@@ -1170,6 +1171,107 @@ function AppShell() {
     return () => {
       isMounted = false;
       isDbMounted = false;
+    };
+  }, []);
+
+  // Native appUrlOpen listener: capture Google OAuth redirect-back delivered as a custom scheme (oblivion://...) or App Link, so it is handled in-app instead of only via query params and never breaks out to Chrome. Complements the query-param branch above.
+  useEffect(() => {
+    let mounted = true;
+
+    const handleAppUrlOpen = async (event: { url: string }) => {
+      if (!mounted) return;
+      try {
+        // Strip a custom scheme / App Link scheme so we can parse the path + query uniformly.
+        let normalized = event?.url || "";
+        if (/^[a-z][\w-]+:\/\//i.test(normalized)) {
+          normalized = normalized.replace(/^[a-z][\w-]+:\/\//i, "");
+        }
+
+        const urlParams = new URLSearchParams(new URL("https://" + normalized).search);
+        const errParam = urlParams.get("oauth_error");
+        const successParam = urlParams.get("oauth_success");
+        const userParam = urlParams.get("user");
+
+        if (errParam) {
+          setOauthBannerError(errParam);
+          setActiveTab("settings");
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
+
+        let validated = false;
+        if (successParam || userParam) {
+          setIsAuthenticating(true);
+          setIsAuthenticatingGlobal(true);
+          if (userParam) {
+            try {
+              const parsedUser = JSON.parse(decodeURIComponent(userParam));
+              if (parsedUser && (parsedUser.id || parsedUser.email)) {
+                const fullUser = { ...parsedUser, isLoggedIn: true };
+                setInMemoryAuth(fullUser.accessToken || null, fullUser);
+                setStoredAuth(fullUser.accessToken || null, fullUser);
+                setUser(fullUser);
+                showToast(`Signed in as ${fullUser.name || fullUser.email || "Google User"}`);
+                validated = true;
+              } else {
+                console.warn("Native OAuth redirect-back had no usable user payload:", parsedUser);
+                setAuthFailure(true);
+              }
+            } catch (e) {
+              console.error("Failed to parse native user param:", e);
+              setAuthFailure(true);
+            }
+          }
+
+          if (!validated) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+
+          // Server-side validation of the freshly stored access token before remounting.
+          try {
+            const headers: Record<string, string> = {};
+            const token = getStoredAuthToken();
+            if (token) {
+              headers["Authorization"] = `Bearer ${token}`;
+              headers["X-Access-Token"] = token;
+              const res = await safeClientFetch("/api/auth/me", { headers, credentials: "include" }, 1, 500);
+              if (!res || !res.ok) throw new Error("Token validation rejected by server");
+              const data = await res.json().catch(() => null);
+              if (!(data && data.isLoggedIn && data.user)) throw new Error("Server did not confirm the session");
+            } else {
+              throw new Error("No access token after native OAuth redirect-back");
+            }
+          } catch (e) {
+            console.warn("Native OAuth token validation failed:", e);
+            clearStoredAuth();
+            setInMemoryAuth(null, null);
+            setUser(null);
+            setActiveTab("settings");
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setAuthFailure(true);
+            return;
+          }
+
+          // Token validated: force a full-page SPA remount so the WebView re-reads the fresh session and never shows stale/blank state after OAuth redirect-back.
+          window.history.replaceState({}, document.title, window.location.pathname);
+          window.location.replace("/");
+          setTimeout(() => {
+            setIsAuthenticating(false);
+            setIsAuthenticatingGlobal(false);
+          }, 1200);
+        }
+      } catch (e) {
+        console.error("appUrlOpen handler error:", e);
+      }
+    };
+
+    const handle = App.addListener("appUrlOpen", handleAppUrlOpen);
+    return () => {
+      mounted = false;
+      try {
+        if (handle && typeof handle.remove === "function") handle.remove();
+      } catch {}
     };
   }, []);
 
