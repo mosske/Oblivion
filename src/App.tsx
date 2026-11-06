@@ -1267,12 +1267,18 @@ function AppShell() {
       }
     };
 
-    const handle = Capacitor.isNativePlatform() ? CapApp.addListener("appUrlOpen", handleAppUrlOpen) : undefined;
+    let handle: any;
+    if (Capacitor.isNativePlatform()) {
+      CapApp.addListener("appUrlOpen", handleAppUrlOpen).then((h) => {
+        handle = h;
+      }).catch((err) => {
+        console.error("Failed to add appUrlOpen listener", err);
+      });
+    }
     return () => {
-      mounted = false;
-      try {
-        if (handle && typeof handle.remove === "function") handle.remove();
-      } catch {}
+      if (handle && typeof handle.remove === 'function') {
+        handle.remove();
+      }
     };
   }, []);
 
