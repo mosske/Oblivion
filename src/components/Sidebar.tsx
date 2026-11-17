@@ -17,6 +17,12 @@ import { User, Playlist, ThemePreset, NavTab } from "../types";
 import { FullAppDesignConfig, FULL_APP_DESIGNS } from "../utils/appDesignThemes";
 import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { OblivionLogo } from "./OblivionLogo";
+import {
+  getLibraryVisiblePlaylists,
+  readHiddenPlaylistIds,
+  readPlaylistSort,
+  PLAYLIST_PREFS_EVENT,
+} from "../utils/playlistListPrefs";
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -46,33 +52,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onInstallPwa,
   isInstalled,
 }) => {
+  // Mirror the Library: same hidden playlists, same filtering and same sort order, updated live.
+  const [hiddenIds, setHiddenIds] = React.useState<string[]>(() => readHiddenPlaylistIds());
+  const [sortOption, setSortOption] = React.useState<string>(() => readPlaylistSort());
+
+  React.useEffect(() => {
+    const refresh = () => {
+      setHiddenIds(readHiddenPlaylistIds());
+      setSortOption(readPlaylistSort());
+    };
+    window.addEventListener(PLAYLIST_PREFS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(PLAYLIST_PREFS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
+
   const cleanPlaylists = React.useMemo(() => {
     if (!user?.isLoggedIn) return [];
-
-    let hiddenIds: string[] = [];
-    try {
-      const stored = localStorage.getItem("oblivion_hidden_playlists");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) hiddenIds = parsed;
-      }
-    } catch {}
-
-    const seen = new Set<string>();
-    return (playlists || []).filter((pl) => {
-      if (!pl) return false;
-      const id = pl.id || pl.playlistId;
-      if (!id || seen.has(id) || hiddenIds.includes(id)) return false;
-      seen.add(id);
-      return true;
-    });
-  }, [playlists, user?.isLoggedIn]);
+    return getLibraryVisiblePlaylists(playlists, hiddenIds, sortOption);
+  }, [playlists, hiddenIds, sortOption, user?.isLoggedIn]);
 
 
   return (
     <aside
       id="app-sidebar-nav"
       className={`sidebar-nav desktop-menu w-64 ${designConfig.sidebarBg} ${designConfig.borderSubtle} border-r flex flex-col fixed left-0 top-0 bottom-0 h-screen ${designConfig.textPrimary} select-none z-30 shrink-0 hidden md:flex transition-colors duration-300 shadow-lg overflow-y-auto overflow-x-hidden custom-scrollbar`}
+      style={{ overscrollBehavior: "contain" }}
     >
       {/* Brand Logo */}
       <div className="p-6 pb-4 flex items-center justify-between shrink-0">
@@ -222,7 +229,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={pl.id}
               onClick={() => {
-                setActiveTab("library");
+                // App's onSelectPlaylist already switches to Library and opens the playlist. Also calling
+                // setActiveTab("library") here made the tab handler close the playlist again (race).
                 onSelectPlaylist(pl);
               }}
               className={`w-full group flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium ${designConfig.textSecondary} hover:${designConfig.textPrimary} ${designConfig.isLight ? "hover:bg-[#f4f1ea]" : "hover:bg-slate-900/80"} transition-all text-left`}

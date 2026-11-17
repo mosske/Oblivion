@@ -21,6 +21,7 @@ import { PlaylistCoverArt } from "./PlaylistCoverArt";
 import { PlaylistCard } from "./PlaylistCard";
 import { ManageVisibilityModal } from "./ManageVisibilityModal";
 import { getCachedPlaylists } from "../services/playlistService";
+import { notifyPlaylistPrefsChanged } from "../utils/playlistListPrefs";
 
 interface LibraryViewProps {
   playlists: Playlist[];
@@ -84,6 +85,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   const handleSortChange = (newSort: SortOption) => {
     setSortOption(newSort);
     localStorage.setItem("oblivion_playlist_sort", newSort);
+    notifyPlaylistPrefsChanged();
   };
 
   // Save hidden playlist IDs and persist to storage
@@ -93,6 +95,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     try {
       localStorage.setItem("oblivion_hidden_playlists", JSON.stringify(safeIds));
     } catch {}
+    notifyPlaylistPrefsChanged();
     setToastText("Playlist visibility preferences saved");
     setTimeout(() => setToastText(null), 3000);
   };
@@ -107,6 +110,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       try {
         localStorage.setItem("oblivion_hidden_playlists", JSON.stringify(updated));
       } catch {}
+      notifyPlaylistPrefsChanged();
       return updated;
     });
   };
