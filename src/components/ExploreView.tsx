@@ -265,6 +265,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${
                 designConfig.id === "neue-editorial"
                   ? "bg-[#1F1F1F]/10 text-[#1F1F1F] border border-[#1F1F1F]/20 shadow-xs"
+                  : designConfig.isChristmas
+                  ? "bg-white/90 text-[#8f0f22] border border-[#d4af37]/60 shadow-xs"
                   : designConfig.isCandy
                   ? "bg-white/90 text-[#1e4a7a] border border-pink-200 shadow-xs"
                   : designConfig.isLight
@@ -287,6 +289,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               className={`explore-header-title explore-discover-heading text-2xl sm:text-3xl md:text-4xl font-extrabold ${
                 designConfig.id === "neue-editorial"
                   ? "text-white drop-shadow-[0_2px_8px_rgba(31,31,31,0.7)] [text-shadow:_0_2px_8px_rgba(31,31,31,0.7)]"
+                  : designConfig.isChristmas
+                  ? "text-[#5a0f1b]"
                   : designConfig.isCandy
                   ? "text-[#1e4a7a]"
                   : "text-white"
@@ -298,6 +302,8 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               className={`text-xs sm:text-sm ${
                 designConfig.id === "neue-editorial"
                   ? "text-[#3A3530]"
+                  : designConfig.isChristmas
+                  ? "text-[#3a0c14]"
                   : designConfig.isCandy
                   ? "text-[#3b1235]"
                   : "text-slate-200/90"

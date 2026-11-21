@@ -153,7 +153,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
     (designConfig.id as string) === "candyland-pastel" ||
     (designConfig as any).isCandy ||
     (designConfig as any).themePreset === "candyland" ||
-    designConfig.name === "Candyland Pastel"
+    designConfig.name === "Candyland Pastel" ||
+    Boolean((designConfig as any).isChristmas)
   );
 
   const isBespoke = Boolean(

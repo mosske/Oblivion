@@ -24,6 +24,7 @@ export interface FullAppDesignConfig {
   isSugarTimeJazz?: boolean;
   isHardRock?: boolean;
   isBespoke?: boolean;
+  isChristmas?: boolean;
   themeColorMeta?: string;
 
   // Visual Styling Classes
@@ -838,6 +839,75 @@ export const FULL_APP_DESIGNS_BASE: Record<string, FullAppDesignConfig> = {
     navInactive: "text-white/70 hover:text-white hover:bg-white/[0.06] rounded-2xl",
     trackRowHover: "hover:bg-white/[0.06]",
   },
+
+  christmas: {
+    id: "christmas",
+    name: "Gilded Noël",
+    subtitle: "Metallic Red, Silver & Gold Tinsel on Winter White",
+    badge: "SEASONAL",
+    num: "12",
+    themePreset: "christmas",
+    playerLayout: "floating-dock",
+    description:
+      "A warm, classy Christmas light theme: metallic red accents, silver and gold tinsel trims, frosted winter-white glass, gentle falling snowflakes in many shapes and sizes, and a string of twinkling Christmas lights.",
+    features: [
+      "Metallic red, silver & gold tinsel trims on a warm winter-white canvas",
+      "Gentle falling snowflakes in six shapes and many sizes",
+      "A twinkling string of red, gold, white & silver Christmas lights",
+      "Applied everywhere: screens, pop-ups, modals and album, playlist & genre views",
+    ],
+    swatchColors: ["#b3122b", "#d4af37", "#c4cad3", "#fbf7f0"],
+    multiAccentGradient: "from-[#b3122b] via-[#d4af37] to-[#c4cad3]",
+    isLight: true,
+    isChristmas: true,
+    themeColorMeta: "#f6efe3",
+
+    bgCanvas: "christmas-canvas-bg",
+    cardBg: "bg-[#fffdf9]/85 backdrop-blur-xl",
+    headerBg: "bg-[#fffaf2]/90 backdrop-blur-xl",
+    sidebarBg: "bg-[#fffaf2]/92 backdrop-blur-2xl",
+    bottomNavBg: "bg-[#fffaf2]/95 backdrop-blur-2xl",
+    borderSubtle: "border-[#d4af37]/35",
+    borderStrong: "border-[#d4af37]/65",
+    textPrimary: "text-[#3a0c14]",
+    textSecondary: "text-[#6a2a33]",
+    textMuted: "text-[#8b4d56]",
+    accentBg: "bg-[#b3122b]",
+    accentText: "text-[#b3122b]",
+    accentBorder: "border-[#b3122b]/40",
+    accentContrastText: "text-white",
+
+    headingPrimary: "text-[#5a0f1b]",
+    headingSecondary: "text-[#3a0c14]",
+    headingMuted: "text-[#7a3a44]",
+    cardHover: "hover:bg-white",
+    modalBg: "bg-[#fffdf9]/97 backdrop-blur-2xl",
+    pillBg: "bg-white/70 backdrop-blur-md",
+    pillActive: "bg-gradient-to-r from-[#d7263d] to-[#8f0f22] text-white font-bold",
+    inputBg: "bg-white/90 text-[#3a0c14] border-[#d4af37]/50",
+    waveformGradient: "from-[#b3122b] via-[#d4af37] to-[#c4cad3]",
+    progressGradient: "bg-gradient-to-r from-[#b3122b] via-[#d4af37] to-[#c4cad3]",
+    glowRing: "shadow-[0_0_25px_rgba(179,18,43,0.30)]",
+    bannerGradient: "from-[#b3122b]/20 via-[#d4af37]/18 to-[#c4cad3]/25",
+    mockup: {
+      bannerGradient: "from-[#b3122b] via-[#d4af37] to-[#c4cad3]",
+      heroTitle: "Gilded Noël Sessions",
+      heroSubtitle: "Tinsel, Snow & Twinkling Lights",
+      chipLabels: ["🎄 Carols", "❄️ Winter Chill", "✨ Holiday Pop", "🔔 Classics"],
+      dockStyle: "bg-[#fffdf9]/90 border-[#d4af37]/60 shadow-xl",
+    },
+
+    accentSecondaryBg: "bg-[#d4af37]",
+    accentSecondaryText: "text-[#8a6a12]",
+    accentTertiaryBg: "bg-[#c4cad3]",
+    accentTertiaryText: "text-[#5b6577]",
+
+    btnPrimary: "bg-gradient-to-r from-[#d7263d] via-[#b3122b] to-[#8f0f22] hover:brightness-110 text-white font-extrabold shadow-md shadow-[#b3122b]/30 border border-[#d4af37]/60 active:scale-95",
+    btnSecondary: "bg-white/85 hover:bg-white text-[#3a0c14] border border-[#d4af37]/50 font-semibold shadow-xs",
+    navActive: "bg-gradient-to-r from-[#d7263d] to-[#8f0f22] text-white shadow-md font-bold",
+    navInactive: "text-[#6a2a33] hover:text-[#3a0c14] hover:bg-white/60",
+    trackRowHover: "hover:bg-[#f7e7a1]/25",
+  },
 };
 
 import {
@@ -913,6 +983,7 @@ export const THEME_CANVAS_COLORS: Record<string, string> = {
   "hard-rock": "#120e0b",
   "sugar-time-jazz": "#120e0b",
   bespoke: "#0a0d1a",
+  christmas: "#f6efe3",
 };
 
 /**
@@ -953,6 +1024,7 @@ export function syncDocumentThemeColor(themeOrId?: string | FullAppDesignConfig 
   const isLight =
     colorHex.toLowerCase() === "#ffd1dc" ||
     colorHex.toLowerCase() === "#f2e8d8" ||
+    colorHex.toLowerCase() === "#f6efe3" ||
     (typeof themeOrId === "object" && Boolean(themeOrId?.isLight));
 
   if (typeof document !== "undefined") {

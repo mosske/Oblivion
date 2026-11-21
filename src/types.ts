@@ -131,7 +131,8 @@ export type ThemePreset =
   | 'obsidian-depth'
   | 'nebula-liquid-glass'
   | 'hard-rock' | 'sugar-time-jazz'
-  | 'bespoke';
+  | 'bespoke'
+  | 'christmas';
 export type AudioQuality = 'normal' | 'high' | 'lossless';
 export type LyricsFontSize = 'sm' | 'md' | 'lg';
 export type LyricsAlignment = 'left' | 'center';
@@ -162,7 +163,8 @@ export type FullAppDesignId =
   | 'obsidian-depth'    // 8. Obsidian Depth (Matte Slate, Soft 3D Extrusion & Neon Cyan)
   | 'nebula-liquid-glass' // 9. Nebula Liquid Glass (Deep Cosmic Void, Translucent Liquid Glass & Violet/Cyan Glow)
   | 'hard-rock' | 'sugar-time-jazz'    // 10. Hard Rock (formerly Sugar Time Jazz) (Warm Tan to Dark Chocolate, Purple Back-Glow & Frosted Glass)
-  | 'bespoke';           // 11. Bespoke (Customizable Liquid Glass Canvas with 4 User-Selected Theme Colors)
+  | 'bespoke'            // 11. Bespoke (Customizable Liquid Glass Canvas with 4 User-Selected Theme Colors)
+  | 'christmas';         // 12. Gilded Noël (Metallic Red, Silver & Gold Tinsel on Winter White, Falling Snow & Christmas Lights)
 
 export interface UserSettings {
   audioQuality: AudioQuality;

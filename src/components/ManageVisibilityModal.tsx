@@ -39,6 +39,8 @@ const getDoneButtonThemeStyles = (themeId?: string): string => {
     case "candyland":
     case "ytmusic-red":
       return "bg-gradient-to-r from-[#ff70a6] to-[#ff4d8d] hover:from-[#f75b95] hover:to-[#e03a7c] text-white font-extrabold shadow-lg shadow-pink-500/30";
+    case "christmas":
+      return "bg-gradient-to-r from-[#d7263d] via-[#b3122b] to-[#8f0f22] hover:brightness-110 text-white font-extrabold shadow-lg shadow-[#b3122b]/30 border border-[#d4af37]/60";
     case "dynamic-emerald":
       return "bg-gradient-to-r from-[#00f5a0] via-[#00e5cc] to-[#00d9f5] hover:brightness-110 text-[#011a12] font-black shadow-[0_0_24px_rgba(0,245,160,0.55),inset_0_1.5px_1px_rgba(255,255,255,0.7)] border-t border-white/60";
     case "audiophile-gold":
@@ -60,6 +62,8 @@ const getHeaderBadgeThemeStyles = (themeId?: string): string => {
     case "candyland":
     case "ytmusic-red":
       return "bg-[#ff70a6]/20 text-[#ff70a6] border-[#ff70a6]/30";
+    case "christmas":
+      return "bg-[#b3122b]/10 text-[#b3122b] border-[#d4af37]/50";
     case "dynamic-emerald":
       return "bg-gradient-to-r from-emerald-950/50 to-teal-950/40 text-[#00f5a0] border border-[#00f5a0]/40 border-t-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]";
     case "audiophile-gold":
@@ -81,6 +85,8 @@ const getSearchFocusBorder = (themeId?: string): string => {
     case "candyland":
     case "ytmusic-red":
       return "focus:border-[#ff70a6]";
+    case "christmas":
+      return "focus:border-[#b3122b]";
     case "dynamic-emerald":
       return "focus:border-[#00f5a0]";
     case "audiophile-gold":

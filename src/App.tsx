@@ -16,6 +16,8 @@ import { AddToPlaylistModal } from "./components/AddToPlaylistModal";
 import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
+import { ChristmasSnowfall } from "./components/ChristmasSnowfall";
+import { ChristmasLights } from "./components/ChristmasLights";
 import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";
 import { DesignerTrapezoidBackground } from "./components/DesignerTrapezoidBackground";
 import { EmeraldWildernessBackground } from "./components/EmeraldWildernessBackground";
@@ -753,6 +755,14 @@ function AppShell() {
           contrastText: "#ffffff",
           sliderTrack: "#ffd1dc",
           sliderFill: "#ff70a6",
+        },
+        christmas: {
+          accent: "#b3122b",
+          secondary: "#d4af37",
+          tertiary: "#c4cad3",
+          contrastText: "#ffffff",
+          sliderTrack: "#f1e6d0",
+          sliderFill: "#b3122b",
         },
         "ytmusic-red": {
           accent: "#dc2626",
@@ -2907,9 +2917,12 @@ function AppShell() {
         <AuthRetryCard onSignIn={handleRetrySignIn} onOpenSettings={() => setActiveTab("settings")} />
       )}
 
-      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : (activeFullDesign.isHardRock || activeFullDesign.isSugarTimeJazz || activeFullDesign.id === "hard-rock" || activeFullDesign.id === "sugar-time-jazz") ? "hard-rock-canvas-bg bg-[#120e0b]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
+      <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isChristmas || activeFullDesign.id === "christmas") ? "christmas-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : (activeFullDesign.isHardRock || activeFullDesign.isSugarTimeJazz || activeFullDesign.id === "hard-rock" || activeFullDesign.id === "sugar-time-jazz") ? "hard-rock-canvas-bg bg-[#120e0b]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
+      {/* Gilded Noël (Christmas): gentle falling snow + twinkling lights, hidden while the full player is open */}
+      <ChristmasSnowfall isActive={Boolean((activeFullDesign.isChristmas || activeFullDesign.id === "christmas") && !playerState.isFullscreen)} />
+      <ChristmasLights isActive={Boolean((activeFullDesign.isChristmas || activeFullDesign.id === "christmas") && !playerState.isFullscreen)} />
 
       {/* Animated Glowing Nebula Gradient & Fluid Aurora Canvas for Theme 09 (Nebula Liquid Glass) */}
       <NebulaLiquidBackground isActive={Boolean((activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") && !playerState.isFullscreen)} />
@@ -2952,7 +2965,7 @@ function AppShell() {
       />
 
       {/* Main Content Workspace Area */}
-      <main className={`app-content main-viewport flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass" || activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory" || activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald" || activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold" || activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
+      <main className={`app-content main-viewport flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 relative z-10 ${(activeFullDesign.isCandy || activeFullDesign.isChristmas || activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass" || activeFullDesign.isDesigner || activeFullDesign.id === "designer" || settings.themePreset === "designer-ivory" || activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald" || activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold" || activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`}`}>
         {/* Sticky Top Navigation Header Across All Views */}
         <Navbar
           activeTab={activeTab}

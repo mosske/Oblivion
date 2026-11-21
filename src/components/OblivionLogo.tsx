@@ -90,6 +90,19 @@ const PALETTES: Record<string, GradientPalette> = {
     textGold: "#ff70a6",
   },
 
+  // 12. Gilded Noël (Metallic Red with Gold & Silver Tinsel)
+  christmas: {
+    ringGrad: { c1: "#fff1c9", c2: "#d4af37", c3: "#b3122b", c4: "#c4cad3" },
+    tri1Grad: { c1: "#e8505b", c2: "#b3122b", c3: "#7a0f1d" },
+    tri2Grad: { c1: "#f7e7a1", c2: "#d4af37", c3: "#8a6a12" },
+    highlight: "#ffffff",
+    shadow: "#3a0c14",
+    playCore: "#FFFFFF",
+    playHighlight: "#f7e7a1",
+    auraColor: "#b3122b",
+    textGold: "#b3122b",
+  },
+
   // 4. Emerald Wilderness (Jade, Neon Mint, Electric Teal & Warm Firefly Gold)
   "dynamic-emerald": {
     ringGrad: { c1: "#d0fbe9", c2: "#00f5a0", c3: "#00d9f5", c4: "#ffe066" },

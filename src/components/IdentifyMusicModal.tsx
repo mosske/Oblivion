@@ -67,6 +67,29 @@ export const IdentifyMusicModal: React.FC<IdentifyMusicModalProps> = ({
           trackArtist: "text-[#ff70a6] font-semibold",
           iconColor: "text-white",
         };
+      case "christmas":
+        return {
+          accentHex: "#b3122b",
+          badgeBg: "bg-[#b3122b]/10 border border-[#d4af37]/60 text-[#b3122b] font-bold shadow-xs",
+          accentText: "text-[#b3122b]",
+          btnPrimary: "bg-gradient-to-r from-[#d7263d] via-[#b3122b] to-[#8f0f22] hover:brightness-110 text-white shadow-lg shadow-[#b3122b]/35 font-extrabold active:scale-95 border border-[#d4af37]/60",
+          btnSecondary: "bg-white/90 hover:bg-white text-[#3a0c14] border-2 border-[#d4af37]/50 font-bold shadow-xs active:scale-95",
+          btnActive: "bg-gradient-to-r from-[#d7263d] via-[#b3122b] to-[#8f0f22] text-white ring-4 ring-[#d4af37]/45",
+          glowBg: "bg-[#d7263d]/25",
+          pulseBg: "bg-[#d4af37]/30",
+          ringBorder: "border-[#d4af37]",
+          ringColor: "ring-[#d4af37]/45",
+          cardBorder: "border-[#d4af37]/50",
+          cardBg: "bg-white/95 border-2 border-[#d4af37]/45 shadow-md shadow-[#d4af37]/20",
+          modalBg: "bg-[#fffaf3] border-2 border-[#d4af37]/60 shadow-2xl",
+          modalTitle: "text-[#3a0c14] font-black",
+          closeBtn: "text-[#6a2a33] hover:text-[#3a0c14] hover:bg-[#fdecc8]/70 border border-[#d4af37]/40 bg-white/70",
+          statusTitle: "text-[#3a0c14] font-black",
+          statusSubtitle: "text-[#6a2a33] font-medium",
+          trackTitle: "text-[#3a0c14] font-bold",
+          trackArtist: "text-[#b3122b] font-semibold",
+          iconColor: "text-white",
+        };
       case "obsidian-depth":
         return {
           accentHex: "#38bdf8",

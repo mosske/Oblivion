@@ -317,6 +317,44 @@ function getFullPlayerThemeStyles(design: FullAppDesignConfig, bespokeColors?: s
         mutedText: "text-[#8A2BE2]/80 hover:text-[#8A2BE2]",
         volSlider: "bg-pink-100 accent-[#8A2BE2]",
       };
+    case "christmas":
+      return {
+        bgCanvas: "bg-gradient-to-b from-[#fffaf3] via-[#fbf3e6] to-[#f4eadb] text-[#3a0c14]",
+        orb1: "bg-[#d7263d]/18",
+        orb2: "bg-[#d4af37]/22",
+        auroraBeam1: "bg-gradient-to-r from-[#d7263d]/18 via-[#f7e7a1]/25 to-[#c4cad3]/30",
+        auroraBeam2: "bg-gradient-to-r from-[#d4af37]/20 via-[#d7263d]/15 to-[#e8ecf1]/30",
+        orbitalGlow1: "bg-gradient-to-tr from-[#d7263d]/22 via-[#d4af37]/18 to-[#c4cad3]/30",
+        orbitalGlow2: "bg-gradient-to-bl from-[#d4af37]/22 via-[#d7263d]/16 to-[#e8ecf1]/30",
+        driftAuraGlow: "bg-gradient-to-br from-[#d7263d]/10 via-[#d4af37]/8 to-transparent",
+        veil: "bg-transparent",
+        topBar: "full-player-header bg-[#fffaf2]/90 backdrop-blur-md border-b border-[#d4af37]/45 text-[#3a0c14] shadow-sm",
+        minimizeBtn: "bg-[#fff6e6] hover:bg-[#fdecc8] text-[#8f0f22] border border-[#d4af37]/60 shadow-sm",
+        nowPlayingDot: "bg-[#d7263d] shadow-[0_0_10px_#d7263d]",
+        nowPlayingLabel: "text-[#a8132a] font-black tracking-wider",
+        nowPlayingTitle: "text-[#3a0c14]",
+        tabActive: "full-player-nav-btn active bg-gradient-to-r from-[#d7263d] to-[#8f0f22] text-white border-[#d4af37]/70 shadow-[0_4px_12px_rgba(179,18,43,0.35)] font-bold",
+        tabInactive: "full-player-nav-btn bg-[#fff6e6] text-[#8f0f22] border-[#d4af37]/50",
+        artGlowRing: "from-[#d7263d]/30 via-[#d4af37]/30 to-[#c4cad3]/40",
+        artBorder: "border-[#d4af37]/70 shadow-[0_16px_36px_rgba(122,15,29,0.28)]",
+        stageTitle: "text-[#3a0c14] drop-shadow-sm font-extrabold",
+        stageArtist: "text-[#b3122b] font-bold",
+        stageTagAccent: "bg-[#fdecc8] border border-[#d4af37]/60 text-[#8f0f22]",
+        stageTagNeutral: "bg-white border border-[#c4cad3] text-[#3a0c14]",
+        bottomDeck: "full-player-controls-container full-player-bottom-dock bg-[#fffdf9]/95 border-t border-[#d4af37]/50 text-[#3a0c14] shadow-[0_-4px_20px_rgba(122,15,29,0.12)]",
+        seekbarTrack: "bg-[#f1e6d0] border border-[#d4af37]/40",
+        seekbarFill: "bg-gradient-to-r from-[#d7263d] via-[#d4af37] to-[#c4cad3]",
+        seekbarThumb: "bg-[#b3122b] border-2 border-white shadow-[0_0_12px_rgba(179,18,43,0.55)]",
+        seekbarGlow: "shadow-[#d7263d]/40",
+        seekbarAccent: "accent-[#b3122b]",
+        timeText: "text-[#8f0f22] font-mono",
+        playBtn: "full-player-play-btn bg-gradient-to-br from-[#e04b57] via-[#b3122b] to-[#7a0f1d] hover:brightness-110 text-white shadow-[0_4px_15px_rgba(179,18,43,0.45)] active:scale-95",
+        playIconFill: "fill-white text-white",
+        ctrlBtn: "bg-[#fff6e6] hover:bg-[#fdecc8] text-[#8a6a12] border border-[#d4af37]/50 shadow-sm",
+        activeText: "text-[#b3122b] drop-shadow-[0_0_8px_rgba(179,18,43,0.4)]",
+        mutedText: "text-[#8a6a12]/85 hover:text-[#8a6a12]",
+        volSlider: "bg-[#f1e6d0] accent-[#b3122b]",
+      };
     case "dynamic-emerald":
       return {
         bgCanvas: "bg-[#01140c]",
@@ -739,7 +777,9 @@ const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     designConfig.name === "Candyland Pastel"
   );
 
-  const isTransparentHousing = isHardRock || isCandyland;
+  const isChristmasTheme = (designConfig.id as string) === "christmas" || Boolean((designConfig as any).isChristmas);
+
+  const isTransparentHousing = isHardRock || isCandyland || isChristmasTheme;
 
   return (
     <div
@@ -1311,6 +1351,10 @@ export const Player: React.FC<PlayerProps> = ({
     (designConfig as any).isCandy ||
     (designConfig as any).themePreset === "candyland" ||
     designConfig.name === "Candyland Pastel"
+  );
+
+  const isChristmas = Boolean(
+    (designConfig.id as string) === "christmas" || (designConfig as any).isChristmas
   );
 
   const [bespokeColors, setBespokeColors] = useState<[string, string, string, string]>(() => {
@@ -3859,6 +3903,15 @@ export const Player: React.FC<PlayerProps> = ({
                             // Own compositor layer so waveform repaints never re-rasterize the halo.
                             willChange: "transform",
                           }
+                          : isChristmas
+                          ? {
+                              // Metallic-red halo with a gold edge, matching the Gilded Noël play button.
+                              background:
+                                "radial-gradient(circle, rgba(215, 38, 61, 0.55) 0%, rgba(212, 175, 55, 0.22) 55%, transparent 75%)",
+                              boxShadow: "0 0 32px rgba(179, 18, 43, 0.45), 0 0 14px rgba(212, 175, 55, 0.55)",
+                              filter: "blur(4px)",
+                              willChange: "transform",
+                            }
                         : isCandyland
                         ? (designConfig.id as string) === "candyland"
                           ? {

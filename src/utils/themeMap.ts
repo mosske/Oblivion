@@ -309,6 +309,24 @@ export class ThemeRegistry {
       subtextColor: "text-slate-200",
       swatchColors: ["#0a0d1a", "#ff007f", "#8b5cf6", "#00f0ff"]
     },
+    "christmas": {
+      id: "christmas",
+      name: "Gilded Noël",
+      description: "Seasonal light theme: metallic red, silver and gold tinsel on warm winter white, with gentle falling snow and twinkling Christmas lights.",
+      category: "Light",
+      previewGradient: "from-[#fffaf3] via-[#f7e7a1] to-[#b3122b]",
+      accentClass: "text-[#b3122b]",
+      accentText: "text-[#b3122b]",
+      accentBg: "bg-[#b3122b]",
+      borderAccent: "border-[#d4af37]/50",
+      bgCanvas: "from-[#fffaf3] via-[#f8f0e4] to-[#f2e8d8]",
+      cardBg: "bg-[#fffdf9]/85 backdrop-blur-xl border-[#d4af37]/40 shadow-md",
+      sidebarBg: "bg-[#fffaf2]/90 backdrop-blur-xl border-[#d4af37]/40",
+      playerBg: "bg-[#fffdf9]/95 backdrop-blur-xl border-[#d4af37]/45",
+      textColor: "text-[#3a0c14]",
+      subtextColor: "text-[#6a2a33]",
+      swatchColors: ["#b3122b", "#d4af37", "#c4cad3", "#fbf7f0"]
+    },
   };
 
   static getTheme(id: ThemePreset): ThemeMeta {

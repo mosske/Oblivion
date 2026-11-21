@@ -408,7 +408,8 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     (designConfig.id as string) === "candyland" ||
     (designConfig.id as string) === "candyland-pastel" ||
     (designConfig as any).isCandy ||
-    designConfig.name === "Candyland Pastel"
+    designConfig.name === "Candyland Pastel" ||
+    Boolean((designConfig as any).isChristmas)
   );
 
   const isHardRock = Boolean(
