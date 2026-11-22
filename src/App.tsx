@@ -17,7 +17,7 @@ import { AuthModal } from "./components/AuthModal";
 import { OblivionLogo } from "./components/OblivionLogo";
 import { CandylandFallingSweets } from "./components/CandylandFallingSweets";
 import { ChristmasSnowfall } from "./components/ChristmasSnowfall";
-import { ChristmasLights } from "./components/ChristmasLights";
+import { ChristmasGarland } from "./components/ChristmasGarland";
 import { NebulaLiquidBackground } from "./components/NebulaLiquidBackground";
 import { DesignerTrapezoidBackground } from "./components/DesignerTrapezoidBackground";
 import { EmeraldWildernessBackground } from "./components/EmeraldWildernessBackground";
@@ -2920,9 +2920,8 @@ function AppShell() {
       <div data-theme={activeFullDesign.id} className={`flex min-h-screen w-full ${activeFullDesign.isCandy ? "candyland-canvas-bg" : (activeFullDesign.isChristmas || activeFullDesign.id === "christmas") ? "christmas-canvas-bg" : (activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") ? "bg-[#0c071e]" : (activeFullDesign.isDesigner || activeFullDesign.id === "designer") ? "bg-[#0e0d11]" : (activeFullDesign.isEmeraldWilderness || activeFullDesign.id === "dynamic-emerald") ? "bg-transparent" : (activeFullDesign.isHommeMosaic || activeFullDesign.id === "audiophile-gold") ? "bg-transparent" : (activeFullDesign.isCyberpunkCity || activeFullDesign.id === "cyberpunk-neon") ? "bg-transparent" : (activeFullDesign.isBespoke || activeFullDesign.id === "bespoke") ? "bg-transparent" : (activeFullDesign.isHardRock || activeFullDesign.isSugarTimeJazz || activeFullDesign.id === "hard-rock" || activeFullDesign.id === "sugar-time-jazz") ? "hard-rock-canvas-bg bg-[#120e0b]" : `bg-gradient-to-b ${activeFullDesign.bgCanvas}`} ${activeFullDesign.textPrimary} font-sans select-none relative overflow-x-clip`}>
       {/* Animated Falling Sweets with Device Orientation Physics for Theme 03 (Candyland) */}
       <CandylandFallingSweets isActive={Boolean((activeFullDesign.isCandy || activeFullDesign.id === "candyland") && !playerState.isFullscreen)} />
-      {/* Gilded Noël (Christmas): gentle falling snow + twinkling lights, hidden while the full player is open */}
+      {/* Gilded Noël (Christmas): gentle falling snow, hidden while the full player is open (the garland hangs under the header, see below) */}
       <ChristmasSnowfall isActive={Boolean((activeFullDesign.isChristmas || activeFullDesign.id === "christmas") && !playerState.isFullscreen)} />
-      <ChristmasLights isActive={Boolean((activeFullDesign.isChristmas || activeFullDesign.id === "christmas") && !playerState.isFullscreen)} />
 
       {/* Animated Glowing Nebula Gradient & Fluid Aurora Canvas for Theme 09 (Nebula Liquid Glass) */}
       <NebulaLiquidBackground isActive={Boolean((activeFullDesign.isNebulaGlass || activeFullDesign.id === "nebula-liquid-glass") && !playerState.isFullscreen)} />
@@ -2979,6 +2978,9 @@ function AppShell() {
             setActiveTab("home");
           }}
         />
+
+        {/* Gilded Noël (Christmas): flashing garland hung under the header; scrolls away with the page */}
+        {(activeFullDesign.isChristmas || activeFullDesign.id === "christmas") && <ChristmasGarland isActive />}
 
         {/* Global Toast Notification */}
         {toastMessage && (
