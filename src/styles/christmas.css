@@ -76,8 +76,11 @@
      (2px to 34px, repeat 184px) with a few thin dark metallic-red accents. Each band has its own
      gradient for the metallic / tinsel sheen. Two faint print layers (running reindeer, Christmas trees)
      sit over the stripes. Candyland uses 60px bands at 145deg for comparison. */
-  background-color: #fbf6ea !important;
+  /* Top layer: seamless ornament wrapping-paper tile (public/christmas/paper-tile.webp, shown at 640px).
+     The stripes + prints below are only a fallback until that file is deployed. */
+  background-color: #f3efdf !important;
   background-image:
+    url("/christmas/paper-tile.webp"),
     url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22560%22 height=%22440%22 viewBox=%220 0 560 440%22%3E%3Cg fill=%22%238a6a12%22 stroke=%22%238a6a12%22 fill-opacity=%22.20%22 stroke-opacity=%22.20%22%3E%3Cg transform=%22translate(70 110) rotate(-4) scale(0.95 0.95)%22%3E%3Cg stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath stroke=%22none%22 d=%22M38 66C42 50 88 44 122 52C140 56 148 66 146 78C143 92 118 96 92 94C66 94 40 88 38 66Z%22/%3E%3Cpath stroke=%22none%22 d=%22M118 56L150 30L164 38L142 72Z%22/%3E%3Cpath stroke=%22none%22 d=%22M148 31C158 22 176 23 186 33C189 37 184 42 176 42C169 42 162 44 155 41Z%22/%3E%3Cpath stroke=%22none%22 d=%22M150 30L142 18L157 26Z%22/%3E%3Cpath stroke=%22none%22 d=%22M40 64L26 56L36 74Z%22/%3E%3Cg fill=%22none%22 stroke-width=%226%22%3E%3Cpath d=%22M126 88L150 106L168 100%22/%3E%3Cpath d=%22M116 90L128 114L148 122%22/%3E%3Cpath d=%22M54 84L34 106L16 100%22/%3E%3Cpath d=%22M64 90L50 116L30 126%22/%3E%3C/g%3E%3Cg fill=%22none%22 stroke-width=%223.2%22%3E%3Cpath d=%22M158 30C153 18 151 6 142 -4%22/%3E%3Cpath d=%22M154 21L143 17%22/%3E%3Cpath d=%22M151 12L142 7%22/%3E%3Cpath d=%22M147 2L155 -7%22/%3E%3Cpath d=%22M165 30C167 16 164 4 157 -6%22/%3E%3Cpath d=%22M166 19L175 13%22/%3E%3Cpath d=%22M164 9L173 1%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cg transform=%22translate(470 290) rotate(3) scale(-0.7 0.7)%22%3E%3Cg stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath stroke=%22none%22 d=%22M38 66C42 50 88 44 122 52C140 56 148 66 146 78C143 92 118 96 92 94C66 94 40 88 38 66Z%22/%3E%3Cpath stroke=%22none%22 d=%22M118 56L150 30L164 38L142 72Z%22/%3E%3Cpath stroke=%22none%22 d=%22M148 31C158 22 176 23 186 33C189 37 184 42 176 42C169 42 162 44 155 41Z%22/%3E%3Cpath stroke=%22none%22 d=%22M150 30L142 18L157 26Z%22/%3E%3Cpath stroke=%22none%22 d=%22M40 64L26 56L36 74Z%22/%3E%3Cg fill=%22none%22 stroke-width=%226%22%3E%3Cpath d=%22M126 88L150 106L168 100%22/%3E%3Cpath d=%22M116 90L128 114L148 122%22/%3E%3Cpath d=%22M54 84L34 106L16 100%22/%3E%3Cpath d=%22M64 90L50 116L30 126%22/%3E%3C/g%3E%3Cg fill=%22none%22 stroke-width=%223.2%22%3E%3Cpath d=%22M158 30C153 18 151 6 142 -4%22/%3E%3Cpath d=%22M154 21L143 17%22/%3E%3Cpath d=%22M151 12L142 7%22/%3E%3Cpath d=%22M147 2L155 -7%22/%3E%3Cpath d=%22M165 30C167 16 164 4 157 -6%22/%3E%3Cpath d=%22M166 19L175 13%22/%3E%3Cpath d=%22M164 9L173 1%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
     url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22330%22 height=%22330%22 viewBox=%220 0 330 330%22%3E%3Cg fill=%22%237a0f1d%22 fill-opacity=%22.16%22%3E%3Cg transform=%22translate(40 40) scale(0.52)%22%3E%3Cpath d=%22M50 2l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8z%22/%3E%3Cpath d=%22M50 16L72 50H28Z%22/%3E%3Cpath d=%22M50 34L80 76H20Z%22/%3E%3Cpath d=%22M50 58L90 108H10Z%22/%3E%3Crect x=%2244%22 y=%22108%22 width=%2212%22 height=%2216%22/%3E%3C/g%3E%3Cg transform=%22translate(205 185) scale(0.4)%22%3E%3Cpath d=%22M50 2l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8z%22/%3E%3Cpath d=%22M50 16L72 50H28Z%22/%3E%3Cpath d=%22M50 34L80 76H20Z%22/%3E%3Cpath d=%22M50 58L90 108H10Z%22/%3E%3Crect x=%2244%22 y=%22108%22 width=%2212%22 height=%2216%22/%3E%3C/g%3E%3Cg transform=%22translate(120 230) scale(0.3)%22%3E%3Cpath d=%22M50 2l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8z%22/%3E%3Cpath d=%22M50 16L72 50H28Z%22/%3E%3Cpath d=%22M50 34L80 76H20Z%22/%3E%3Cpath d=%22M50 58L90 108H10Z%22/%3E%3Crect x=%2244%22 y=%22108%22 width=%2212%22 height=%2216%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
     repeating-linear-gradient(
@@ -125,9 +128,9 @@
     #fff6d8 179.4px,
     #d4b24f 184px
   ) !important;
-  background-size: 560px 440px, 330px 330px, auto !important;
-  background-position: 30px 90px, 150px 20px, 0 0 !important;
-  background-repeat: repeat, repeat, repeat !important;
+  background-size: 640px 640px, 560px 440px, 330px 330px, auto !important;
+  background-position: 0 0, 30px 90px, 150px 20px, 0 0 !important;
+  background-repeat: repeat, repeat, repeat, repeat !important;
   background-attachment: fixed !important;
 }
 
